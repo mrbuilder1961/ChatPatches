@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "wmch",
+  "version": "1.2.1",
+
+  "name": "Where's My Chat History",
+  "description": "Currently:\n- Keeps chat history when you leave a server\n- increases the amount of maximum chat messages depending on allocated RAM\n- adds a timestamp before each message. Heavily inspired by ryanbester and JackFred2's original mods.\n\nFor any technical users, this mod's only mixin is in the ChatHud file; all problems most likely stemmed from conflict there.",
+  "authors": [
+    "OBro1961",
+    "ryanbester",
+    "JackFred2"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": "https://github.com/mrbuilder1961/WheresMyChatHistory"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/wmch/icon.png",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "obro1961.WheresMyChatHistory"
+    ]
+  },
+  "mixins": [
+    "wmch.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.11.3",
+    "fabric": "*",
+    "minecraft": "1.18.x",
+    "java": ">=17"
+  }
+}
