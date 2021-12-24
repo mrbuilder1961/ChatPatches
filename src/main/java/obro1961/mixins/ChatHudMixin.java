@@ -1,9 +1,13 @@
 package obro1961.mixins;
 
 import java.util.Calendar;
+import java.util.Deque;
+import java.util.List;
 import java.util.Locale;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,15 +18,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.hud.ChatHud;
+import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 @Environment(EnvType.CLIENT)
-@Mixin(ChatHud.class)
+@Mixin(value = ChatHud.class, priority = 9999)
 public class ChatHudMixin {
+    @Shadow @Final List<ChatHudLine<Text>> messages;
+    @Shadow @Final List<ChatHudLine<OrderedText>> visibleMessages;
+    @Shadow @Final Deque<Text> messageQueue;
+
     /**
      * Prevents the game from clearing chat history
      * @param clearHistory
@@ -67,7 +77,7 @@ public class ChatHudMixin {
                 .withClickEvent( new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, String.format("%s|%d",formatL.replaceFirst("\nClick to copy!",""),c.getTime().getTime()) ) )
             )
         )
-        .append( m );        
+        .append( m );
 
         return m.asString().startsWith("<]")
         ? new LiteralText(m.asString().replaceFirst("\\[\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2}\\]","")).formatted(Formatting.DARK_AQUA).formatted(Formatting.BOLD)

@@ -6,7 +6,8 @@
   "mixins": [],
   "client": [
     "ChatHudMixin",
-    "IChatHudAccessorMixin"
+    "IChatHudAccessorMixin",
+    "KeyboardMixin"
   ],
   "injectors": {
     "defaultRequire": 1

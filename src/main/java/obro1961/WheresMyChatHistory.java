@@ -26,7 +26,7 @@ public class WheresMyChatHistory implements ClientModInitializer {
 					mc.inGameHud.addChatMessage(MessageType.CHAT, Text.of(text), null);
 				}
 			} catch (Throwable t) {log.error("Something happened while joining a world/server; caused by '{}':\t{}", t.getCause(), t.getLocalizedMessage());}
-		});
+        });
 
 		log.info("Finished loading!");
 	}
