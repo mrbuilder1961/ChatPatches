@@ -11,13 +11,24 @@ version = project.mod_version
 group = project.maven_group
 
 dependencies {
-	// To change the versions see the gradle.properties file
+	// Versions changed in the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API; needed for this mod (specifically events)
+	// fabric api
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+		include "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	// config api
+	modApi("me.shedaniel.cloth:cloth-config-fabric:6.1.48") {
+        exclude(group: "net.fabricmc.fabric-api")
+    }
+	modImplementation "com.terraformersmc:modmenu:3.0.1"
+}
+repositories {
+  	mavenCentral()
+	maven { url "https://maven.shedaniel.me/" }
+	maven { url "https://maven.terraformersmc.com/" }
 }
 
 processResources {

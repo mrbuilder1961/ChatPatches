@@ -8,7 +8,7 @@ This mod does a few things:
 ## Setup
 
 I don't know, just download the code maybe? Do whatever you'd normally do? I've been working on this for like 3 weeks and I'm exhausted so sorry to be that guy but just figure it out please.
-Prebuilt .JAR files can be found in the **[prebuilt](https://github.com/mrbuilder1961/WheresMyChatHistory/tree/master/prebuilt)** folder.
+Prebuilt .JAR files can be found in **build/libs**.
 
 ## License
 

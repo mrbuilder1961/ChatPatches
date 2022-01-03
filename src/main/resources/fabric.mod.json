@@ -1,17 +1,18 @@
 {
   "schemaVersion": 1,
   "id": "wmch",
-  "version": "1.3",
+  "version": "1.3.1",
 
   "name": "Where's My Chat History",
-  "description": "Currently:\n- Keeps chat history when you leave a server\n- increases the amount of maximum chat messages depending on allocated RAM\n- adds a timestamp before each message. Heavily inspired by ryanbester and JackFred2's original mods.\n\nFor any technical users, this mod's only mixin is in the ChatHud file; all problems most likely stemmed from conflict there.",
-  "authors": [
-    "OBro1961",
+  "description": "Currently:\n- Keeps chat history when you leave a server\n- increases the amount of maximum chat messages depending on allocated RAM\n- adds a timestamp before each message.\nTo access the config, either modify wmch.json in the config folder or install Mod Menu(v3.0.1+) and Cloth Config(6.1.48+) to edit the options in-game\nHeavily inspired by ryanbester and JackFred2's original mods.\n\nFor any technical users, this mod's only mixins are in the ChatHud.class and Keyboard.class; all problems most likely stemmed from conflict there.",
+  "authors": ["OBro1961"],
+  "contributors": [
     "ryanbester",
     "JackFred2"
   ],
   "contact": {
-    "homepage": "https://github.com/mrbuilder1961/WheresMyChatHistory/tree/1.18.x/#readme",
+    "homepage": "https://curseforge.com/minecraft/mc-mods/wmch",
+    "issues": "https://github.com/mrbuilder1961/WheresMyChatHistory/issues",
     "sources": "https://github.com/mrbuilder1961/WheresMyChatHistory/tree/1.18.x/"
   },
 
@@ -20,12 +21,14 @@
 
   "environment": "client",
   "entrypoints": {
-    "client": [
-      "obro1961.WheresMyChatHistory"
-    ]
+    "client": ["obro1961.WheresMyChatHistory"],
+    "modmenu": ["obro1961.config.ModMenuIntegration"]
   },
   "mixins": [
-    "wmch.mixins.json"
+    {
+      "config": "wmch.mixins.json",
+      "environment": "client"
+    }
   ],
 
   "depends": {
@@ -33,5 +36,9 @@
     "fabric": "*",
     "minecraft": "1.18.x",
     "java": ">=17"
+  },
+  "recommends": {
+    "modmenu": ">=3.0.1",
+    "cloth-config": ">=6.1.48"
   }
 }
