@@ -26,6 +26,7 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 - Auto-updating yarn mappings
 - Configurable Mixin priority values (per class or global)
 - Modrinth page
+- Hex colors in config
 
 ## License
 
