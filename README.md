@@ -22,7 +22,7 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 ## Possible features
 
 - When installed server-side, functions as [Server Chat History](https://github.com/Giggitybyte/ServerChatHistory)
-- Configurable player angle brackets (removeable, changeable)
+- Configurable player angle brackets
 - Auto-updating yarn mappings
 - Configurable Mixin priority values (per class or global)
 - Modrinth page
