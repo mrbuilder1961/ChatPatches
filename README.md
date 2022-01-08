@@ -1,6 +1,6 @@
 [![Fabric Mod](https://img.shields.io/badge/modloader-fabric-informational)](https://fabricmc.net/use/)
 [![Latest Version](https://img.shields.io/badge/version-1.4.1-brightgreen)](https://github.com/Giggitybyte/ServerChatHistory/releases)
-[![Curseforge Download](https://bit.ly/33eX25e)](https://www.curseforge.com/minecraft/mc-mods/wmch/files/all)
+[![Curseforge Download](https://bit.ly/33eX25e)](https://www.curseforge.com/minecraft/mc-mods/wmch)
 # Where's My Chat History
 
 This mod does quite a few things:
