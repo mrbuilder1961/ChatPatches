@@ -30,4 +30,4 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 
 ## License
 
-This template is available under the GNU GPLv3 license. TL;DR: You can do whatever, as long as it's free, open-source, and credits me and the other authors.
+This mod is available under the GNU GPLv3 license. TL;DR: You can do whatever, as long as it's free, open-source, and credits me and the other authors.
