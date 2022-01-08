@@ -19,6 +19,7 @@ import net.minecraft.client.MinecraftClient;
 @Mixin(Keyboard.class)
 public class KeyboardMixin {
     @Shadow @Final MinecraftClient client;
+
     /** Allows F3+D to properly clear chat without breaking the function for other implementations */
     @Inject( method = "processF3(I)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;clear(Z)V") )
     public void properlyClear(int key, CallbackInfoReturnable<Boolean> ci) {

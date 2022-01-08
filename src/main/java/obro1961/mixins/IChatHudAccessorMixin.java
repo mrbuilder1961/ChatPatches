@@ -13,8 +13,8 @@ import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 
 @Mixin(ChatHud.class)
+/* Used for an alternate `clear()` so F3+D actually works */
 public interface IChatHudAccessorMixin {
-    // used for an alternate clear() so F3+D properly clears chat
     @Accessor
     public List<ChatHudLine<Text>> getMessages();
 
