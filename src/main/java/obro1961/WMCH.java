@@ -66,7 +66,7 @@ public class WMCH implements ClientModInitializer {
 	 * @see WMCH#or(Object, Object)
 	 */
 	public static Object or(Object o1, Object o2, Object fallback) {
-		return Objects.nonNull(o1)||(Boolean)o1 ? o1 : Objects.nonNull(o2)||(Boolean)o2 ? o2 : fallback;
+		return Objects.nonNull(o1) ? o1 : Objects.nonNull(o2) ? o2 : fallback;
 	}
 	/** Same as {@link WMCH#or(Object, Object, Object)}, but passes o2 as both o2 and fallback. */
 	public static Object or(Object o1, Object o2) { return or(o1, o2, o2); }

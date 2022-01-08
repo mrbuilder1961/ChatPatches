@@ -102,9 +102,9 @@ public class Config {
         if(!WMCH.isConfigModded) lg.warn("Cloth config v6.1.48+ and Mod Menu v3.0.1+ are not installed, config can only be accessed by the file. Make sure your mods are in the right folder and are the right version or higher.");
         read();
 
-        cfg.time = (boolean)WMCH.or(cfg.time, cfg.time_enabled, TIME);
-        cfg.hover = (boolean)WMCH.or(cfg.hover, cfg.hover_enabled, HOVER);
-        cfg.boundary = (boolean)WMCH.or(cfg.boundary, cfg.boundary_enabled, BOUNDARY);
+        cfg.time = (Boolean)WMCH.or(cfg.time, cfg.time_enabled, TIME);
+        cfg.hover = (Boolean)WMCH.or(cfg.hover, cfg.hover_enabled, HOVER);
+        cfg.boundary = (Boolean)WMCH.or(cfg.boundary, cfg.boundary_enabled, BOUNDARY);
         cfg.boundaryStr = (String)WMCH.or(cfg.boundaryStr, cfg.boundary_string, BOUNDARYSTR);
 
         try {
@@ -135,7 +135,7 @@ public class Config {
         if(cfg.reset) reset(); cfg.reset = false;
 
         WMCH.config = cfg;
-        lg.info("Finished parsing basic config!");
+        lg.info("Finished parsing config!");
     }
 
 

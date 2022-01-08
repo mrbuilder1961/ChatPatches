@@ -119,7 +119,7 @@ public class ClothConfig extends Config {
                     .build()
                 );
             break;
-            case "[Lnet.minecraft.util.Formatting;":
+            case "[Lnet.minecraft.class_124;": // "[Lnet.minecraft.util.Formatting;"
                 List<String> strFmts = new ArrayList<>(); List<Formatting> fmts = new ArrayList<>(Arrays.asList( (Formatting[])def ));
                 fmts.removeIf(f -> Objects.isNull(f) || f==Formatting.RESET);
                 fmts.forEach(f -> strFmts.add(f.getName()));
