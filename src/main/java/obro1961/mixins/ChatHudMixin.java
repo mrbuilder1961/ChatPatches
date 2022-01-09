@@ -60,7 +60,7 @@ public class ChatHudMixin {
                     .withClickEvent( WMCH.config.hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, WMCH.config.getFormattedHover(now) ) : null )
                 )
             )
-        .append(!isBoundary&&WMCH.config.time ? Text.of("") : new LiteralText(" ").setStyle(m.getStyle()))
+        .append(isBoundary||!WMCH.config.time ? Text.of("") : new LiteralText(" ").setStyle(m.getStyle()))
         .append(m);
     }
 }

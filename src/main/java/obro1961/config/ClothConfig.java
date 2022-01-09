@@ -29,12 +29,12 @@ public class ClothConfig extends Config {
      * @return A new config Screen for player access
      */
     public Screen getWMCHConfigScreen(Screen prevScreen) {
-        ConfigBuilder bldr = ConfigBuilder.create().setParentScreen(prevScreen).setDoesConfirmSave(true).setTitle(new TranslatableText("wmch.config.title"));
+        ConfigBuilder bldr = ConfigBuilder.create().setParentScreen(prevScreen).setDoesConfirmSave(true).setTitle(new TranslatableText("text.wmch.title"));
         ConfigEntryBuilder iBldr = bldr.entryBuilder();
-        ConfigCategory time = bldr.getOrCreateCategory(new TranslatableText("wmch.config.time_category"));
-        ConfigCategory hover = bldr.getOrCreateCategory(new TranslatableText("wmch.config.hover_category"));
-        ConfigCategory boundary = bldr.getOrCreateCategory(new TranslatableText("wmch.config.boundary_category"));
-        ConfigCategory other = bldr.getOrCreateCategory(new TranslatableText("wmch.config.other_category"));
+        ConfigCategory time = bldr.getOrCreateCategory(new TranslatableText("text.wmch.time_category"));
+        ConfigCategory hover = bldr.getOrCreateCategory(new TranslatableText("text.wmch.hover_category"));
+        ConfigCategory boundary = bldr.getOrCreateCategory(new TranslatableText("text.wmch.boundary_category"));
+        ConfigCategory other = bldr.getOrCreateCategory(new TranslatableText("text.wmch.other_category"));
 
         iBldr = quickStart("time", cfg.time, iBldr, time, null, current -> {
             cfg.time = (boolean)WMCH.or(current, cfg.time_enabled, TIME);
@@ -84,9 +84,9 @@ public class ClothConfig extends Config {
             cfg.boundaryFormatting = (Formatting[])WMCH.or(bFmts.toArray(EMPTY), cfg.boundary_formatting, BOUNDARYFORMATTING);
         });
 
-        other.addEntry( iBldr.startIntField(new TranslatableText("wmch.config.maxMsgs"), cfg.maxMsgs)
+        other.addEntry( iBldr.startIntField(new TranslatableText("text.wmch.maxMsgs"), cfg.maxMsgs)
                 .setDefaultValue(maxMsgs)
-                .setTooltip(new TranslatableText("wmch.config.maxMsgs_desc"))
+                .setTooltip(new TranslatableText("text.wmch.maxMsgs_desc"))
                 .setSaveConsumer(current -> { cfg.maxMsgs = current>100 && current<16835 ? current : cfg.maxMsgs>100 && cfg.maxMsgs<16835 ? cfg.maxMsgs : MAXMSGS; })
             .build() );
         quickStart("reset", cfg.reset, iBldr, other, null, current -> { if(current) reset(); cfg.reset = false; }, null);
@@ -99,7 +99,7 @@ public class ClothConfig extends Config {
     }
 
     private static ConfigEntryBuilder quickStart(String key, Object def, ConfigEntryBuilder iBldr, ConfigCategory category, Consumer<String> saveStr, Consumer<Boolean> saveBool, Consumer<List<String>> saveList) {
-        TranslatableText[] texts = {new TranslatableText("wmch.config."+key), new TranslatableText("wmch.config."+key+"_desc")};
+        TranslatableText[] texts = {new TranslatableText("text.wmch."+key), new TranslatableText("text.wmch."+key+"_desc")};
         switch (def.getClass().getName()) {
             case "java.lang.String":
                 category.addEntry(
