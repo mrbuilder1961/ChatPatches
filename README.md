@@ -8,6 +8,7 @@ This mod does quite a few things:
 - Adds a timestamp in front of all messages, formatted like [HOUR:MINUTE:SECOND] in pink text, with a tooltip that renders a complete date down to the millisecond
 - Keeps chat history and previously sent messages across ALL world/servers (but automatically resets on game exit)
 - All of this is configurable
+
 Be on the lookout for new versions, issues, and possible future features!
 
 ## Setup
