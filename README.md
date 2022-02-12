@@ -18,13 +18,14 @@ Be on the lookout for new versions, issues, and possible future features!
 3. Open a terminal/command prompt, then run `./gradlew build`
 4. Hopefully everything works!
 
-If that doesn't work, then I don't know, just trial-and-error things? Do whatever you'd normally do? I've been working on this for far too long and I'm exhausted so sorry to be that guy but I honestly have no clue how to.
+If that doesn't work, then I don't know, just trial-and-error things? Do whatever you'd normally do? I honestly don't know.
 
 ## Possible features
 
 - When installed server-side, functions as [Server Chat History](https://github.com/Giggitybyte/ServerChatHistory)
 - Configurable player angle brackets
 - Chat search box, with regex search capabilities
+- Logs show changed settings
 - Configurable Mixin priority values (per class or global)
 - Modrinth page
 - Hex colors in config
