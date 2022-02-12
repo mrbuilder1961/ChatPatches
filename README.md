@@ -4,7 +4,7 @@
 # Where's My Chat History
 
 This mod does quite a few things:
-- Increases the maximum amount of chat based on allocated RAM (but minimally it goes from 100 -> 1024 max messages)
+- Increases the maximum amount of chat based on allocated RAM (minimally it goes from 100 -> 1024 max messages)
 - Adds a timestamp in front of all messages, formatted like [HOUR:MINUTE:SECOND] in pink text, with a tooltip that renders a complete date down to the millisecond
 - Keeps chat history and previously sent messages across ALL world/servers (but automatically resets on game exit)
 - All of this is configurable
@@ -24,7 +24,7 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 
 - When installed server-side, functions as [Server Chat History](https://github.com/Giggitybyte/ServerChatHistory)
 - Configurable player angle brackets
-- Auto-updating yarn mappings
+- Chat search box, with regex search capabilities
 - Configurable Mixin priority values (per class or global)
 - Modrinth page
 - Hex colors in config
