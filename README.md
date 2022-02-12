@@ -27,7 +27,6 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 - Chat search box, with regex search capabilities
 - Logs show changed settings
 - Message counter (x2 or x3 appearing after multiple messages)
-- Configurable Mixin priority values (per class or global)
 - Modrinth page
 - Hex colors in config
 
