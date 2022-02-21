@@ -22,7 +22,6 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 
 ## Possible features
 
-- When installed server-side, functions as [Server Chat History](https://github.com/Giggitybyte/ServerChatHistory)
 - Configurable player angle brackets
 - Chat search box, with regex search capabilities
 - Logs show changed settings
