@@ -22,7 +22,6 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 
 ## Possible features
 
-- When installed server-side, functions as [Server Chat History](https://github.com/Giggitybyte/ServerChatHistory)
 - Configurable player angle brackets
 - Chat search box, with regex search capabilities
 - Logs show changed settings
@@ -30,10 +29,6 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 - Hex colors in config
 - Smooth message receive
 - Modrinth page
-
-## License
-
-This mod is available under the GNU GPLv3 license.
 
 ## Changelog
 
@@ -46,3 +41,6 @@ I was going to implement a system that, when the `hover` option was toggled off,
 the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However,
 unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added.
 This also applies for all other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
+
+## License
+This mod is available under the GNU GPLv3 license. TL;DR: You can do whatever, as long as it's free, open-source, and credits me and the other authors.
