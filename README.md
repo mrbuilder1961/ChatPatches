@@ -22,11 +22,8 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 
 ## Possible features
 
-- Configurable player angle brackets
 - Chat search box, with regex search capabilities
-- Logs show changed settings
 - Message counter (x2 or x3 appearing after multiple messages)
-- Hex colors in config
 - Smooth message receive
 - Modrinth page
 
