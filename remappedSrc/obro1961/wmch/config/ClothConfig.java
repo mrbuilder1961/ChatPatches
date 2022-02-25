@@ -1,4 +1,4 @@
-package obro1961.config;
+package obro1961.wmch.config;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -13,13 +13,14 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
-import obro1961.WMCH;
+import obro1961.wmch.Util;
+import obro1961.wmch.WMCH;
 
 /** The extended config menu, supported by Cloth Config and Mod Menu. @see Config */
 public class ClothConfig extends Config {
     public ClothConfig(boolean resetCfgObj) { super(resetCfgObj); }
-    protected ClothConfig(boolean timeEnabled, String timeString, Formatting[] timeFormattings, boolean hoverEnabled, String hoverString, boolean boundaryEnabled, String boundaryString, Formatting[] boundaryFormattings, int maxMessages, boolean resetOptions) {
-        super(timeEnabled, timeString, timeFormattings, hoverEnabled, hoverString, boundaryEnabled, boundaryString, boundaryFormattings, maxMessages, resetOptions);
+    protected ClothConfig(boolean timeEnabled, String timeString, Formatting[] timeFormattings, boolean hoverEnabled, String hoverString, boolean boundaryEnabled, String boundaryString, Formatting[] boundaryFormattings, int maxMessages, boolean resetOptions, String name) {
+        super(timeEnabled, timeString, timeFormattings, hoverEnabled, hoverString, boundaryEnabled, boundaryString, boundaryFormattings, maxMessages, resetOptions, name);
     }
 
 
@@ -37,11 +38,11 @@ public class ClothConfig extends Config {
         ConfigCategory other = bldr.getOrCreateCategory(new TranslatableText("text.wmch.other_category"));
 
         iBldr = quickStart("time", cfg.time, iBldr, time, null, current -> {
-            cfg.time = (boolean)WMCH.or(current, cfg.time_enabled, TIME);
+            cfg.time = (boolean)Util.or(current, cfg.time_enabled, TIME);//? b => B
         }, null);
         iBldr = quickStart("timeStr", cfg.timeStr, iBldr, time, current -> {
             try {
-                cfg.timeStr = ((String)WMCH.or(cfg.timeStr, cfg.time_text, TIMESTR)).replaceAll("'","").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'");
+                cfg.timeStr = ((String)Util.or(current, cfg.time_text, TIMESTR)).replaceAll("'","").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'");
                 SimpleDateFormat sdf = new SimpleDateFormat(cfg.timeStr);
                 if(sdf==null || !(sdf instanceof SimpleDateFormat)) cfg.timeStr = TIMESTR;
             } catch(IllegalArgumentException e) {
@@ -53,15 +54,15 @@ public class ClothConfig extends Config {
             List<Formatting> tFmts = new ArrayList<>(current.size());
                 for(int i=0;i<current.size();i++) tFmts.add(Formatting.byName(current.get(i)));
                 tFmts.removeIf(f -> Objects.isNull(f) || f==Formatting.RESET);
-            cfg.timeFormatting = (Formatting[])WMCH.or(tFmts.toArray(EMPTY), cfg.time_formatting, TIMEFORMATTING);
+            cfg.timeFormatting = (Formatting[])Util.or(tFmts.toArray(EMPTY), cfg.time_formatting, TIMEFORMATTING);
         });
 
         iBldr = quickStart("hover", cfg.hover, iBldr, hover, null, current -> {
-            cfg.hover = (Boolean)WMCH.or(current, cfg.hover_enabled, HOVER);
+            cfg.hover = (Boolean)Util.or(current, cfg.hover_enabled, HOVER);
         }, null);
         iBldr = quickStart("hoverStr", cfg.hoverStr, iBldr, hover, current -> {
             try {
-                cfg.hoverStr = ((String)WMCH.or(current, cfg.hover_string, HOVERSTR)).replaceAll("'","").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'");
+                cfg.hoverStr = ((String)Util.or(current, cfg.hover_string, HOVERSTR)).replaceAll("'","").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'");
                 SimpleDateFormat sdf = new SimpleDateFormat(cfg.hoverStr);
                 if(sdf==null || !(sdf instanceof SimpleDateFormat)) cfg.hoverStr = HOVERSTR;
             } catch(IllegalArgumentException e) {
@@ -71,17 +72,17 @@ public class ClothConfig extends Config {
         }, null, null);
 
         iBldr = quickStart("boundary", cfg.boundary, iBldr, boundary, null, current -> {
-            cfg.boundary = (Boolean)WMCH.or(current, cfg.boundary_enabled, BOUNDARY);
+            cfg.boundary = (Boolean)Util.or(current, cfg.boundary_enabled, BOUNDARY);
 
         }, null);
         iBldr = quickStart("boundaryStr", cfg.boundaryStr, iBldr, boundary, current -> {
-            cfg.boundaryStr = (String)WMCH.or(current, cfg.boundary_string, BOUNDARYSTR);
+            cfg.boundaryStr = (String)Util.or(current, cfg.boundary_string, BOUNDARYSTR);
         }, null, null);
         iBldr = quickStart("boundaryFormatting", cfg.boundaryFormatting, iBldr, boundary, null, null, current -> {
             List<Formatting> bFmts = new ArrayList<>(current.size());
                 for(int i=0;i<current.size();i++) bFmts.add(Formatting.byName(current.get(i)));
                 bFmts.removeIf(f -> Objects.isNull(f) || f==Formatting.RESET);
-            cfg.boundaryFormatting = (Formatting[])WMCH.or(bFmts.toArray(EMPTY), cfg.boundary_formatting, BOUNDARYFORMATTING);
+            cfg.boundaryFormatting = (Formatting[])Util.or(bFmts.toArray(EMPTY), cfg.boundary_formatting, BOUNDARYFORMATTING);
         });
 
         other.addEntry( iBldr.startIntField(new TranslatableText("text.wmch.maxMsgs"), cfg.maxMsgs)
@@ -90,9 +91,15 @@ public class ClothConfig extends Config {
                 .setSaveConsumer(current -> { cfg.maxMsgs = current>100 && current<16835 ? current : cfg.maxMsgs>100 && cfg.maxMsgs<16835 ? cfg.maxMsgs : MAXMSGS; })
             .build() );
         quickStart("reset", cfg.reset, iBldr, other, null, current -> { if(current) reset(); cfg.reset = false; }, null);
+        quickStart("nameStr", cfg.nameStr, iBldr, other, current -> {
+            diffObj = cfg.nameStr;
+            cfg.nameStr = current!=null && current.contains("$") ? current : cfg.nameStr!=null && cfg.nameStr.contains("$") ? cfg.nameStr : NAMESTR;
+            // add all addDiffs
+        }, null, null);
 
         bldr.setSavingRunnable(() -> {
             write(cfg);
+            // log changes
             lg.info("Saved config info from Mod Menu interface using Cloth Config!");
         });
         return bldr.build();
@@ -100,7 +107,8 @@ public class ClothConfig extends Config {
 
     private static ConfigEntryBuilder quickStart(String key, Object def, ConfigEntryBuilder iBldr, ConfigCategory category, Consumer<String> saveStr, Consumer<Boolean> saveBool, Consumer<List<String>> saveList) {
         TranslatableText[] texts = {new TranslatableText("text.wmch."+key), new TranslatableText("text.wmch."+key+"_desc")};
-        switch (def.getClass().getName()) {
+
+        switch ( WMCH.fbl.getMappingResolver().unmapClassName(WMCH.fbl.getMappingResolver().getCurrentRuntimeNamespace(),def.getClass().getName()) ) {
             case "java.lang.String":
                 category.addEntry(
                     iBldr.startStrField(texts[0], (String)def)
@@ -119,7 +127,7 @@ public class ClothConfig extends Config {
                     .build()
                 );
             break;
-            case "[Lnet.minecraft.class_124;": // "[Lnet.minecraft.util.Formatting;"
+            case "[Lnet.minecraft.util.Formatting;":
                 List<String> strFmts = new ArrayList<>(); List<Formatting> fmts = new ArrayList<>(Arrays.asList( (Formatting[])def ));
                 fmts.removeIf(f -> Objects.isNull(f) || f==Formatting.RESET);
                 fmts.forEach(f -> strFmts.add(f.getName()));

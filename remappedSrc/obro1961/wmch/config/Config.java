@@ -1,8 +1,9 @@
-package obro1961.config;
+package obro1961.wmch.config;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,7 +19,8 @@ import org.apache.logging.log4j.Logger;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Formatting;
-import obro1961.WMCH;
+import obro1961.wmch.Util;
+import obro1961.wmch.WMCH;
 
 /**
  * The config class for WMCH. Extended by others for external versions.
@@ -28,6 +30,8 @@ public class Config {
     protected static Logger lg = WMCH.log; // Just shortens lots of log references
     protected static final Formatting[] EMPTY = new Formatting[0];
     protected static Config cfg;
+    protected static String diff = ""; // config change log
+    protected static Object diffObj;
 
     // default values
     public static final boolean TIME = true;
@@ -38,6 +42,7 @@ public class Config {
     public static final boolean BOUNDARY = true;
     public static final String BOUNDARYSTR = "<]===---{ SESSION BOUNDARY LINE }---===[>";
     public static final Formatting[] BOUNDARYFORMATTING = new Formatting[] {Formatting.DARK_AQUA, Formatting.BOLD};
+    public static final String NAMESTR = "<$>";
     public static final int MAXMSGS = 1024;
     public static final boolean RESET = false;
 
@@ -50,6 +55,7 @@ public class Config {
     public boolean boundary = BOUNDARY;
     public String boundaryStr = BOUNDARYSTR;
     public Formatting[] boundaryFormatting = BOUNDARYFORMATTING;
+    public String nameStr = NAMESTR;
     public int maxMsgs = MAXMSGS;
     public boolean reset = RESET;
 
@@ -76,10 +82,11 @@ public class Config {
         this.boundaryFormatting = BOUNDARYFORMATTING;
         this.maxMsgs = MAXMSGS;
         this.reset = RESET;
+        this.nameStr = NAMESTR;
 
         if(resetCfgObj) WMCH.config = this;
     }
-    protected Config(boolean timeEnabled, String timeString, Formatting[] timeFormattings, boolean hoverEnabled, String hoverString, boolean boundaryEnabled, String boundaryString, Formatting[] boundaryFormattings, int maxMessages, boolean resetOptions) {
+    protected Config(boolean timeEnabled, String timeString, Formatting[] timeFormattings, boolean hoverEnabled, String hoverString, boolean boundaryEnabled, String boundaryString, Formatting[] boundaryFormattings, int maxMessages, boolean resetOptions, String name) {
         this.time = timeEnabled;
         this.timeStr = timeString;
         this.timeFormatting = timeFormattings;
@@ -90,10 +97,11 @@ public class Config {
         this.boundaryFormatting = boundaryFormattings;
         this.maxMsgs = maxMessages;
         this.reset = resetOptions;
+        this.nameStr = name;
     }
     /** Returns a ClothConfig if available, otherwise returns null. */
     public ClothConfig getClothConfig() {
-        if(WMCH.isConfigModded) return new ClothConfig(this.time, this.timeStr, this.timeFormatting, this.hover, this.hoverStr, this.boundary, this.boundaryStr, this.boundaryFormatting, this.maxMsgs, this.reset);
+        if(WMCH.isConfigModded) return new ClothConfig(this.time, this.timeStr, this.timeFormatting, this.hover, this.hoverStr, this.boundary, this.boundaryStr, this.boundaryFormatting, this.maxMsgs, this.reset, this.nameStr);
         else return null;
     }
 
@@ -102,13 +110,13 @@ public class Config {
         if(!WMCH.isConfigModded) lg.warn("Cloth config v6.1.48+ and Mod Menu v3.0.1+ are not installed, config can only be accessed by the file. Make sure your mods are in the right folder and are the right version or higher.");
         read();
 
-        cfg.time = (Boolean)WMCH.or(cfg.time, cfg.time_enabled, TIME);
-        cfg.hover = (Boolean)WMCH.or(cfg.hover, cfg.hover_enabled, HOVER);
-        cfg.boundary = (Boolean)WMCH.or(cfg.boundary, cfg.boundary_enabled, BOUNDARY);
-        cfg.boundaryStr = (String)WMCH.or(cfg.boundaryStr, cfg.boundary_string, BOUNDARYSTR);
+        cfg.time = (Boolean)Util.or(cfg.time, cfg.time_enabled, TIME);
+        cfg.hover = (Boolean)Util.or(cfg.hover, cfg.hover_enabled, HOVER);
+        cfg.boundary = (Boolean)Util.or(cfg.boundary, cfg.boundary_enabled, BOUNDARY);
+        cfg.boundaryStr = (String)Util.or(cfg.boundaryStr, cfg.boundary_string, BOUNDARYSTR);
 
         try {
-            cfg.timeStr = ((String)WMCH.or(cfg.timeStr, cfg.time_text, TIMESTR)).replaceAll("'","").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'");
+            cfg.timeStr = ((String)Util.or(cfg.timeStr, cfg.time_text, TIMESTR)).replaceAll("'","").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'");
             SimpleDateFormat sdf = new SimpleDateFormat(cfg.timeStr);
             if(sdf==null || !(sdf instanceof SimpleDateFormat)) cfg.timeStr = TIMESTR;
         } catch(IllegalArgumentException e) {
@@ -116,7 +124,7 @@ public class Config {
             cfg.timeStr = TIMESTR;
         }
         try {
-            cfg.hoverStr = ((String)WMCH.or(cfg.hoverStr, cfg.hover_string, HOVERSTR)).replaceAll("'","").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'");
+            cfg.hoverStr = ((String)Util.or(cfg.hoverStr, cfg.hover_string, HOVERSTR)).replaceAll("'","").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'");
             SimpleDateFormat sdf = new SimpleDateFormat(cfg.hoverStr);
             if(sdf==null || !(sdf instanceof SimpleDateFormat)) cfg.hoverStr = HOVERSTR;
         } catch(IllegalArgumentException e) {
@@ -124,23 +132,40 @@ public class Config {
             cfg.hoverStr = HOVERSTR;
         }
 
-        List<Formatting> tFmts = new ArrayList<>(Arrays.asList( (Formatting[])WMCH.or(cfg.timeFormatting, cfg.time_formatting, EMPTY) ));
-        List<Formatting> bFmts = new ArrayList<>(Arrays.asList( (Formatting[])WMCH.or(cfg.boundaryFormatting, cfg.boundary_formatting, EMPTY) ));
+        List<Formatting> tFmts = new ArrayList<>(Arrays.asList( (Formatting[])Util.or(cfg.timeFormatting, cfg.time_formatting, EMPTY) ));
+        List<Formatting> bFmts = new ArrayList<>(Arrays.asList( (Formatting[])Util.or(cfg.boundaryFormatting, cfg.boundary_formatting, EMPTY) ));
         tFmts.removeIf(f -> Objects.isNull(f) || f==Formatting.RESET);
         bFmts.removeIf(f -> Objects.isNull(f) || f==Formatting.RESET);
-        cfg.timeFormatting = (Formatting[])WMCH.or(tFmts.toArray(EMPTY), TIMEFORMATTING);
-        cfg.boundaryFormatting = (Formatting[])WMCH.or(bFmts.toArray(EMPTY), BOUNDARYFORMATTING);
+        cfg.timeFormatting = (Formatting[])Util.or(tFmts.toArray(EMPTY), TIMEFORMATTING);
+        cfg.boundaryFormatting = (Formatting[])Util.or(bFmts.toArray(EMPTY), BOUNDARYFORMATTING);
 
-        cfg.maxMsgs = (Integer)cfg.maxMsgs!=null && cfg.maxMsgs>100 && cfg.maxMsgs<16384 ? cfg.maxMsgs : ((Integer)cfg.max_messages!=null && cfg.max_messages>100 && cfg.max_messages<16384 ? cfg.max_messages : MAXMSGS);
-        if(cfg.reset) reset(); cfg.reset = false;
+        cfg.maxMsgs = (Integer)cfg.maxMsgs!=null && Util.inRange(101, 16383, cfg.maxMsgs) ? cfg.maxMsgs : ((Integer)cfg.max_messages!=null && Util.inRange(101, 16383, cfg.max_messages) ? cfg.max_messages : MAXMSGS);
+        cfg.nameStr = cfg.nameStr!=null && cfg.nameStr.contains("$") ? cfg.nameStr : NAMESTR;
 
+        if(cfg.reset)reset(); cfg.reset = false;
+
+        addDiffs(cfg, WMCH.config);
         WMCH.config = cfg;
-        lg.info("Finished parsing config!");
+        lg.info(diff=="" ? "Nothing happened; no changes were made." : "Finished saving config; changes made:"+diff);
     }
 
 
-    public String getFormattedTime(Date when) { return new SimpleDateFormat(cfg.timeStr).format(when); }
-    public String getFormattedHover(Date when) { return new SimpleDateFormat(cfg.hoverStr).format(when); }
+    public String getTimeF(Date when) { return new SimpleDateFormat(cfg.timeStr).format(when); }
+    public String getHoverF(Date when) { return new SimpleDateFormat(cfg.hoverStr).format(when); }
+    public String getNameF() { return cfg.nameStr.replace("$", (String)WMCH.lastMDat[0]); }
+    /** Takes 3 objects and adds them to the config difference string if any changes were made. */
+    protected static void addDiffs(Config neww, Config old) {
+        List<Field[]> fields = Arrays.asList(neww.getClass().getFields(), old.getClass().getFields());
+         lg.info(fields);
+        if( old.equals(neww) ) return;
+        else try {
+            // loops over both Configs to compare fields
+            for(int i=0,j=0; i<fields.get(0).length && j<fields.get(1).length; i++,j++)
+                diff += "\n\t"+fields.get(0)[i].get(fields.get(0)).toString()+" => "+fields.get(1)[j].get(fields.get(1)).toString();
+        } catch(Exception e) {lg.fatal("exception: {}",e);}
+
+        diff.replaceAll("\n\t(.{0,300}) => \1", "");
+    }
 
     /**
      * Extracts a {@link Config} from {@code ./config/wmch.json}.
@@ -168,7 +193,7 @@ public class Config {
         String cfgPath = FabricLoader.getInstance().getConfigDir().toFile().getAbsolutePath()+File.separator+"wmch.json";
 
         try (FileWriter fw = new FileWriter(cfgPath)) {
-            // ignore null values
+            //* ignore null values
             new GsonBuilder().excludeFieldsWithModifiers(Modifier.PROTECTED, Modifier.STATIC).setPrettyPrinting().create().toJson(c, c.getClass(), fw);
 
             lg.debug("Saved config info {} from '{}'", c.toString(), cfgPath);
@@ -182,25 +207,15 @@ public class Config {
         WMCH.config = cfg;
         write(cfg);
     }
-    /** Takes a list, object, and optional predicate and if the object is not null and passes the predicate, it is added to the list and returned */
-    public static List<Object> addIfValid(List<Object> list, Object o, boolean predicate) {
-        if(o != null && predicate) {
-            try { list.add(o); }
-            catch (Exception e) { lg.warn("An Exception was thrown whilst adding object '{}':", o); e.printStackTrace(); }
-
-            return list;
-        } else return list;
-    }
-
 
     @Override
     public String toString() {
-        List<Formatting> tFmts = new ArrayList<>(Arrays.asList( (Formatting[])WMCH.or(cfg.timeFormatting, cfg.time_formatting, EMPTY) ));
-        List<Formatting> bFmts = new ArrayList<>(Arrays.asList( (Formatting[])WMCH.or(cfg.boundaryFormatting, cfg.boundary_formatting, EMPTY) ));
+        List<Formatting> tFmts = new ArrayList<>(Arrays.asList( (Formatting[])Util.or(cfg.timeFormatting, cfg.time_formatting, EMPTY) ));
+        List<Formatting> bFmts = new ArrayList<>(Arrays.asList( (Formatting[])Util.or(cfg.boundaryFormatting, cfg.boundary_formatting, EMPTY) ));
         tFmts.removeIf(f -> Objects.isNull(f) || f==Formatting.RESET);
         bFmts.removeIf(f -> Objects.isNull(f) || f==Formatting.RESET);
-        cfg.timeFormatting = (Formatting[])WMCH.or(tFmts.toArray(EMPTY), TIMEFORMATTING);
-        cfg.boundaryFormatting = (Formatting[])WMCH.or(bFmts.toArray(EMPTY), BOUNDARYFORMATTING);
+        cfg.timeFormatting = (Formatting[])Util.or(tFmts.toArray(EMPTY), TIMEFORMATTING);
+        cfg.boundaryFormatting = (Formatting[])Util.or(bFmts.toArray(EMPTY), BOUNDARYFORMATTING);
 
         return String.format(
             "{\n\ttime: %b,\n\ttimeStr: '%s',\n\ttimeFormatting: %s,\n\thover: %b,\n\thoverStr: '%s',\n\tboundary: %b,\n\tboundaryStr: '%s',\n\tboundaryFormatting: '%s',\n\tmaxMsgs: %d,\n}",

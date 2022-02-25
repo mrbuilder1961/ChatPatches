@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "wmch",
-  "version": "1.4.3",
+  "version": "1.4.4",
 
   "name": "Where's My Chat History",
-  "description": "Currently:\n- Keeps chat history when you leave a server\n- increases the amount of maximum chat messages depending on allocated RAM\n- adds a timestamp before each message.\nTo access the config, either modify wmch.json in the config folder or install Mod Menu(v3.0.1+) and Cloth Config(6.1.48+) to edit the options in-game\nHeavily inspired by ryanbester and JackFred2's original mods.\n\nFor any technical users, this mod's only mixins are in the ChatHud.class and Keyboard.class; all problems most likely stemmed from conflict there.",
+  "description": "Currently:\n- Keeps chat history when you leave a server\n- increases the amount of maximum chat messages depending on allocated RAM\n- adds a timestamp before each message.\nTo access the config, either modify wmch.json in the config folder or install Mod Menu(v3.0.0+) and Cloth Config(6.1.48+) to edit the options in-game\nSee the GitHub release page for the current version to learn more about what was changed in this update!\nHeavily inspired by ryanbester and JackFred2's original mods.\n\nFor any technical users, this mod's only mixins are in the ChatHud.class and Keyboard.class; all problems most likely stemmed from conflict there.",
   "authors": ["OBro1961"],
   "contributors": [
     "ryanbester",
@@ -19,15 +19,15 @@
   "license": "CC0-1.0",
   "icon": "assets/wmch/icon.png",
 
-  "environment": "client",
+  "environment": "*",
   "entrypoints": {
-    "client": ["obro1961.WMCH"],
-    "modmenu": ["obro1961.config.ModMenuIntegration"]
+    "main": ["obro1961.wmch.WMCH"],
+    "modmenu": ["obro1961.wmch.config.ModMenuIntegration"]
   },
   "mixins": [
     {
       "config": "wmch.mixins.json",
-      "environment": "client"
+      "environment": "*"
     }
   ],
 
