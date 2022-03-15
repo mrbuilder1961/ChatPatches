@@ -1,4 +1,4 @@
-name: Java Linter from Fabric Wiki
+name: Super Linter
 
 on: [push, pull_request]
 jobs:
@@ -6,11 +6,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Check for errors
-        uses: github/super-linter@v3
+      - name: Lint
+        uses: github/super-linter@v4
         env:
           # Only check updated code
           VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: 1.18.x
