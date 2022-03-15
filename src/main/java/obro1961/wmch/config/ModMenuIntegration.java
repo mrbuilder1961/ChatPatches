@@ -8,6 +8,11 @@ import obro1961.wmch.WMCH;
 public class ModMenuIntegration implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> { return ((ClothConfig)WMCH.config).getWMCHConfigScreen(parent); };
+        return parent -> {
+            return WMCH.config instanceof ClothConfig
+                ? ((ClothConfig)WMCH.config).getWMCHConfigScreen(parent)
+                : null
+            ;
+        };
     }
 }

@@ -38,7 +38,7 @@
     "java": ">=17"
   },
   "recommends": {
-    "modmenu": ">=3.0.0",
-    "cloth-config": ">=6.1.48"
+    "modmenu": ">=3.1.0",
+    "cloth-config": ">=6.2.57"
   }
 }

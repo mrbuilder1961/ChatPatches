@@ -45,9 +45,16 @@ public class ChatHudMixin {
     @Shadow @Final List<ChatHudLine<OrderedText>> visibleMessages;
     @Shadow @Final Deque<Text> messageQueue;
 
-    /** Prevents the game from clearing chat history;  */
-    @Inject(method = "clear(Z)V", at = @At("HEAD"), cancellable = true)
-    public void clear(boolean clearHistory, CallbackInfo ci) { ci.cancel(); }
+    /** Prevents the game from clearing chat history */
+    @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
+    public void clear(boolean delHist, CallbackInfo ci) {
+        if(!delHist) {
+            visibleMessages.clear();
+            messageQueue.clear();
+            messages.clear();
+        }
+        ci.cancel();
+    }
 
     /** Increases the amount of maximum chat messages, configurable */
     @ModifyConstant(method = "addMessage(Lnet/minecraft/text/Text;IIZ)V", constant = @Constant(intValue = 100))

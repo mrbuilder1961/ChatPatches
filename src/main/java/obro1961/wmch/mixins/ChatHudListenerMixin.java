@@ -26,7 +26,6 @@ public class ChatHudListenerMixin {
 
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     public void saveName(MessageType t, Text m, UUID from, CallbackInfo ci) {
-        //WMCH.log.info("{}|{} ({})",t.name(),from.toString(),m.getString());
         WMCH.lastMsgData[1] = t;
 
         if(t == MessageType.CHAT)

@@ -37,7 +37,7 @@ public class Config {
     public static final boolean TIME = true;
     public static final String TIMESTR = "[HH:mm:ss]";
     public static final int TIMECOLOR = Formatting.LIGHT_PURPLE.getColorValue();
-    public static final Formatting[] TIMEFORMATTING = {Formatting.LIGHT_PURPLE};
+    public static final Formatting[] TIMEFORMATTING = {};
     public static final boolean HOVER = true;
     public static final String HOVERSTR = "yyyy dd, MM, @ HH:mm:ss.SSSS";
     public static final boolean COUNTER = true;
@@ -47,7 +47,7 @@ public class Config {
     public static final boolean BOUNDARY = true;
     public static final String BOUNDARYSTR = "<]===---{ SESSION BOUNDARY LINE }---===[>";
     public static final int BOUNDARYCOLOR = Formatting.DARK_AQUA.getColorValue();
-    public static final Formatting[] BOUNDARYFORMATTING = {Formatting.DARK_AQUA, Formatting.BOLD};
+    public static final Formatting[] BOUNDARYFORMATTING = {Formatting.BOLD};
     public static final String NAMESTR = "<$>";
     public static final int MAXMSGS = 1024;
     public static final boolean RESET = false;

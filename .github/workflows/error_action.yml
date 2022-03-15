@@ -1,0 +1,16 @@
+name: Java Linter from Fabric Wiki
+
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check for errors
+        uses: github/super-linter@v3
+        env:
+          # Only check updated code
+          VALIDATE_ALL_CODEBASE: false

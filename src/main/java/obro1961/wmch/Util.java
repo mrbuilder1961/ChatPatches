@@ -86,9 +86,7 @@ public class Util {
 			}
 		};
 
-		Object tmp = ot.accept(getChars);
-
-		WMCH.log.info(tmp);
+		ot.accept(getChars);
 		return rebuilt;
 	} */
 }
