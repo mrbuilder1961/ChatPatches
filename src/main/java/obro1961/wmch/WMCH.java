@@ -48,7 +48,7 @@ public class WMCH implements ModInitializer {
 
 	public static boolean moddedConfig;
 	public static Config config;
-	public static Object[] lastMsgData = new Object[3]; // instances of String(playername), MessageType, and <ContentType>
+	public static Object[] lastMsgData = new Object[2]; // instances of UUID(playerID) and MessageType
 
 	@Override
 	public void onInitialize() {
@@ -59,7 +59,7 @@ public class WMCH implements ModInitializer {
 		}
 
 		try {
-			moddedConfig = fbl.getModContainer("cloth-config").get().getMetadata().getVersion().compareTo(Version.parse("6.1.48"))>=0 && fbl.getModContainer("modmenu").get().getMetadata().getVersion().compareTo(Version.parse("3.0.0"))>=0;
+			moddedConfig = fbl.getModContainer("cloth-config").get().getMetadata().getVersion().compareTo(Version.parse("6.2.57"))>=0 && fbl.getModContainer("modmenu").get().getMetadata().getVersion().compareTo(Version.parse("3.1.0"))>=0;
 		} catch (Exception e) { moddedConfig = false; }
 		if(moddedConfig) config = new ClothConfig(true); else config = new Config(true);
 		Config.validate();
@@ -67,15 +67,14 @@ public class WMCH implements ModInitializer {
 		ClientPlayConnectionEvents.JOIN.register((nh, ps, mc) -> {
 			try {
 				// adds the boundary line if there is more than one message and the last message isn't also a boundary line
-				//! need to fix boundary message duping
 				List<ChatHudLine<Text>> chatMsgs;
 				if( (chatMsgs=((IChatHudAccessorMixin)mc.inGameHud.getChatHud()).getMessages()).size()>0 && config.boundary ) {
-					if( !chatMsgs.isEmpty() && chatMsgs.get(0).getText().getString()!=config.boundaryStr )
+					if(!( chatMsgs.isEmpty() || chatMsgs.get(0).getText().getString().equals(config.boundaryStr) ))
 						mc.inGameHud.addChatMessage(MessageType.CHAT, new LiteralText(config.boundaryStr).setStyle(Style.EMPTY.withFormatting(config.boundaryFormatting).withColor(config.boundaryColor)), Util.NIL_UUID);
 				}
 			}
-			catch (IndexOutOfBoundsException e) {/* Thrown when there are no messages to check */}
-			catch (Exception e) {log.error("An error occurred while joining a new session; caused by {}:\n{}", e.getCause()!=null ? e.getCause() : "unknown", e.getLocalizedMessage());}
+			catch(IndexOutOfBoundsException e){/* Thrown when there are no messages to check */}
+			catch(Exception e){log.warn("An error occurred while joining a new session; caused by {}:\t{}",e.getCause()!=null ? e.getCause() : "unknown",e.getLocalizedMessage());}
 		});
 
 		log.info("Finished setting up client-side!");

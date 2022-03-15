@@ -2,8 +2,6 @@ package obro1961.wmch.mixins;
 
 import java.util.UUID;
 
-import com.mojang.authlib.GameProfile;
-
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,14 +24,7 @@ public class ChatHudListenerMixin {
 
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     public void saveName(MessageType t, Text m, UUID from, CallbackInfo ci) {
-        WMCH.lastMsgData[1] = t;
-
-        if(t == MessageType.CHAT)
-            // only modify player messages
-            WMCH.lastMsgData[0] =
-                new GameProfile(from, (String)WMCH.lastMsgData[0]).getName()!=null ? new GameProfile(from, (String)WMCH.lastMsgData[0]).getName()
-                : WMCH.lastMsgData[0]!=null && WMCH.lastMsgData[0]!="" ? WMCH.lastMsgData[0]
-                : client.getSession().getUsername()
-            ;
+        // only modify non-system/actionbar messages
+        if((WMCH.lastMsgData[1]=t) == MessageType.CHAT) WMCH.lastMsgData[0] = from;
     }
 }

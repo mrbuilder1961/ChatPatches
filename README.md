@@ -22,11 +22,12 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 
 ## Possible features
 
-- Chat search feature, with regex search capabilities
+- Make certain messages automatically copiable, such as the Open-To-LAN port
 - Message counter (x2 or x3 appearing after multiple messages)
+- Make Fabric API optional, but disables boundary messages
+- Chat search feature, with regex search capabilities
 - Modrinth page
 - Smooth message receive
-- Make Fabric API optional, but disables boundary messages
 
 ## Changelog
 

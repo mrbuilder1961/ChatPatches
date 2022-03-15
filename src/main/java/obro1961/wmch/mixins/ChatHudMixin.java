@@ -69,21 +69,22 @@ public class ChatHudMixin {
         Date now = new Date(); Config c = WMCH.config;
         boolean isBoundary = m.asString()==c.boundaryStr && c.boundary;
 
-        // looks through accessible players to get sufficient player data, if needed
-        PlayerEntity[] lastPlayer = {client.player};
-        Consumer<? super PlayerEntity> find = player -> {
-            if(!client.options.advancedItemTooltips) return;
-            lastPlayer[0] = player.getEntityName()==WMCH.lastMsgData[0] ? player : lastPlayer[0];
-        };
-        try { client.world.getPlayers().forEach(find); } catch(Exception e) {} // searches in the client
-        try { client.world.getServer().getPlayerManager().getPlayerList().forEach(find); } catch(Exception e) {} // then in the server
+        // gets message sender
+        UUID uuid = (UUID) WMCH.lastMsgData[0];
+        Text name = (Text) new LiteralText("SYSTEM").formatted(Formatting.GRAY);
+        for(AbstractClientPlayerEntity player : client.world.getPlayers()) {
+            GameProfile prof = player.getGameProfile();
+            if( prof.getId().equals(WMCH.lastMsgData[0]) ) {
+                uuid = prof.getId();
+                name = player.getDisplayName();
+            }
+        }
 
         Text formatted = new LiteralText("")
         .append(!isBoundary && c.time // only adds the timestamp if it's enabled and if it isn't a boundary line
             ? (Text)new LiteralText( c.getTimeF(now)+" " )
                 .setStyle(Style.EMPTY
                     .withFormatting(c.timeFormatting)
-                    //* adds the hover and click events if enabled; however they don't show up if re-enabled later. might want to fix that
                     .withHoverEvent( !c.hover ? null : new HoverEvent(SHOW_TEXT, Text.of(c.getHoverF(now))) )
                     .withClickEvent( new ClickEvent(SUGGEST_COMMAND, c.getHoverF(now) ) )
                     .withColor(c.timeColor)
@@ -93,11 +94,10 @@ public class ChatHudMixin {
         .append( c.nameStr!=Config.NAMESTR && !isBoundary && WMCH.lastMsgData[1]==MessageType.CHAT && !m.getString().startsWith("[Debug]")
             // reconstructs the message, with proper styling
             ? (LiteralText)(new LiteralText("").setStyle(m.getStyle())
-                // recreating this player hover event was annoying af
-                .append(new LiteralText( c.getNameF() ).setStyle( m.getStyle()
-                    .withHoverEvent( new HoverEvent(SHOW_ENTITY, new HoverEvent.EntityContent(EntityType.PLAYER, lastPlayer[0].getUuid(), lastPlayer[0].getDisplayName())) )
-                    .withClickEvent( new ClickEvent(SUGGEST_COMMAND, "/tell "+WMCH.lastMsgData[0]) )
-            )).append( (Text)new LiteralText(m.getString().replace( (String)WMCH.lastMsgData[0], "")).setStyle(m.getStyle()) ))
+                .append(new LiteralText( c.getNameF(name.getString())+" " ).setStyle( m.getStyle()
+                    .withHoverEvent( new HoverEvent(SHOW_ENTITY, new HoverEvent.EntityContent(EntityType.PLAYER, uuid, name)) )
+                    .withClickEvent( new ClickEvent(SUGGEST_COMMAND, "/tell "+name.getString()) )
+            )).append( (Text)new LiteralText(m.getString().replace( name.getString()+" ", "")).setStyle(m.getStyle()) ))
             : m
         );
 

@@ -146,7 +146,7 @@ public class Config {
     // these methods return a "formatted" version of their input, (ex. getHoverF(Date) returns the formatted hover string)
     public String getTimeF(Date when) { return new SimpleDateFormat(cfg.timeStr).format(when); }
     public String getHoverF(Date when) { return new SimpleDateFormat(cfg.hoverStr).format(when); }
-    public String getNameF() { return cfg.nameStr.replace("$", (String)WMCH.lastMsgData[0]); }
+    public String getNameF() { return cfg.nameStr.replaceAll("\\$", (String)WMCH.lastMsgData[0]); }
 
     /** Prints any changes between 2 Configs, or nothing if they're (objectically) identical */
     protected static void logDiffs(Config neww, Config old) {

@@ -110,11 +110,10 @@ public class ClothConfig extends Config {
                 .setSaveConsumer(current ->  cfg.maxMsgs = current>100 && current<16835 ? current : cfg.maxMsgs>100 && cfg.maxMsgs<16835 ? cfg.maxMsgs : MAXMSGS )
             .build()
         );
-        quick("nameStr", cfg.nameStr, eBldr, other, current -> {
-            cfg.nameStr = current!=null && current.contains("$") ? current : cfg.nameStr!=null && cfg.nameStr.contains("$") ? cfg.nameStr : NAMESTR;
+        eBldr = quick("nameStr", cfg.nameStr, eBldr, other, current -> {
+            cfg.nameStr = current!=null && current.contains("$") ? current : cfg.nameStr;
         }, null, null);
-        quick("reset", cfg.reset, eBldr, other, null, current -> { if(current) reset(); cfg.reset = false; }, null);
-
+        eBldr = quick("reset", cfg.reset, eBldr, other, null, current -> { if(current) reset(); cfg.reset = false; }, null);
         bldr.setSavingRunnable(() -> {
             write(cfg);
             logDiffs(cfg, WMCH.config);
