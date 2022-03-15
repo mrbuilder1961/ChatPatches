@@ -7,7 +7,9 @@ import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
 import java.util.Date;
 import java.util.Deque;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.UUID;
+
+import com.mojang.authlib.GameProfile;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,8 +26,8 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.MessageType;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
@@ -33,6 +35,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import obro1961.wmch.WMCH;
 import obro1961.wmch.config.Config;
 
