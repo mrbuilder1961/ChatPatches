@@ -22,14 +22,15 @@ If that doesn't work, then I don't know, just trial-and-error things? Do whateve
 
 ## Possible features
 
-- Chat search box, with regex search capabilities
+- Chat search feature, with regex search capabilities
 - Message counter (x2 or x3 appearing after multiple messages)
-- Smooth message receive
 - Modrinth page
+- Smooth message receive
+- Make Fabric API optional, but disables boundary messages
 
 ## Changelog
 
-See individual releases for specific changelogs, a full one will be made at some point.
+See individual releases for specific changelogs, a full one may be made at some point.
 
 ## Wont fix/add
 
