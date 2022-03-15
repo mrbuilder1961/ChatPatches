@@ -14,5 +14,9 @@ jobs:
         uses: github/super-linter@v4
         env:
           # Only check updated code
-          VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: 1.18.x
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_YAML: false
+          
+          LINTER_RULES_PATH: .github/workflows/
+          JAVA_FILE_NAME: sun_checks.xml
