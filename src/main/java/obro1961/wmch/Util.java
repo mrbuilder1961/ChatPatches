@@ -1,7 +1,16 @@
 package obro1961.wmch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import net.minecraft.text.CharacterVisitor;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 /**
@@ -10,9 +19,9 @@ import net.minecraft.util.Formatting;
 public class Util {
 	/**
 	 * Functions similarly to the JavaScript OR ({@code ||}) operator, which
-	 * is a boolean operator but also returns the left side Object if truthy.
-	 * If falsy, it returns the right side Object. This functions equivalently
-	 * except it has a fallback to avoid {@code NullPointerExceptions}.
+	 * is a boolean operator but can also return the left side Object if true.
+	 * If false, it returns the right side Object. This functions equivalently
+	 * except it has a fallback to avoid {@code NullPointerException}s.
 	 * <p>
 	 * Recommended to cast to the output type if you know it, to avoid errors
 	 *
@@ -23,7 +32,7 @@ public class Util {
 	 * @return {@code o1}, {@code o2}, or {@code fallback}.
 	 * @see Util#or(Object, Object)
 	 */
-	public static Object or(Object o1, Object o2, Object fallback) {
+	public static <T> T or(T o1, T o2, T fallback) {
 		return o1 != null ? o1 : o2 != null ? o2 : fallback;
 	}
 
@@ -31,33 +40,21 @@ public class Util {
 	 * Same as {@link Util#or(Object, Object, Object)}, but passes o2 as itself and
 	 * the fallback.
 	 */
-	public static Object or(Object o1, Object o2) {
+	public static <T> T or(T o1, T o2) {
 		return or(o1, o2, o2);
 	}
 
 	/**
-	 * A returns true if {@code num} is in between {@code min} and {@code max}.
-	 * Inclusive.
-	 *
-	 * @param min Minimum integer in range
-	 * @param max Minimum integer in range
-	 * @param num Integer to test
-	 * @return If {@code num} is in the range
-	 */
-	public static boolean inRange(int min, int max, int num) {
-		return num >= min && num <= max;
-	}
-
-	/**
-	 * Returns a stringified array of {@code Formatting.getName()} for each {@code Formatting} instance
+	 * Returns a stringified array of {@code Formatting.getName()} for each
+	 * {@code Formatting} instance
 	 */
 	public static String formattingArrToStr(Formatting[] array) {
 		if (array.length > 0) {
 			ArrayList<String> arr = new ArrayList<>(0);
-			for (int i = 0; i < array.length; i++)
+			for (int i = 0; i < array.length; ++i)
 				arr.add("");
 
-			for (int i = 0; i < arr.size(); i++)
+			for (int i = 0; i < arr.size(); ++i)
 				arr.set(i, array[i].getName());
 
 			return arr.toString();
@@ -65,28 +62,59 @@ public class Util {
 			return "[]";
 	}
 
-	// this is all going to be worked on and finished in the next update
-	/* public static Text fromOrderedText(OrderedText ot) {
-		ArrayList<BiConsumer<Integer, Style>> chars = new ArrayList<>();
+	public static String delAll(String dirty, String toDel) { return dirty.replaceAll(toDel, ""); }
+	public static String delOne(String dirty, String toDel) { return dirty.replaceFirst(toDel, ""); }
+
+	// currently unused
+	/* public static Text reorder(OrderedText old) {
 		LiteralText rebuilt = new LiteralText("");
-		CharacterVisitor getChars = new CharacterVisitor() {
-			@Override
-			public boolean accept(int unknown, Style style, int codepoint) {
-				for (int i = 0; i < Character.toChars(codepoint).length; i++) {
-					chars.add(
-						new BiConsumer<Integer, Style>() {
-							@Override
-							public void accept(Integer cp, Style s) {
-								rebuilt.append(new LiteralText(Character.toString(cp)).setStyle(s));
-							}
-						});
-					chars.get(chars.size() - 1).accept(codepoint, style);
-				}
+		old.accept(new CharacterVisitor() {
+			@Override public boolean accept(int ix, Style s, int cp) {
+				rebuilt.append(new LiteralText(Character.toString(cp)).setStyle(s));
 				return true;
 			}
-		};
-
-		ot.accept(getChars);
+		});
 		return rebuilt;
 	} */
+
+	public static String asString(OrderedText old) {
+		StringBuilder str = new StringBuilder();
+		old.accept(new CharacterVisitor() {
+			@Override public boolean accept(int ix, Style s, int cp) {
+				str.append(Character.toString(cp));
+				return true;
+			}
+		});
+		return str.toString();
+	}
+
+	/**
+	 * Turns a String formatted like {@code "&4Dark RED &l&33AAffCUSTOM BOLD BLUE"}
+	 * to
+	 * a text with all {@code &<?>} replaced with styled colors.
+	 * If there are no formatting characters, returns the unstyled string.
+	 * Doesn't support hex colors.
+	 */
+	public static Text getStrTextF(String dirty) {
+		LiteralText out = new LiteralText("");
+		Pattern finder = Pattern.compile("(?:&[0-9a-fA-Fk-orK-OR])+");
+		Matcher results = finder.matcher(dirty);
+
+		if (dirty.matches(".*"+finder.pattern()+".*")) {
+			List<String> texts = new ArrayList<>( Arrays.asList(dirty.split(finder.pattern())) ); texts.removeIf(s -> s.equals(""));
+			int i = 0;
+			// &8(&7x&r$&8) -> _&8(&7x&r#&8) -> [_,(,x,#,)] -> [r,8,7,r,8] -> Text
+			while(results.find()) {
+				Formatting[] style = new Formatting[results.group().length() / 2];
+				char[] codes = delAll(results.group(), "&").toCharArray();
+				for (int j = 0; j < codes.length; ++j) style[j] = Formatting.byCode(codes[j]);
+
+				out.append( new LiteralText(texts.get(i)).formatted(style) );
+				++i;
+			}
+			System.out.println(results.results());
+			return out;
+		} else
+			return Text.of(dirty);
+	}
 }

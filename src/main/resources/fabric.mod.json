@@ -1,15 +1,12 @@
 {
   "schemaVersion": 1,
   "id": "wmch",
-  "version": "1.4.4",
+  "version": "1.4.5",
 
   "name": "Where's My Chat History",
-  "description": "Currently:\n- Keeps chat history when you leave a server\n- increases the amount of maximum chat messages depending on allocated RAM\n- adds a timestamp before each message.\nTo access the config, either modify wmch.json in the config folder or install Mod Menu(v3.0.0+) and Cloth Config(6.1.48+) to edit the options in-game\nSee the GitHub release page for the current version to learn more about what was changed in this update!\nHeavily inspired by ryanbester and JackFred2's original mods.\n\nFor any technical users, this mod's only mixins are in the ChatHud.class and Keyboard.class; all problems most likely stemmed from conflict there.",
-  "authors": ["OBro1961"],
-  "contributors": [
-    "ryanbester",
-    "JackFred2"
-  ],
+  "description": "A versatile client-side chat mod that can do many things, just check out the config and the GitHub page for more info!",
+  "authors": ["See the GitHub page for a full list!"],
+  "contributors": [],
   "contact": {
     "homepage": "https://curseforge.com/minecraft/mc-mods/wmch",
     "issues": "https://github.com/mrbuilder1961/WheresMyChatHistory/issues",
@@ -34,7 +31,7 @@
   "depends": {
     "fabricloader": ">=0.13.0",
     "fabric": "*",
-    "minecraft": "1.18.2",
+    "minecraft": "1.18.x",
     "java": ">=17"
   },
   "recommends": {
