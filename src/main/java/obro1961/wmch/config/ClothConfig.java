@@ -1,21 +1,5 @@
 package obro1961.wmch.config;
 
-import static obro1961.wmch.config.Option.BOUNDARY;
-import static obro1961.wmch.config.Option.BOUNDARYCOLOR;
-import static obro1961.wmch.config.Option.BOUNDARYSTR;
-import static obro1961.wmch.config.Option.COUNTER;
-import static obro1961.wmch.config.Option.COUNTERCOLOR;
-import static obro1961.wmch.config.Option.COUNTERSTR;
-import static obro1961.wmch.config.Option.HOVER;
-import static obro1961.wmch.config.Option.HOVERSTR;
-import static obro1961.wmch.config.Option.LENIANTEQUALS;
-import static obro1961.wmch.config.Option.MAXMSGS;
-import static obro1961.wmch.config.Option.NAMESTR;
-import static obro1961.wmch.config.Option.TIME;
-import static obro1961.wmch.config.Option.TIMECOLOR;
-import static obro1961.wmch.config.Option.TIMEFORMAT;
-import static obro1961.wmch.config.Option.TIMESTR;
-
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
@@ -43,29 +27,30 @@ public class ClothConfig extends Config {
 
         ConfigCategory time = bldr.getOrCreateCategory(new TranslatableText("text.wmch.time_category"));
         ConfigCategory hover = bldr.getOrCreateCategory(new TranslatableText("text.wmch.hover_category"));
-        //ConfigCategory counter = bldr.getOrCreateCategory(new TranslatableText("text.wmch.counter_category"));
+        ConfigCategory counter = bldr.getOrCreateCategory(new TranslatableText("text.wmch.counter_category"));
         ConfigCategory boundary = bldr.getOrCreateCategory(new TranslatableText("text.wmch.boundary_category"));
         ConfigCategory other = bldr.getOrCreateCategory(new TranslatableText("text.wmch.other_category"));
 
-        eBldr = TIME.updateEntryBuilder(eBldr, time, TIME);
-        eBldr = TIMESTR.updateEntryBuilder(eBldr, time, TIMESTR);
-        eBldr = TIMEFORMAT.updateEntryBuilder(eBldr, time, TIMEFORMAT);
-        eBldr = TIMECOLOR.updateEntryBuilder(eBldr, time, TIMECOLOR);
+        eBldr = Option.TIME.updateEntryBuilder(eBldr, time, Option.TIME);
+        eBldr = Option.TIMESTR.updateEntryBuilder(eBldr, time, Option.TIMESTR);
+        eBldr = Option.TIMEFORMAT.updateEntryBuilder(eBldr, time, Option.TIMEFORMAT);
+        eBldr = Option.TIMECOLOR.updateEntryBuilder(eBldr, time, Option.TIMECOLOR);
 
-        eBldr = HOVER.updateEntryBuilder(eBldr, hover, HOVER);
-        eBldr = HOVERSTR.updateEntryBuilder(eBldr, hover, HOVERSTR);
+        eBldr = Option.HOVER.updateEntryBuilder(eBldr, hover, Option.HOVER);
+        eBldr = Option.HOVERSTR.updateEntryBuilder(eBldr, hover, Option.HOVERSTR);
 
-        /* eBldr = COUNTER.updateEntryBuilder(eBldr, counter, COUNTER);
-        eBldr = COUNTERSTR.updateEntryBuilder(eBldr, counter, COUNTERSTR);
-        eBldr = COUNTERCOLOR.updateEntryBuilder(eBldr, counter, COUNTERCOLOR);
-        eBldr = LENIANTEQUALS.updateEntryBuilder(eBldr, counter, LENIANTEQUALS); */
+        eBldr = Option.COUNTER.updateEntryBuilder(eBldr, counter, Option.COUNTER);
+        eBldr = Option.COUNTERSTR.updateEntryBuilder(eBldr, counter, Option.COUNTERSTR);
+        eBldr = Option.COUNTERCOLOR.updateEntryBuilder(eBldr, counter, Option.COUNTERCOLOR);
+        //eBldr = Option.DUPETHRESHOLD.updateEntryBuilder(eBldr, counter, Option.DUPETHRESHOLD);
+        eBldr = Option.LENIANTEQUALS.updateEntryBuilder(eBldr, counter, Option.LENIANTEQUALS);
 
-        eBldr = BOUNDARY.updateEntryBuilder(eBldr, boundary, BOUNDARY);
-        eBldr = BOUNDARYSTR.updateEntryBuilder(eBldr, boundary, BOUNDARYSTR);
-        eBldr = BOUNDARYCOLOR.updateEntryBuilder(eBldr, boundary, BOUNDARYCOLOR);
+        eBldr = Option.BOUNDARY.updateEntryBuilder(eBldr, boundary, Option.BOUNDARY);
+        eBldr = Option.BOUNDARYSTR.updateEntryBuilder(eBldr, boundary, Option.BOUNDARYSTR);
+        eBldr = Option.BOUNDARYCOLOR.updateEntryBuilder(eBldr, boundary, Option.BOUNDARYCOLOR);
 
-        eBldr = NAMESTR.updateEntryBuilder(eBldr, other, NAMESTR);
-        eBldr = MAXMSGS.updateEntryBuilder(eBldr, other, MAXMSGS);
+        eBldr = Option.NAMESTR.updateEntryBuilder(eBldr, other, Option.NAMESTR);
+        eBldr = Option.MAXMSGS.updateEntryBuilder(eBldr, other, Option.MAXMSGS);
 
 
         bldr.setSavingRunnable(() -> {

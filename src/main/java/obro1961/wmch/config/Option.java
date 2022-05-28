@@ -98,7 +98,7 @@ public class Option<T> {
                 break;
             }
             case "java.lang.Integer": {
-                category.addEntry( me.getKey() == "maxMsgs"
+                category.addEntry( me.getKey() == "maxMsgs" || me.getKey() == "dupeThreshold"
                     ? builder.startIntField(getName(), (int)value)
                         .setDefaultValue((int)def)
                         .setTooltip(getTooltip())
@@ -169,18 +169,21 @@ public class Option<T> {
     public static final Option<Boolean> COUNTER = new Option<>(true, "counter", TIME.getSaveConsumer());
     public static final Option<String> COUNTERSTR = new Option<>("&8(&7x&e$&8)", "counterStr", (inc, me) -> {
         if(inc.contains("$")) {
-            String out = Util.delAll(inc, "\s{3,}");
+            String out = Util.delAll(inc, "\s{2,}");
             Util.getStrTextF(out);
             me.setInDefConfig(out);
         }
     });
     public static final Option<Integer> COUNTERCOLOR = new Option<>(Formatting.YELLOW.getColorValue(), "counterColor", TIMECOLOR.getSaveConsumer());
+    public static final Option<Integer> DUPETHRESHOLD = new Option<>(3, "dupeThreshold", (inc, me) -> {
+        if(inc > 1 && inc < Option.MAXMSGS.get()) me.setInDefConfig(inc);
+    });
+    public static final Option<Boolean> LENIANTEQUALS = new Option<>(false, "leniantEquals", TIME.getSaveConsumer());
     public static final Option<Boolean> BOUNDARY = new Option<>(true, "boundary", TIME.getSaveConsumer());
     public static final Option<String> BOUNDARYSTR = new Option<>("&b[==============]", "boundaryStr", (inc, me) -> {
         if(inc.length() > 0) {
-            String out = Util.delAll(inc, "\s{2,}").trim();
-            Util.getStrTextF(out);
-            me.setInDefConfig(inc);
+            Util.getStrTextF(inc.strip());
+            me.setInDefConfig(inc.strip());
         }
     });
     public static final Option<Integer> BOUNDARYCOLOR = new Option<>(Formatting.DARK_AQUA.getColorValue(), "boundaryColor", TIMECOLOR.getSaveConsumer());
@@ -188,12 +191,11 @@ public class Option<T> {
     public static final Option<Integer> MAXMSGS = new Option<>(1024, "maxMsgs", (inc, me) -> {
         if(4097 > inc && inc > 99) me.setInDefConfig(inc);
     });
-    public static final Option<Boolean> LENIANTEQUALS = new Option<>(false, "leniantEquals", TIME.getSaveConsumer());
 
     public static final List<Option<?>> OPTIONS = new ArrayList<>(Arrays.asList(
         TIME, TIMESTR, TIMECOLOR, TIMEFORMAT,
         HOVER, HOVERSTR,
-        COUNTER, COUNTERSTR, COUNTERCOLOR, LENIANTEQUALS,
+        COUNTER, COUNTERSTR, COUNTERCOLOR, DUPETHRESHOLD, LENIANTEQUALS,
         BOUNDARY, BOUNDARYSTR, BOUNDARYCOLOR,
         NAMESTR, MAXMSGS
     ));

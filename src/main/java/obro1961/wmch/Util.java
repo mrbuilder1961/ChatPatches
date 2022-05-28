@@ -101,18 +101,24 @@ public class Util {
 		Matcher results = finder.matcher(dirty);
 
 		if (dirty.matches(".*"+finder.pattern()+".*")) {
+			// if there is text before a formatter then add it alone
+			if( dirty.split(finder.pattern())[0].length() > 0 ) {
+				String prfx = dirty.split(finder.pattern())[0];
+				out.append(prfx);
+				dirty = dirty.replace(prfx, "");
+			};
+
 			List<String> texts = new ArrayList<>( Arrays.asList(dirty.split(finder.pattern())) ); texts.removeIf(s -> s.equals(""));
 			int i = 0;
-			// &8(&7x&r$&8) -> _&8(&7x&r#&8) -> [_,(,x,#,)] -> [r,8,7,r,8] -> Text
+
 			while(results.find()) {
 				Formatting[] style = new Formatting[results.group().length() / 2];
 				char[] codes = delAll(results.group(), "&").toCharArray();
 				for (int j = 0; j < codes.length; ++j) style[j] = Formatting.byCode(codes[j]);
 
-				out.append( new LiteralText(texts.get(i)).formatted(style) );
-				++i;
+				out.append( new LiteralText(texts.get(i++)).formatted(style) );
 			}
-			System.out.println(results.results());
+
 			return out;
 		} else
 			return Text.of(dirty);

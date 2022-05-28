@@ -128,23 +128,59 @@ public class ChatHudMixin  {
             client.keyboard.setClipboard(raw);
             client.inGameHud.addChatMessage(
                 MessageType.GAME_INFO,
-                new LiteralText( "'%s' copied!".formatted(raw.trim()) ).formatted(Formatting.GREEN),
+                new LiteralText( "'%s' copied!".formatted(raw.strip()) ).formatted(Formatting.GREEN),
                 net.minecraft.util.Util.NIL_UUID
             );
         }
 
         return old;
     }
-
     @Inject(
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/font/TextHandler;getStyleAt(Lnet/minecraft/text/OrderedText;I)Lnet/minecraft/text/Style;"
-        ),
+        at = @At(value="INVOKE", target="Lnet/minecraft/client/font/TextHandler;getStyleAt(Lnet/minecraft/text/OrderedText;I)Lnet/minecraft/text/Style;"),
         method = "getText",
-        locals = LocalCapture.CAPTURE_FAILEXCEPTION
+        locals = LocalCapture.CAPTURE_FAILSOFT
     )
     private void grabText(double x,double y,CallbackInfoReturnable<Style> ci,double d,double e,int i,int j,ChatHudLine<OrderedText> chatHudLine) {
         hovered = chatHudLine.getText();
+    }
+
+    /** Decides which messages need dupe counters and which don't */
+    @Inject(method = "addMessage(Lnet/minecraft/text/Text;IIZ)V", at = @At("HEAD"), cancellable = true)
+    public void injectCounter(Text m, int time, int id, boolean rfrs, CallbackInfo ci) {
+        //* index 0 is the message before this one (current message hasnt been added yet)
+        if( Option.COUNTER.get() && !m.getString().equals( Util.delAll(Option.BOUNDARYSTR.get(), "(?:&[0-9a-fA-Fk-orK-OR])+") ) && messages.size() > 0 ) {
+            ChatHudLine<Text> last = messages.get(0);
+            final List<Text> sibs = m.getSiblings(); final List<Text> lSibs = last.getText().getSiblings();
+
+            Short dupes = sibs.size() > 2
+                ? Short.valueOf( Util.delAll(sibs.get(2).getString(), "\\D") )
+                : lSibs.size() > 2
+                    ? Short.valueOf( Util.delAll(lSibs.get(2).getString(), "\\D") )
+                    : 1
+            ;
+
+            // if the current or last message have a counter or the messages are equal, continue
+            if( dupes > 1 || Option.LENIANTEQUALS.get()
+                ? sibs.get(1).getString().equalsIgnoreCase(lSibs.get(1).getString())
+                : sibs.get(1).getString().equals(lSibs.get(1).getString())
+            ) {
+                ++dupes;
+                // adds the updated counter and timestamp
+                if(lSibs.size() > 2) last.getText().getSiblings().set(2, WMCH.config.getDupeF(dupes));
+                else last.getText().getSiblings().add(2, WMCH.config.getDupeF(dupes));
+                if(lSibs.get(0).getString().length() > 0) last.getText().getSiblings().set(0, sibs.get(0));
+                // modifies the message to have a counter
+                messages.set(0, new ChatHudLine<Text>(last.getCreationTick(), last.getText(), last.getId()));
+
+                if(messages.size() > 0) visibleMessages.remove(0);
+                net.minecraft.client.util.ChatMessages.breakRenderedChatMessageLines(
+                    last.getText(),
+                    net.minecraft.util.math.MathHelper.floor((double)ChatHud.getWidth(client.options.chatWidth) / client.options.chatScale),
+                    client.textRenderer
+                ).forEach(vt -> visibleMessages.add(0, new ChatHudLine<>(last.getCreationTick(), vt, last.getId())));
+
+                ci.cancel(); //? might screw up logs or something, maybe add a warning that says a message was removed for duping
+            }
+        }
     }
 }

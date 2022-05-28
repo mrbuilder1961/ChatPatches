@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import obro1961.wmch.Util;
 import obro1961.wmch.WMCH;
@@ -37,6 +38,7 @@ public class Config {
     public boolean counter;
     public String counterStr;
     public int counterColor;
+    public int dupeThreshold;
     public boolean leniantEquals;
     public boolean boundary;
     public String boundaryStr;
@@ -55,12 +57,13 @@ public class Config {
         this.counter = Option.COUNTER.getDefault();
         this.counterStr = Option.COUNTERSTR.getDefault();
         this.counterColor = Option.COUNTERCOLOR.getDefault();
+        this.dupeThreshold = Option.DUPETHRESHOLD.getDefault();
+        this.leniantEquals = Option.LENIANTEQUALS.getDefault();
         this.boundary = Option.BOUNDARY.getDefault();
         this.boundaryStr = Option.BOUNDARYSTR.getDefault();
         this.boundaryColor = Option.BOUNDARYCOLOR.getDefault();
         this.nameStr = Option.NAMESTR.getDefault();
         this.maxMsgs = Option.MAXMSGS.getDefault();
-        this.leniantEquals = Option.LENIANTEQUALS.getDefault();
     }
 
     /**
@@ -82,10 +85,11 @@ public class Config {
         Option.BOUNDARYSTR.onSave(cfg.boundaryStr, Option.BOUNDARYSTR);
         Option.BOUNDARYCOLOR.onSave(cfg.boundaryColor, Option.BOUNDARYCOLOR);
 
-        /* Option.COUNTER.onSave(cfg.counter, Option.COUNTER);
+        Option.COUNTER.onSave(cfg.counter, Option.COUNTER);
         Option.COUNTERSTR.onSave(cfg.counterStr, Option.COUNTERSTR);
         Option.COUNTERCOLOR.onSave(cfg.counterColor, Option.COUNTERCOLOR);
-        Option.LENIANTEQUALS.onSave(cfg.leniantEquals, Option.LENIANTEQUALS); */
+        //Option.DUPETHRESHOLD.onSave(cfg.dupeThreshold, Option.DUPETHRESHOLD);
+        Option.LENIANTEQUALS.onSave(cfg.leniantEquals, Option.LENIANTEQUALS);
 
         Option.NAMESTR.onSave(cfg.nameStr, Option.NAMESTR);
         Option.MAXMSGS.onSave(cfg.maxMsgs, Option.MAXMSGS);
@@ -98,7 +102,7 @@ public class Config {
     /** Formats timeStr, then uses that to format timeFormat, adds a space, then finally colors it */
     public Text getTimeF(Date when) {
         return ((LiteralText)Util.getStrTextF(Option.TIMEFORMAT.get() + (new SimpleDateFormat(cfg.timeStr).format(when)) + " "))
-            .fillStyle(net.minecraft.text.Style.EMPTY.withColor(Option.TIMECOLOR.get()));
+            .fillStyle(Style.EMPTY.withColor(Option.TIMECOLOR.get()));
     }
     public String getHoverF(Date when) {
         return new SimpleDateFormat(Option.HOVERSTR.get()).format(when);
@@ -107,23 +111,19 @@ public class Config {
         return Option.NAMESTR.get().replaceAll("\\$", name);
     }
     public Text getDupeF(int dupes) {
-        return Util.getStrTextF(" " + Option.COUNTERSTR.get().replaceAll("\\$", Integer.toString(dupes)));
+        return ((LiteralText)Util.getStrTextF(" " + Option.COUNTERSTR.get().replaceAll("\\$", Integer.toString(dupes))))
+            .fillStyle(Style.EMPTY.withColor(Option.COUNTERCOLOR.get()));
     }
 
-    /** Prints any changes between altering Options. */
+    /** Prints any changes between altering of Options */
     protected static void logDiffs() {
         // only log if changes were made
-        if (Option.diff == "Changes made:") {
-            Option.diff = "No changes made!";
-        } else {
-            Option.diff.lines().forEach(ln -> {});
-        }
-
-        lg.info(Option.diff);
+        if (Option.diff == "Changes made:") lg.info("No changes made!");
+        else lg.info(Option.diff);
         Option.diff = "Changes made:";
     }
 
-    /** Sets the {@code cfg} field in {@link Config} to the file at {@code ./config/wmch.json}. */
+    /** Sets the {@code cfg} field in {@link Config} to the file at {@code ./config/wmch.json} */
     public static void read() {
         File cfgFile = new File( FabricLoader.getInstance().getConfigDir().toFile().getAbsolutePath() + File.separator + "wmch.json" );
         Gson gson = new Gson();
@@ -150,7 +150,7 @@ public class Config {
     }
 
     /**
-     * Saves a Config to {@code ./config/wmch.json}.
+     * Saves a Config to {@code ./config/wmch.json}
      * @param c The Config to save
      */
     public static void write(Config c) {
