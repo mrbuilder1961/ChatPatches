@@ -64,19 +64,5 @@ This also applies for all other options: if you toggle it off, it will probably 
 re-adds every chat message, which then triggers the method that initially adds these modifications. That ends up re-adding them. This is fixable,
 but ends up being very tedious and it breaks on most servers. The best solution is to just clear the chat manually with F3+D or ignore it.
 
-## Contributors to the latest version
-### Developers
-- MechanicalArcane (me): Made this amalgamation monstrosity of a mod
-- ryanbester: Created some code for older versions of WMCH from their mod [keepcommandhistory](https://github.com/ryanbester/keepcommandhistory/blob/master/src/main/java/com/ryanbester/keepcommandhistory/mixin/MixinNewChatGui.java), for making sure F3+D works
-- JackFred2: Created some code from their mod [MoreChatHistory](https://github.com/JackFred2/MoreChatHistory/blob/main/src/main/java/red/jackf/morechathistory/mixins/MixinChatHud.java), for increasing the max number of chat messages cached
-
-### Suggestors and Bug Reporters
-- KOMPuteRSH4IK: Suggested a config
-- LOLboy199: Reported a game-breaking bug
-- jpeterik12: Reported timestamps missing a text buffer
-- EGOIST1372: Suggested copying messages
-- PaladinFallen: Reported chat mixin error
-- Ovbi-UwU: Reported `[SYSTEM]` messages and incorrect name formatting
-
 ## License
 This mod is available under the GNU GPLv3 license. TL;DR: You can do whatever, as long as it's free, open-source, and credits me and the other authors.

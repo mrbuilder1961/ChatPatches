@@ -4,6 +4,7 @@ import static net.minecraft.text.ClickEvent.Action.SUGGEST_COMMAND;
 import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
 import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Deque;
 import java.util.List;
@@ -146,7 +147,7 @@ public class ChatHudMixin  {
 
     /** Decides which messages need dupe counters and which don't */
     @Inject(method = "addMessage(Lnet/minecraft/text/Text;IIZ)V", at = @At("HEAD"), cancellable = true)
-    public void injectCounter(Text m, int time, int id, boolean rfrs, CallbackInfo ci) {
+    public void injectCounter(Text m, int id, int tick, boolean rfrs, CallbackInfo ci) {
         //* index 0 is the message before this one (current message hasnt been added yet)
         if( Option.COUNTER.get() && !m.getString().equals( Util.delAll(Option.BOUNDARYSTR.get(), "(?:&[0-9a-fA-Fk-orK-OR])+") ) && messages.size() > 0 ) {
             ChatHudLine<Text> last = messages.get(0);
@@ -165,19 +166,25 @@ public class ChatHudMixin  {
                 : sibs.get(1).getString().equals(lSibs.get(1).getString())
             ) {
                 ++dupes;
-                // adds the updated counter and timestamp
+                // modifies the message to have a counter and timestamp
                 if(lSibs.size() > 2) last.getText().getSiblings().set(2, WMCH.config.getDupeF(dupes));
                 else last.getText().getSiblings().add(2, WMCH.config.getDupeF(dupes));
                 if(lSibs.get(0).getString().length() > 0) last.getText().getSiblings().set(0, sibs.get(0));
-                // modifies the message to have a counter
-                messages.set(0, new ChatHudLine<Text>(last.getCreationTick(), last.getText(), last.getId()));
 
-                if(messages.size() > 0) visibleMessages.remove(0);
-                net.minecraft.client.util.ChatMessages.breakRenderedChatMessageLines(
+                // modifies the actual message to have a counter
+                if(messages.size() > 0) messages.remove(0);
+                messages.add(0, new ChatHudLine<Text>(tick, last.getText(), id));
+
+                // modifies the rendered messages to have a counter
+                List<OrderedText> visibles = net.minecraft.client.util.ChatMessages.breakRenderedChatMessageLines(
                     last.getText(),
                     net.minecraft.util.math.MathHelper.floor((double)ChatHud.getWidth(client.options.chatWidth) / client.options.chatScale),
                     client.textRenderer
-                ).forEach(vt -> visibleMessages.add(0, new ChatHudLine<>(last.getCreationTick(), vt, last.getId())));
+                ); Collections.reverse(visibles);
+
+                for(OrderedText text : visibles)
+                    visibleMessages.set( visibles.indexOf(text), new ChatHudLine<>(tick, text, id) );
+
 
                 ci.cancel(); //? might screw up logs or something, maybe add a warning that says a message was removed for duping
             }

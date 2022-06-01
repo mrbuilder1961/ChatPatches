@@ -1,7 +1,6 @@
 /**
  * TODO List (highest priority is top):
  * - highlighted and copyable important messages or smart messages (not configurable, ex. port from LAN screen)
- *!- duplicate counter (xN, ex. x3) [NOT WORKING, BORROW FROM OTHER MOD]
  * - regex +normal search functionality (ChatHudMixin) (based on Vazkii's ChatFlow mod)
  *
  * Planning:
