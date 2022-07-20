@@ -25,12 +25,12 @@ public class ChatHudListenerMixin {
     @Shadow @Final private MinecraftClient client;
 
     @Inject(method = "onChatMessage", at = @At("HEAD"))
-    public void saveName(MessageType t, Text m, UUID from, CallbackInfo ci) {
+    public void saveName(MessageType type, Text msg, UUID sender, CallbackInfo ci) {
         boolean player = false; // throws a NPE if the UUID can't be resolved
-        try { player = client.getNetworkHandler().getPlayerListEntry(from).getProfile().isComplete(); }
+        try { player = client.getNetworkHandler().getPlayerListEntry(sender).getProfile().isComplete(); }
         catch(NullPointerException e) {}
 
-        // only modify non-system/actionbar messages
-        WMCH.msgSender = player ? client.getNetworkHandler().getPlayerListEntry(from).getProfile() : new GameProfile(from, "");
+        // IF sender is a player AND message type is chat THEN cache the data
+        WMCH.msgSender = (player && type == MessageType.CHAT) ? client.getNetworkHandler().getPlayerListEntry(sender).getProfile() : new GameProfile(sender, "");
     }
 }

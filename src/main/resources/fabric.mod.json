@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
   "id": "wmch",
-  "version": "1.4.6.1",
+  "version": "1.5.0",
 
   "name": "Where's My Chat History",
   "description": "A versatile client-side chat mod that can do many things, just check out the config and the GitHub page for more info!",
-  "authors": ["See the GitHub page for a full list!"],
+  "authors": ["MechanicalArcane (formerly OBro1961)"],
   "contributors": [],
   "contact": {
     "homepage": "https://curseforge.com/minecraft/mc-mods/wmch",
     "issues": "https://github.com/mrbuilder1961/WheresMyChatHistory/issues",
-    "sources": "https://github.com/mrbuilder1961/WheresMyChatHistory/tree/1.18.x/"
+    "sources": "https://github.com/mrbuilder1961/WheresMyChatHistory"
   },
 
   "license": "CC0-1.0",
@@ -29,13 +29,13 @@
   ],
 
   "depends": {
-    "fabricloader": ">=0.13.0",
+    "fabricloader": ">=0.14.0",
     "fabric": "*",
     "minecraft": "1.18.x",
     "java": ">=17"
   },
   "recommends": {
-    "modmenu": ">=3.1.0",
-    "cloth-config": ">=6.2.57"
+    "modmenu": ">=3.2.3",
+    "cloth-config": ">=6.2.62"
   }
 }

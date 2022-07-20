@@ -1,5 +1,8 @@
 package obro1961.wmch.config;
 
+import static obro1961.wmch.util.Util.delAll;
+import static obro1961.wmch.util.Util.getStrTextF;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,10 +17,8 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Language;
-import obro1961.wmch.Util;
 import obro1961.wmch.WMCH;
 
-//! instead of defaulting a value if it's invalid, don't do anything so it will use the old value instead
 /** A Config option class for creating, accessing, and modifying settings. */
 public class Option<T> {
     public static String diff = "Changes made:";
@@ -53,17 +54,19 @@ public class Option<T> {
     public T getDefault() {return def;}
     public String getKey() {return key;}
     public TranslatableText getName() {return new TranslatableText("text.wmch."+key);}
-    public TranslatableText getTooltip() {return new TranslatableText("text.wmch."+key+"_desc");}
+    public TranslatableText getTooltip() {return new TranslatableText("text.wmch.desc."+key);}
     public BiConsumer<T, Option<T>> getSaveConsumer() {return saveConsumer;}
     public Class<?> getType() {return value.getClass();}
+
     // setters
     public void set(T value) {
         if( Objects.nonNull(value) && !Objects.equals(this.value, value) ) diff += String.format("\n\t%s: '%s' => '%s'", key, this.value, value);
         this.value = Objects.requireNonNullElse(value, this.value);
-    } //! add diff here!!!
+    }
     public void setDefault(T def) {this.def = Objects.requireNonNullElse(def, this.def);}
     public void setKey(String key) {this.key = Objects.requireNonNullElse(key, this.key);}
     public void setSaveConsumer(BiConsumer<T, Option<T>> saver) {this.saveConsumer = Objects.requireNonNullElse(saver, this.saveConsumer);}
+
 
     public boolean changed() {
         return value != def || !value.equals(def);
@@ -71,14 +74,14 @@ public class Option<T> {
     public void onSave(T val, Option<T> me) {
         this.getSaveConsumer().accept(val, me);
     }
-    /** ONLY sets the value, does NOT validate it. */
+    /** Sets the value in the config provided for writing to disk, and this option */
     public void setInConfig(Config cfg, T inc) {
         this.set(inc);
 
         try {
             cfg.getClass().getField(key).set(cfg, inc);
         } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-            lg.fatal("you should not be seeing this unless I screwed something up");
+            lg.fatal("You should not be seeing this unless I screwed something up; in which case please open a bug report with this log attached (preferably debug if it exists).");
             e.printStackTrace();
         }
     }
@@ -128,36 +131,46 @@ public class Option<T> {
     }
 
     /** For updating the GitHub table */
-    public static void printTableEntries() {
-        Language l = Language.getInstance();
+    public static void printTableEntries(Language lang) {
+        StringBuilder bldr = new StringBuilder();
         OPTIONS.forEach(o -> {
-            lg.info("| %s | %s | %s | `` | text.wmch.%s |".formatted(
-                l.get("text.wmch."+o.key),
+            bldr.append("\n| %s | %s | %s | `` | text.wmch.%s |\n".formatted(
+                lang.get("text.wmch." + o.key),
                 o.def.getClass() == Integer.class && o.key != "maxMsgs"
-                    ? "`0x" + Integer.toHexString((int)o.def) + "` (`" + o.def + "`)"
+                    ? "`0x" + Integer.toHexString((int)o.def).toUpperCase() + "` (`" + o.def + "`)"
                     : "`" + o.def + "`",
-                l.get("text.wmch."+o.key+"_desc"),
+                lang.get("text.wmch.desc." + o.key),
                 o.key
             ));
         });
+
+        lg.warn(bldr.toString());
     }
 
 
-    //! most of these just take the first 4 and reuse them
     public static final Option<Boolean> TIME = new Option<>(true, "time", (inc, me) -> me.setInDefConfig(inc));
     public static final Option<String> TIMESTR = new Option<>("[HH:mm:ss]", "timeStr", (inc, me) -> {
+        boolean failed = false;
         try {
-            me.setInDefConfig(
-                new SimpleDateFormat( Util.delAll(Util.or(inc, me.get()), "'").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'") ).toPattern()
-            );
+            new SimpleDateFormat( inc.replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'").replaceAll("'{2,}", "'") ).toPattern();
+            // "MM/dd  'ms':SSS"
+            // inc.replaceAll(useless_chars, "'$1'").replaceAll("'{2,}", "'")
+            // delAll(inc, "'").replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'")
         } catch(IllegalArgumentException e) {
-            lg.warn("An IllegalArgumentException occurred while trying to make the timestamp (if you see this make a bug report!):"); e.printStackTrace();
+            failed = true;
+
+            lg.warn("An IllegalArgumentException occurred while trying to make the timestamp (if you see this make a bug report!):");
+            e.printStackTrace();
+        } finally {
+            me.setInDefConfig(
+                new SimpleDateFormat( (failed ? me.get() : inc).replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'").replaceAll("'{2,}", "'") ).toPattern()
+            );
         }
     });
     public static final Option<String> TIMEFORMAT = new Option<>("", "timeFormat", (inc, me) -> {
         try {
-            String out = Util.delAll(inc, "\s{3,}");
-            Util.getStrTextF(out);
+            String out = delAll(inc, "\s{3,}");
+            getStrTextF(out);
             me.setInDefConfig(out);
         } catch (Exception e) { lg.warn(e.getStackTrace()); }
     });
@@ -169,24 +182,24 @@ public class Option<T> {
     public static final Option<Boolean> COUNTER = new Option<>(true, "counter", TIME.getSaveConsumer());
     public static final Option<String> COUNTERSTR = new Option<>("&8(&7x&e$&8)", "counterStr", (inc, me) -> {
         if(inc.contains("$")) {
-            String out = Util.delAll(inc, "\s{2,}");
-            Util.getStrTextF(out);
+            String out = delAll(inc, "\s{2,}");
+            getStrTextF(out);
             me.setInDefConfig(out);
         }
     });
     public static final Option<Integer> COUNTERCOLOR = new Option<>(Formatting.YELLOW.getColorValue(), "counterColor", TIMECOLOR.getSaveConsumer());
-    public static final Option<Integer> DUPETHRESHOLD = new Option<>(3, "dupeThreshold", (inc, me) -> {
-        if(inc > 1 && inc < Option.MAXMSGS.get()) me.setInDefConfig(inc);
-    });
-    public static final Option<Boolean> LENIANTEQUALS = new Option<>(false, "leniantEquals", TIME.getSaveConsumer());
     public static final Option<Boolean> BOUNDARY = new Option<>(true, "boundary", TIME.getSaveConsumer());
     public static final Option<String> BOUNDARYSTR = new Option<>("&b[==============]", "boundaryStr", (inc, me) -> {
         if(inc.length() > 0) {
-            Util.getStrTextF(inc.strip());
+            getStrTextF(inc.strip());
             me.setInDefConfig(inc.strip());
         }
     });
     public static final Option<Integer> BOUNDARYCOLOR = new Option<>(Formatting.DARK_AQUA.getColorValue(), "boundaryColor", TIMECOLOR.getSaveConsumer());
+    /* public static final Option<Enum<String>> CHATPRIVACY = new Option<>(new Enum<String>(){"old","secret","new"}, "chatPrivacy", (inc, me) -> {
+
+    }); */
+    public static final Option<Boolean> SAVECHAT = new Option<>(false, "saveChat", TIME.getSaveConsumer());
     public static final Option<String> NAMESTR = new Option<>("<$>", "nameStr", (inc, me) -> {if(inc.contains("$")) me.setInDefConfig(inc);});
     public static final Option<Integer> MAXMSGS = new Option<>(1024, "maxMsgs", (inc, me) -> {
         if(4097 > inc && inc > 99) me.setInDefConfig(inc);
@@ -195,8 +208,8 @@ public class Option<T> {
     public static final List<Option<?>> OPTIONS = new ArrayList<>(Arrays.asList(
         TIME, TIMESTR, TIMECOLOR, TIMEFORMAT,
         HOVER, HOVERSTR,
-        COUNTER, COUNTERSTR, COUNTERCOLOR, DUPETHRESHOLD, LENIANTEQUALS,
+        COUNTER, COUNTERSTR, COUNTERCOLOR,
         BOUNDARY, BOUNDARYSTR, BOUNDARYCOLOR,
-        NAMESTR, MAXMSGS
+        /* CHATPRIVACY, */ SAVECHAT, NAMESTR, MAXMSGS
     ));
 }

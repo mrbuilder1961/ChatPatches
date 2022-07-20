@@ -11,7 +11,7 @@ import net.minecraft.text.Text;
 
 /** Used for an alternate {@code clear()} so F3+D actually works */
 @Mixin(ChatHud.class)
-public interface IChatHudAccessorMixin {
+public interface ChatHudAccessorMixin {
     @Accessor
     public List<ChatHudLine<Text>> getMessages();
 }

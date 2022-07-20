@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.11-SNAPSHOT'
+	id 'fabric-loom' version '0.12-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -7,15 +7,15 @@ sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = 'wmch'
-version = '1.4.6.1'
+version = '1.5.0'
 group = 'obro1961.wmch'
 project.ext.set('minecraft_version', '1.18.2')
-project.ext.set('loader_version', '0.13.3')
-project.ext.set('api_version', '0.51.1+1.18.2')
-project.ext.set('yarn_mappings', '1.18.2+build.2')
+project.ext.set('loader_version', '0.14.8')
+project.ext.set('api_version', '0.57.0+1.18.2')
+project.ext.set('yarn_mappings', '1.18.2+build.2') //! 1.18.2+build.3 not importing
 
-project.ext.set('cloth_version', '6.2.57')
-project.ext.set('modmenu_version', '3.1.0')
+project.ext.set('cloth_version', '6.2.62')
+project.ext.set('modmenu_version', '3.2.3')
 
 repositories {
   	mavenCentral()
