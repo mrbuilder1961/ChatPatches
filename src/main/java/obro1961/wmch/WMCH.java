@@ -1,8 +1,7 @@
 /**
  * Planned Features (highest priority is top):
- **- fix dupe counter and flag error [DONE]
- **- /copymessage clientside command using an index [DONE]
  * - regex +normal search functionality (ChatHudMixin) (base on ChatFlow by Vazkii)
+ * - animate new message to slide in from right, bottom, or left
  *
  * Completed Features (this version):
  * - added "savechat" option which saves your current conversations to a log file and later re-adds them, up to 1024 messages. WARNING: too many can cause large file/memory consumption, periodacally delete the file / F3+D / disable this option to avoid this
@@ -84,7 +83,7 @@ public class WMCH implements ModInitializer {
 	 * and when injecting a message counter so no weird issues occur.
 	 * Whole numbers mean no modifications.
 	 */
-	public static int flags = -1;
+	public static int flags = 0;
 
 	private Gson json = new Gson();
 
@@ -111,7 +110,7 @@ public class WMCH implements ModInitializer {
 
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((nh, ps, mc) -> {
-			if (flags < 0 && Option.SAVECHAT.get()) { // only runs on first world join
+			if (Option.SAVECHAT.get() && cachedMsgs.isEmpty()) { // only runs on first world join
 				try (FileReader fr = new FileReader(chatLogFile)) {
 					List<JsonElement> saved = json.fromJson(fr, new TypeToken<List<JsonElement>>(){}.getType());
 
