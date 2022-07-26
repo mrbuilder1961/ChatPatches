@@ -48,7 +48,5 @@
     "text.wmch.copymessage.index.missing": "Message %d doesn't exist",
 
 
-    "chat.type.team.text": "%s %s %s",
-    "chat.type.team.sent": "-> %s %s %s",
-    "chat.type.text": "%s %s"
+    "text.wmch.mutableChat": "<%s> %s"
 }

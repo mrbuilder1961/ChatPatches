@@ -6,36 +6,57 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-archivesBaseName = 'wmch'
-version = '1.5.0'
-group = 'obro1961.wmch'
-project.ext.set('minecraft_version', '1.18.2')
-project.ext.set('loader_version', '0.14.8')
-project.ext.set('api_version', '0.57.0+1.18.2')
-project.ext.set('yarn_mappings', '1.18.2+build.2') //! 1.18.2+build.3 not importing
+project.ext.set('minecraft', '1.19')
+project.ext.set('yarn_mappings', '+build.4')
+project.ext.set('loader_vers', '0.14.8')
+project.ext.set('api_vers', '0.57.0+')
 
-project.ext.set('cloth_version', '6.2.62')
-project.ext.set('modmenu_version', '3.2.3')
+project.ext.set('cloth_vers', '7.0.73')
+project.ext.set('modmenu_vers', '4.0.4')
+
+archivesBaseName = 'wmch'
+version = project.ext.minecraft + '-1.5.0'
+group = 'obro1961.wmch'
+
 
 repositories {
   	mavenCentral()
-	maven { url "https://maven.shedaniel.me/" }
-	maven { url "https://maven.terraformersmc.com/" }
+	maven { url "https://maven.shedaniel.me/" } // cloth-config
+	maven { url "https://maven.terraformersmc.com/releases/" } // modmenu
+	maven { url "https://repo.spongepowered.org/maven" } // fernflower decompiler (for .mixin.out)
 }
+
+configurations {
+	fernflower .extendsFrom implementation
+}
+sourceSets {
+	fernflower {
+		compileClasspath += main.output
+		ext.languageVersion = 8
+		ext.compatibility = '1.6'
+        ext.modularityExcluded = true
+	}
+}
+
 dependencies {
-	// Versions changed in the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.ext.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.ext.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.ext.loader_version}"
+	// Required loaders
+	minecraft "com.mojang:minecraft:${project.ext.minecraft}"
+	mappings "net.fabricmc:yarn:${project.ext.minecraft}${project.ext.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.ext.loader_vers}"
 
 	// fabric api
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.ext.api_version}"
-		include "net.fabricmc.fabric-api:fabric-api:${project.ext.api_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.ext.api_vers}${project.ext.minecraft}"
+		//include "net.fabricmc.fabric-api:fabric-api:${project.ext.api_vers}${project.ext.minecraft}"
+
+
 	// config api
-	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.ext.cloth_version}") {
+	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.ext.cloth_vers}") {
         exclude(group: "net.fabricmc.fabric-api")
     }
-	modImplementation "com.terraformersmc:modmenu:${project.ext.modmenu_version}"
+	modImplementation "com.terraformersmc:modmenu:${project.ext.modmenu_vers}"
+
+	// FernFlower decompiler
+    //fernflowerImplementation 'org.jetbrains.java.decompiler:fernflower:sponge-SNAPSHOT'
 }
 
 processResources {

@@ -15,17 +15,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
-import net.minecraft.text.Text;
 import obro1961.wmch.WMCH;
 import obro1961.wmch.util.Util;
 
-/**
- * The config class for WMCH. Extended by others for external versions.
- *
- * @see ClothConfig
- */
+/** The config class for WMCH. Extended by {@link ClothConfig} for use with ModMenu. */
 public class Config {
     protected static final Logger lg = WMCH.log;
 
@@ -39,60 +34,62 @@ public class Config {
     public boolean counter;
     public String counterStr;
     public int counterColor;
-    public boolean saveChat;
     public boolean boundary;
     public String boundaryStr;
     public String boundaryFormat;
     public int boundaryColor;
+    public boolean saveChat;
+    //public boolean hideUnsecureNotif;
     public String nameStr;
     public int maxMsgs;
 
     public Config() {
         this.time = Option.TIME.getDefault();
-        this.timeStr = Option.TIMESTR.getDefault();
-        this.timeFormat = Option.TIMEFORMAT.getDefault();
-        this.timeColor = Option.TIMECOLOR.getDefault();
+        this.timeStr = Option.TIME_STR.getDefault();
+        this.timeFormat = Option.TIME_FORMAT.getDefault();
+        this.timeColor = Option.TIME_COLOR.getDefault();
         this.hover = Option.HOVER.getDefault();
-        this.hoverStr = Option.HOVERSTR.getDefault();
+        this.hoverStr = Option.HOVER_STR.getDefault();
         this.counter = Option.COUNTER.getDefault();
-        this.counterStr = Option.COUNTERSTR.getDefault();
-        this.counterColor = Option.COUNTERCOLOR.getDefault();
-        this.saveChat = Option.SAVECHAT.getDefault();
+        this.counterStr = Option.COUNTER_STR.getDefault();
+        this.counterColor = Option.COUNTER_COLOR.getDefault();
         this.boundary = Option.BOUNDARY.getDefault();
-        this.boundaryStr = Option.BOUNDARYSTR.getDefault();
-        this.boundaryColor = Option.BOUNDARYCOLOR.getDefault();
-        this.nameStr = Option.NAMESTR.getDefault();
-        this.maxMsgs = Option.MAXMSGS.getDefault();
+        this.boundaryStr = Option.BOUNDARY_STR.getDefault();
+        this.boundaryColor = Option.BOUNDARY_COLOR.getDefault();
+        this.saveChat = Option.SAVE_CHAT.getDefault();
+        //this.hideUnsecureNotif = Option.HIDE_UNSECURE_NOTIF.getDefault();
+        this.nameStr = Option.NAME_STR.getDefault();
+        this.maxMsgs = Option.MAX_MESSAGES.getDefault();
     }
 
     /**
      * Turns the config into usable, publicly accessible values.
      */
     public static void validate() {
-        if (!WMCH.inGameConfig)
-            lg.warn("Cloth config v{}+ and Mod Menu v{}+ are not installed, so the config can only be accessed through the JSON file.",
-                    WMCH.DEPENDENTS[0], WMCH.DEPENDENTS[1]);
+        if(!WMCH.inGameConfig)
+            lg.warn("Cloth config v{}+ and Mod Menu v{}+ are not installed, so the config can only be accessed through the JSON file.", WMCH.DEPENDENTS[0], WMCH.DEPENDENTS[1]);
         read();
 
-        Option.TIME.onSave(config.time, Option.TIME);
-        Option.TIMESTR.onSave(config.timeStr, Option.TIMESTR);
-        Option.TIMEFORMAT.onSave(config.timeFormat, Option.TIMEFORMAT);
-        Option.TIMECOLOR.onSave(config.timeColor, Option.TIMECOLOR);
+        Option.TIME.save(config.time);
+        Option.TIME_STR.save(config.timeStr);
+        Option.TIME_FORMAT.save(config.timeFormat);
+        Option.TIME_COLOR.save(config.timeColor);
 
-        Option.HOVER.onSave(config.hover, Option.HOVER);
-        Option.HOVERSTR.onSave(config.hoverStr, Option.HOVERSTR);
+        Option.HOVER.save(config.hover);
+        Option.HOVER_STR.save(config.hoverStr);
 
-        Option.BOUNDARY.onSave(config.boundary, Option.BOUNDARY);
-        Option.BOUNDARYSTR.onSave(config.boundaryStr, Option.BOUNDARYSTR);
-        Option.BOUNDARYCOLOR.onSave(config.boundaryColor, Option.BOUNDARYCOLOR);
+        Option.BOUNDARY.save(config.boundary);
+        Option.BOUNDARY_STR.save(config.boundaryStr);
+        Option.BOUNDARY_COLOR.save(config.boundaryColor);
 
-        Option.COUNTER.onSave(config.counter, Option.COUNTER);
-        Option.COUNTERSTR.onSave(config.counterStr, Option.COUNTERSTR);
-        Option.COUNTERCOLOR.onSave(config.counterColor, Option.COUNTERCOLOR);
+        Option.COUNTER.save(config.counter);
+        Option.COUNTER_STR.save(config.counterStr);
+        Option.COUNTER_COLOR.save(config.counterColor);
 
-        Option.SAVECHAT.onSave(config.saveChat, Option.SAVECHAT);
-        Option.NAMESTR.onSave(config.nameStr, Option.NAMESTR);
-        Option.MAXMSGS.onSave(config.maxMsgs, Option.MAXMSGS);
+        Option.SAVE_CHAT.save(config.saveChat);
+        //Option.HIDE_UNSECURE_NOTIF.onSave(config.hideUnsecureNotif);
+        Option.NAME_STR.save(config.nameStr);
+        Option.MAX_MESSAGES.save(config.maxMsgs);
 
         logDiffs();
         lg.info("Finished saving config!");
@@ -102,30 +99,30 @@ public class Config {
      * Formats timeStr, uses that to format timeFormat, adds a space, then
      * finally colors it
      */
-    public Text getTimeF(Date when) {
-        return ((LiteralText) Util
-                .getStrTextF(Option.TIMEFORMAT.get() + (new SimpleDateFormat(config.timeStr).format(when)) + " "))
-                .fillStyle(Style.EMPTY.withColor(Option.TIMECOLOR.get()));
+    public MutableText getTimeF(Date when) {
+        return
+            (Util.getStrTextF(Option.TIME_FORMAT.get() + (new SimpleDateFormat(config.timeStr).format(when)) + " "))
+                .fillStyle(Style.EMPTY.withColor(Option.TIME_COLOR.get()));
     }
 
     public String getHoverF(Date when) {
-        return new SimpleDateFormat(Option.HOVERSTR.get()).format(when);
+        return new SimpleDateFormat(Option.HOVER_STR.get()).format(when);
     }
 
     public String getNameF(String name) {
-        return Option.NAMESTR.get().replaceAll("\\$", name);
+        return Option.NAME_STR.get().replaceAll("\\$", name);
     }
 
-    public Text getDupeF(int dupes) {
-        return ((LiteralText) Util
-                .getStrTextF(" " + Option.COUNTERSTR.get().replaceAll("\\$", Integer.toString(dupes))))
-                .fillStyle(Style.EMPTY.withColor(Option.COUNTERCOLOR.get()));
+    public MutableText getDupeF(int dupes) {
+        return
+            (Util.getStrTextF(" " + Option.COUNTER_STR.get().replaceAll("\\$", Integer.toString(dupes))))
+                .fillStyle(Style.EMPTY.withColor(Option.COUNTER_COLOR.get()));
     }
 
     /** Prints any changes between altering of Options */
     protected static void logDiffs() {
         // only log if changes were made
-        if (Option.diff == "Changes made:")
+        if(Option.diff == "Changes made:")
             lg.info("No changes made!");
         else
             lg.info(Option.diff);
@@ -140,20 +137,20 @@ public class Config {
         final File cfgFile = new File(FabricLoader.getInstance().getConfigDir().toFile().getAbsolutePath() + "/wmch.json");
 
         try (FileReader fr = new FileReader(cfgFile)) {
-            if (!cfgFile.exists()) {
+            if(!cfgFile.exists()) {
                 reset();
                 lg.warn("Could not find wmch's config file (searched in '{}'); created a default one.", cfgFile.getAbsolutePath());
             } else {
                 config = new Gson().fromJson(fr, config.getClass());
 
-                if (config == null || !(config instanceof Config)) {
+                if(config == null || !(config instanceof Config)) {
                     reset();
                     lg.info("Something was broken, so the config has been reset.");
                 }
 
                 lg.debug("Loaded config info {} from '{}'", config, cfgFile.getAbsolutePath());
             }
-        } catch (Exception e) {
+        } catch(Exception e) {
             lg.error("An error occurred while trying to load wmch's config data; resetting:");
             e.printStackTrace();
             reset();
@@ -171,7 +168,7 @@ public class Config {
         try (FileWriter fw = new FileWriter(cfgPath)) {
             new GsonBuilder().excludeFieldsWithModifiers(Modifier.STATIC).setPrettyPrinting().create().toJson(c, c.getClass(), fw);
             lg.debug("Saved config info {} from '{}'", c.toString(), cfgPath);
-        } catch (Exception e) {
+        } catch(Exception e) {
             lg.error("An error occurred while trying to save wmch's config data:");
             e.printStackTrace();
         }

@@ -5,13 +5,13 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Language;
 import obro1961.wmch.WMCH;
 import obro1961.wmch.util.Util;
 
 /**
- * The extended config menu, supported by Cloth Config and Mod Menu. @see Config
+ * The extended config menu, supported by Cloth Config and Mod Menu.
+ * @see Config
  */
 public class ClothConfig extends Config {
     public ClothConfig() {
@@ -22,34 +22,35 @@ public class ClothConfig extends Config {
         ConfigBuilder bldr = ConfigBuilder.create()
             .setParentScreen(prevScreen)
             .setDoesConfirmSave(true)
-        .setTitle(new TranslatableText("text.wmch.title"));
+            .setTitle(Text.translatable("text.wmch.title"));
         ConfigEntryBuilder eBldr = bldr.entryBuilder();
 
-        ConfigCategory time = bldr.getOrCreateCategory(new TranslatableText("text.wmch.category.time"));
-        ConfigCategory hover = bldr.getOrCreateCategory(new TranslatableText("text.wmch.category.hover"));
-        ConfigCategory counter = bldr.getOrCreateCategory(new TranslatableText("text.wmch.category.counter"));
-        ConfigCategory boundary = bldr.getOrCreateCategory(new TranslatableText("text.wmch.category.boundary"));
-        ConfigCategory other = bldr.getOrCreateCategory(new TranslatableText("text.wmch.category.other"));
+        ConfigCategory time = bldr.getOrCreateCategory(Text.translatable("text.wmch.category.time"));
+        ConfigCategory hover = bldr.getOrCreateCategory(Text.translatable("text.wmch.category.hover"));
+        ConfigCategory counter = bldr.getOrCreateCategory(Text.translatable("text.wmch.category.counter"));
+        ConfigCategory boundary = bldr.getOrCreateCategory(Text.translatable("text.wmch.category.boundary"));
+        ConfigCategory other = bldr.getOrCreateCategory(Text.translatable("text.wmch.category.other"));
 
-        eBldr = Option.TIME.updateEntryBuilder(eBldr, time, Option.TIME);
-        eBldr = Option.TIMESTR.updateEntryBuilder(eBldr, time, Option.TIMESTR);
-        eBldr = Option.TIMEFORMAT.updateEntryBuilder(eBldr, time, Option.TIMEFORMAT);
-        eBldr = Option.TIMECOLOR.updateEntryBuilder(eBldr, time, Option.TIMECOLOR);
+        eBldr = Option.TIME.updateEntryBuilder(eBldr, time);
+        eBldr = Option.TIME_STR.updateEntryBuilder(eBldr, time);
+        eBldr = Option.TIME_FORMAT.updateEntryBuilder(eBldr, time);
+        eBldr = Option.TIME_COLOR.updateEntryBuilder(eBldr, time);
 
-        eBldr = Option.HOVER.updateEntryBuilder(eBldr, hover, Option.HOVER);
-        eBldr = Option.HOVERSTR.updateEntryBuilder(eBldr, hover, Option.HOVERSTR);
+        eBldr = Option.HOVER.updateEntryBuilder(eBldr, hover);
+        eBldr = Option.HOVER_STR.updateEntryBuilder(eBldr, hover);
 
-        eBldr = Option.COUNTER.updateEntryBuilder(eBldr, counter, Option.COUNTER);
-        eBldr = Option.COUNTERSTR.updateEntryBuilder(eBldr, counter, Option.COUNTERSTR);
-        eBldr = Option.COUNTERCOLOR.updateEntryBuilder(eBldr, counter, Option.COUNTERCOLOR);
+        eBldr = Option.COUNTER.updateEntryBuilder(eBldr, counter);
+        eBldr = Option.COUNTER_STR.updateEntryBuilder(eBldr, counter);
+        eBldr = Option.COUNTER_COLOR.updateEntryBuilder(eBldr, counter);
 
-        eBldr = Option.BOUNDARY.updateEntryBuilder(eBldr, boundary, Option.BOUNDARY);
-        eBldr = Option.BOUNDARYSTR.updateEntryBuilder(eBldr, boundary, Option.BOUNDARYSTR);
-        eBldr = Option.BOUNDARYCOLOR.updateEntryBuilder(eBldr, boundary, Option.BOUNDARYCOLOR);
+        eBldr = Option.BOUNDARY.updateEntryBuilder(eBldr, boundary);
+        eBldr = Option.BOUNDARY_STR.updateEntryBuilder(eBldr, boundary);
+        eBldr = Option.BOUNDARY_COLOR.updateEntryBuilder(eBldr, boundary);
 
-        eBldr = Option.SAVECHAT.updateEntryBuilder(eBldr, other, Option.SAVECHAT);
-        eBldr = Option.NAMESTR.updateEntryBuilder(eBldr, other, Option.NAMESTR);
-        eBldr = Option.MAXMSGS.updateEntryBuilder(eBldr, other, Option.MAXMSGS);
+        eBldr = Option.SAVE_CHAT.updateEntryBuilder(eBldr, other);
+        //eBldr = Option.HIDE_UNSECURE_NOTIF.updateEntryBuilder(eBldr, other);
+        eBldr = Option.NAME_STR.updateEntryBuilder(eBldr, other);
+        eBldr = Option.MAX_MESSAGES.updateEntryBuilder(eBldr, other);
 
         if(WMCH.fbl.isDevelopmentEnvironment())
             other.addEntry(
@@ -57,9 +58,8 @@ public class ClothConfig extends Config {
                     .setDefaultValue(false)
                     .setTooltip(Text.of("Debug button"))
                     .setSaveConsumer(inc -> { if(inc) Option.printTableEntries(Language.getInstance()); })
-                .build()
-            );
-
+                    .build()
+                );
 
         bldr.setSavingRunnable(() -> {
             logDiffs();

@@ -3,11 +3,13 @@ package obro1961.wmch.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.minecraft.network.message.MessageSender;
 import net.minecraft.text.CharacterVisitor;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -17,6 +19,9 @@ import net.minecraft.util.Formatting;
  * Random functions that are of some random, obsolete use
  */
 public class Util {
+	public static final UUID NIL_UUID = new UUID(0, 0);
+	public static final MessageSender NIL_SENDER = new MessageSender(NIL_UUID, Text.empty(), Text.empty());
+
 	public static String delAll(String dirty, String toDel) {
 		return dirty.replaceAll(toDel, "");
 	}
@@ -40,14 +45,14 @@ public class Util {
 	 * If there are no formatting characters, returns the unstyled string.
 	 * Doesn't support hex colors.
 	 */
-	public static Text getStrTextF(String dirty) {
-		LiteralText out = new LiteralText("");
+	public static MutableText getStrTextF(String dirty) {
+		MutableText out = Text.empty();
 		Pattern finder = Pattern.compile("(?:&[0-9a-fA-Fk-orK-OR])+");
 		Matcher results = finder.matcher(dirty);
 
-		if (dirty.matches(".*" + finder.pattern() + ".*")) {
+		if(dirty.matches(".*" + finder.pattern() + ".*")) {
 			// if there is text before a formatter then add it alone
-			if (dirty.split(finder.pattern())[0].length() > 0) {
+			if(dirty.split(finder.pattern())[0].length() > 0) {
 				String prfx = dirty.split(finder.pattern())[0];
 				out.append(prfx);
 				dirty = dirty.replace(prfx, "");
@@ -61,14 +66,14 @@ public class Util {
 			while (results.find()) {
 				Formatting[] style = new Formatting[results.group().length() / 2];
 				char[] codes = delAll(results.group(), "&").toCharArray();
-				for (int j = 0; j < codes.length; ++j)
+				for(int j = 0; j < codes.length; ++j)
 					style[j] = Formatting.byCode(codes[j]);
 
-				out.append(new LiteralText(texts.get(i++)).formatted(style));
+				out.append(Text.literal(texts.get(i++)).formatted(style));
 			}
 
 			return out;
 		} else
-			return Text.of(dirty);
+			return Text.literal(dirty);
 	}
 }
