@@ -1,4 +1,4 @@
-package obro1961.wmch.mixins;
+package mechanicalarcane.wmch.mixins;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,15 +17,13 @@ import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
 
 @Environment(EnvType.CLIENT)
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(value = ClientPlayNetworkHandler.class, priority = 1)
 public class CPNHMixin {
     @Shadow @Final private MinecraftClient client;
 
     /**
      * Ignores the {@link GameOptions#onlyShowSecureChat} option so customized messages are viewable.
      * Also removes signed message sender verification and the associated log warnings.
-     * (Potential security risk due to no message verification, but I don't think this method
-     * contains most of the verification anyway)
      */
     @Inject(method = "handleMessage", at = @At("HEAD"), cancellable = true)
     public void allowUnsecureMessages(MessageType type, SignedMessage message, MessageSender sender, CallbackInfo ci) {

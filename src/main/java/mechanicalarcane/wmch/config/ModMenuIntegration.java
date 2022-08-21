@@ -1,9 +1,9 @@
-package obro1961.wmch.config;
+package mechanicalarcane.wmch.config;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 
-import obro1961.wmch.WMCH;
+import mechanicalarcane.wmch.WMCH;
 
 public class ModMenuIntegration implements ModMenuApi {
     @Override

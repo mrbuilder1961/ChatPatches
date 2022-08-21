@@ -15,3 +15,4 @@ bin/
 *.DS_Store
 run/
 .gradle.lnk
+lib/

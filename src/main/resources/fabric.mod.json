@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "wmch",
-  "version": "1.5.0",
+  "version": "1.5.1",
 
   "name": "Where's My Chat History",
-  "description": "A versatile client-side chat mod that can do many things, just check out the config and the GitHub page for more info!",
+  "description": "A versatile client-side chat mod that makes chat more customizable, just check out the config and the GitHub page for more info!",
   "authors": ["MechanicalArcane (formerly OBro1961)"],
   "contributors": [],
   "contact": {
@@ -13,29 +13,32 @@
     "sources": "https://github.com/mrbuilder1961/WheresMyChatHistory"
   },
 
-  "license": "CC0-1.0",
+  "license": "LGPLv3",
   "icon": "assets/wmch/icon.png",
 
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
-    "main": ["obro1961.wmch.WMCH"],
-    "modmenu": ["obro1961.wmch.config.ModMenuIntegration"]
+    "client": ["mechanicalarcane.wmch.WMCH"],
+    "modmenu": ["mechanicalarcane.wmch.config.ModMenuIntegration"]
   },
-  "mixins": [
-    {
-      "config": "wmch.mixins.json",
-      "environment": "*"
-    }
-  ],
+  "mixins": [ "wmch.mixins.json" ],
 
   "depends": {
-    "fabricloader": ">=0.14.0",
-    "fabric": "*",
+    "java": ">=17",
     "minecraft": "1.19",
-    "java": ">=17"
+    "fabricloader": ">=0.14.0",
+    "fabric-command-api-v2": "*",
+    "fabric-lifecycle-events-v1": "*",
+    "fabric-networking-api-v1": "*"
   },
   "recommends": {
-    "cloth-config": ">=7.0.73",
-    "modmenu": ">=4.0.4"
+    "cloth-config": "*",
+    "modmenu": "*"
+  },
+  "suggests": {
+    "nochatreports": "*"
+  },
+  "breaks": {
+    "morechathistory": "*"
   }
 }

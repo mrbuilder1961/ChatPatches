@@ -6,24 +6,16 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-project.ext.set('minecraft', '1.19')
-project.ext.set('yarn_mappings', '+build.4')
-project.ext.set('loader_vers', '0.14.8')
-project.ext.set('api_vers', '0.57.0+')
-
-project.ext.set('cloth_vers', '7.0.73')
-project.ext.set('modmenu_vers', '4.0.4')
-
-archivesBaseName = 'wmch'
-version = project.ext.minecraft + '-1.5.0'
-group = 'obro1961.wmch'
+archivesBaseName = project.archivesBaseName
+group = project.group
+version = project.version
 
 
 repositories {
   	mavenCentral()
 	maven { url "https://maven.shedaniel.me/" } // cloth-config
 	maven { url "https://maven.terraformersmc.com/releases/" } // modmenu
-	maven { url "https://repo.spongepowered.org/maven" } // fernflower decompiler (for .mixin.out)
+	maven { url "https://repo.spongepowered.org/maven" } // mixin and fernflower decompiler (for .mixin.out)
 }
 
 configurations {
@@ -39,23 +31,30 @@ sourceSets {
 }
 
 dependencies {
-	// Required loaders
-	minecraft "com.mojang:minecraft:${project.ext.minecraft}"
-	mappings "net.fabricmc:yarn:${project.ext.minecraft}${project.ext.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.ext.loader_vers}"
-
+	minecraft "com.mojang:minecraft:${project.minecraft}"
+	mappings "net.fabricmc:yarn:${project.minecraft}${project.yarn}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader}"
 	// fabric api
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.ext.api_vers}${project.ext.minecraft}"
-		//include "net.fabricmc.fabric-api:fabric-api:${project.ext.api_vers}${project.ext.minecraft}"
+	//modImplementation "net.fabricmc.fabric-api:fabric-api:${project.api}${project.minecraft}"
+	modImplementation fabricApi.module("fabric-command-api-v2", project.api + project.minecraft)
+	modImplementation fabricApi.module("fabric-lifecycle-events-v1", project.api + project.minecraft)
+	modImplementation fabricApi.module("fabric-networking-api-v1", project.api + project.minecraft)
 
 
-	// config api
-	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.ext.cloth_vers}") {
+	// cloth-config api
+	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config}") {
         exclude(group: "net.fabricmc.fabric-api")
     }
-	modImplementation "com.terraformersmc:modmenu:${project.ext.modmenu_vers}"
 
-	// FernFlower decompiler
+	// modmenu api
+	modImplementation "com.terraformersmc:modmenu:${project.modmenu}"
+
+
+	// nochatreports for testing integration
+	modImplementation files("lib/NoChatReports-FABRIC-1.19-v1.2.3.jar")
+	//modRuntimeOnlyMapped files("lib/NoChatReports-FABRIC-1.19-v1.2.3.jar") //? use for the original, freshly-compiled NCR mod file
+
+	// FernFlower decompiler, currently spams log with tons of errors
     //fernflowerImplementation 'org.jetbrains.java.decompiler:fernflower:sponge-SNAPSHOT'
 }
 
@@ -72,9 +71,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 }
 
@@ -88,12 +84,18 @@ publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			from components.java
+
+			artifact(remapJar) {
+                builtBy remapJar
+            }
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
+            }
 		}
 	}
 
 	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
 	repositories {
-		// Add repositories to publish to here.
 		// Notice: This block does NOT have the same function as the block in the top level.
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.

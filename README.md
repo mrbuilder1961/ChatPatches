@@ -4,12 +4,12 @@
 # Where's My Chat History
 
 This mod does quite a few things:
-- Increases the maximum amount of chat messages allowed based on allocated RAM (minimally it goes from 100 to 1024 max messages)
+- Increases the maximum amount of chat messages to 16384
 - Adds a timestamp in front of all messages, formatted as `[HOUR:MINUTE:SECOND]` in pink text, with a tooltip that renders a complete date down to the millisecond
 - Keeps chat history and previously sent messages across ALL worlds and servers
 - Lets you modify vanilla player names to something more appealing than triangle brackets
 - Minimize spam by enabling the counter that shows how many messages have been sent in a row
-- All of this is configurable, with much more to offer
+- All of this is configurable, with much more to offer!
 
 Be on the lookout for new versions, issues, and possible future features!
 
@@ -38,13 +38,12 @@ Be on the lookout for new versions, issues, and possible future features!
 | Boundary color | `0xAAAA` (`43690`) | The color that's 'filled in' where applicable in the boundary text. | `14099062` | `text.wmch.boundaryColor` |
 | Chat log toggle | `false` | Should the chat be saved into a log so it can be re-added back into the chat in another game session? | `true` | text.wmch.saveChat |
 | Playername text | `<$>` | The text that replaces the playername in most references (if present). Vanilla would be <$>; no brackets $. $ represents the playername. Only for player messages. | `[$]:` | `text.wmch.nameStr` |
-| Maximum chat messages | `1024` | The max amount of chat messages allowed to render. Not recommended to change, as it's automatically adjusted based on RAM allocation. | `2167` | `text.wmch.maxMsgs` |
+| Maximum chat messages | `16384` | The max amount of chat messages allowed to render. Vanilla has this set as 100, maximum allowed is 32,767. Keep in mind the higher the value, the more memory the chat requires. | `2167` | `text.wmch.maxMsgs` |
 
 ## Possible features
 
 - Make certain messages automatically copiable, such as the Open-To-LAN port
 - Chat search feature, with regex search capabilities
-- Modrinth page
 
 ## Changelog
 
@@ -59,4 +58,4 @@ unless I've glossed over a simpler method, this would take up wayyy too much ext
 This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
 
 ## License
-This mod is available under the GNU GPLv3 license. TL;DR: You can do whatever, as long as it's free, open-source, and credits me and the other authors.
+This mod is available under the GNU LGPLv3 license. Check out [this](https://choosealicense.com/licenses/lgpl-3.0/) page for proper information.

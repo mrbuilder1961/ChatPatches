@@ -1,4 +1,4 @@
-package obro1961.wmch.mixins;
+package mechanicalarcane.wmch.mixins;
 
 import java.util.List;
 
@@ -11,10 +11,19 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.text.Text;
 
-/** Used for an alternate {@code clear()} so F3+D actually works */
+/**
+ * A mixin accessor method that
+ * widens ChatHud access to the
+ * {@code messages} and
+ * {@code visibleMessages} variables.
+ *
+ * Used for adding boundary lines and
+ * for the {@code CopyMessageCommand}
+ * execute methods.
+ */
 @Environment(EnvType.CLIENT)
-@Mixin(ChatHud.class)
-public interface ChatHudAccessorMixin {
+@Mixin(value = ChatHud.class, priority = 1)
+public interface ChatHudAccessor {
     @Accessor
     public List<ChatHudLine<Text>> getMessages();
 }
