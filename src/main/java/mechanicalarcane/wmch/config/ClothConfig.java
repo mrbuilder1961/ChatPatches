@@ -95,8 +95,7 @@ public class ClothConfig extends Config {
                                 json.toJson(enUSFile, obj, gb);
                                 json.toJson(enUSFile, obj, nz);
                             } catch (Exception e) {
-                                WMCH.LOGGER.warn("[debug]: writing lang files failed:");
-                                e.printStackTrace();
+                                WMCH.LOGGER.warn("[debug]: writing lang files failed:", e);
                             }
                         }
                     })

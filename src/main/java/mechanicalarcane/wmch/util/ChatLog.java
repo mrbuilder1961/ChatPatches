@@ -80,8 +80,7 @@ public class ChatLog {
 
                 initialized = true;
             } catch(IOException e) {
-                LOGGER.error("[initialize] Couldn't create chatlog file connections:");
-                e.printStackTrace();
+                LOGGER.error("[initialize] Couldn't create chatlog file connections:", e);
             }
         }
     }
@@ -104,8 +103,7 @@ public class ChatLog {
 
                 fileSize = channel.size();
             } catch (IOException e) {
-                LOGGER.error("[deserialize] An I/O error occurred while trying to update the chat log:");
-                e.printStackTrace();
+                LOGGER.error("[deserialize] An I/O error occurred while trying to update the chat log:", e);
             }
         } else if(rawData.length() < 2) {
             data = new Data(100);
@@ -142,8 +140,7 @@ public class ChatLog {
 
             LOGGER.info("Saved chat log containing {} messages and {} sent messages to ./logs/chatlog.json", data.messages.size(), data.history.size());
         } catch (IOException e) {
-            LOGGER.error("[serialize] An I/O error occurred while trying to write the chat log:");
-            e.printStackTrace();
+            LOGGER.error("[serialize] An I/O error occurred while trying to write the chat log:", e);
         } finally {
             if(crashing)
                 savedAfterCrash = true;

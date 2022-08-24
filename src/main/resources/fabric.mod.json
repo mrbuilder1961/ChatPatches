@@ -39,6 +39,7 @@
     "nochatreports": "*"
   },
   "breaks": {
-    "morechathistory": "*"
+    "morechathistory": "*",
+    "essential": "*"
   }
 }

@@ -141,10 +141,9 @@ public class Config {
             LOGGER.info("Loaded config info from config/wmch.json!");
         } catch(FileNotFoundException e) {
             reset();
-            LOGGER.warn("[readFromFile] Couldn't find {}'s config file in config/wmch.json; created a default one.", WMCH.NAMES[0]);
+            LOGGER.warn("[readFromFile] Couldn't find {}'s config file in config/wmch.json; created a default one.", WMCH.NAMES[0], e);
         } catch(Exception e) {
-            LOGGER.error("[readFromFile] An error occurred while trying to load {}'s config data; resetting:", WMCH.NAMES[0]);
-            e.printStackTrace();
+            LOGGER.error("[readFromFile] An error occurred while trying to load {}'s config data; resetting:", WMCH.NAMES[0], e);
             reset();
         }
     }
@@ -160,8 +159,7 @@ public class Config {
 
             LOGGER.info("Saved config info to config/wmch.json!");
         } catch(Exception e) {
-            LOGGER.error("[writeToFile] An error occurred while trying to save {}'s config data:", WMCH.NAMES[0]);
-            e.printStackTrace();
+            LOGGER.error("[writeToFile] An error occurred while trying to save {}'s config data:", WMCH.NAMES[0], e);
         }
     }
 

@@ -83,8 +83,7 @@ public class Option<T> {
         try {
             WMCH.config.getClass().getField(key).set(WMCH.config, inc);
         } catch(IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-            LOGGER.fatal("[setInDefConfig] You should not be seeing this unless I screwed something up; in which case please open a bug report of this on GitHub:");
-            e.printStackTrace();
+            LOGGER.fatal("[setInDefConfig] You should not be seeing this unless I screwed something up; in which case please open a bug report of this on GitHub:", e);
         }
     }
 
@@ -124,8 +123,7 @@ public class Option<T> {
         } catch(IllegalArgumentException e) {
             failed = true;
 
-            LOGGER.warn("[TIME_STR()] An IllegalArgumentException occurred while trying to make the timestamp (if you see this make a bug report!):");
-            e.printStackTrace();
+            LOGGER.warn("[TIME_STR()] An IllegalArgumentException occurred while trying to make the timestamp (if you see this make a bug report!):", e);
         } finally {
             me.setInDefConfig(
                 new SimpleDateFormat( (failed ? me.get() : inc).replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'").replaceAll("'{2,}", "'") ).toPattern()
@@ -138,8 +136,7 @@ public class Option<T> {
             formatString(out);
             me.setInDefConfig(out);
         } catch(Exception e) {
-            LOGGER.warn("[TIME_FORMAT()] An error occurred while trying to save TIME_FORMAT Option:");
-            e.printStackTrace();
+            LOGGER.warn("[TIME_FORMAT()] An error occurred while trying to save TIME_FORMAT Option:", e);
         }
     });
     public static final Option<Integer> TIME_COLOR = new Option<>(Formatting.LIGHT_PURPLE.getColorValue(), "timeColor", (inc, me) -> {
@@ -238,8 +235,7 @@ public class Option<T> {
             for(Option option : OPTIONS)
                 option.save( config.getClass().getField(option.key).get(config) );
         } catch(IllegalStateException | IllegalAccessException | NoSuchFieldException e) {
-            LOGGER.fatal("[saveAll] You should not be seeing this unless I screwed something up, report this on GitHub:");
-            e.printStackTrace();
+            LOGGER.fatal("[saveAll] You should not be seeing this unless I screwed something up, report this on GitHub:", e);
         }
     }
 
@@ -255,8 +251,7 @@ public class Option<T> {
                 field.set(config, optField.getDefault());
             }
         } catch(NullPointerException | IllegalStateException | IllegalAccessException e) {
-            LOGGER.fatal("[defaultAll] You should not be seeing this unless I screwed something up, report this on GitHub:");
-            e.printStackTrace();
+            LOGGER.fatal("[defaultAll] You should not be seeing this unless I screwed something up, report this on GitHub:", e);
         }
     }
 }

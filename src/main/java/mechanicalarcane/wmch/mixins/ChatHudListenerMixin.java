@@ -10,10 +10,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.aizistral.nochatreports.handlers.NoReportsConfig;
-
 import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.WMCH.Relation;
+import mechanicalarcane.wmch.util.NCRConfigAccessor;
 import mechanicalarcane.wmch.util.Util;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -46,16 +44,13 @@ public class ChatHudListenerMixin {
         final Registry<MessageType> typeRegistry = client.player.clientWorld.getRegistryManager().get(Registry.MESSAGE_TYPE_KEY);
         final MessageType CHAT = typeRegistry.get(MessageType.CHAT);
 
-        final boolean sentByPlayer = Relation.NOCHATREPORTS.installed()
-            ? (
-                NoReportsConfig.convertsToGameMessage()
-                    ? (
-                        type.equals( typeRegistry.get(MessageType.SYSTEM) ) &&
-                        !client.inGameHud.extractSender(msg).equals( Util.NIL_UUID )
-                    )
-                    : type.equals(CHAT)
-            )
-            : type.equals(CHAT)
+        final boolean sentByPlayer =
+            NCRConfigAccessor.chatToSys()
+                ? (
+                    type.equals( typeRegistry.get(MessageType.SYSTEM) ) &&
+                    !client.inGameHud.extractSender(msg).equals( Util.NIL_UUID )
+                )
+                : type.equals(CHAT)
         ;
 
         UUID source = sender != null ? sender.uuid() : client.inGameHud.extractSender(msg);

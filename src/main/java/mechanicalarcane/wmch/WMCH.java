@@ -115,8 +115,7 @@ public class WMCH implements ClientModInitializer {
 							);
 						}
 					} catch(Exception e) {
-						LOGGER.warn("[boundaryAdder] An error occurred while joining a new session:");
-						e.printStackTrace();
+						LOGGER.warn("[boundaryAdder] An error occurred while joining a new session:", e);
 					}
 				}
 			}
@@ -136,8 +135,7 @@ public class WMCH implements ClientModInitializer {
 		try {
 			ChatLog.serialize(crashed);
 		} catch(Exception e) {
-			LOGGER.warn("[writeCachedData({})] An error occurred while trying to save the chat log{}:", crashed, crashed ? " after a crash" : "");
-			e.printStackTrace();
+			LOGGER.warn("[writeCachedData({})] An error occurred while trying to save the chat log{}:", crashed, crashed ? " after a crash" : "", e);
 		}
 	}
 
@@ -161,8 +159,7 @@ public class WMCH implements ClientModInitializer {
 				this.type = type;
 
 			} catch(VersionParsingException e) {
-				LOGGER.fatal("[Relation()] This shouldn't appear, it means a mod relation version was inputted incorrectly. Please report this on GitHub:");
-				e.printStackTrace();
+				LOGGER.fatal("[Relation()] This shouldn't appear, it means a mod relation version was inputted incorrectly. Please report this on GitHub:", e);
 			}
 		}
 
