@@ -7,8 +7,9 @@ sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = project.archivesBaseName
-group = project.group
 version = project.version
+group = project.group
+
 def mappedNCRFile = "lib/NoChatReports-FABRIC-1.19-v1.2.3.jar"
 
 
@@ -19,7 +20,7 @@ repositories {
 	maven { url "https://repo.spongepowered.org/maven" } // mixin and fernflower decompiler (for .mixin.out)
 }
 
-configurations {
+/* configurations {
 	fernflower .extendsFrom implementation
 }
 sourceSets {
@@ -29,7 +30,7 @@ sourceSets {
 		ext.compatibility = '1.6'
         ext.modularityExcluded = true
 	}
-}
+} */
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft}"
@@ -82,13 +83,6 @@ publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			from components.java
-
-			artifact(remapJar) {
-                builtBy remapJar
-            }
-            artifact(sourcesJar) {
-                builtBy remapSourcesJar
-            }
 		}
 	}
 

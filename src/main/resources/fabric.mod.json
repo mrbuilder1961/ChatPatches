@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "wmch",
-  "version": "1.5.1",
+  "version": "1.5.2",
 
   "name": "Where's My Chat History",
   "description": "A versatile client-side chat mod that makes chat more customizable, just check out the config and the GitHub page for more info!",

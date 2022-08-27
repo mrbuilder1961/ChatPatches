@@ -1,14 +1,7 @@
-/**
- * Planned Features (highest priority is top):
- * - regex +normal search functionality (ChatHudMixin) (base on ChatFlow by Vazkii)
- * - animate new message to slide in from right, bottom, or left
- *
- * Completed Features (this version):
- *
- *
+/*
  * Planning:
- *  Regex GUI needs toMatch, toReplace, '&' char for color formatting,
- *  Small explanation, credit to Vazkii, save, delete, preview i/o
+ * Regex GUI needs toMatch, toReplace, '&' char for color formatting,
+ * Small explanation, credit to Vazkii, save, delete, preview i/o
  */
 package mechanicalarcane.wmch;
 

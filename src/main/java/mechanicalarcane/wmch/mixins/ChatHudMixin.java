@@ -20,10 +20,13 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import mechanicalarcane.wmch.config.Option;
 import mechanicalarcane.wmch.util.ChatLog;
@@ -98,22 +101,45 @@ public class ChatHudMixin {
     }
 
     /**
-     * Shifts the rendered chat messages box up a few pixels
-     * as to not interfere with the health and armor bars.
+     * These next 4 ModifyArg/ModifyVariable injectors
+     * all work together to move parts of the chat,
+     * including the message texts, background, scroll
+     * bar, and hover data.
+     *
+     * <p> All of these methods together (when enabled by
+     * {@link Option#SHIFT_HUD_POS}) shifts the rendered
+     * chat messages box up a few pixels as to not
+     * interfere with the armor bar.
      */
-    @ModifyVariable(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;translate(DDD)V", ordinal = 1))
-    private MatrixStack shiftChatPos(MatrixStack stack) {
-        if( Option.SHIFT_HUD_POS.get() )
-            stack.translate(0, -10, 0);
+    @ModifyArg(method = "render", index = 3, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;drawWithShadow(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/OrderedText;FFI)I"))
+    private float moveChatText(float yPos) {
+        return yPos - (Option.SHIFT_HUD_POS.get() ? 10f : 0f);
+    }
+    @ModifyArgs(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V", ordinal = 0))
+    private void moveChatBg(Args args) {
+        if( !Option.SHIFT_HUD_POS.get() )
+            return;
 
-        return stack;
+        args.set(2, ((int) args.get(2)) - 10);
+        args.set(4, ((int) args.get(4)) - 10);
+    }
+    @ModifyArg(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V", ordinal = 2))
+    private MatrixStack moveScrollBar(MatrixStack matrices) {
+        if( Option.SHIFT_HUD_POS.get() )
+            matrices.translate(0D, -10D, 0D);
+
+        return matrices;
+    }
+    @ModifyVariable(method = "getTextStyleAt(DD)Lnet/minecraft/text/Style;", argsOnly = true, ordinal = 1, at = @At("HEAD"))
+    private double moveHoverData(double x) {
+        return x + (Option.SHIFT_HUD_POS.get() ? 10 : 0);
     }
 
     /**
      * Modifies the incoming message by adding timestamps,
      * nicer (vanilla) playername texts, hover events, and
-     * in conjunction with {@link #injectCounter(Text, int, int, boolean, CallbackInfo)},
-     * even duplicate counters.
+     * in conjunction with {@link #injectCounter(Text, int,
+     * int, boolean, CallbackInfo)}, even duplicate counters.
      *
      * <p>Process explained:
      * IF not boundary AND timestamp enabled THEN add the formatted and styled timestamp

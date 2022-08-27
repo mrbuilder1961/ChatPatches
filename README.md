@@ -42,12 +42,14 @@ Be on the lookout for new versions, issues, and possible future features!
 
 ## Possible features
 
-- Make certain messages automatically copiable, such as the Open-To-LAN port
+- Make certain messages copiable on-click, such as the Open-To-LAN port
 - Chat search feature, with regex search capabilities
+- animate message recieve
+- add buttons to the edge of chat input box OR in multiplayer menu screen (for WMCH settings and chat searcher)
 
 ## Changelog
 
-See [individual releases](https://github.com/mrbuilder1961/WheresMyChatHistory/releases) for specific changelogs or the [commit list](https://github.com/mrbuilder1961/WheresMyChatHistory/commits). A complete one may be made at some point.
+See [individual releases](https://github.com/mrbuilder1961/WheresMyChatHistory/releases) for specific changelogs or the [commit list](https://github.com/mrbuilder1961/WheresMyChatHistory/commits).
 
 ## Wont fix/add
 

@@ -96,6 +96,7 @@ public class ChatLog {
     public static void deserialize() {
         long fileSize = -1;
         if( !rawData.startsWith("{") && rawData.length() > 1 ) {
+            LOGGER.info("Old chatlog file type detected, updating...");
             try {
                 write("{\"history\":[],\"messages\":");
                 channel.position(channel.size());
@@ -125,8 +126,8 @@ public class ChatLog {
 
         loaded = true;
 
-        LOGGER.info("Read chat log using {} bytes of data, containing {} messages and {} sent messages from ./logs/chatlog.json",
-			fileSize, data.messages.size(), data.history.size()
+        LOGGER.info("Read chat log{}, containing {} messages and {} sent messages from ./logs/chatlog.json",
+			fileSize != -1 ? "using " + fileSize + " bytes of data" : "", data.messages.size(), data.history.size()
 		);
     }
 
@@ -136,7 +137,11 @@ public class ChatLog {
 
         try {
             enforceSizes(Option.MAX_MESSAGES.get());
-            write( json.toJson(data, Data.class) );
+            final String stringified = json.toJson(data, Data.class);
+
+            // removes any overflowing file data so no corrupted JSON is stored
+            channel.truncate(stringified.getBytes().length);
+            write(stringified);
 
             LOGGER.info("Saved chat log containing {} messages and {} sent messages to ./logs/chatlog.json", data.messages.size(), data.history.size());
         } catch (IOException e) {
@@ -151,6 +156,7 @@ public class ChatLog {
     /** Shorthand for writing Strings to {@code ChatLog.channel} */
     private static void write(String str) throws IOException {
         channel.write( ByteBuffer.wrap(str.getBytes()) );
+        channel.position(0);
     }
 
     /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@code max}. */

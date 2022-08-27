@@ -106,7 +106,7 @@ public class Config {
                         new HoverEvent.EntityContent(net.minecraft.entity.EntityType.PLAYER, player.uuid(), player.name())
                     )
                 )
-                .withClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tell " + name) )
+                .withClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tell " + name + " ") )
             );
     }
 
