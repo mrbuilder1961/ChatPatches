@@ -9,6 +9,7 @@ targetCompatibility = JavaVersion.VERSION_17
 archivesBaseName = project.archivesBaseName
 group = project.group
 version = project.version
+def mappedNCRFile = "lib/NoChatReports-FABRIC-1.19-v1.2.3.jar"
 
 
 repositories {
@@ -47,7 +48,9 @@ dependencies {
 
 
 	// nochatreports for testing integration
-	modImplementation files("lib/NoChatReports-FABRIC-1.19-v1.2.3.jar")
+	if( file(mappedNCRFile).exists() ) {
+		modImplementation files(mappedNCRFile)
+	}
 
 	// FernFlower decompiler, currently spams log with tons of errors
     //fernflowerImplementation 'org.jetbrains.java.decompiler:fernflower:sponge-SNAPSHOT'
