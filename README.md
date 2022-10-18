@@ -36,7 +36,7 @@ If that doesn't work, then I don't know. Sorry, I'm not fluent in Gradle; most o
 | Boundary toggle | `true` | Should a boundary line show after using chat, leaving, and then joining again later? | `false` | `text.wmch.boundary` |
 | Boundary text | `&b[==============]` | The text that is shown when a boundary line is inserted into the chat, add ampersands (&) followed by a formatting code to prettify it. | `&l>-==-<` | `text.wmch.boundaryStr` |
 | Boundary color | `0xAAAA` (`43690`) | The color that's 'filled in' where applicable in the boundary text. | `14099062` | `text.wmch.boundaryColor` |
-| Chat log toggle | `false` | Should the chat be saved into a log so it can be re-added back into the chat in another game session? | `true` | text.wmch.saveChat |
+| Chat log toggle | `false` | Should the chat be saved into a log so it can be re-added back into the chat in another game session? | `true` | `text.wmch.saveChat` |
 | Playername text | `<$>` | The text that replaces the playername in most references (if present). Vanilla would be <$>; no brackets $. $ represents the playername. Only for player messages. | `[$]:` | `text.wmch.nameStr` |
 | Maximum chat messages | `1024` | The max amount of chat messages allowed to render. Not recommended to change, as it's automatically adjusted based on RAM allocation. | `2167` | `text.wmch.maxMsgs` |
 
@@ -59,4 +59,4 @@ unless I've glossed over a simpler method, this would take up wayyy too much ext
 This also applies for all other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
 
 ## License
-This mod is available under the GNU GPLv3 license. TL;DR: You can do whatever, as long as it's free, open-source, and credits me and the other authors.
+This mod is available under the GNU LGPLv3 license. TL;DR: You can do whatever, as long as it's free, open-source, and credits me and the other authors.
