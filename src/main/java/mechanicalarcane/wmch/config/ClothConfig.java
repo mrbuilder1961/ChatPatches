@@ -15,10 +15,7 @@ import mechanicalarcane.wmch.util.Util.Flag;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
-/**
- * The extended config menu, supported by Cloth Config and Mod Menu.
- * @see Config
- */
+/** The extended config menu, supported by Cloth Config and Mod Menu. @see Config */
 public class ClothConfig extends Config {
     protected ClothConfig() {
         super();
@@ -111,6 +108,12 @@ public class ClothConfig extends Config {
                     .setSaveConsumer(n -> Util.Flag.flags = n)
                 .build()
             );
+            /* debug.addEntry(
+                eBldr.startBooleanToggle( Text.of("whatever this was supposed to be"), false )
+                    .setDefaultValue( false )
+                    .setTooltip( Text.of("help me") )
+                .build()
+            ); */
         }
 
         bldr.setSavingRunnable(() -> {

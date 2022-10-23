@@ -50,11 +50,9 @@ public class Util {
 		 */
 		public static int flags = INIT.value;
 		private final int value;
-		//private final int[] slot;
 
-		private Flag(int value) { //,int[] slot
+		private Flag(int value) {
 			this.value = value;
-			//this.slot = slot;
 		}
 
 		public static String binary() { return Integer.toBinaryString(flags); }
@@ -119,7 +117,7 @@ public class Util {
 
 	/** Removes all ampersand + formatting code sequences from {@code formatted}. */
 	public static String strip(String formatted) {
-		return delAll(formatted, "(&[0-9a-fA-Fk-orK-OR])+");
+		return delAll(formatted, "(?:&[0-9a-fA-Fk-orK-OR])+");
 	}
 
 	/** Constructs a Text object from an OrderedText */
@@ -167,20 +165,19 @@ public class Util {
 	 */
 	public static MutableText formatString(String dirty) {
 		MutableText out = Text.empty();
-		Pattern finder = Pattern.compile("(?:&[0-9a-fA-Fk-orK-OR])+");
-		Matcher results = finder.matcher(dirty);
+		Pattern formatCode = Pattern.compile("(?:&[0-9a-fA-Fk-orK-OR])+");
+		Matcher results = formatCode.matcher(dirty);
 
-		if(dirty.matches(".*" + finder.pattern() + ".*")) {
+		if(dirty.matches(".*" + formatCode.pattern() + ".*")) {
 			// if there is text before a formatter then add it alone
-			if(dirty.split(finder.pattern())[0].length() > 0) {
-				String prfx = dirty.split(finder.pattern())[0];
+			if( dirty.split(formatCode.pattern())[0].length() > 0 ) {
+				String prfx = dirty.split( formatCode.pattern() )[0];
 				out.append(prfx);
-				dirty = dirty.replace(prfx, "");
+				dirty = delAll(dirty, prfx);
 			}
-			;
 
-			List<String> texts = new ArrayList<>(Arrays.asList(dirty.split(finder.pattern())));
-			texts.removeIf(s -> s.equals(""));
+			List<String> texts = new ArrayList<>(Arrays.asList( dirty.split(formatCode.pattern()) ));
+			texts.removeIf(String::isBlank);
 			int i = 0;
 
 			while (results.find()) {
@@ -189,12 +186,13 @@ public class Util {
 				for(int j = 0; j < codes.length; ++j)
 					style[j] = Formatting.byCode(codes[j]);
 
-				out.append(Text.literal(texts.get(i++)).formatted(style));
+				out.append( Text.literal(texts.get(i++)).formatted(style) );
 			}
 
 			return out;
-		} else
-			return Text.literal(dirty);
+		}
+
+		return Text.literal(dirty);
 	}
 
 	public static boolean isBoundaryLine(String text) {

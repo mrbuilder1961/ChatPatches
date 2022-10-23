@@ -70,6 +70,7 @@ public class Option<T> {
     public boolean changed() {
         return val != def || !val.equals(def);
     }
+    /** Runs this Option's save consumer with {@code inc}. */
     public void save(T inc) {
         this.saveConsumer.accept(inc, this);
     }
@@ -123,7 +124,7 @@ public class Option<T> {
         } catch(IllegalArgumentException e) {
             failed = true;
 
-            LOGGER.warn("[TIME_STR()] An IllegalArgumentException occurred while trying to make the timestamp (if you see this make a bug report!):", e);
+            LOGGER.warn("[TIME_STR()] An IllegalArgumentException occurred while trying to verify the timestamp (if you see this make a bug report!):", e);
         } finally {
             me.setInDefConfig(
                 new SimpleDateFormat( (failed ? me.get() : inc).replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'").replaceAll("'{2,}", "'") ).toPattern()
@@ -136,11 +137,11 @@ public class Option<T> {
             formatString(out);
             me.setInDefConfig(out);
         } catch(Exception e) {
-            LOGGER.warn("[TIME_FORMAT()] An error occurred while trying to save TIME_FORMAT Option:", e);
+            LOGGER.warn("[TIME_FORMAT()] An error occurred while trying to save {}:", me.key.toUpperCase(), e);
         }
     });
     public static final Option<Integer> TIME_COLOR = new Option<>(Formatting.LIGHT_PURPLE.getColorValue(), "timeColor", (inc, me) -> {
-        if(16777216 > inc && inc >= 0) me.setInDefConfig(inc);
+        if(0xFFFFFF > inc && inc >= 0) me.setInDefConfig(inc);
     });
 
     public static final Option<Boolean> HOVER = new Option<>(true, "hover", TIME.getSaveConsumer());
@@ -225,6 +226,7 @@ public class Option<T> {
                 LOGGER.error("[updateEntryBuilder] Unexpected class \"{}\", expected java.lang.(String|Integer|Short|Boolean)", val.getClass().getName());
                 break;
         }
+        
         return builder;
     }
 

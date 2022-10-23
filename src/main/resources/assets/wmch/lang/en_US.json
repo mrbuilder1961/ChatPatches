@@ -18,11 +18,9 @@
     "text.wmch.counter": "Message counter toggle",
     "text.wmch.counterStr": "Message counter text",
     "text.wmch.counterColor": "Message counter color",
-    "text.wmch.leniantEquals": "Leniant counter toggle",
     "text.wmch.desc.counter": "Should a message counter show after a message to indicate multiple were sent?",
     "text.wmch.desc.counterStr": "The text that's added to the end of a message to indicate multiple duplicates were sent. Must include a $ for the number of duplicates.",
     "text.wmch.desc.counterColor": "The color that's 'filled in' where applicable in the counter text, for example '&r' will be replaced with this color.",
-    "text.wmch.desc.leniantEquals": "When enabled, the dupe counter will mark a message as 'duped' even if the text's case is slightly different.",
 
     "text.wmch.boundary": "Boundary toggle",
     "text.wmch.boundaryStr": "Boundary text",

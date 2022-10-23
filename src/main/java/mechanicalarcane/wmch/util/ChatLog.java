@@ -58,7 +58,7 @@ public class ChatLog {
 
     public static boolean loaded = false;
 
-    /** Internal class for serializing, used seperately from ChatLog for simplification */
+    /** Micro class for serializing, used seperately from ChatLog for simplification */
     private static class Data {
         public List<Text> messages;
         public List<String> history;

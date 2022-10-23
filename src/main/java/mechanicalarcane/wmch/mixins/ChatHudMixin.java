@@ -45,8 +45,9 @@ import net.minecraft.text.Text;
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatHud.class, priority = 1)
 public class ChatHudMixin {
+    // these constants represent the indexes of (customized) message siblings
     private final int TIME = 0;
-    private final int NAME_MSG = 1;
+    private final int OG_MSG = 1;
     private final int DUPE = 2;
 
     @Shadow @Final MinecraftClient client;
@@ -166,7 +167,8 @@ public class ChatHudMixin {
                     .append( config.getFormattedName(msgSender) )
                     .append( Text.literal( mStr.replaceFirst("^<[a-zA-Z0-9_]{3,16}> ", "") ).setStyle(mStyle) )
                 : m
-            );
+            )
+        ;
 
 
         ChatLog.addMessage(modified, Option.MAX_MESSAGES.get());
@@ -199,17 +201,18 @@ public class ChatHudMixin {
     public void injectCounter(Text m, int id, int tick, boolean rfrs, CallbackInfo ci) {
         // IF counter is enabled AND there are messages AND the message isn't a boundary line THEN continue
         if( Option.COUNTER.get() && messages.size() > 0 && !m.getString().equals(Util.formatString(Option.BOUNDARY_STR.get()).getString()) ) {
+
             ChatHudLine<Text> last = messages.get(0);
             final List<Text> sibs = m.getSiblings();
-            final List<Text> lSibs = last.getText().getSiblings();
+            final List<Text> lastSibs = last.getText().getSiblings();
 
             // IF the last and incoming message bodies are equal AND the 4+2 flags aren't set THEN continue
-            if( !RESET_FINISHING.isSet() && sibs.get(NAME_MSG).getString() .equalsIgnoreCase( lSibs.get(NAME_MSG).getString()) ) {
+            if( !RESET_FINISHING.isSet() && sibs.get(OG_MSG).getString() .equalsIgnoreCase( lastSibs.get(OG_MSG).getString()) ) {
                 // how many duped messages plus this one
                 int dupes = (sibs.size() > DUPE
-                    ? Integer.valueOf(delAll(sibs.get(DUPE).getString(), "\\D"))
-                    : lSibs.size() > DUPE
-                        ? Integer.valueOf(delAll(lSibs.get(DUPE).getString(), "\\D"))
+                    ? Integer.valueOf(delAll( sibs.get(DUPE).getString(), "\\D") )
+                    : lastSibs.size() > DUPE
+                        ? Integer.valueOf(delAll( lastSibs.get(DUPE).getString(), "\\D") )
                         : 1
                 ) + 1;
 
@@ -218,10 +221,10 @@ public class ChatHudMixin {
                 Util.setOrAdd( last.getText().getSiblings(), DUPE, config.getFormattedCounter(dupes) );
 
                 // IF the last message had a timestamp THEN update it
-                if(lSibs.get(TIME).getString().length() > TIME)
+                if(lastSibs.get(TIME).getString().length() > TIME)
                     last.getText().getSiblings().set(TIME, sibs.get(TIME));
                 // Replace the old text with the incoming text
-                last.getText().getSiblings().set(NAME_MSG, sibs.get(NAME_MSG));
+                last.getText().getSiblings().set(OG_MSG, sibs.get(OG_MSG));
 
                 // modifies the actual message to have a counter
                 if( !messages.isEmpty() )
@@ -236,7 +239,6 @@ public class ChatHudMixin {
                     client.textRenderer
                 );
                 Collections.reverse(visibles);
-
                 for(OrderedText text : visibles)
                     Util.setOrAdd( visibleMessages, visibles.indexOf(text), new ChatHudLine<>(tick, text, id) );
 

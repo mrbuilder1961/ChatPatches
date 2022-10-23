@@ -14,10 +14,10 @@ import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
-import mechanicalarcane.wmch.command.CopyMessageCommand;
 import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.config.Option;
 import mechanicalarcane.wmch.util.ChatLog;
+import mechanicalarcane.wmch.util.CopyMessageCommand;
 import mechanicalarcane.wmch.util.Util;
 import mechanicalarcane.wmch.util.Util.Flag;
 import net.fabricmc.api.ClientModInitializer;
@@ -47,7 +47,7 @@ public class WMCH implements ClientModInitializer {
 
 
 	/**
-	 *?IF dev environment, downloads CrowdInTranslate files.
+	 *?If devenv, downloads CrowdInTranslate files.
 	 * Validates the newly created Config object.
 	 * Initializes the ChatLog.
 	 * Registers the CopyMessageCommand on client's server initialization
