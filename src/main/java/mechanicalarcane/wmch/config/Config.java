@@ -15,12 +15,10 @@ import org.jetbrains.annotations.Nullable;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.authlib.GameProfile;
 
 import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.WMCH.Relation;
 import mechanicalarcane.wmch.util.Util;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.network.message.MessageSender;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
@@ -29,6 +27,9 @@ import net.minecraft.text.Text;
 
 /** The config class for WMCH. Extended by {@link ClothConfig} for use with ModMenu. */
 public class Config {
+    public static final boolean hasModMenu = WMCH.FABRICLOADER.getModContainer("modmenu").isPresent();
+    public static final boolean hasClothConfig = WMCH.FABRICLOADER.getModContainer("cloth-config").isPresent();
+
     // configurable
     public boolean time;
     public String timeStr;
@@ -44,9 +45,8 @@ public class Config {
     public int boundaryColor;
     public boolean saveChat;
     public boolean shiftHudPos;
-    public int maxMsgs;
     public String nameStr;
-    //public boolean hideUnsecureNotif;
+    public int maxMsgs;
 
     protected Config() {
         Option.defaultAll(this);
@@ -54,7 +54,7 @@ public class Config {
 
     /** Creates a new Config or ClothConfig depending on installed Relations. */
     public static Config newConfig() {
-        return (Relation.CLOTH_CONFIG.installed() && Relation.MODMENU.installed()) ? new ClothConfig() : new Config();
+        return (hasModMenu && hasClothConfig) ? new ClothConfig() : new Config();
     }
 
 
@@ -63,13 +63,13 @@ public class Config {
      */
     public void validate() {
         if( !(this instanceof ClothConfig) )
-            LOGGER.warn("{} and {} aren't installed in a recent enough version; no in-game config integration available.", Relation.CLOTH_CONFIG.getName(), Relation.MODMENU.getName());
+            LOGGER.warn("[Config.validate] Cloth Config and Mod Menu aren't installed in a recent enough version; no in-game config integration available.");
 
         readFromFile();
         Option.saveAll(this);
 
-        Option.logDiffs();
-        LOGGER.info("Finished validating config!");
+        Option.logDiff();
+        LOGGER.info("[Config.validate] Finished validating config!");
     }
 
 
@@ -96,14 +96,14 @@ public class Config {
         ;
     }
 
-    public MutableText getFormattedName(MessageSender player) {
-        String name = player.name().getString();
+    public MutableText getFormattedName(GameProfile player) {
+        String name = player.getName();
         return Util.formatString(Option.NAME_STR.get().replaceAll("\\$", name) + " ")
             .setStyle( Style.EMPTY
                 .withHoverEvent(
                     new HoverEvent(
                         HoverEvent.Action.SHOW_ENTITY,
-                        new HoverEvent.EntityContent(net.minecraft.entity.EntityType.PLAYER, player.uuid(), player.name())
+                        new HoverEvent.EntityContent( net.minecraft.entity.EntityType.PLAYER, player.getId(), Text.of(player.getName()) )
                     )
                 )
                 .withClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tell " + name + " ") )
@@ -119,12 +119,12 @@ public class Config {
 
     /** Loads the config settings saved at {@code ./config/wmch.json} into this Config instance */
     public void readFromFile() {
-        try(FileReader fr = new FileReader( FabricLoader.getInstance().getConfigDir().toFile().getAbsolutePath() + "/wmch.json" )) {
+        try(FileReader fr = new FileReader(Util.CONFIG_PATH)) {
             config = new Gson().fromJson(fr, config.getClass());
 
             if( !(config instanceof Config) ) {
                 reset();
-                LOGGER.info("Something was broken, so the config has been reset.");
+                LOGGER.info("[Config.read] Something was broken, so the config has been reset.");
             }
 
             // replaces the 'this' Config object's field values with ones from the config file
@@ -138,28 +138,28 @@ public class Config {
                 option.set( this, config.getClass().getFields()[i].get(config) );
             }
 
-            LOGGER.info("Loaded config info from config/wmch.json!");
+            LOGGER.info("[Config.read] Loaded config info from config/wmch.json!");
         } catch(FileNotFoundException e) {
             reset();
-            LOGGER.warn("[readFromFile] Couldn't find {}'s config file in config/wmch.json; created a default one.", WMCH.NAMES[0], e);
+            LOGGER.warn("[Config.read] Couldn't find {}'s config file in config/wmch.json; created a default one.", WMCH.NAMES[0], e);
         } catch(Exception e) {
-            LOGGER.error("[readFromFile] An error occurred while trying to load {}'s config data; resetting:", WMCH.NAMES[0], e);
+            LOGGER.error("[Config.read] An error occurred while trying to load {}'s config data; resetting:", WMCH.NAMES[0], e);
             reset();
         }
     }
 
     /** Saves this {@code Config} instance to {@code ./config/wmch.json} */
     public void writeToFile() {
-        try(FileWriter fw = new FileWriter( WMCH.FABRICLOADER.getConfigDir().toFile().getAbsolutePath() + "/wmch.json" )) {
+        try(FileWriter fw = new FileWriter(Util.CONFIG_PATH)) {
             new GsonBuilder()
                 .excludeFieldsWithModifiers(Modifier.STATIC)
                 .setPrettyPrinting()
             .create()
                 .toJson(this, this.getClass(), fw);
 
-            LOGGER.info("Saved config info to config/wmch.json!");
+            LOGGER.info("[Config.write] Saved config info to config/wmch.json!");
         } catch(Exception e) {
-            LOGGER.error("[writeToFile] An error occurred while trying to save {}'s config data:", WMCH.NAMES[0], e);
+            LOGGER.error("[Config.write] An error occurred while trying to save {}'s config data:", WMCH.NAMES[0], e);
         }
     }
 

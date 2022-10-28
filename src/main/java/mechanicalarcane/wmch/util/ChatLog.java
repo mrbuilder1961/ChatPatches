@@ -20,7 +20,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
-import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.config.Option;
 import net.minecraft.SharedConstants;
 import net.minecraft.text.Text;
@@ -30,7 +29,7 @@ import net.minecraft.text.Text;
  * run directory located at {@code ./logs/chatlog.json}.
  */
 public class ChatLog {
-    private static final File file = new File( WMCH.FABRICLOADER.getGameDir().toFile().getAbsolutePath() + "/logs/chatlog.json" );
+    private static final File file = new File(Util.CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Text.class, new JsonSerializer<Text>() {
             @Override public JsonElement serialize(Text src, Type typeOfSrc, JsonSerializationContext context) {
@@ -80,7 +79,7 @@ public class ChatLog {
 
                 initialized = true;
             } catch(IOException e) {
-                LOGGER.error("[initialize] Couldn't create chatlog file connections:", e);
+                LOGGER.error("[ChatLog()] Couldn't create chatlog file connections:", e);
             }
         }
     }
@@ -96,7 +95,7 @@ public class ChatLog {
     public static void deserialize() {
         long fileSize = -1;
         if( !rawData.startsWith("{") && rawData.length() > 1 ) {
-            LOGGER.info("Old chatlog file type detected, updating...");
+            LOGGER.info("[Option.deserialize] Old chatlog file type detected, updating...");
             try {
                 write("{\"history\":[],\"messages\":");
                 channel.position(channel.size());
@@ -104,7 +103,7 @@ public class ChatLog {
 
                 fileSize = channel.size();
             } catch (IOException e) {
-                LOGGER.error("[deserialize] An I/O error occurred while trying to update the chat log:", e);
+                LOGGER.error("[Option.deserialize] An I/O error occurred while trying to update the chat log:", e);
             }
         } else if(rawData.length() < 2) {
             data = new Data(100);
@@ -117,7 +116,7 @@ public class ChatLog {
             data = json.fromJson(rawData, Data.class);
             enforceSizes(Option.MAX_MESSAGES.get());
         } catch (com.google.gson.JsonSyntaxException e) {
-            LOGGER.error("[deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
+            LOGGER.error("[Option.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
             data = new Data(100);
             loaded = true;
@@ -126,7 +125,7 @@ public class ChatLog {
 
         loaded = true;
 
-        LOGGER.info("Read chat log{}, containing {} messages and {} sent messages from ./logs/chatlog.json",
+        LOGGER.info("[Option.deserialize] Read chat log{}, containing {} messages and {} sent messages from ./logs/chatlog.json",
 			fileSize != -1 ? "using " + fileSize + " bytes of data" : "", data.messages.size(), data.history.size()
 		);
     }
@@ -143,9 +142,9 @@ public class ChatLog {
             channel.truncate(stringified.getBytes().length);
             write(stringified);
 
-            LOGGER.info("Saved chat log containing {} messages and {} sent messages to ./logs/chatlog.json", data.messages.size(), data.history.size());
+            LOGGER.info("[Option.serialize] Saved chat log containing {} messages and {} sent messages to ./logs/chatlog.json", data.messages.size(), data.history.size());
         } catch (IOException e) {
-            LOGGER.error("[serialize] An I/O error occurred while trying to write the chat log:", e);
+            LOGGER.error("[Option.serialize] An I/O error occurred while trying to write the chat log:", e);
         } finally {
             if(crashing)
                 savedAfterCrash = true;

@@ -53,9 +53,8 @@ public class ClothConfig extends Config {
 
         eBldr = Option.SAVE_CHAT.updateEntryBuilder(eBldr, hud);
         eBldr = Option.SHIFT_HUD_POS.updateEntryBuilder(eBldr, hud);
-        eBldr = Option.MAX_MESSAGES.updateEntryBuilder(eBldr, hud);
         eBldr = Option.NAME_STR.updateEntryBuilder(eBldr, hud);
-        //eBldr = Option.HIDE_UNSECURE_NOTIF.updateEntryBuilder(eBldr, hud);
+        eBldr = Option.MAX_MESSAGES.updateEntryBuilder(eBldr, hud);
 
         // debug options
         if(WMCH.FABRICLOADER.isDevelopmentEnvironment()) {
@@ -92,7 +91,7 @@ public class ClothConfig extends Config {
                                 json.toJson(enUSFile, obj, gb);
                                 json.toJson(enUSFile, obj, nz);
                             } catch (Exception e) {
-                                WMCH.LOGGER.warn("[debug]: writing lang files failed:", e);
+                                WMCH.LOGGER.warn("[Debug.langFiles]: Writing lang files failed:", e);
                             }
                         }
                     })
@@ -117,9 +116,9 @@ public class ClothConfig extends Config {
         }
 
         bldr.setSavingRunnable(() -> {
-            Option.logDiffs();
+            Option.logDiff();
             WMCH.config.writeToFile();
-            WMCH.LOGGER.info("Finished validating the Mod Menu/Cloth Config config!");
+            WMCH.LOGGER.info("[ClothConfig.save] Finished validating the Mod Menu/Cloth Config config!");
         });
 
         return bldr.build();

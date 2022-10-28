@@ -1,4 +1,4 @@
-package mechanicalarcane.wmch.mixins;
+package mechanicalarcane.wmch.mixin;
 
 import java.util.List;
 
@@ -9,7 +9,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.text.Text;
 
 /**
  * A mixin accessor method that
@@ -25,5 +24,5 @@ import net.minecraft.text.Text;
 @Mixin(value = ChatHud.class, priority = 1)
 public interface ChatHudAccessor {
     @Accessor
-    public List<ChatHudLine<Text>> getMessages();
+    public List<ChatHudLine> getMessages();
 }

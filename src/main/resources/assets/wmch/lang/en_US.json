@@ -33,12 +33,10 @@
     "text.wmch.shiftHudPos": "Shift chat interface",
     "text.wmch.maxMsgs": "Maximum chat messages",
     "text.wmch.nameStr": "Playername text",
-    "text.wmch.hideUnsecureNotif": "Hide 'unsecure message' notif",
     "text.wmch.desc.saveChat": "Should the chat be saved into a log so it can be re-added back into the chat in another game session?",
     "text.wmch.desc.shiftHudPos": "Should that chat interface be shifted up about 10 pixels to not obstruct the armor bar?",
     "text.wmch.desc.maxMsgs": "The max amount of chat messages allowed to render. Vanilla has this set as 100, maximum allowed is 32,767. Keep in mind the higher the value, the more memory the chat requires.",
     "text.wmch.desc.nameStr": "The text that replaces the playername in most references (if present). Vanilla is <$>; no brackets $. $ represents the playername. Only for player messages.",
-    "text.wmch.desc.hideUnsecureNotif": "Should the 'Not Secure', 'Modified', and 'Unsecure' notifications be removed? If NoChatReports is installed, this instead follows those settings.",
 
     "text.wmch.category.time": "Timestamp",
     "text.wmch.category.hover": "Hover Info",

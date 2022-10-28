@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "wmch",
-  "version": "1.5.2",
+  "version": "1.5.3",
 
   "name": "Where's My Chat History",
   "description": "A versatile client-side chat mod that makes chat more customizable, just check out the config and the GitHub page for more info!",
@@ -19,13 +19,13 @@
   "environment": "client",
   "entrypoints": {
     "client": ["mechanicalarcane.wmch.WMCH"],
-    "modmenu": ["mechanicalarcane.wmch.config.ModMenuIntegration"]
+    "modmenu": ["mechanicalarcane.wmch.integration.ModMenuIntegration"]
   },
   "mixins": [ "wmch.mixins.json" ],
 
   "depends": {
     "java": ">=17",
-    "minecraft": "1.19",
+    "minecraft": "1.19.x",
     "fabricloader": ">=0.14.0",
     "fabric": "*"
   },

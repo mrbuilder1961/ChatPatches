@@ -3,16 +3,10 @@
  * Regex GUI needs toMatch, toReplace, '&' char for color formatting,
  * Small explanation, credit to Vazkii, save, delete, preview i/o
  */
+
 package mechanicalarcane.wmch;
 
-import static net.fabricmc.loader.api.metadata.ModDependency.Kind.BREAKS;
-import static net.fabricmc.loader.api.metadata.ModDependency.Kind.DEPENDS;
-import static net.fabricmc.loader.api.metadata.ModDependency.Kind.RECOMMENDS;
-import static net.fabricmc.loader.api.metadata.ModDependency.Kind.SUGGESTS;
-
-import java.io.File;
 import java.util.List;
-import java.util.Optional;
 
 import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.config.Option;
@@ -25,14 +19,11 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.Version;
-import net.fabricmc.loader.api.VersionParsingException;
-import net.fabricmc.loader.api.metadata.ModDependency;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.network.message.MessageSender;
-import net.minecraft.network.message.MessageType;
+import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.network.message.MessageMetadata;
+import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
@@ -40,10 +31,10 @@ public class WMCH implements ClientModInitializer {
 	public static final String[] NAMES = { "wmch", "Where's My Chat History", "WMCH" };
 	public static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger(NAMES[1]);
 	public static final FabricLoader FABRICLOADER = FabricLoader.getInstance();
-	public static final File chatLogFile = new File( FABRICLOADER.getGameDir().toFile().getAbsolutePath() + "/logs/chatlog.json" );
 
 	public static Config config = Config.newConfig();
-	public static MessageSender msgSender = Util.NIL_SENDER;
+	/** Represents the sender and timestamp data of the last recieved chat message. */
+	public static MessageMetadata lastMeta = Util.NIL_METADATA;
 
 
 	/**
@@ -86,9 +77,9 @@ public class WMCH implements ClientModInitializer {
 							mc.inGameHud.getChatHud().addToMessageHistory(sent);
 					if( messagesSize > 0)
 						for(Text msg : ChatLog.getMessages().toArray( new Text[messagesSize] ))
-							mc.inGameHud.getChatHud().addMessage(msg);
+							mc.inGameHud.getChatHud().addMessage(msg, MessageSignatureData.EMPTY, new MessageIndicator(0x382fb5, null, null, "Restored"));
 
-					LOGGER.info("Added {} messages and {} sent messages from ./logs/chatlog.json into Minecraft!", messagesSize, historySize);
+					LOGGER.info("[ChatLog.worldInit] Added {} messages and {} history messages from ./logs/chatlog.json into Minecraft!", messagesSize, historySize);
 				}
 
 				// resets flags
@@ -98,23 +89,21 @@ public class WMCH implements ClientModInitializer {
 				// Adds boundary message if not first join and messages exist and last message isn't a boundary line
 				if(Option.BOUNDARY.get()) {
 					try {
-						List<ChatHudLine<Text>> chatMsgs = Util.accessChatHud(mc).getMessages();
+						List<ChatHudLine> chatMsgs = Util.accessChatHud(mc).getMessages();
 						// IF there is more than one message AND the last message isn't also a boundary line THEN adds the boundary line
-						if(!chatMsgs.isEmpty() && !Util.isBoundaryLine( chatMsgs.get(0).getText().getString() )) {
-							mc.inGameHud.onChatMessage(
-								net.minecraft.util.registry.BuiltinRegistries.MESSAGE_TYPE.get(MessageType.SYSTEM),
-								Util.formatString(Option.BOUNDARY_STR.get()) .setStyle(Style.EMPTY.withColor(Option.BOUNDARY_COLOR.get())),
-								Util.NIL_SENDER
+						if(!chatMsgs.isEmpty() && !Util.isBoundaryLine( chatMsgs.get(0).content().getString() )) {
+							mc.inGameHud.getChatHud().addMessage(
+								Util.formatString(Option.BOUNDARY_STR.get()) .setStyle(Style.EMPTY.withColor(Option.BOUNDARY_COLOR.get()))
 							);
 						}
 					} catch(Exception e) {
-						LOGGER.warn("[boundaryAdder] An error occurred while joining a new session:", e);
+						LOGGER.warn("[WMCH.boundary] An error occurred while joining a new session:", e);
 					}
 				}
 			}
 		});
 
-		LOGGER.info("Finished setting up!");
+		LOGGER.info("[WMCH()] Finished setting up!");
 	}
 
 
@@ -128,46 +117,7 @@ public class WMCH implements ClientModInitializer {
 		try {
 			ChatLog.serialize(crashed);
 		} catch(Exception e) {
-			LOGGER.warn("[writeCachedData({})] An error occurred while trying to save the chat log{}:", crashed, crashed ? " after a crash" : "", e);
+			LOGGER.warn("[WMCH.writeCached({})] An error occurred while trying to save the chat log{}:", crashed, crashed ? " after a crash" : "", e);
 		}
-	}
-
-
-	public static class Relation {
-		private boolean installed;
-		private String id;
-		private String name;
-		private Version version; // 0.0.0 if not present
-		private ModDependency.Kind type;
-
-
-		private Relation(String id, String version, ModDependency.Kind type) {
-			try {
-				Optional<ModContainer> me = FABRICLOADER.getModContainer(id);
-
-				this.installed = me.isPresent();
-				this.id = id;
-				this.name = installed ? me.get().getMetadata().getName() : id;
-				this.version = me.isPresent() ? me.get().getMetadata().getVersion() : Version.parse("0.0.0");
-				this.type = type;
-
-			} catch(VersionParsingException e) {
-				LOGGER.fatal("[Relation()] This shouldn't appear, it means a mod relation version was inputted incorrectly. Please report this on GitHub:", e);
-			}
-		}
-
-
-		public boolean installed() { return installed; }
-		public String getId() { return id; }
-		public String getName() { return name; }
-		public Version getVersion() { return version; }
-		public ModDependency.Kind getType() { return type; }
-
-
-		public static final Relation FABRIC_API = new Relation("fabric-api", "0.58.0", DEPENDS);
-		public static final Relation CLOTH_CONFIG = new Relation("cloth-config", "7.0.73", RECOMMENDS);
-		public static final Relation MODMENU = new Relation("modmenu", "4.0.4", RECOMMENDS);
-		public static final Relation NOCHATREPORTS = new Relation("nochatreports", "*", SUGGESTS);
-		public static final Relation MORECHATHISTORY = new Relation("morechathistory", "*", BREAKS);
 	}
 }

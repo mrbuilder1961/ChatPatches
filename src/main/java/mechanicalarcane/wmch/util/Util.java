@@ -1,5 +1,6 @@
 package mechanicalarcane.wmch.util;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,11 +10,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.collect.Lists;
+import com.mojang.authlib.GameProfile;
 
+import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.config.Option;
-import mechanicalarcane.wmch.mixins.ChatHudAccessor;
+import mechanicalarcane.wmch.mixin.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.message.MessageSender;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.network.message.MessageMetadata;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
@@ -26,7 +30,10 @@ import net.minecraft.util.Formatting;
  */
 public class Util {
 	public static final UUID NIL_UUID = new UUID(0, 0);
-	public static final MessageSender NIL_SENDER = new MessageSender(NIL_UUID, Text.empty(), Text.empty());
+	public static final GameProfile NIL_PROFILE = new GameProfile(NIL_UUID, "");
+	public static final MessageMetadata NIL_METADATA = new MessageMetadata(NIL_UUID, Instant.EPOCH, 0);
+	public static final String CONFIG_PATH = WMCH.FABRICLOADER.getConfigDir().toString() + "/wmch.json";
+	public static final String CHATLOG_PATH = WMCH.FABRICLOADER.getGameDir().toString() + "/logs/chatlog.json";
 
 	public static enum Flag {
 		INIT(0b1000),
@@ -77,6 +84,25 @@ public class Util {
 		//public boolean otherFlagsSet() { return (isSet() ? (flags ^ value) : flags) > 0; } // true if this flag is not the *sole* flag set
 	}
 
+
+	/**
+	 * Takes a {@code UUID} and
+	 * {@code NetworkHandler} and searches
+	 * for a player with the id provided,
+	 * otherwise returns {@code NIL_PROFILE}.
+	 */
+	public static GameProfile getProfile(MinecraftClient client, UUID id) {
+		List<PlayerListEntry> players = new ArrayList<>( client.getNetworkHandler().getPlayerList() );
+
+		for(PlayerListEntry player : players) {
+			GameProfile prof = player.getProfile();
+
+			if( prof.getId().equals(id) )
+				return prof;
+		}
+
+		return NIL_PROFILE;
+	}
 
 	/** A shorthand method for accessing methods from {@code client}'s {@code net.minecraft.client.gui.hud.ChatHud} object. */
 	public static ChatHudAccessor accessChatHud(MinecraftClient client) {

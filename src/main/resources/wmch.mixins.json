@@ -1,13 +1,13 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "mechanicalarcane.wmch.mixins",
+  "package": "mechanicalarcane.wmch.mixin",
   "compatibilityLevel": "JAVA_17",
   "verbose": true,
   "mixins": [],
   "client": [
     "ChatHudAccessor",
-    "ChatHudListenerMixin",
+    "MessageHandlerMixin",
     "ChatHudMixin",
     "CPNHMixin",
     "MinecraftClientMixin"

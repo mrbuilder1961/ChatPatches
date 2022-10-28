@@ -5,6 +5,7 @@ import static mechanicalarcane.wmch.util.Util.delAll;
 import static mechanicalarcane.wmch.util.Util.formatString;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,7 +23,7 @@ import net.minecraft.util.Formatting;
 
 /** A Config option class for creating, accessing, and modifying settings. */
 public class Option<T> {
-    public static String diff = "Changes made:";
+    public static String diff = "[Option.logDiff] Changes made:";
 
     private T val;
     private T def;
@@ -84,18 +85,18 @@ public class Option<T> {
         try {
             WMCH.config.getClass().getField(key).set(WMCH.config, inc);
         } catch(IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-            LOGGER.fatal("[setInDefConfig] You should not be seeing this unless I screwed something up; in which case please open a bug report of this on GitHub:", e);
+            LOGGER.fatal("[Option.setInDefConfig] You should not be seeing this unless I screwed something up; in which case please open a bug report of this on GitHub:", e);
         }
     }
 
 
     /** Prints any changes between altering of Options */
-    public static void logDiffs() {
-        if(diff == "Changes made:")
-            LOGGER.info("No changes made!");
+    public static void logDiff() {
+        if(diff == "[Option.logDiff] Changes made:")
+            LOGGER.info("[Option.logDiff] No changes made!");
         else
             LOGGER.info(diff);
-        diff = "Changes made:";
+        diff = "[Option.logDiff] Changes made:";
     }
 
     /** For updating the GitHub table */
@@ -112,7 +113,7 @@ public class Option<T> {
             ));
         });
 
-        LOGGER.warn(bldr.toString());
+        LOGGER.warn("[Option.printGithubTables]\n" + bldr.toString());
     }
 
 
@@ -124,7 +125,7 @@ public class Option<T> {
         } catch(IllegalArgumentException e) {
             failed = true;
 
-            LOGGER.warn("[TIME_STR()] An IllegalArgumentException occurred while trying to verify the timestamp (if you see this make a bug report!):", e);
+            LOGGER.warn("[Option.TIME_STR()] An IllegalArgumentException occurred while trying to verify the timestamp (if you see this make a bug report!):", e);
         } finally {
             me.setInDefConfig(
                 new SimpleDateFormat( (failed ? me.get() : inc).replaceAll("([ABCIJN-RTUVbcefgijln-rtvx]+)", "'$1'").replaceAll("'{2,}", "'") ).toPattern()
@@ -137,7 +138,7 @@ public class Option<T> {
             formatString(out);
             me.setInDefConfig(out);
         } catch(Exception e) {
-            LOGGER.warn("[TIME_FORMAT()] An error occurred while trying to save {}:", me.key.toUpperCase(), e);
+            LOGGER.warn("[Option.TIME_FORMAT()] An error occurred while trying to save {}:", me.key.toUpperCase(), e);
         }
     });
     public static final Option<Integer> TIME_COLOR = new Option<>(Formatting.LIGHT_PURPLE.getColorValue(), "timeColor", (inc, me) -> {
@@ -173,14 +174,14 @@ public class Option<T> {
             me.setInDefConfig(inc);
     });
     public static final Option<String> NAME_STR = new Option<>("<$>", "nameStr", (inc, me) -> {if(inc.contains("$")) me.setInDefConfig(inc);});
-    //public static final Option<Boolean> HIDE_UNSECURE_NOTIF = new Option<>(true, "hideUnsecureNotif", TIME.getSaveConsumer());
+    public static final Option<Boolean> HIDE_INDICATORS = new Option<>(true, "hideIndicators", TIME.getSaveConsumer());
 
     public static final List<Option<?>> OPTIONS = new ArrayList<>(Arrays.asList(
         TIME, TIME_STR, TIME_COLOR, TIME_FORMAT,
         HOVER, HOVER_STR,
         COUNTER, COUNTER_STR, COUNTER_COLOR,
         BOUNDARY, BOUNDARY_STR, BOUNDARY_COLOR,
-        SAVE_CHAT, SHIFT_HUD_POS, MAX_MESSAGES, NAME_STR/*, HIDE_UNSECURE_NOTIF*/
+        SAVE_CHAT, SHIFT_HUD_POS, HIDE_INDICATORS, NAME_STR, MAX_MESSAGES
     ));
 
 
@@ -223,10 +224,10 @@ public class Option<T> {
                 break;
             }
             default:
-                LOGGER.error("[updateEntryBuilder] Unexpected class \"{}\", expected java.lang.(String|Integer|Short|Boolean)", val.getClass().getName());
+                LOGGER.error("[Option.updateEntryBuilder] Unexpected class \"{}\", expected java.lang.(String|Integer|Short|Boolean)", val.getClass().getName());
                 break;
         }
-        
+
         return builder;
     }
 
@@ -237,7 +238,7 @@ public class Option<T> {
             for(Option option : OPTIONS)
                 option.save( config.getClass().getField(option.key).get(config) );
         } catch(IllegalStateException | IllegalAccessException | NoSuchFieldException e) {
-            LOGGER.fatal("[saveAll] You should not be seeing this unless I screwed something up, report this on GitHub:", e);
+            LOGGER.fatal("[Option.saveAll] You should not be seeing this unless I screwed something up, report this on GitHub:", e);
         }
     }
 
@@ -245,15 +246,18 @@ public class Option<T> {
     public static void defaultAll(Config config) {
         try {
             for(Field field : config.getClass().getFields()) {
-                Option<?> optField = Util.find(OPTIONS, opt -> field.getName().equals(opt.key)).get(0);
+                if( Modifier.isStatic(field.getModifiers()) )
+                    continue;
+
+                Option<?> optField = Util.find( OPTIONS, opt -> field.getName().equals(opt.key) ).get(0);
 
                 if(optField == null)
-                    throw new NullPointerException("optField should have found an equivalent Field '" + field.getName() + "', got null.");
+                    throw new NullPointerException("[Option.defaultAll] optField should have found an equivalent Field '" + field.getName() + "', got null.");
 
                 field.set(config, optField.getDefault());
             }
         } catch(NullPointerException | IllegalStateException | IllegalAccessException e) {
-            LOGGER.fatal("[defaultAll] You should not be seeing this unless I screwed something up, report this on GitHub:", e);
+            LOGGER.fatal("[Option.defaultAll] You should not be seeing this unless I screwed something up, report this on GitHub:", e);
         }
     }
 }

@@ -47,6 +47,7 @@ Be on the lookout for new versions, issues, and possible future features!
 - animate message recieve
 - add buttons to the edge of chat input box OR in multiplayer menu screen (for WMCH settings and chat searcher)
 - buttons/variable input strings to easily message data (ex. coords or UUID)
+- "smart" chat shift feature, so eating golden apples/having more health doesn't get hidden behind the chat
 
 ## Changelog
 

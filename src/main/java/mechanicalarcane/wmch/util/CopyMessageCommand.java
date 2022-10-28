@@ -43,11 +43,11 @@ public class CopyMessageCommand {
 
     private static int executeIndex(CommandContext<FabricClientCommandSource> context) {
         client = context.getSource().getClient();
-        List<ChatHudLine<Text>> messages = Util.accessChatHud(client).getMessages();
+        List<ChatHudLine> messages = Util.accessChatHud(client).getMessages();
         int i = context.getArgument("message_index", Integer.class);
 
         if(messages.size() > i) {
-            String message = messages.get(i).getText().getString();
+            String message = messages.get(i).content().getString();
 
             client.keyboard.setClipboard(message);
             context.getSource().sendFeedback(Text.translatable("text.wmch.copymessage.index", i, message));
@@ -69,11 +69,11 @@ public class CopyMessageCommand {
 
     private static CompletableFuture<Suggestions> indexSuggestions(CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) {
         client = context.getSource().getClient();
-        List<ChatHudLine<Text>> messages = Util.accessChatHud(client).getMessages();
+        List<ChatHudLine> messages = Util.accessChatHud(client).getMessages();
 
         // loops over each message for suggesting
-        for(ChatHudLine<Text> line : messages)
-            builder.suggest(messages.indexOf(line), line.getText());
+        for(ChatHudLine line : messages)
+            builder.suggest(messages.indexOf(line), line.content());
 
         return builder.buildFuture();
     }

@@ -1,1 +1,0 @@
--Dmixin.debug.export=true -Dmixin.hotSwap -javaagent:\"%USERPROFILE%\\caches\\modules-2\\files-2.1\\net.fabricmc\\sponge-mixin\\0.11.4+mixin.0.8.5\\c1dc27696aa4006e492c2485c9ccbcb26045a971\\sponge-mixin-0.11.4+mixin.0.8.5.jar\"

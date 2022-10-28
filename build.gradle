@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.12-SNAPSHOT'
+	id 'fabric-loom' version '1.0-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -10,7 +10,8 @@ archivesBaseName = project.archivesBaseName
 group = project.group
 version = "${project.archivesBaseName}-${project.minecraft}-${project.version}"
 
-def mappedNCRFile = "lib/NoChatReports-FABRIC-1.19-v1.2.3.jar"
+def mappedNCRFile = "random/jars/NoChatReports-FABRIC-1.19.2-v1.13.10.jar"
+def lazyDFUFile = "random/jars/lazydfu-0.1.3.jar"
 
 
 repositories {
@@ -49,8 +50,11 @@ dependencies {
 
 
 	// nochatreports for testing integration
-	if( file(mappedNCRFile).exists() ) {
+	if( file(mappedNCRFile).exists() && System.getProperty("fabric.development") ) {
 		modImplementation files(mappedNCRFile)
+	}
+	if( file(lazyDFUFile).exists() && System.getProperty("fabric.development") ) {
+		modImplementation files(lazyDFUFile)
 	}
 
 	//! currently spams log with tons of errors
