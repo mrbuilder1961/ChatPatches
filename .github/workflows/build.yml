@@ -26,6 +26,7 @@ jobs:
         uses: actions/setup-java@v2 #^^
         with:
           java-version: ${{ matrix.java }}
+          distribution: temurin
       - name: make gradle wrapper executable
         if: ${{ runner.os != 'Windows' }}
         run: chmod +x ./gradlew
