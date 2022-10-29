@@ -24,22 +24,22 @@ Be on the lookout for new versions, issues, and possible future features!
 
 | Name | Default Value | Description | Example | Lang Key |
 |---|---|---|---|---|
-| Timestamp toggle | `true` | Should a timestamp in front of all messages show? | `false` | `text.wmch.time` |
-| Timestamp text | `[HH:mm:ss]` | The text that is used for the timestamp. For dynamic text, search online for 'java date format string'. | `HH:mm` | `text.wmch.timeStr` |
-| Timestamp color | `0xFF55FF` (`16733695`) | The color that's 'filled in' where applicable in the timestamp text. | `298570` | `text.wmch.timeColor` |
-| Timestamp modifiers | ` ` | The string of ampersands (&) and formatting codes that apply over the time string. | `&l&o` | `text.wmch.timeFormat` |
-| Hover toggle | `true` | Should the text that appears when you hover over the timestamp show? | `false` | `text.wmch.hover` |
-| Hover text | `yyyy dd, MM, @ HH:mm:ss.SSSS` | The text that appears when hovering over timestamp text. For dynamic text, search online for 'java date format string'. | `dd/MM/yyyy` | `text.wmch.hoverStr` |
-| Message counter toggle | `true` | Should a message counter show after messages to indicate multiple were sent? | `false` | `text.wmch.counter` |
-| Message counter text | `&8(&7x&e$&8)` | The text that's added to the end of messages to indicate multiple duplicates were sent. Must include a $ for the number of duplicates. | `x$` | `text.wmch.counterStr` |
-| Message counter color | `0xFFFF55` (`16777045`) | The color that's 'filled in' where applicable in the counter text. | `782235` | `text.wmch.counterColor` |
-| Boundary toggle | `true` | Should a boundary line show after using chat, leaving, and then joining again later? | `false` | `text.wmch.boundary` |
-| Boundary text | `&b[==============]` | The text that is shown when a boundary line is inserted into the chat, add ampersands (&) followed by a formatting code to prettify it. | `&l>-==-<` | `text.wmch.boundaryStr` |
-| Boundary color | `0xAAAA` (`43690`) | The color that's 'filled in' where applicable in the boundary text. | `14099062` | `text.wmch.boundaryColor` |
-| Chat log toggle | `false` | Should the chat be saved into a log so it can be re-added back into the chat in another game session? | `true` | `text.wmch.saveChat` |
-| Shift chat interface | `true` | Should that chat interface be shifted up about 10 pixels to not obstruct the armor bar? | `false` | `text.wmch.shiftHudPos` 
-| Playername text | `<$>` | The text that replaces the playername in most references (if present). Vanilla would be <$>; no brackets $. $ represents the playername. Only for player messages. | `[$]:` | `text.wmch.nameStr` |
-| Maximum chat messages | `16384` | The max amount of chat messages allowed to render. Vanilla has this set as 100, maximum allowed is 32,767. Keep in mind the higher the value, the more memory the chat requires. | `2167` | `text.wmch.maxMsgs` |
+| Timestamp toggle | `true` | Should a timestamp in front of all messages show? | `false` | text.wmch.time |
+| Timestamp text | `[HH:mm:ss]` | The text that is used for the timestamp. For dynamic text, search online for 'java date format string'. | `HH:mm` | text.wmch.timeStr |
+| Timestamp color | `0xFF55FF` (`16733695`) | The color that's 'filled in' where applicable in the timestamp text. | `0x298570` | text.wmch.timeColor |
+| Timestamp modifiers | ` ` | The string of ampersands (&) and formatting codes that apply over the time string. | `&l&o` | text.wmch.timeFormat |
+| Hover toggle | `true` | Should the text that appears when you hover over the timestamp show? | `false` | text.wmch.hover |
+| Hover text | `MM/dd/yyyy` | The text that appears when hovering over timestamp text. For dynamic text, search online for 'java date format string'. | `dd/MM/yyyy` | text.wmch.hoverStr |
+| Message counter toggle | `true` | Should a message counter show after a message to indicate multiple were sent? | `false` | text.wmch.counter |
+| Message counter text | `&8(&7x&e$&8)` | The text that's added to the end of a message to indicate multiple duplicates were sent. Must include a $ for the number of duplicates. | `x$` | text.wmch.counterStr |
+| Message counter color | `0xFFFF55` (`16777045`) | The color that's 'filled in' where applicable in the counter text, for example '&r' will be replaced with this color. | `0x782235` | text.wmch.counterColor |
+| Boundary toggle | `true` | Should a boundary line show after using chat, leaving, and then joining again later? | `false` | text.wmch.boundary |
+| Boundary text | `&b[==============]` | The text that is shown when a boundary line is inserted into the chat, add ampersands (&) followed by a formatting code to prettify it. | `&l>-==-<` | text.wmch.boundaryStr |
+| Boundary color | `0xAAAA` (`43690`) | The color that's 'filled in' where applicable in the boundary text, for example '&r' will be replaced with this color. | `0x14099062` | text.wmch.boundaryColor |
+| Chat log toggle | `false` | Should the chat be saved into a log so it can be re-added back into the chat in another game session? | `true` | text.wmch.saveChat |
+| Shift chat interface | `true` | Should that chat interface be shifted up about 10 pixels to not obstruct the armor bar? | `false` | text.wmch.shiftHudPos |
+| Playername text | `<$>` | The text that replaces the playername in chat messages. Vanilla is <$>, no brackets is $; where $ represents the playername. Only applies to player messages. | `[$]:` | text.wmch.nameStr |
+| Maximum chat messages | `16384` | The max amount of chat messages allowed to render. Vanilla has this set as 100, maximum allowed is 32,767. Keep in mind the higher the value, the more memory the chat requires. | `2167` | text.wmch.maxMsgs |
 
 ## Possible features
 

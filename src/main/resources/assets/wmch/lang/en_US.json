@@ -36,7 +36,7 @@
     "text.wmch.desc.saveChat": "Should the chat be saved into a log so it can be re-added back into the chat in another game session?",
     "text.wmch.desc.shiftHudPos": "Should that chat interface be shifted up about 10 pixels to not obstruct the armor bar?",
     "text.wmch.desc.maxMsgs": "The max amount of chat messages allowed to render. Vanilla has this set as 100, maximum allowed is 32,767. Keep in mind the higher the value, the more memory the chat requires.",
-    "text.wmch.desc.nameStr": "The text that replaces the playername in most references (if present). Vanilla is <$>; no brackets $. $ represents the playername. Only for player messages.",
+    "text.wmch.desc.nameStr": "The text that replaces the playername in chat messages. Vanilla is <$>, no brackets is $; where $ represents the playername. Only applies to player messages.",
 
     "text.wmch.category.time": "Timestamp",
     "text.wmch.category.hover": "Hover Info",

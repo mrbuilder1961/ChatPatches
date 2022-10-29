@@ -103,7 +103,7 @@ public class Option<T> {
     public static void printTableEntries() {
         StringBuilder bldr = new StringBuilder();
         OPTIONS.forEach(o -> {
-            bldr.append("\n| %s | %s | %s | `` | text.wmch.%s |\n".formatted(
+            bldr.append("\n| %s | %s | %s | `` | `text.wmch.%s` |".formatted(
                 I18n.translate("text.wmch." + o.key),
                 o.def.getClass() == Integer.class && o.key != "maxMsgs"
                     ? "`0x" + Integer.toHexString((int)o.def).toUpperCase() + "` (`" + o.def + "`)"
@@ -113,7 +113,7 @@ public class Option<T> {
             ));
         });
 
-        LOGGER.warn("[Option.printGithubTables]\n" + bldr.toString());
+        LOGGER.warn("[Option.printGithubTables]" + bldr.toString());
     }
 
 
@@ -146,7 +146,7 @@ public class Option<T> {
     });
 
     public static final Option<Boolean> HOVER = new Option<>(true, "hover", TIME.getSaveConsumer());
-    public static final Option<String> HOVER_STR = new Option<>("HH:mm:ss.SSSS", "hoverStr", TIME_STR.getSaveConsumer());
+    public static final Option<String> HOVER_STR = new Option<>("MM/dd/yyyy", "hoverStr", TIME_STR.getSaveConsumer());
 
     public static final Option<Boolean> COUNTER = new Option<>(true, "counter", TIME.getSaveConsumer());
     public static final Option<String> COUNTER_STR = new Option<>("&8(&7x&e$&8)", "counterStr", (inc, me) -> {
@@ -173,15 +173,14 @@ public class Option<T> {
         if(Short.MAX_VALUE >= inc && inc >= 100)
             me.setInDefConfig(inc);
     });
-    public static final Option<String> NAME_STR = new Option<>("<$>", "nameStr", (inc, me) -> {if(inc.contains("$")) me.setInDefConfig(inc);});
-    public static final Option<Boolean> HIDE_INDICATORS = new Option<>(true, "hideIndicators", TIME.getSaveConsumer());
+    public static final Option<String> NAME_STR = new Option<>("$", "nameStr", (inc, me) -> {if(inc.contains("$")) me.setInDefConfig(inc);});
 
     public static final List<Option<?>> OPTIONS = new ArrayList<>(Arrays.asList(
         TIME, TIME_STR, TIME_COLOR, TIME_FORMAT,
         HOVER, HOVER_STR,
         COUNTER, COUNTER_STR, COUNTER_COLOR,
         BOUNDARY, BOUNDARY_STR, BOUNDARY_COLOR,
-        SAVE_CHAT, SHIFT_HUD_POS, HIDE_INDICATORS, NAME_STR, MAX_MESSAGES
+        SAVE_CHAT, SHIFT_HUD_POS, NAME_STR, MAX_MESSAGES
     ));
 
 
