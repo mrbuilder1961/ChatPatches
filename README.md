@@ -1,6 +1,7 @@
-[![Fabric Mod](https://img.shields.io/badge/modloader-fabric-informational)](https://fabricmc.net/use/)
-[![Latest Version](https://img.shields.io/badge/version-1.5.3-brightgreen)](https://github.com/mrbuilder1961/WheresMyChatHistory/releases)
-[![Curseforge Download](https://bit.ly/33eX25e)](https://www.curseforge.com/minecraft/mc-mods/wmch)
+[![Fabric Mod](https://img.shields.io/badge/modloader-fabric-eeeeee)](https://fabricmc.net/use/)
+[![Latest Version](https://img.shields.io/badge/version-1.5.3-blueviolet)](https://github.com/mrbuilder1961/WheresMyChatHistory/releases)
+[![Curseforge Download](https://img.shields.io/badge/curseforge-5900_downloads-blue)](https://www.curseforge.com/minecraft/mc-mods/wmch)
+[![Modrinth Download](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=modrinth&suffix=%20downloads&query=downloads&url=https://api.modrinth.com/v2/project/MOqt4Z5n&cacheSeconds=3600)](https://www.modrinth.com/mod/MOqt4Z5n)
 # Where's My Chat History
 
 This mod does quite a few things:
