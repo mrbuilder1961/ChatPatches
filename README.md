@@ -5,11 +5,11 @@
 # Where's My Chat History
 
 This mod does quite a few things:
-- Increases the maximum amount of chat messages to 16384
-- Adds a timestamp in front of all messages, formatted as `[HOUR:MINUTE:SECOND]` in pink text, with a tooltip that renders a complete date down to the millisecond
+- Increases the maximum amount of chat messages to 16,384
+- Adds a timestamp in front of all messages, formatted as `[HOUR:MINUTE:SECOND]` in pink text, with a tooltip that renders a complete date
 - Keeps chat history and previously sent messages across ALL worlds and servers
-- Lets you modify vanilla player names to something more appealing than triangle brackets
-- Minimize spam by enabling the counter that shows how many messages have been sent in a row
+- Lets you modify vanilla player names to anything more appealing than triangle brackets
+- Minimize spam by enabling the counter that shows how many duplicate messages have been sent in a row
 - All of this is configurable, with much more to offer!
 
 Be on the lookout for new versions, issues, and possible future features!
@@ -51,17 +51,20 @@ Be on the lookout for new versions, issues, and possible future features!
 - buttons/variable input strings to easily message data (ex. coords or UUID)
 - "smart" chat shift feature, so eating golden apples/having more health doesn't get hidden behind the chat
 
-## Changelog
+## Incompatibilities
 
-See [individual releases](https://github.com/mrbuilder1961/WheresMyChatHistory/releases) for specific changelogs or the [commit list](https://github.com/mrbuilder1961/WheresMyChatHistory/commits).
+- Meteor Client's BetterChat features
+- Essential
+- MoreChatHistory
 
 ## Wont fix/add
 
 1. When you hover over the timestamp, by default it shows more detailed time information.
-I was going to implement a system that, when the `hover` option was toggled off, it would just not render
-the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However,
-unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added.
-This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
+I was going to implement a system that, when the `hover` option was toggled off, it would just not render the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However, unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added. This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
+
+## Changelog
+
+See [individual releases](https://github.com/mrbuilder1961/WheresMyChatHistory/releases) for specific changelogs or the [commit list](https://github.com/mrbuilder1961/WheresMyChatHistory/commits).
 
 ## License
-This mod is available under the GNU LGPLv3 license. Check out [this](https://choosealicense.com/licenses/lgpl-3.0/) page for proper information.
+This mod is available under the GNU LGPLv3 license. Check out [this](https://choosealicense.com/licenses/lgpl-3.0/) page for information.
