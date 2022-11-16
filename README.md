@@ -24,7 +24,7 @@ Be on the lookout for new versions, issues, and possible future features!
 ## Configuration help
 
 | Name | Default Value | Description  | Lang Key |
-|---|---|---|---|---|
+|---|---|---|---|
 | Timestamp toggle | `true` | Should a timestamp in front of all messages show? | `text.wmch.time` |
 | Timestamp text | `[HH:mm:ss]` | The text that is used for the timestamp. For dynamic text, search online for 'java date format string'. | `text.wmch.timeStr` |
 | Timestamp color | `0xFF55FF` (`16733695`) | The color that's 'filled in' where applicable in the timestamp text. | `text.wmch.timeColor` |
