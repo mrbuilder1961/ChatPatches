@@ -48,6 +48,5 @@
     "text.wmch.copymessage.index": "Copied message %d: '%s'",
     "text.wmch.copymessage.index.missing": "Message %d doesn't exist",
 
-
-    "text.wmch.mutableChat": "<%s> %s"
+    "text.wmch.mixin.incompatible": "This Option is disabled because one or more of the mods listed are installed: %s\nRegardless of which mod(s) are installed, they all have conflicting mixins or methods which break the method(s) that let this Option function."
 }

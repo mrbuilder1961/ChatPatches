@@ -18,17 +18,24 @@ import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.util.Util;
 import net.minecraft.client.resource.language.I18n;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 /** A Config option class for creating, accessing, and modifying settings. */
 public class Option<T> {
-    public static String diff = "[Option.logDiff] Changes made:";
+    private static final String BLANK_DIFF = "[Option.logDiff] Changes made:";
+    private static final List<String> NONE = List.of(); // empty list representing no incompatible mods
+    public static String diff = BLANK_DIFF;
 
     private T val;
     private T def;
     private String key;
     private BiConsumer<T, Option<T>> saveConsumer;
+
+    private List<String> breaks = NONE; // to disable an Option based on mods, set it to the equivalent list in IntegrationMixinPlugin
+    private boolean disabled = false; // toggled in IntegrationMixinPlugin if incompatible mods are loaded
 
     /**
      * Creates a new Config option.
@@ -37,14 +44,17 @@ public class Option<T> {
      * @param onSave The save consumer that takes an incoming value
      * and decides IF it's valid how to save it; Otherwise does nothing.
      */
-    public Option(T def, String key, BiConsumer<T, Option<T>> onSave) {
-        Objects.requireNonNull(def, "Cannot instantiate a ConfigOption without a default value");
-        Objects.requireNonNull(key, "Cannot instantiate a ConfigOption without a lang key");
-        Objects.requireNonNull(onSave, "Cannot instantiate a ConfigOption without a save consumer");
+    public Option(T def, String key, /* List<String> breaks, */ BiConsumer<T, Option<T>> onSave) {
+        String err = "Cannot instantiate a ConfigOption without a ";
 
-        this.val = this.def = def;
+        Objects.requireNonNull(def, err + "default value");
+        Objects.requireNonNull(key, err + "lang key");
+        Objects.requireNonNull(onSave, err + "save consumer");
+
+        this.val = (this.def = def);
         this.key = key;
         this.saveConsumer = onSave;
+        //this.breaks = breaks;
     }
 
 
@@ -52,10 +62,23 @@ public class Option<T> {
     public T get() {return val;}
     public T getDefault() {return def;}
     public String getKey() {return key;}
-    public Text getName() {return Text.translatable("text.wmch."+key);}
-    public Text getTooltip() {return Text.translatable("text.wmch.desc."+key);}
+    public Text getName() {
+        MutableText name = Text.translatable("text.wmch." + key);
+
+        return name.setStyle(
+            disabled
+                ? Style.EMPTY.withColor(Formatting.RED).withItalic(true).withStrikethrough(true)
+                : name.getStyle()
+        );
+    }
+    public Text getTooltip() {
+        return Text.translatable(
+            disabled ? "text.wmch.mixin.incompatible" : "text.wmch.desc."+key,
+            disabled ? new Object[] {this.getBreakingMods()} : new Object[0]
+        );
+    }
     public BiConsumer<T, Option<T>> getSaveConsumer() {return saveConsumer;}
-    public Class<?> getType() {return val.getClass();}
+    public List<String> getBreakingMods() {return breaks;}
 
     // setters
     public void set(T inc) {
@@ -66,6 +89,7 @@ public class Option<T> {
     public void setDefault(T def) {this.def = Objects.requireNonNullElse(def, this.def);}
     public void setKey(String key) {this.key = Objects.requireNonNullElse(key, this.key);}
     public void setSaveConsumer(BiConsumer<T, Option<T>> saver) {this.saveConsumer = Objects.requireNonNullElse(saver, this.saveConsumer);}
+    //public void disable() { this.disabled = true; }
 
 
     public boolean changed() {
@@ -92,18 +116,20 @@ public class Option<T> {
 
     /** Prints any changes between altering of Options */
     public static void logDiff() {
-        if(diff == "[Option.logDiff] Changes made:")
+        if( diff.equals(BLANK_DIFF) ) {
             LOGGER.info("[Option.logDiff] No changes made!");
-        else
+        } else {
             LOGGER.info(diff);
-        diff = "[Option.logDiff] Changes made:";
+            diff = BLANK_DIFF;
+        }
     }
 
     /** For updating the GitHub table */
     public static void printTableEntries() {
         StringBuilder bldr = new StringBuilder();
+
         OPTIONS.forEach(o -> {
-            bldr.append("\n| %s | %s | %s | `` | `text.wmch.%s` |".formatted(
+            bldr.append("\n| %s | %s | %s | `text.wmch.%s` |".formatted(
                 I18n.translate("text.wmch." + o.key),
                 o.def.getClass() == Integer.class && o.key != "maxMsgs"
                     ? "`0x" + Integer.toHexString((int)o.def).toUpperCase() + "` (`" + o.def + "`)"
@@ -142,7 +168,7 @@ public class Option<T> {
         }
     });
     public static final Option<Integer> TIME_COLOR = new Option<>(Formatting.LIGHT_PURPLE.getColorValue(), "timeColor", (inc, me) -> {
-        if(0xFFFFFF > inc && inc >= 0) me.setInDefConfig(inc);
+        if(0xFFFFFF >= inc && inc >= 0) me.setInDefConfig(inc);
     });
 
     public static final Option<Boolean> HOVER = new Option<>(true, "hover", TIME.getSaveConsumer());
@@ -165,7 +191,7 @@ public class Option<T> {
             me.setInDefConfig(inc.strip());
         }
     });
-    public static final Option<Integer> BOUNDARY_COLOR = new Option<>(Formatting.DARK_AQUA.getColorValue(), "boundaryColor", TIME_COLOR.getSaveConsumer());
+    public static final Option<Integer> BOUNDARY_COLOR = new Option<>(Formatting.AQUA.getColorValue(), "boundaryColor", TIME_COLOR.getSaveConsumer());
 
     public static final Option<Boolean> SAVE_CHAT = new Option<>(false, "saveChat", TIME.getSaveConsumer());
     public static final Option<Boolean> SHIFT_HUD_POS = new Option<>(true, "shiftHudPos", TIME.getSaveConsumer());
@@ -198,7 +224,7 @@ public class Option<T> {
                 break;
             }
             case "java.lang.Integer": {
-                category.addEntry( this.getKey() == "maxMsgs"
+                category.addEntry( this.getKey().equals("maxMsgs")
                     ? builder.startIntSlider(getName(), (int)val, 100, Short.MAX_VALUE)
                         .setDefaultValue((int)def)
                         .setTooltip(getTooltip())
@@ -223,7 +249,7 @@ public class Option<T> {
                 break;
             }
             default:
-                LOGGER.error("[Option.updateEntryBuilder] Unexpected class \"{}\", expected java.lang.(String|Integer|Short|Boolean)", val.getClass().getName());
+                LOGGER.error("[Option.updateEntryBuilder] Unexpected class \"{}\", expected one of: java.lang.String,Integer,Short,Boolean", val.getClass().getName());
                 break;
         }
 
@@ -251,7 +277,7 @@ public class Option<T> {
                 Option<?> optField = Util.find( OPTIONS, opt -> field.getName().equals(opt.key) ).get(0);
 
                 if(optField == null)
-                    throw new NullPointerException("[Option.defaultAll] optField should have found an equivalent Field '" + field.getName() + "', got null.");
+                    throw new NullPointerException("[Option.defaultAll] optField should have found an equivalent Field '" + field.getName() + "'");
 
                 field.set(config, optField.getDefault());
             }

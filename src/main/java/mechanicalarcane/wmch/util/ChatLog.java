@@ -26,7 +26,7 @@ import net.minecraft.text.Text;
 
 /**
  * Represents the chat log file in the
- * run directory located at {@code ./logs/chatlog.json}.
+ * run directory located at {@link Util#CHATLOG_PATH}.
  */
 public class ChatLog {
     private static final File file = new File(Util.CHATLOG_PATH);
@@ -95,7 +95,7 @@ public class ChatLog {
     public static void deserialize() {
         long fileSize = -1;
         if( !rawData.startsWith("{") && rawData.length() > 1 ) {
-            LOGGER.info("[Option.deserialize] Old chatlog file type detected, updating...");
+            LOGGER.info("[ChatLog.deserialize] Old chatlog file type detected, updating...");
             try {
                 write("{\"history\":[],\"messages\":");
                 channel.position(channel.size());
@@ -103,7 +103,7 @@ public class ChatLog {
 
                 fileSize = channel.size();
             } catch (IOException e) {
-                LOGGER.error("[Option.deserialize] An I/O error occurred while trying to update the chat log:", e);
+                LOGGER.error("[ChatLog.deserialize] An I/O error occurred while trying to update the chat log:", e);
             }
         } else if(rawData.length() < 2) {
             data = new Data(100);
@@ -116,7 +116,7 @@ public class ChatLog {
             data = json.fromJson(rawData, Data.class);
             enforceSizes(Option.MAX_MESSAGES.get());
         } catch (com.google.gson.JsonSyntaxException e) {
-            LOGGER.error("[Option.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
+            LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
             data = new Data(100);
             loaded = true;
@@ -125,8 +125,10 @@ public class ChatLog {
 
         loaded = true;
 
-        LOGGER.info("[Option.deserialize] Read chat log{}, containing {} messages and {} sent messages from ./logs/chatlog.json",
-			fileSize != -1 ? "using " + fileSize + " bytes of data" : "", data.messages.size(), data.history.size()
+        LOGGER.info("[ChatLog.deserialize] Read the chat log {} containing {} messages and {} sent messages from '{}'",
+			fileSize != -1 ? "(using "+fileSize+" bytes of data)" : "",
+            data.messages.size(), data.history.size(),
+            Util.CHATLOG_PATH
 		);
     }
 
@@ -142,9 +144,14 @@ public class ChatLog {
             channel.truncate(stringified.getBytes().length);
             write(stringified);
 
-            LOGGER.info("[Option.serialize] Saved chat log containing {} messages and {} sent messages to ./logs/chatlog.json", data.messages.size(), data.history.size());
+            if(data.messages.size() > 0)
+                LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), Util.CHATLOG_PATH);
+            else {
+                data.history.clear();
+                LOGGER.info("[ChatLog.serialize] Cleared the chat log located at '{}'", Util.CHATLOG_PATH);
+            }
         } catch (IOException e) {
-            LOGGER.error("[Option.serialize] An I/O error occurred while trying to write the chat log:", e);
+            LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to write the chat log:", e);
         } finally {
             if(crashing)
                 savedAfterCrash = true;

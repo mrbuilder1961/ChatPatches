@@ -2,12 +2,12 @@ package mechanicalarcane.wmch.util;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
@@ -109,7 +109,7 @@ public class Util {
 		return ((ChatHudAccessor) client.inGameHud.getChatHud());
 	}
 
-	/** If there's space to overwrite, runs {@code list.set(index, object)}. Otherwise does {@code list.add(index, object)}. */
+	/** If there's space to overwrite, runs {@code list.set(index, object)}. Otherwise runs {@code list.add(index, object)}. */
 	public static <T> List<T> setOrAdd(List<T> list, final int index, T object) {
 		if(list.size() > index)
 			list.set(index, object);
@@ -137,13 +137,32 @@ public class Util {
 	}
 
 
-	public static String delAll(String dirty, String toDel) {
-		return dirty.replaceAll(toDel, "");
+
+	public static String delAll(String str, String... regexes) {
+		for(String regex : regexes)
+			str = str.replaceAll(regex, "");
+
+		return str;
 	}
 
 	/** Removes all ampersand + formatting code sequences from {@code formatted}. */
 	public static String strip(String formatted) {
-		return delAll(formatted, "(?:&[0-9a-fA-Fk-orK-OR])+");
+		return delAll(formatted, "(?i)(?<!\\\\)(&[0-9a-fk-or])+");
+	}
+
+	/** Returns a list of all substrings in {@code input} that matched {@code regex}. */
+	public static List<String> capture(String regex, String input) {
+		Matcher matcher = Pattern.compile(regex).matcher(input);
+		List<String> captures = Lists.newArrayListWithCapacity(0); //? err from 0
+
+		while(matcher.find())
+			captures.add( matcher.group() );
+
+		return captures;
+	}
+
+	public static boolean isBoundaryLine(String text) {
+		return text.equals( strip(Option.BOUNDARY_STR.get()) ) || text.equals( strip(Option.BOUNDARY_STR.get()) );
 	}
 
 	/** Constructs a Text object from an OrderedText */
@@ -184,44 +203,70 @@ public class Util {
 
 	/**
 	 * Turns a String formatted like {@code "&4Dark RED &l&33AAffCUSTOM BOLD BLUE"}
-	 * to
-	 * a text with all {@code &<?>} replaced with styled colors.
+	 * into a Text with all {@code &<?>} codes replaced with styled colors.
 	 * If there are no formatting characters, returns the unstyled string.
 	 * Doesn't support hex colors.
+	 *
+	 * @param plain String to format
 	 */
-	public static MutableText formatString(String dirty) {
-		MutableText out = Text.empty();
-		Pattern formatCode = Pattern.compile("(?:&[0-9a-fA-Fk-orK-OR])+");
-		Matcher results = formatCode.matcher(dirty);
+	public static MutableText formatString(String plain) {
+		final String formatCode = "(?i)(?m)(?<!\\\\)(&[0-9a-fk-or])+"; // case-insensitive, multiline, ignore backslashes before
+		MutableText output = Text.empty();
 
-		if(dirty.matches(".*" + formatCode.pattern() + ".*")) {
-			// if there is text before a formatter then add it alone
-			if( dirty.split(formatCode.pattern())[0].length() > 0 ) {
-				String prfx = dirty.split( formatCode.pattern() )[0];
-				out.append(prfx);
-				dirty = delAll(dirty, prfx);
-			}
-
-			List<String> texts = new ArrayList<>(Arrays.asList( dirty.split(formatCode.pattern()) ));
-			texts.removeIf(String::isBlank);
-			int i = 0;
-
-			while (results.find()) {
-				Formatting[] style = new Formatting[results.group().length() / 2];
-				char[] codes = delAll(results.group(), "&").toCharArray();
-				for(int j = 0; j < codes.length; ++j)
-					style[j] = Formatting.byCode(codes[j]);
-
-				out.append( Text.literal(texts.get(i++)).formatted(style) );
-			}
-
-			return out;
+		List<String> texts = Lists.newArrayList( Stream.of( plain.split(formatCode) ).toList() );
+		// if startswith code => remove empty string
+		// doesnt start with code => move before code to output (append(str))
+		if(texts.size() > 0) {
+			if( // moves the first text to output if it doesn't have a format code OR if its padded (whitespace, not empty)
+				( texts.get(0).isBlank() && !texts.get(0).isEmpty() && !plain.matches("^" + formatCode + ".+$") )
+				|| ( !plain.matches("^" + formatCode + ".+$") )
+			)
+				output.append( texts.remove(0) );
+			else
+				texts.remove(0);
 		}
 
-		return Text.literal(dirty);
-	}
+		// Captures formatting codes from input string, removes dupes, and orderes each group into a char list
+		List<ArrayList<Formatting>> fCodes = (
+			capture(formatCode, plain).stream().map(codes -> {
+				List<Formatting> formatters =
+					delAll( codes, "(?i)(&[0-9a-fk-or]){1,}(?=&\\1)", "&" )
+					.chars().mapToObj(intCode -> Formatting.byCode( (char)intCode ))
+					.toList()
+				;
 
-	public static boolean isBoundaryLine(String text) {
-		return text.equals( strip(Option.BOUNDARY_STR.get()) ) || text == strip(Option.BOUNDARY_STR.get());
+				return new ArrayList<>(
+					formatters.contains(Formatting.RESET) // gets every code after the last reset (if any reset codes are present)
+						? formatters.subList( formatters.lastIndexOf(Formatting.RESET), formatters.size() ) //? includes reset code, deleting it will ruin it
+						: formatters
+				);
+			})
+			.toList()
+		);
+		
+
+		if( texts.size() > 0 && fCodes.size() > 0 ) {
+			for(int index = 0; index < texts.size();) {
+				Style base = (index > 0) ? output.getSiblings().get(index-1).getStyle() : Style.EMPTY;
+				List<Formatting> style = fCodes.get(index);
+
+				if( style.get(0).equals(Formatting.RESET) ) // if first code is reset, reset the base style
+					base = Style.EMPTY.withFormatting( style.remove(0) ); // consolidates remove and set calls
+
+				if( style.size() > 1 && style.get(style.size() - 1).equals(Formatting.RESET) )
+					style = List.of(Formatting.RESET); // if last code is reset with codes before it, reset the current style
+
+
+				output.append(
+					Text.literal( texts.get(index++) ) .setStyle(
+						style.size() > 0 ? base.withFormatting( style.toArray(new Formatting[0]) ) : base
+					)
+				);
+			}
+
+			return output;
+		}
+
+		return Text.literal(plain);
 	}
 }

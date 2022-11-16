@@ -23,8 +23,8 @@ import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
 
 @Environment(EnvType.CLIENT)
-@Mixin(value = MessageHandler.class, priority = 1)
-public class MessageHandlerMixin {
+@Mixin(value = MessageHandler.class, priority = 400)
+public abstract class MessageHandlerMixin {
     @Shadow @Final private MinecraftClient client;
 
     /**
@@ -36,7 +36,7 @@ public class MessageHandlerMixin {
      * <p>If it fails to locate a player, caches {@link Util#NIL_SENDER}.
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
-    public void cacheChatSender(final SignedMessage message, final MessageType.Parameters params, CallbackInfo ci) {
+    private void cacheChatSender(final SignedMessage message, final MessageType.Parameters params, CallbackInfo ci) {
         client.options.getOnlyShowSecureChat().setValue(false);
 
         WMCH.lastMeta = message.createMetadata();
@@ -49,13 +49,13 @@ public class MessageHandlerMixin {
      * returns {@code true}.
      */
     @Inject(method = "onGameMessage", at = @At("HEAD"))
-    public void cacheGameSender(Text message, boolean overlay, CallbackInfo ci) {
+    private void cacheGameSender(Text message, boolean overlay, CallbackInfo ci) {
         if( Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+$", message.getString()) && NCRConfigAccessor.chatToSys() ) {
             String messagename = org.apache.commons.lang3.StringUtils.substringBetween( net.minecraft.client.font.TextVisitFactory.removeFormattingCodes( message ), "<", ">" );
             UUID uuid = client.getSocialInteractionsManager().getUuid(messagename);
 
             WMCH.lastMeta =
-                ( messagename == null || messagename == "" || uuid.equals(Util.NIL_UUID) )
+                ( messagename == null || messagename.equals("") || uuid.equals(Util.NIL_UUID) )
                     ? Util.NIL_METADATA
                     : new MessageMetadata( uuid, java.time.Instant.now(), 0 )
             ;

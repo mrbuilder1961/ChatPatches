@@ -8,6 +8,8 @@ package mechanicalarcane.wmch;
 
 import java.util.List;
 
+import com.llamalad7.mixinextras.MixinExtrasBootstrap;
+
 import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.config.Option;
 import mechanicalarcane.wmch.util.ChatLog;
@@ -28,8 +30,7 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class WMCH implements ClientModInitializer {
-	public static final String[] NAMES = { "wmch", "Where's My Chat History", "WMCH" };
-	public static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger(NAMES[1]);
+	public static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("Where's My Chat History");
 	public static final FabricLoader FABRICLOADER = FabricLoader.getInstance();
 
 	public static Config config = Config.newConfig();
@@ -52,6 +53,7 @@ public class WMCH implements ClientModInitializer {
 		/* if(FABRICLOADER.isDevelopmentEnvironment()) {
 			//CrowdinTranslate.downloadTranslations("projectName", NAMES[0]);
 		} */
+		MixinExtrasBootstrap.init();
 
 		config.validate();
 		ChatLog.initialize();
@@ -93,7 +95,7 @@ public class WMCH implements ClientModInitializer {
 						// IF there is more than one message AND the last message isn't also a boundary line THEN adds the boundary line
 						if(!chatMsgs.isEmpty() && !Util.isBoundaryLine( chatMsgs.get(0).content().getString() )) {
 							mc.inGameHud.getChatHud().addMessage(
-								Util.formatString(Option.BOUNDARY_STR.get()) .setStyle(Style.EMPTY.withColor(Option.BOUNDARY_COLOR.get()))
+								Util.formatString(Option.BOUNDARY_STR.get()) .fillStyle(Style.EMPTY.withColor(Option.BOUNDARY_COLOR.get()))
 							);
 						}
 					} catch(Exception e) {

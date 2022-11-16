@@ -11,8 +11,8 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.HideMessageS2CPacket;
 
 @Environment(EnvType.CLIENT)
-@Mixin(value = ClientPlayNetworkHandler.class, priority = 1)
-public class CPNHMixin {
+@Mixin(value = ClientPlayNetworkHandler.class, priority = 400)
+public abstract class CPNHMixin {
     /**
      * Prevents messages from being hidden.
      * This may be deleted; but I currently
@@ -20,7 +20,7 @@ public class CPNHMixin {
      * would need to be hidden.
      */
     @Inject(method = "onHideMessage", at = @At("HEAD"), cancellable = true)
-    public void cancelHideMessage(HideMessageS2CPacket packet, CallbackInfo ci) {
+    private void cancelHideMessage(HideMessageS2CPacket packet, CallbackInfo ci) {
         ci.cancel();
     }
 }

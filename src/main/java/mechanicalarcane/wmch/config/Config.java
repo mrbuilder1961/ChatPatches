@@ -27,8 +27,8 @@ import net.minecraft.text.Text;
 
 /** The config class for WMCH. Extended by {@link ClothConfig} for use with ModMenu. */
 public class Config {
-    public static final boolean hasModMenu = WMCH.FABRICLOADER.getModContainer("modmenu").isPresent();
-    public static final boolean hasClothConfig = WMCH.FABRICLOADER.getModContainer("cloth-config").isPresent();
+    public static final boolean hasModMenu = WMCH.FABRICLOADER.isModLoaded("modmenu");
+    public static final boolean hasClothConfig = WMCH.FABRICLOADER.isModLoaded("cloth-config");
 
     // configurable
     public boolean time;
@@ -112,7 +112,7 @@ public class Config {
 
     public MutableText getFormattedCounter(int dupes) {
         return
-            (Util.formatString(" " + Option.COUNTER_STR.get().replaceAll("\\$", Integer.toString(dupes))))
+            Util.formatString(" " + Option.COUNTER_STR.get().replaceAll("\\$", Integer.toString(dupes)))
                 .fillStyle(Style.EMPTY.withColor(Option.COUNTER_COLOR.get()));
     }
 
@@ -138,12 +138,12 @@ public class Config {
                 option.set( this, config.getClass().getFields()[i].get(config) );
             }
 
-            LOGGER.info("[Config.read] Loaded config info from config/wmch.json!");
+            LOGGER.info("[Config.read] Loaded config info from '{}'!", Util.CONFIG_PATH);
         } catch(FileNotFoundException e) {
             reset();
-            LOGGER.warn("[Config.read] Couldn't find {}'s config file in config/wmch.json; created a default one.", WMCH.NAMES[0], e);
+            LOGGER.warn("[Config.read] Couldn't find a config file at '{}'; created a default one:", Util.CONFIG_PATH, e);
         } catch(Exception e) {
-            LOGGER.error("[Config.read] An error occurred while trying to load {}'s config data; resetting:", WMCH.NAMES[0], e);
+            LOGGER.error("[Config.read] An error occurred while trying to load config data; resetting:", e);
             reset();
         }
     }
@@ -157,9 +157,9 @@ public class Config {
             .create()
                 .toJson(this, this.getClass(), fw);
 
-            LOGGER.info("[Config.write] Saved config info to config/wmch.json!");
+            LOGGER.info("[Config.write] Saved config info to '{}'!", Util.CONFIG_PATH);
         } catch(Exception e) {
-            LOGGER.error("[Config.write] An error occurred while trying to save {}'s config data:", WMCH.NAMES[0], e);
+            LOGGER.error("[Config.write] An error occurred while trying to save config data to '{}':", Util.CONFIG_PATH, e);
         }
     }
 

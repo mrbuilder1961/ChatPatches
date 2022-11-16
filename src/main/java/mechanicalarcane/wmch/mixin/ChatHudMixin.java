@@ -2,7 +2,6 @@ package mechanicalarcane.wmch.mixin;
 
 import static mechanicalarcane.wmch.WMCH.config;
 import static mechanicalarcane.wmch.WMCH.lastMeta;
-import static mechanicalarcane.wmch.config.Option.MAX_MESSAGES;
 import static mechanicalarcane.wmch.util.Util.delAll;
 import static mechanicalarcane.wmch.util.Util.Flag.RESET_FINAL;
 import static mechanicalarcane.wmch.util.Util.Flag.RESET_FINISHING;
@@ -17,15 +16,15 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
+
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import mechanicalarcane.wmch.config.Option;
 import mechanicalarcane.wmch.util.ChatLog;
@@ -44,8 +43,8 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 @Environment(EnvType.CLIENT)
-@Mixin(value = ChatHud.class, priority = 1)
-public class ChatHudMixin {
+@Mixin(value = ChatHud.class, priority = 400)
+public abstract class ChatHudMixin {
     // these constants represent the indexes of (customized) message siblings
     private final int TIME = 0;
     private final int OG_MSG = 1;
@@ -58,7 +57,7 @@ public class ChatHudMixin {
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
-    public void clear(boolean clearHistory, CallbackInfo ci) {
+    private void clear(boolean clearHistory, CallbackInfo ci) {
         if(!clearHistory) {
             client.getMessageHandler().processAll();
             visibleMessages.clear();
@@ -69,14 +68,13 @@ public class ChatHudMixin {
         ci.cancel();
     }
 
-    /** Increases the amount of chat messages allowed to be cached */
-    @ModifyConstant(
-        method = "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
-        constant = @Constant(intValue = 100)
+    @ModifyExpressionValue(
+        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
+        at = @At(value = "CONSTANT", args = "intValue=100")
     )
-    private int moreMsgs(int old) {
-        return MAX_MESSAGES.changed() ? MAX_MESSAGES.get() : MAX_MESSAGES.getDefault();
-    };
+    private int increaseMaxMessages(int hundred) {
+        return Option.MAX_MESSAGES.get();
+    }
 
     /** Prevents messages from modifying when changing chat settings run twice before and after message is added */;
     @Inject(
@@ -95,7 +93,7 @@ public class ChatHudMixin {
             )
         }
     )
-    public void removeSettingDupe(CallbackInfo ci, int i) {
+    private void removeSettingDupe(CallbackInfo ci, int i) {
         if(messages.size() == 1) {
             if(RESET_FINISHING.isSet())
                 RESET_FINISHING.unSet();
@@ -180,7 +178,7 @@ public class ChatHudMixin {
         method = "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
         at = @At("HEAD")
     )
-    public Text modifyMessage(Text m) {
+    private Text modifyMessage(Text m) {
         if( Flag.INIT.isSet() ? (Flag.flags > 8) : (Flag.flags > 0) )
             return m;
 
@@ -211,7 +209,7 @@ public class ChatHudMixin {
 
     /** Saves sent message history */
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-    public void saveHistory(String message, CallbackInfo ci) {
+    private void saveHistory(String message, CallbackInfo ci) {
         if( !Flag.LOADING_CHATLOG.isSet() )
             ChatLog.addHistory(message, Option.MAX_MESSAGES.get());
     }
@@ -236,13 +234,15 @@ public class ChatHudMixin {
         at = @At("HEAD"),
         cancellable = true
     )
-    public void injectCounter(Text m, MessageSignatureData sig, int tick, MessageIndicator indicator, boolean rfrs, CallbackInfo ci) { //Text m, int id, int tick, boolean rfrs
+    private void injectCounter(Text m, MessageSignatureData sig, int tick, MessageIndicator indicator, boolean rfrs, CallbackInfo ci) { //Text m, int id, int tick, boolean rfrs
         // IF counter is enabled AND there are messages AND the message isn't a boundary line THEN continue
-        if( Option.COUNTER.get() && messages.size() > 0 && !m.getString().equals(Util.formatString(Option.BOUNDARY_STR.get()).getString()) ) {
+        if( Option.COUNTER.get() && messages.size() > 0 && !m.getString().equals( Util.strip(Option.BOUNDARY_STR.get()) ) ) {
 
             ChatHudLine last = messages.get(0);
+            Text text = last.content();
             final List<Text> sibs = m.getSiblings();
             final List<Text> lastSibs = last.content().getSiblings();
+
 
             // IF the last and incoming message bodies are equal AND the 4+2 flags aren't set THEN continue
             if( !RESET_FINISHING.isSet() && sibs.get(OG_MSG).getString() .equalsIgnoreCase( lastSibs.get(OG_MSG).getString()) ) {
@@ -254,38 +254,36 @@ public class ChatHudMixin {
                         : 1
                 ) + 1;
 
-
                 // modifies the message to have a counter and timestamp
-                Util.setOrAdd( last.content().getSiblings(), DUPE, config.getFormattedCounter(dupes) );
+                Util.setOrAdd( text.getSiblings(), DUPE, config.getFormattedCounter(dupes) );
 
                 // IF the last message had a timestamp THEN update it
-                if(lastSibs.get(TIME).getString().length() > TIME)
-                    last.content().getSiblings().set(TIME, sibs.get(TIME));
+                if(lastSibs.get(TIME).getString().length() > 0)
+                    text.getSiblings().set(TIME, sibs.get(TIME));
                 // Replace the old text with the incoming text
-                last.content().getSiblings().set(OG_MSG, sibs.get(OG_MSG));
+                text.getSiblings().set(OG_MSG, sibs.get(OG_MSG));
 
                 // modifies the actual message to have a counter
                 if( !messages.isEmpty() )
                     messages.remove(0);
-                messages.add( 0, new ChatHudLine(tick, last.content(), last.headerSignature(), last.indicator()) );
-
+                messages.add( 0, new ChatHudLine(tick, text, last.headerSignature(), last.indicator()) );
 
                 // modifies the rendered messages to have a counter
                 List<OrderedText> visibles = net.minecraft.client.util.ChatMessages.breakRenderedChatMessageLines(
-                    last.content(),
+                    text,
                     net.minecraft.util.math.MathHelper.floor( (double)ChatHud.getWidth(client.options.getChatWidth().getValue()) / client.options.getChatScale().getValue() ),
                     client.textRenderer
                 );
                 Collections.reverse(visibles);
-                for(OrderedText text : visibles)
+                for(OrderedText ordered : visibles)
                     Util.setOrAdd(
                         visibleMessages,
-                        visibles.indexOf(text),
+                        visibles.indexOf(ordered),
                         new ChatHudLine.Visible(
                             tick,
-                            text,
+                            ordered,
                             last.indicator(),
-                            ((visibles.indexOf(text)) == (visibles.size() - 1))
+                            ((visibles.indexOf(ordered)) == (visibles.size() - 1))
                         )
                     );
 

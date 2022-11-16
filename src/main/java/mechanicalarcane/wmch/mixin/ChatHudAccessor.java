@@ -21,7 +21,7 @@ import net.minecraft.client.gui.hud.ChatHudLine;
  * execute methods.
  */
 @Environment(EnvType.CLIENT)
-@Mixin(value = ChatHud.class, priority = 1)
+@Mixin(value = ChatHud.class, priority = 400)
 public interface ChatHudAccessor {
     @Accessor
     public List<ChatHudLine> getMessages();

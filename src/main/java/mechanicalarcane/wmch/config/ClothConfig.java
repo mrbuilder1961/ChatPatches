@@ -1,11 +1,5 @@
 package mechanicalarcane.wmch.config;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-
-import com.google.gson.JsonObject;
-
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
@@ -58,43 +52,13 @@ public class ClothConfig extends Config {
 
         // debug options
         if(WMCH.FABRICLOADER.isDevelopmentEnvironment()) {
-            ConfigCategory debug = bldr.getOrCreateCategory(Text.of("Debug tings"));
+            ConfigCategory debug = bldr.getOrCreateCategory(Text.of("Debug things"));
 
             debug.addEntry(
                 eBldr.startBooleanToggle(Util.formatString("&cPrint GitHub Tables"), false)
                     .setDefaultValue(false)
                     .setTooltip(Text.of("puts them into the logs at warn level"))
                     .setSaveConsumer(inc -> { if(inc) Option.printTableEntries(); })
-                .build()
-            );
-            debug.addEntry(
-                eBldr.startBooleanToggle(Util.formatString("&6Propogate Lang Files"), false)
-                    .setDefaultValue(false)
-                    .setTooltip(Text.of("replaces all da files with the one from en_us.json"))
-                    .setSaveConsumer(inc -> {
-                        if(inc) {
-                            File lang = new File(java.nio.file.Paths.get("").toAbsolutePath().toString().replace("\\run", "") + "/src/main/resources/assets/wmch/lang/");
-                            try(
-                                FileReader in = new FileReader(lang + "/en_us.json");
-
-                                FileWriter au = new FileWriter(lang + "/en_au.json");
-                                FileWriter ca = new FileWriter(lang + "/en_ca.json");
-                                FileWriter gb = new FileWriter(lang + "/en_gb.json");
-                                FileWriter nz = new FileWriter(lang + "/en_nz.json");
-                            ) {
-                                com.google.gson.Gson json = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-                                final Class<JsonObject> obj = JsonObject.class;
-                                JsonObject enUSFile = json.fromJson(in, obj);
-
-                                json.toJson(enUSFile, obj, au);
-                                json.toJson(enUSFile, obj, ca);
-                                json.toJson(enUSFile, obj, gb);
-                                json.toJson(enUSFile, obj, nz);
-                            } catch (Exception e) {
-                                WMCH.LOGGER.warn("[Debug.langFiles]: Writing lang files failed:", e);
-                            }
-                        }
-                    })
                 .build()
             );
             debug.addEntry(

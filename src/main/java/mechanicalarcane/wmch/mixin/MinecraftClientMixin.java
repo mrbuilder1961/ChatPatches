@@ -13,7 +13,7 @@ import net.minecraft.client.MinecraftClient;
 /** Injects callbacks to game exit events so cached data can still be saved */
 @Environment(EnvType.CLIENT)
 @Mixin(MinecraftClient.class)
-public class MinecraftClientMixin {
+public abstract class MinecraftClientMixin {
     @Inject(method = "run", at = {
         @At(
             value = "INVOKE",
@@ -28,7 +28,7 @@ public class MinecraftClientMixin {
             target = "Lnet/minecraft/client/MinecraftClient;cleanUpAfterCrash()V"
         )
     })
-    public void saveCachedDataOnCrash(CallbackInfo ci) {
+    private void saveCachedDataOnCrash(CallbackInfo ci) {
         WMCH.writeCachedData(true);
     }
 }
