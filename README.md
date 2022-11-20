@@ -14,6 +14,10 @@ This mod does quite a few things:
 
 Be on the lookout for new versions, issues, and possible future features!
 
+## Localization and Translation
+
+If you would like to help translate WMCH into other languages, head to [our CrowdIn page](https://crwd.in/wmch) and see how you can contribute!
+
 ## Setup developer workspace
 
 1. Download the latest ZIP (this page -> Code -> Download ZIP)
