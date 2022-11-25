@@ -14,8 +14,6 @@ bin/
 .project
 *.DS_Store
 run/
+remappedSrc/
 
 random/
-.gradle.lnk
-lib/
-remappedSrc/
