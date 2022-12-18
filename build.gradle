@@ -1,6 +1,6 @@
 plugins {
-	id 'fabric-loom' version '1.0-SNAPSHOT'
-	id 'maven-publish'
+	id "fabric-loom" version "1.0-SNAPSHOT"
+	id "maven-publish"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -10,33 +10,34 @@ archivesBaseName = project.archivesBaseName
 group = project.group
 version = "$project.archivesBaseName-$project.minecraft-$project.version"
 
-def integrationsFile = file("./random/integration.properties")
-
 
 repositories {
   	mavenCentral()
-	maven { url "https://maven.shedaniel.me/" } // cloth-config
-	maven { url "https://maven.terraformersmc.com/releases/" } // modmenu
-	maven { url 'https://jitpack.io' } // MixinExtras
-	maven { url 'https://repo.essential.gg/repository/maven-public' } // MixinExtras
+	maven { url "https://jitpack.io" } // MixinExtras
+	maven { url "https://repo.essential.gg/repository/maven-public" } // MixinExtras
+	//maven { url "https://minecraft.guntram.de/maven/" } // CrowdinTranslate
+	maven { url "https://maven.shedaniel.me/" } // Cloth Config API
+	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
 }
 
+def integrationsFile = file("./random/integration.properties")
 
 dependencies {
 	minecraft "com.mojang:minecraft:$project.minecraft"
 	mappings "net.fabricmc:yarn:$project.minecraft$project.yarn:v2"
 	modImplementation "net.fabricmc:fabric-loader:$project.loader"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api$project.minecraft"
 
 	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:0.1.0") ))
+	//include( modImplementation("de.guntram.mcmod:crowdin-translate:$project.crowdin") )
 
-	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api$project.minecraft"
 	modApi("me.shedaniel.cloth:cloth-config-fabric:$project.cloth_config") {
         exclude(group: "net.fabricmc.fabric-api")
     }
 	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
 
 
-	// integration files, togglable in /random/integrations.properties
+	// integration files, toggleable in /random/integrations.properties
 	if( integrationsFile.exists() ) {
 		println "Started loading dev testing integrations..."
 
@@ -48,12 +49,14 @@ dependencies {
 			def properties = integration.toString().split("=")
 			def data = properties[1].split(",")
 			def loc = (data[0].substring(data[0].indexOf("[")+1, data[0].indexOf("]"))).split("\\|") .stream().map({f -> f.endsWith(".jar") ? "random/integrations/" + f : f}).toList()
-			def enabled = data[1]
+			def enabled = Boolean.valueOf(data[1])
 			def func = data.size() > 2 ? data[2] : "modImplementation"
 
-			def i=0;
+			def i = 0
 			for(f in loc) {
-				"${func}" ( f.endsWith(".jar") ? files(f) : f )
+				if(enabled) {
+					"${func}" ( f.endsWith(".jar") ? files(f) : f )
+				}
 
 				println ("\t-> " + (enabled ? "Loaded" : "Skipped") + " integration '${properties[0]}${i>0 ? "_"+i : ""}' at '${loc[i]}'" + (func != "modImplementation" ? " using method '$func'" : ""))
 

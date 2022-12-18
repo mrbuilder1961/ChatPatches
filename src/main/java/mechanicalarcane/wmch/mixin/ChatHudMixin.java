@@ -1,59 +1,49 @@
 package mechanicalarcane.wmch.mixin;
 
-import static mechanicalarcane.wmch.WMCH.config;
-import static mechanicalarcane.wmch.WMCH.lastMeta;
-import static mechanicalarcane.wmch.util.Util.delAll;
-import static mechanicalarcane.wmch.util.Util.Flag.RESET_FINAL;
-import static mechanicalarcane.wmch.util.Util.Flag.RESET_FINISHING;
-import static mechanicalarcane.wmch.util.Util.Flag.RESET_NORMAL;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
-
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-
-import mechanicalarcane.wmch.config.Option;
+import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.util.ChatLog;
 import mechanicalarcane.wmch.util.Util;
-import mechanicalarcane.wmch.util.Util.Flag;
+import mechanicalarcane.wmch.util.Util.Flags;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.network.message.MessageSignatureData;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.text.*;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static mechanicalarcane.wmch.WMCH.config;
+import static mechanicalarcane.wmch.WMCH.lastMsgData;
+import static mechanicalarcane.wmch.util.Util.Flags.*;
+import static mechanicalarcane.wmch.util.Util.delAll;
 
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatHud.class, priority = 400)
 public abstract class ChatHudMixin {
-    // these constants represent the indexes of (customized) message siblings
-    private final int TIME = 0;
-    private final int OG_MSG = 1;
-    private final int DUPE = 2;
+    @Shadow @Final private MinecraftClient client;
 
-    @Shadow @Final MinecraftClient client;
-    @Shadow @Final List<String> messageHistory;
-    @Shadow @Final List<ChatHudLine> messages;
-    @Shadow @Final List<ChatHudLine.Visible> visibleMessages;
+    @Shadow @Final private List<ChatHudLine> messages;
+    @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
+
+
+    @Shadow public abstract double getChatScale();
+
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
@@ -63,20 +53,22 @@ public abstract class ChatHudMixin {
             visibleMessages.clear();
             // empties the message cache (which on save clears chatlog.json)
             ChatLog.clearMessages();
+            ChatLog.clearHistory();
         }
 
         ci.cancel();
     }
 
+    // uses ModifyExpressionValue to chain with other mods (aka not break)
     @ModifyExpressionValue(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
         at = @At(value = "CONSTANT", args = "intValue=100")
     )
     private int increaseMaxMessages(int hundred) {
-        return Option.MAX_MESSAGES.get();
+        return config.maxMsgs;
     }
 
-    /** Prevents messages from modifying when changing chat settings run twice before and after message is added */;
+    /** Prevents messages from modifying when changing chat settings run twice before and after message is added */
     @Inject(
         method = "refresh",
         locals = LocalCapture.CAPTURE_FAILSOFT,
@@ -96,78 +88,46 @@ public abstract class ChatHudMixin {
     private void removeSettingDupe(CallbackInfo ci, int i) {
         if(messages.size() == 1) {
             if(RESET_FINISHING.isSet())
-                RESET_FINISHING.unSet();
+                RESET_FINISHING.remove();
             else
                 RESET_FINISHING.set();
         } else {
             if(i > 0)
                 RESET_NORMAL.set();
             else if(RESET_FINAL.isSet())
-                RESET_FINAL.unSet();
+                RESET_FINAL.remove();
             else
                 RESET_FINISHING.set();
         }
     }
 
+
     /**
-     * These next 7 Modify injectors all work
-     * together to move parts of the chat,
-     * including the message texts, background,
-     * scroll bar, hover text, and message indicators.
-     *
-     * <p> All of these methods together (when enabled by
-     * {@link Option#SHIFT_HUD_POS}) shifts the rendered
-     * chat messages box up a few pixels as to not
-     * interfere with the armor bar. However, this does
-     * not further increase if another row of icons is
-     * added. (ex. golden apple hearts)
+     * These methods shift various parts of the ChatHud by
+     * {@link Config#shiftChat}, including the text, scroll
+     * bar, indicator bar, and hover text.
      */
-    @ModifyArg(method = "render", index = 3, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;drawWithShadow(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/OrderedText;FFI)I"))
-    private float moveChatText(float y) {
-        return y - (Option.SHIFT_HUD_POS.get() ? 10 : 0);
+    @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 11) // try multiplying by guiScale for same pixel shift behavior?
+    private int moveChatText(int t) {
+        return t - (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
     }
-    @ModifyArgs(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V", ordinal = 0))
-    private void moveChatBg(Args args) {
-        if( !Option.SHIFT_HUD_POS.get() )
-            return;
-
-        args.set(2, ((int) args.get(2)) - 10);
-        args.set(4, ((int) args.get(4)) - 10);
+    @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 1), ordinal = 9)
+    private int moveScrollBar(int q) {
+        return q + (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
     }
-    @ModifyArg(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V", ordinal = 3))
-    private MatrixStack moveScrollBar(MatrixStack matrices) {
-        if( Option.SHIFT_HUD_POS.get() )
-            matrices.translate(0, -10, 0);
-
-        return matrices;
-    }
-    @ModifyArg(method = "render", index = 2, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;drawIndicatorIcon(Lnet/minecraft/client/util/math/MatrixStack;IILnet/minecraft/client/gui/hud/MessageIndicator$Icon;)V"))
-    private int moveIndicator(int x) {
-        return x - (Option.SHIFT_HUD_POS.get() ? 10 : 0);
-    }
-    @ModifyArgs(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;fill(Lnet/minecraft/client/util/math/MatrixStack;IIIII)V", ordinal = 1))
-    private void moveIndicatorBar(Args args) {
-        if( !Option.SHIFT_HUD_POS.get() )
-            return;
-
-        args.set(2, ((int) args.get(2)) - 10);
-        args.set(4, ((int) args.get(4)) - 10);
-    }
-    @ModifyVariable(method = "getIndicatorAt", argsOnly = true, ordinal = 1, at = @At(value = "HEAD"))
-    private double moveIndicatorText(double x) {
-        return x + (Option.SHIFT_HUD_POS.get() ? 10 : 0);
-    }
-    @ModifyVariable(method = "getTextStyleAt(DD)Lnet/minecraft/text/Style;", argsOnly = true, ordinal = 1, at = @At("HEAD"))
-    private double moveHoverText(double x) {
-        return x + (Option.SHIFT_HUD_POS.get() ? 10 : 0);
+    // condensed to one method because the first part of both methods are almost identical
+    @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
+    private double moveIndicatorAndHoverText(double e) {
+        // small bug with this, hover text extends to above chat, likely includes indicator text as well
+        // maybe check ChatHud#toChatLineY(double)
+        return e + ( Math.abs(config.shiftChat) * this.getChatScale() );
     }
 
 
     /**
      * Modifies the incoming message by adding timestamps,
      * nicer (vanilla) playername texts, hover events, and
-     * in conjunction with {@link #injectCounter(Text, int,
-     * int, boolean, CallbackInfo)}, even duplicate counters.
+     * in conjunction with {@link #injectCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}, even duplicate counters.
      *
      * <p>Process explained:
      * IF not boundary AND timestamp enabled THEN add the formatted and styled timestamp
@@ -175,43 +135,68 @@ public abstract class ChatHudMixin {
      * AND message contains an unformatted name THEN reformat message sender's name
      */
     @ModifyVariable(
-        method = "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
-        at = @At("HEAD")
+        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
+        at = @At("HEAD"),
+        argsOnly = true
     )
-    private Text modifyMessage(Text m) {
-        if( Flag.INIT.isSet() ? (Flag.flags > 8) : (Flag.flags > 0) )
-            return m;
+    private Text modifyMessage(Text message) {
+        if(Flags.anySet( Flags.LOADING_CHATLOG, RESET_NORMAL, RESET_FINISHING, RESET_FINAL ))
+            return message; // cancels modifications if there are any non-INIT flags set, excluding BOUNDARY_LINE
 
-        final String mStr = m.getString();
-        final Style mStyle = m.getStyle();
-        final boolean emptyMeta = lastMeta.equals(Util.NIL_METADATA);
-        Date now = emptyMeta ? new Date() : Date.from(lastMeta.timestamp());
-        boolean boundary = Util.isBoundaryLine(mStr) && Option.BOUNDARY.get();
-
-
-        Text modified = Text.empty().setStyle(mStyle)
-            .append(!boundary && Option.TIME.get()
-                ? config.getFormattedTime(now) .setStyle( config.getHoverStyle(now) )
-                : Text.empty()
-            )
-            .append( (Option.NAME_STR.changed() && !boundary && !emptyMeta && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", mStr))
-                ? Text.empty().setStyle(mStyle)
-                    .append( config.getFormattedName( Util.getProfile(client, lastMeta.sender()) ) )
-                    .append( Text.literal( mStr.replaceFirst("^<[a-zA-Z0-9_]{3,16}> ", "") ).setStyle(mStyle) )
-                : m
-            )
-        ;
+        final Style style = message.getStyle();
+        final boolean lastEmpty = lastMsgData.equals(Util.NIL_METADATA);
+        Date now = lastEmpty ? new Date() : Date.from(lastMsgData.timestamp());
+        boolean boundary = BOUNDARY_LINE.isSet() && config.boundary;
 
 
-        ChatLog.addMessage(modified, Option.MAX_MESSAGES.get());
+        Text modified =
+            Text.empty().setStyle(style)
+                .append(
+                    !boundary && config.time
+                        ? config.getFormattedTime(now).setStyle( config.getHoverStyle(now) )
+                        : Text.empty()
+                )
+                .append(
+                    !boundary && !lastEmpty && !config.nameStr.equals("<$>") && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
+                        ? Text.empty().setStyle(style)
+                            .append( config.getFormattedName(Util.getProfile(client, lastMsgData.sender())) ) // add formatted name
+                            .append( // add first part of message (depending on Text style and whether it was a chat or system)
+                                message.getContent() instanceof TranslatableTextContent
+                                    ? net.minecraft.util.Util.make(() -> { // all message components
+
+                                        MutableText text = Text.empty().setStyle(style);
+                                        List<Text> messages = Arrays.stream( ((TranslatableTextContent) message.getContent()).getArgs() ).map (arg -> (Text)arg ).toList();
+
+                                        for(int i = 1; i < messages.size(); ++i)
+                                            text.append( messages.get(i) );
+
+                                        return text;
+                                    })
+                                    : Text.literal( ((LiteralTextContent) message.getContent()).string().split("> ")[1] ).setStyle(style) // default-style message with name
+                            )
+                            .append( // add any siblings (Texts with different styles)
+                                net.minecraft.util.Util.make(() -> {
+
+                                    MutableText msg = Text.empty().setStyle(style);
+
+                                    message.getSiblings().forEach(msg::append);
+
+                                    return msg;
+                                })
+                            )
+                        : message
+                );
+
+
+        ChatLog.addMessage(modified);
         return modified;
     }
 
     /** Saves sent message history */
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
     private void saveHistory(String message, CallbackInfo ci) {
-        if( !Flag.LOADING_CHATLOG.isSet() )
-            ChatLog.addHistory(message, Option.MAX_MESSAGES.get());
+        if( !Flags.LOADING_CHATLOG.isSet() )
+            ChatLog.addHistory(message);
     }
 
     /**
@@ -230,13 +215,13 @@ public abstract class ChatHudMixin {
      * Exit.
      */
     @Inject(
-        method = "Lnet/minecraft/client/gui/hud/ChatHud;addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
+        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
         at = @At("HEAD"),
         cancellable = true
     )
-    private void injectCounter(Text m, MessageSignatureData sig, int tick, MessageIndicator indicator, boolean rfrs, CallbackInfo ci) { //Text m, int id, int tick, boolean rfrs
+    private void injectCounter(Text m, MessageSignatureData sig, int tick, MessageIndicator indicator, boolean refresh, CallbackInfo ci) {
         // IF counter is enabled AND there are messages AND the message isn't a boundary line THEN continue
-        if( Option.COUNTER.get() && messages.size() > 0 && !m.getString().equals( Util.strip(Option.BOUNDARY_STR.get()) ) ) {
+        if(config.counter && messages.size() > 0 && !BOUNDARY_LINE.isSet() ) {
 
             ChatHudLine last = messages.get(0);
             Text text = last.content();
@@ -245,19 +230,24 @@ public abstract class ChatHudMixin {
 
 
             // IF the last and incoming message bodies are equal AND the 4+2 flags aren't set THEN continue
+            int OG_MSG = 1;
             if( !RESET_FINISHING.isSet() && sibs.get(OG_MSG).getString() .equalsIgnoreCase( lastSibs.get(OG_MSG).getString()) ) {
                 // how many duped messages plus this one
+                int DUPE = 2;
                 int dupes = (sibs.size() > DUPE
-                    ? Integer.valueOf(delAll( sibs.get(DUPE).getString(), "\\D") )
+                    ? Integer.parseInt( delAll( sibs.get(DUPE).getString(), "((?:&|§)[0-9a-fk-or])+", "\\D") )
                     : lastSibs.size() > DUPE
-                        ? Integer.valueOf(delAll( lastSibs.get(DUPE).getString(), "\\D") )
+                        ? Integer.parseInt( delAll( lastSibs.get(DUPE).getString(), "((?:&|§)[0-9a-fk-or])+", "\\D") )
                         : 1
                 ) + 1;
+
 
                 // modifies the message to have a counter and timestamp
                 Util.setOrAdd( text.getSiblings(), DUPE, config.getFormattedCounter(dupes) );
 
                 // IF the last message had a timestamp THEN update it
+                // these constants represent the indexes of (customized) message siblings
+                int TIME = 0;
                 if(lastSibs.get(TIME).getString().length() > 0)
                     text.getSiblings().set(TIME, sibs.get(TIME));
                 // Replace the old text with the incoming text
@@ -274,7 +264,9 @@ public abstract class ChatHudMixin {
                     net.minecraft.util.math.MathHelper.floor( (double)ChatHud.getWidth(client.options.getChatWidth().getValue()) / client.options.getChatScale().getValue() ),
                     client.textRenderer
                 );
+
                 Collections.reverse(visibles);
+
                 for(OrderedText ordered : visibles)
                     Util.setOrAdd(
                         visibleMessages,

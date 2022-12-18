@@ -1,109 +1,112 @@
 package mechanicalarcane.wmch.config;
 
-import static mechanicalarcane.wmch.WMCH.LOGGER;
-import static mechanicalarcane.wmch.WMCH.config;
+import com.google.gson.*;
+import com.mojang.authlib.GameProfile;
+import mechanicalarcane.wmch.WMCH;
+import mechanicalarcane.wmch.util.Util;
+import net.minecraft.entity.EntityType;
+import net.minecraft.text.*;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
-import org.jetbrains.annotations.Nullable;
+import static mechanicalarcane.wmch.WMCH.LOGGER;
+import static mechanicalarcane.wmch.WMCH.config;
+import static mechanicalarcane.wmch.util.Util.fillVars;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.mojang.authlib.GameProfile;
-
-import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.util.Util;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-
-/** The config class for WMCH. Extended by {@link ClothConfig} for use with ModMenu. */
 public class Config {
+    private static final Config DEFAULTS = new Config();
     public static final boolean hasModMenu = WMCH.FABRICLOADER.isModLoaded("modmenu");
     public static final boolean hasClothConfig = WMCH.FABRICLOADER.isModLoaded("cloth-config");
 
     // configurable
-    public boolean time;
-    public String timeStr;
-    public String timeFormat;
-    public int timeColor;
-    public boolean hover;
-    public String hoverStr;
-    public boolean counter;
-    public String counterStr;
-    public int counterColor;
-    public boolean boundary;
-    public String boundaryStr;
-    public int boundaryColor;
-    public boolean saveChat;
-    public boolean shiftHudPos;
-    public String nameStr;
-    public int maxMsgs;
+    public boolean time = true, hover = true, counter = true, boundary = true;
+    public String timeDate = "HH:mm:ss", hoverDate = "MM/dd/yyyy";
+    public String counterStr = "&8(&7x&e$&8)", boundaryStr = "&8[&b$&8]";
+    public String timeFormat = "[$]", hoverFormat = "$";
+    public int timeColor = 0xff55ff, hoverColor = 0xffffff, counterColor = 0xffff55, boundaryColor = 0x55ffff;
+    public boolean saveChat = true;
+    public int shiftChat = 10;
+    public String nameStr = "$";
+    public int maxMsgs = 16384;
 
-    protected Config() {
-        Option.defaultAll(this);
-    }
 
-    /** Creates a new Config or ClothConfig depending on installed Relations. */
-    public static Config newConfig() {
-        return (hasModMenu && hasClothConfig) ? new ClothConfig() : new Config();
+    /** Creates a new Config or ClothConfig depending on installed mods. */
+    public static Config newConfig(boolean reset) {
+        config = (hasModMenu && hasClothConfig) ? new ClothConfig() : new Config();
+        if(!reset)
+            read();
+        return config;
     }
 
 
-    /**
-     * Turns this Config object into a list of usable, properly formatted options
-     */
-    public void validate() {
-        if( !(this instanceof ClothConfig) )
-            LOGGER.warn("[Config.validate] Cloth Config and Mod Menu aren't installed in a recent enough version; no in-game config integration available.");
+    /** Returns all Config options as a List of string keys and class types that can be used with {@link #getOption(String)}. */
+    public static List<Option<?>> getOptions() {
+        List<Option<?>> options = new ArrayList<>( Config.class.getDeclaredFields().length );
 
-        readFromFile();
-        Option.saveAll(this);
+        for(Field opt : Config.class.getDeclaredFields()) {
+            if(Modifier.isStatic( opt.getModifiers() ))
+                continue;
 
-        Option.logDiff();
-        LOGGER.info("[Config.validate] Finished validating config!");
+            options.add( Config.getOption(opt.getName()) );
+        }
+
+        return options;
+    }
+
+    /** Returns the value of the option in the {@link WMCH#config} identified by {@code key}. */
+    @SuppressWarnings("unchecked")
+    public static <T> Option<T> getOption(String key) {
+        try {
+            return new Option<>( (T)config.getClass().getField(key).get(config), (T)Config.class.getField(key).get(DEFAULTS), key );
+
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            LOGGER.error("[Config.getOption({})] An error occurred while trying to get an option value, please report this on GitHub:", key, e);
+
+            return new Option<>( (T)new Object(), (T)new Object(), key );
+        }
     }
 
 
     /** Adds the {@code TIME_FORMAT} and {@code TIME_STR} strings together, adds a space, then formats them. */
     public MutableText getFormattedTime(Date when) {
         return (
-            Util.formatString( Option.TIME_FORMAT.get() + (new SimpleDateFormat(this.timeStr).format(when)) + " " )
-        ).fillStyle(Style.EMPTY.withColor(Option.TIME_COLOR.get()));
+            Util.formatString( fillVars(timeFormat, new SimpleDateFormat(timeDate).format(when)) + " " )
+        ).fillStyle( Style.EMPTY.withColor(timeColor) );
     }
 
     /**
      * If the {@code HOVER} option is enabled, returns a Style with a
      * formatted HoverEvent and ClickEvent and {@code TIME_COLOR} applied.
-     * Otherwise returns a Style with only {@code TIME_COLOR} applied.
+     * Otherwise, returns a Style with only {@code TIME_COLOR} applied.
      * @param when The time to use for formatting the hover time string
      */
-    public @Nullable Style getHoverStyle(Date when) {
-        String hoverText = new SimpleDateFormat(Option.HOVER_STR.get()).format(when);
+    public Style getHoverStyle(Date when) {
+        MutableText hoverText = Util.formatString(
+            fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when))
+        ).fillStyle( Style.EMPTY.withColor(hoverColor) );
 
         return Style.EMPTY
-            .withHoverEvent( Option.HOVER.get() ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(hoverText)) : null )
-            .withClickEvent( Option.HOVER.get() ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText) : null )
-            .withColor(Option.TIME_COLOR.get())
+            .withHoverEvent( hover ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText) : null )
+            .withClickEvent( hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText.getString()) : null )
+            .withColor(timeColor)
         ;
     }
 
     public MutableText getFormattedName(GameProfile player) {
         String name = player.getName();
-        return Util.formatString(Option.NAME_STR.get().replaceAll("\\$", name) + " ")
+        return Util.formatString( fillVars(nameStr, name) + " " )
             .setStyle( Style.EMPTY
                 .withHoverEvent(
                     new HoverEvent(
                         HoverEvent.Action.SHOW_ENTITY,
-                        new HoverEvent.EntityContent( net.minecraft.entity.EntityType.PLAYER, player.getId(), Text.of(player.getName()) )
+                        new HoverEvent.EntityContent( EntityType.PLAYER, player.getId(), Text.of(player.getName()) )
                     )
                 )
                 .withClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tell " + name + " ") )
@@ -112,50 +115,44 @@ public class Config {
 
     public MutableText getFormattedCounter(int dupes) {
         return
-            Util.formatString(" " + Option.COUNTER_STR.get().replaceAll("\\$", Integer.toString(dupes)))
-                .fillStyle(Style.EMPTY.withColor(Option.COUNTER_COLOR.get()));
+            Util.formatString(" " + fillVars(counterStr, Integer.toString(dupes)))
+                .fillStyle( Style.EMPTY.withColor(counterColor) );
+    }
+
+    public MutableText getFormattedBoundary(String levelName) {
+        return
+            Util.formatString( fillVars(boundaryStr, levelName) )
+                .fillStyle(Style.EMPTY.withColor(boundaryColor));
     }
 
 
-    /** Loads the config settings saved at {@code ./config/wmch.json} into this Config instance */
-    public void readFromFile() {
+    /** Loads the config settings saved at {@link Util#CONFIG_PATH} into this Config instance */
+    public static void read() {
         try(FileReader fr = new FileReader(Util.CONFIG_PATH)) {
             config = new Gson().fromJson(fr, config.getClass());
 
-            if( !(config instanceof Config) ) {
-                reset();
-                LOGGER.info("[Config.read] Something was broken, so the config has been reset.");
-            }
-
-            // replaces the 'this' Config object's field values with ones from the config file
-            for(int i = 0; i < this.getClass().getFields().length; ++i) {
-                Field option = this.getClass().getFields()[i];
-
-                // ignores non-public or static fields (ex. logger)
-                if( !Modifier.isPublic(option.getModifiers()) || Modifier.isStatic(option.getModifiers()) )
-                    continue;
-
-                option.set( this, config.getClass().getFields()[i].get(config) );
-            }
-
             LOGGER.info("[Config.read] Loaded config info from '{}'!", Util.CONFIG_PATH);
-        } catch(FileNotFoundException e) {
+        } catch(JsonIOException | JsonSyntaxException e) {
+
+            LOGGER.info("[Config.read] The config couldn't be loaded; copying old data and resetting...");
+            writeCopy();
             reset();
-            LOGGER.warn("[Config.read] Couldn't find a config file at '{}'; created a default one:", Util.CONFIG_PATH, e);
-        } catch(Exception e) {
-            LOGGER.error("[Config.read] An error occurred while trying to load config data; resetting:", e);
+
+        } catch(IOException e) {
             reset();
+            LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", Util.CONFIG_PATH, e);
         }
     }
 
-    /** Saves this {@code Config} instance to {@code ./config/wmch.json} */
-    public void writeToFile() {
+    /** Saves the {@code WMCH.config} instance to {@link Util#CONFIG_PATH} */
+    public static void write() {
         try(FileWriter fw = new FileWriter(Util.CONFIG_PATH)) {
+
             new GsonBuilder()
                 .excludeFieldsWithModifiers(Modifier.STATIC)
                 .setPrettyPrinting()
             .create()
-                .toJson(this, this.getClass(), fw);
+                .toJson(config, config.getClass(), fw);
 
             LOGGER.info("[Config.write] Saved config info to '{}'!", Util.CONFIG_PATH);
         } catch(Exception e) {
@@ -165,7 +162,77 @@ public class Config {
 
     /** Overwrites the {@code WMCH.config} object with default values and saves it */
     public static void reset() {
-        config = Config.newConfig();
-        config.writeToFile();
+        config = Config.newConfig(true);
+        write();
+    }
+
+    /** Copies the current Config file data to {@code ./wmch_old.json} for copying old configurations over */
+    public static void writeCopy() {
+        try(
+            FileInputStream cfg = new FileInputStream(Util.CONFIG_PATH);
+            FileOutputStream copy = new FileOutputStream(Util.CONFIG_PATH.replace("wmch", "wmch_old"))
+        ) {
+            copy.write( cfg.readAllBytes() );
+        } catch (IOException e) {
+            LOGGER.error("An error occurred trying to copy the original config file from '{}':", Util.CONFIG_PATH, e);
+        }
+    }
+
+    /**
+     * A simple Option class that wraps the internally-used
+     * String/Class pair for each Config field. This is
+     * merely an abstraction used for simplification.
+     */
+    public static class Option<T> {
+        private T val;
+        public final T def;
+        public final String key;
+
+        /**
+         * Creates a new Simple Config option.
+         * @param def The default value for creation and resetting.
+         * @param key The lang key of the Option; for identification
+         */
+        public Option(T val, T def, String key) {
+            this.val = Objects.requireNonNull(val, "Cannot create a ConfigOption without a default value");
+            this.def = Objects.requireNonNull(def, "Cannot create a ConfigOption without a default value");
+            this.key = Objects.requireNonNull(key, "Cannot create a ConfigOption without a key");
+        }
+
+
+        public T get() { return val; }
+
+        /**
+         * Sets this Option's value to {@code obj} in {@code this} and also in the config;
+         * assuming {@code obj.getClass().equals(T.class)} returns true.
+         * @param obj The new object to replace the old one with
+         * @param set If false, doesn't change the value. For no check, see
+         * {@link #set(Object)}
+         */
+        public void set(Object obj, boolean set) {
+            try {
+                @SuppressWarnings("unchecked")
+                T inc = (T) obj;
+
+                if( inc != null && !inc.equals(val) && set ) {
+                    config.getClass().getField(key).set(config, inc);
+
+                    this.val = inc;
+                }
+            } catch (NoSuchFieldException | IllegalAccessException | ClassCastException e) {
+                LOGGER.error("[ConfigOption.set({})] An error occurred trying to set a config option:", obj, e);
+            }
+        }
+        public void set(Object obj) {
+            this.set(obj, true);
+        }
+
+        public boolean changed() {
+            return !val.equals(def);
+        }
+
+        public void reset() {
+            this.set( this.val = def );
+        }
     }
 }

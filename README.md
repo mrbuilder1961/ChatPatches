@@ -1,5 +1,5 @@
 [![Fabric Mod](https://img.shields.io/badge/modloader-fabric-eeeeee)](https://fabricmc.net/use/)
-[![Latest Version](https://img.shields.io/badge/version-1.5.5-blueviolet)](https://github.com/mrbuilder1961/WheresMyChatHistory/releases)
+[![Latest Version](https://img.shields.io/badge/version-1.5.6-blueviolet)](https://github.com/mrbuilder1961/WheresMyChatHistory/releases)
 [![Curseforge Download](https://img.shields.io/badge/curseforge-6083_downloads-blue)](https://www.curseforge.com/minecraft/mc-mods/wmch)
 [![Modrinth Download](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=modrinth&suffix=%20downloads&query=downloads&url=https://api.modrinth.com/v2/project/MOqt4Z5n&cacheSeconds=3600)](https://www.modrinth.com/mod/MOqt4Z5n)
 # Where's My Chat History
@@ -16,7 +16,9 @@ Be on the lookout for new versions, issues, and possible future features!
 
 ## Localization and Translation
 
-If you would like to help translate WMCH into other languages, head to [our CrowdIn page](https://crwd.in/wmch) and see how you can contribute!
+If you would like to help translate WMCH into other languages, you can:
+- Create a pull request that adds or corrects a language file
+- Head over to [the CrowdIn page](https://crwd.in/wmch) and see how you can contribute
 
 ## Setup developer workspace
 
@@ -27,30 +29,32 @@ If you would like to help translate WMCH into other languages, head to [our Crow
 
 ## Configuration help
 
-| Name | Default Value | Description  | Lang Key |
-|---|---|---|---|
-| Timestamp toggle | `true` | Should a timestamp in front of all messages show? | `text.wmch.time` |
-| Timestamp text | `[HH:mm:ss]` | The text that is used for the timestamp. For dynamic text, search online for 'java date format string'. | `text.wmch.timeStr` |
-| Timestamp color | `0xFF55FF` (`16733695`) | The color that's 'filled in' where applicable in the timestamp text. | `text.wmch.timeColor` |
-| Timestamp modifiers | `` | The string of ampersands (&) and formatting codes that apply over the time string. | `text.wmch.timeFormat` |
-| Hover toggle | `true` | Should the text that appears when you hover over the timestamp show? | `text.wmch.hover` |
-| Hover text | `MM/dd/yyyy` | The text that appears when hovering over timestamp text. For dynamic text, search online for 'java date format string'. | `text.wmch.hoverStr` |
-| Message counter toggle | `true` | Should a message counter show after a message to indicate multiple were sent? | `text.wmch.counter` |
-| Message counter text | `&8(&7x&e$&8)` | The text that's added to the end of a message to indicate multiple duplicates were sent. Must include a $ for the number of duplicates. | `text.wmch.counterStr` |
-| Message counter color | `0xFFFF55` (`16777045`) | The color that's 'filled in' where applicable in the counter text, for example '&r' will be replaced with this color. | `text.wmch.counterColor` |
-| Boundary toggle | `true` | Should a boundary line show after using chat, leaving, and then joining again later? | `text.wmch.boundary` |
-| Boundary text | `&b[==============]` | The text that is shown when a boundary line is inserted into the chat, add ampersands (&) followed by a formatting code to prettify it. | `text.wmch.boundaryStr` |
-| Boundary color | `0x55FFFF` (`5636095`) | The color that's 'filled in' where applicable in the boundary text, for example '&r' will be replaced with this color. | `text.wmch.boundaryColor` |
-| Chat log toggle | `false` | Should the chat be saved into a log so it can be re-added back into the chat in another game session? | `text.wmch.saveChat` |
-| Shift chat interface | `true` | Should that chat interface be shifted up about 10 pixels to not obstruct the armor bar? | `text.wmch.shiftHudPos` |
-| Playername text | `$` | The text that replaces the playername in chat messages. Vanilla is <$>, no brackets is $; where $ represents the playername. Only applies to player messages. | `text.wmch.nameStr` |
-| Maximum chat messages | `16384` | The max amount of chat messages allowed to render. Vanilla has this set as 100, maximum allowed is 32,767. Keep in mind the higher the value, the more memory the chat requires. | `text.wmch.maxMsgs` |
+| Name                      | Default Value           | Description                                                                                                                                                                                                  | Lang Key                  |
+|---------------------------|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| Timestamp toggle          | `true`                  | Should a timestamp in front of all messages show?                                                                                                                                                            | `text.wmch.time`          |
+| Hover toggle              | `true`                  | Should text appear stating a more detailed time description when you hover over the timestamp text in chat?                                                                                                  | `text.wmch.hover`         |
+| Message counter toggle    | `true`                  | Should a message counter show after messages to indicate multiple duplicates were sent?                                                                                                                      | `text.wmch.counter`       |
+| Boundary toggle           | `true`                  | Should a boundary line show after chatting, leaving a world/server, and then joining another world/server later?                                                                                             | `text.wmch.boundary`      |
+| Timestamp text            | `HH:mm:ss`              | The text that is formatted into a timestamp.                                                                                                                                                                 | `text.wmch.timeDate`      |
+| Hover text                | `MM/dd/yyyy`            | The text that is formatted into a longer date/time string.                                                                                                                                                   | `text.wmch.hoverDate`     |
+| Message counter text      | `&8(&7x&e$&8)`          | The text that's added to the end of a message to indicate multiple duplicates were sent. Requires a $ for the number of duplicates, also supports '&'s + formatting codes to modify it.                      | `text.wmch.counterStr`    |
+| Boundary text             | `&8[&b$&8]`             | The text that is formatted and used for the boundary line. Supports '&' + formatting codes to modify it.                                                                                                     | `text.wmch.boundaryStr`   |
+| Timestamp decoration text | `[$]`                   | The string of '&'s + formatting codes and decoration text that create the timestamp. The $ is a placeholder for the formatted timestamp Option above this one.                                               | `text.wmch.timeFormat`    |
+| Hover decoration text     | `$`                     | The string of '&'s + formatting codes and decoration text that create the detailed hover description. Requires a $ as a placeholder for the formatted timestamp Option above this one.                       | `text.wmch.hoverFormat`   |
+| Timestamp color           | `0xFF55FF` (`16733695`) | The color that's filled in where it would otherwise be blank white in the resulting timestamp.                                                                                                               | `text.wmch.timeColor`     |
+| Hover text color          | `0xFFFFFF` (`16777215`) | The color that's filled in where it would otherwise be blank white in the resulting hover text.                                                                                                              | `text.wmch.hoverColor`    |
+| Message counter color     | `0xFFFF55` (`16777045`) | The color that's filled in where it would otherwise be blank white in the resulting duplicate counter.                                                                                                       | `text.wmch.counterColor`  |
+| Boundary color            | `0x55FFFF` (`5636095`)  | The color that's filled in where it would otherwise be blank white in the resulting boundary line.                                                                                                           | `text.wmch.boundaryColor` |
+| Chat log toggle           | `true`                  | Should the chat be saved into a log so it can be re-added back into the chat in another game session?                                                                                                        | `text.wmch.saveChat`      |
+| Shift chat                | `10`                    | Shifts the chat interface up to not obstruct the armor bar and/or health. Default is 10, set to 0 for no shift.                                                                                              | `text.wmch.shiftChat`     |
+| Playername text           | `$`                     | The text that replaces the playername in chat messages. Vanilla is <$>, no triangle brackets is $; where $ is a placeholder for the playername. Only applies to player sent messages.                        | `text.wmch.nameStr`       |
+| Maximum chat messages     | `0x4000`                | The max amount of chat messages allowed to render. Vanilla is capped at 100, the true maximum is 32767. Keep in mind the higher the number, the more memory the chat will require to store all the messages. | `text.wmch.maxMsgs`       |
 
 ## Possible features
 - Localize logging messages?
-- Make certain messages copiable by default (on-click), such as the Open-To-LAN port
+- Make certain messages copyable by default (on-click), such as the Open-To-LAN port
 - Chat search feature, with regex search capabilities
-- animate message recieve
+- animate message receive
 - add buttons to the edge of chat input box OR in multiplayer menu screen (for WMCH settings and chat searcher)
 - buttons/variable input strings to easily message data (ex. coords or UUID)
 

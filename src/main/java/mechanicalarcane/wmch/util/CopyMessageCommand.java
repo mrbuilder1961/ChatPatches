@@ -1,26 +1,23 @@
 package mechanicalarcane.wmch.util;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
-import mechanicalarcane.wmch.config.Option;
+import mechanicalarcane.wmch.WMCH;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.text.Text;
 
-public class CopyMessageCommand {
-    public static boolean showIndices = false;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+
+public class CopyMessageCommand {
     private static MinecraftClient client;
 
     public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher) {
@@ -29,7 +26,7 @@ public class CopyMessageCommand {
                 .then(
                     literal("index")
                         .then(
-                            argument("message_index", IntegerArgumentType.integer(0, Option.MAX_MESSAGES.get()))
+                            argument("message_index", IntegerArgumentType.integer(0, WMCH.config.maxMsgs))
                                 .suggests(CopyMessageCommand::indexSuggestions)
                                 .executes(CopyMessageCommand::executeIndex)
                         )
@@ -43,7 +40,7 @@ public class CopyMessageCommand {
 
     private static int executeIndex(CommandContext<FabricClientCommandSource> context) {
         client = context.getSource().getClient();
-        List<ChatHudLine> messages = Util.accessChatHud(client).getMessages();
+        List<ChatHudLine> messages = Util.chatHud(client).getMessages();
         int i = context.getArgument("message_index", Integer.class);
 
         if(messages.size() > i) {
@@ -69,7 +66,7 @@ public class CopyMessageCommand {
 
     private static CompletableFuture<Suggestions> indexSuggestions(CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) {
         client = context.getSource().getClient();
-        List<ChatHudLine> messages = Util.accessChatHud(client).getMessages();
+        List<ChatHudLine> messages = Util.chatHud(client).getMessages();
 
         // loops over each message for suggesting
         for(ChatHudLine line : messages)

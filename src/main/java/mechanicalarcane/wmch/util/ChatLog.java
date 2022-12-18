@@ -1,28 +1,26 @@
 package mechanicalarcane.wmch.util;
 
-import static mechanicalarcane.wmch.WMCH.LOGGER;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.InstanceCreator;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonSerializer;
+import mechanicalarcane.wmch.config.Config;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.network.message.MessageSignatureData;
+import net.minecraft.text.Text;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.google.gson.InstanceCreator;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-
-import mechanicalarcane.wmch.config.Option;
-import net.minecraft.SharedConstants;
-import net.minecraft.text.Text;
+import static mechanicalarcane.wmch.WMCH.LOGGER;
+import static mechanicalarcane.wmch.WMCH.config;
 
 /**
  * Represents the chat log file in the
@@ -31,33 +29,20 @@ import net.minecraft.text.Text;
 public class ChatLog {
     private static final File file = new File(Util.CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
-        .registerTypeAdapter(Text.class, new JsonSerializer<Text>() {
-            @Override public JsonElement serialize(Text src, Type typeOfSrc, JsonSerializationContext context) {
-                return Text.Serializer.toJsonTree(src);
-            }
-        })
-        .registerTypeAdapter(Text.class, new JsonDeserializer<Text>() {
-            @Override public Text deserialize(JsonElement json, Type typeOfSrc, JsonDeserializationContext context) {
-                return Text.Serializer.fromJson(json);
-            }
-        })
-        .registerTypeAdapter(Text.class, new InstanceCreator<Text>() {
-            @Override public Text createInstance(Type type) {
-                return Text.empty();
-            }
-        })
+        .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, typeOfSrc, context) -> Text.Serializer.toJsonTree(src))
+        .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, typeOfSrc, context) -> Text.Serializer.fromJson(json))
+        .registerTypeAdapter(Text.class, (InstanceCreator<Text>) type -> Text.empty())
     .create();
 
     private static boolean initialized = false;
     private static boolean savedAfterCrash = false;
     private static ChatLog.Data data = new Data(100);
     private static FileChannel channel;
-    private static FileInputStream inStream;
     private static String rawData;
 
     public static boolean loaded = false;
 
-    /** Micro class for serializing, used seperately from ChatLog for simplification */
+    /** Micro class for serializing, used separately from ChatLog for simplification */
     private static class Data {
         public List<Text> messages;
         public List<String> history;
@@ -69,17 +54,16 @@ public class ChatLog {
     }
 
 
-    /** Initializes the chatlog file and opens all file-related connections. */
+    /** Initializes the ChatLog file and opens file connections. */
     public static void initialize() {
         if(!initialized) {
-            try {
+            try( FileInputStream inStream = new FileInputStream(file) ) {
                 channel = FileChannel.open(file.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-                inStream = new FileInputStream(file);
                 rawData = new String(inStream.readAllBytes());
 
                 initialized = true;
             } catch(IOException e) {
-                LOGGER.error("[ChatLog()] Couldn't create chatlog file connections:", e);
+                LOGGER.error("[ChatLog()] Couldn't create ChatLog file connections:", e);
             }
         }
     }
@@ -88,14 +72,15 @@ public class ChatLog {
     /**
      * Deserializes the chat log and resolves message data from it.
      * First detects if it is reading the first version of the
-     * chatlog, and then updates it to match with the current version.
+     * ChatLog, and then updates it to match with the current version.
      * Then proceeds as normal and deserializes the log into an
      * instance of {@code ChatLog.Data} at {@code ChatLog.data}.
      */
     public static void deserialize() {
         long fileSize = -1;
+
         if( !rawData.startsWith("{") && rawData.length() > 1 ) {
-            LOGGER.info("[ChatLog.deserialize] Old chatlog file type detected, updating...");
+            LOGGER.info("[ChatLog.deserialize] Old ChatLog file type detected, updating...");
             try {
                 write("{\"history\":[],\"messages\":");
                 channel.position(channel.size());
@@ -114,7 +99,7 @@ public class ChatLog {
 
         try {
             data = json.fromJson(rawData, Data.class);
-            enforceSizes(Option.MAX_MESSAGES.get());
+            enforceSizes();
         } catch (com.google.gson.JsonSyntaxException e) {
             LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
@@ -137,12 +122,12 @@ public class ChatLog {
             return;
 
         try {
-            enforceSizes(Option.MAX_MESSAGES.get());
-            final String stringified = json.toJson(data, Data.class);
+            enforceSizes();
+            final String str = json.toJson(data, Data.class);
 
             // removes any overflowing file data so no corrupted JSON is stored
-            channel.truncate(stringified.getBytes().length);
-            write(stringified);
+            channel.truncate(str.getBytes().length);
+            write(str);
 
             if(data.messages.size() > 0)
                 LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), Util.CHATLOG_PATH);
@@ -165,28 +150,38 @@ public class ChatLog {
         channel.position(0);
     }
 
-    /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@code max}. */
-    private static void enforceSizes(int max) {
-        data.messages.removeIf(msg -> data.messages.indexOf(msg) > Math.abs(max));
-        data.history.removeIf(sent -> data.history.indexOf(sent) > Math.abs(max));
+    /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@link Config#maxMsgs}. */
+    private static void enforceSizes() {
+        if( data.messages.size() <= config.maxMsgs && data.history.size() <= config.maxMsgs )
+            return;
+
+        data.messages.removeIf(msg -> data.messages.indexOf(msg) > config.maxMsgs);
+        data.history.removeIf(sent -> data.history.indexOf(sent) > config.maxMsgs);
+    }
+
+    public static void restore(MinecraftClient client) {
+        Util.Flags.LOADING_CHATLOG.set();
+
+        if(data.history.size() > 0)
+            data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
+        if(data.messages.size() > 0)
+            data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(
+                msg, MessageSignatureData.EMPTY, new MessageIndicator(0x382fb5, null, null, "Restored")
+            ));
+
+        Util.Flags.LOADING_CHATLOG.remove();
+        LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(),
+            Util.CHATLOG_PATH);
     }
 
 
-    /**
-     * Adds a chat message to the chat log, returns true if it was added.
-     * @param msg Message to add
-     * @param max The number specifying the limit of cached messages allowed
-     */
-    public static boolean addMessage(Text msg, int max) {
-        return (data.messages.size() < Math.abs(max)) ? data.messages.add(msg) : false;
+    public static void addMessage(Text msg) {
+        if(data.messages.size() < config.maxMsgs)
+            data.messages.add(msg);
     }
-    /**
-     * Adds a sent message to the chat log, returns true if it was added.
-     * @param msg History to add
-     * @param max The number specifying the limit of cached history allowed
-     */
-    public static boolean addHistory(String msg, int max) {
-        return (data.history.size() < Math.abs(max)) ? data.history.add( SharedConstants.stripInvalidChars(msg) ) : false;
+    public static void addHistory(String msg) {
+        if(data.history.size() < config.maxMsgs)
+            data.history.add(msg);
     }
     public static void clearMessages() { data.messages.clear(); }
     public static void clearHistory() { data.history.clear(); }
