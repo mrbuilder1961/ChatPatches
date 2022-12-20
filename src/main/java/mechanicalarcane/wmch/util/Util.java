@@ -2,7 +2,6 @@ package mechanicalarcane.wmch.util;
 
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
-import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.mixin.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
@@ -18,8 +17,6 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.io.File.separator;
-
 /**
  * Random functions that are of some random, obsolete use
  */
@@ -27,8 +24,6 @@ public class Util {
 	public static final UUID NIL_UUID = new UUID(0, 0);
 	public static final MessageMetadata NIL_METADATA = new MessageMetadata(NIL_UUID, Instant.EPOCH, 0);
 
-	public static final String CONFIG_PATH = WMCH.FABRICLOADER.getConfigDir().toString() + separator + "wmch.json";
-	public static final String CHATLOG_PATH = WMCH.FABRICLOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
 
 	/** These are used to fix bugs with messages modifying in counterproductive places */
 	public enum Flags {

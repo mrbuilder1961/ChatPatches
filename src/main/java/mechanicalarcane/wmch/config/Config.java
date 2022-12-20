@@ -16,11 +16,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import static java.io.File.separator;
 import static mechanicalarcane.wmch.WMCH.LOGGER;
 import static mechanicalarcane.wmch.WMCH.config;
 import static mechanicalarcane.wmch.util.Util.fillVars;
 
 public class Config {
+    public static final String CONFIG_PATH = WMCH.FABRICLOADER.getConfigDir().toString() + separator + "wmch.json";
     private static final Config DEFAULTS = new Config();
     public static final boolean hasModMenu = WMCH.FABRICLOADER.isModLoaded("modmenu");
     public static final boolean hasClothConfig = WMCH.FABRICLOADER.isModLoaded("cloth-config");
@@ -50,11 +52,12 @@ public class Config {
     public static List<Option<?>> getOptions() {
         List<Option<?>> options = new ArrayList<>( Config.class.getDeclaredFields().length );
 
-        for(Field opt : Config.class.getDeclaredFields()) {
-            if(Modifier.isStatic( opt.getModifiers() ))
+        for(Field field : Config.class.getDeclaredFields()) {
+
+            if(Modifier.isStatic( field.getModifiers() ))
                 continue;
 
-            options.add( Config.getOption(opt.getName()) );
+            options.add( Config.getOption(field.getName()) );
         }
 
         return options;
@@ -126,12 +129,12 @@ public class Config {
     }
 
 
-    /** Loads the config settings saved at {@link Util#CONFIG_PATH} into this Config instance */
+    /** Loads the config settings saved at {@link Config#CONFIG_PATH} into this Config instance */
     public static void read() {
-        try(FileReader fr = new FileReader(Util.CONFIG_PATH)) {
+        try(FileReader fr = new FileReader(CONFIG_PATH)) {
             config = new Gson().fromJson(fr, config.getClass());
 
-            LOGGER.info("[Config.read] Loaded config info from '{}'!", Util.CONFIG_PATH);
+            LOGGER.info("[Config.read] Loaded config info from '{}'!", CONFIG_PATH);
         } catch(JsonIOException | JsonSyntaxException e) {
 
             LOGGER.info("[Config.read] The config couldn't be loaded; copying old data and resetting...");
@@ -140,13 +143,13 @@ public class Config {
 
         } catch(IOException e) {
             reset();
-            LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", Util.CONFIG_PATH, e);
+            LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", CONFIG_PATH, e);
         }
     }
 
-    /** Saves the {@code WMCH.config} instance to {@link Util#CONFIG_PATH} */
+    /** Saves the {@code WMCH.config} instance to {@link Config#CONFIG_PATH} */
     public static void write() {
-        try(FileWriter fw = new FileWriter(Util.CONFIG_PATH)) {
+        try(FileWriter fw = new FileWriter(CONFIG_PATH)) {
 
             new GsonBuilder()
                 .excludeFieldsWithModifiers(Modifier.STATIC)
@@ -154,9 +157,9 @@ public class Config {
             .create()
                 .toJson(config, config.getClass(), fw);
 
-            LOGGER.info("[Config.write] Saved config info to '{}'!", Util.CONFIG_PATH);
+            LOGGER.info("[Config.write] Saved config info to '{}'!", CONFIG_PATH);
         } catch(Exception e) {
-            LOGGER.error("[Config.write] An error occurred while trying to save config data to '{}':", Util.CONFIG_PATH, e);
+            LOGGER.error("[Config.write] An error occurred while trying to save config data to '{}':", CONFIG_PATH, e);
         }
     }
 
@@ -169,12 +172,12 @@ public class Config {
     /** Copies the current Config file data to {@code ./wmch_old.json} for copying old configurations over */
     public static void writeCopy() {
         try(
-            FileInputStream cfg = new FileInputStream(Util.CONFIG_PATH);
-            FileOutputStream copy = new FileOutputStream(Util.CONFIG_PATH.replace("wmch", "wmch_old"))
+            FileInputStream cfg = new FileInputStream(CONFIG_PATH);
+            FileOutputStream copy = new FileOutputStream(CONFIG_PATH.replace("wmch", "wmch_old"))
         ) {
             copy.write( cfg.readAllBytes() );
         } catch (IOException e) {
-            LOGGER.error("An error occurred trying to copy the original config file from '{}':", Util.CONFIG_PATH, e);
+            LOGGER.error("An error occurred trying to copy the original config file from '{}':", CONFIG_PATH, e);
         }
     }
 
@@ -231,8 +234,5 @@ public class Config {
             return !val.equals(def);
         }
 
-        public void reset() {
-            this.set( this.val = def );
-        }
     }
 }

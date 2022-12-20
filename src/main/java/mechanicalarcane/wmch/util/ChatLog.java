@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
+import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.config.Config;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -19,15 +20,17 @@ import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import static java.io.File.separator;
 import static mechanicalarcane.wmch.WMCH.LOGGER;
 import static mechanicalarcane.wmch.WMCH.config;
 
 /**
  * Represents the chat log file in the
- * run directory located at {@link Util#CHATLOG_PATH}.
+ * run directory located at {@link ChatLog#CHATLOG_PATH}.
  */
 public class ChatLog {
-    private static final File file = new File(Util.CHATLOG_PATH);
+    public static final String CHATLOG_PATH = WMCH.FABRICLOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    private static final File file = new File(CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, typeOfSrc, context) -> Text.Serializer.toJsonTree(src))
         .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, typeOfSrc, context) -> Text.Serializer.fromJson(json))
@@ -41,6 +44,7 @@ public class ChatLog {
     private static String rawData = "{\"history\":[],\"messages\":[]}"; // prevents a few errors if the channel doesn't initialize
 
     public static boolean loaded = false;
+
 
     /** Micro class for serializing, used separately from ChatLog for simplification */
     private static class Data {
@@ -117,7 +121,7 @@ public class ChatLog {
         LOGGER.info("[ChatLog.deserialize] Read the chat log {} containing {} messages and {} sent messages from '{}'",
 			fileSize != -1 ? "(using "+fileSize+" bytes of data)" : "",
             data.messages.size(), data.history.size(),
-            Util.CHATLOG_PATH
+            CHATLOG_PATH
 		);
     }
 
@@ -134,7 +138,7 @@ public class ChatLog {
             write(str);
 
 
-            LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), Util.CHATLOG_PATH);
+            LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
 
         } catch (IOException e) {
 
@@ -181,7 +185,7 @@ public class ChatLog {
 
         Util.Flags.LOADING_CHATLOG.remove();
         LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(),
-            Util.CHATLOG_PATH);
+            CHATLOG_PATH);
     }
 
 
