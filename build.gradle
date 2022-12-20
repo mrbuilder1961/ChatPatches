@@ -6,9 +6,9 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-archivesBaseName = project.archivesBaseName
-group = project.group
-version = "$project.archivesBaseName-$project.minecraft-$project.version"
+archivesBaseName = rootProject.archivesBaseName
+group = rootProject.group
+version = "$rootProject.archivesBaseName-$rootProject.minecraft-$rootProject.version"
 
 
 repositories {
@@ -19,8 +19,6 @@ repositories {
 	maven { url "https://maven.shedaniel.me/" } // Cloth Config API
 	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
 }
-
-def integrationsFile = file("./random/integration.properties")
 
 dependencies {
 	minecraft "com.mojang:minecraft:$project.minecraft"
@@ -38,6 +36,8 @@ dependencies {
 
 
 	// integration files, toggleable in /random/integrations.properties
+	def integrationsFile = file("./random/integration.properties")
+
 	if( integrationsFile.exists() ) {
 		println "Started loading dev testing integrations..."
 
@@ -71,7 +71,7 @@ dependencies {
 }
 
 processResources {
-	inputs.property "version", project.version
+	inputs.property "version", rootProject.version
 	inputs.property "group", rootProject.group
 	inputs.property "modId", rootProject.archivesBaseName
 
@@ -82,7 +82,7 @@ processResources {
 
 	filesMatching("fabric.mod.json") {
 		expand([
-			"version": project.version,
+			"version": rootProject.version,
 			"group": rootProject.group,
 			"modId": rootProject.archivesBaseName,
 
