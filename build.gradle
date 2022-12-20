@@ -72,9 +72,28 @@ dependencies {
 
 processResources {
 	inputs.property "version", project.version
+	inputs.property "group", rootProject.group
+	inputs.property "modId", rootProject.archivesBaseName
+
+	inputs.property "minecraft", rootProject.minecraft
+	inputs.property "minecraft_min", rootProject.minecraft_min
+	inputs.property "loaderBase", rootProject.loader.toString().replaceFirst("\\.\\d+\$", "")
+
 
 	filesMatching("fabric.mod.json") {
-		expand "version": project.version
+		expand([
+			"version": project.version,
+			"group": rootProject.group,
+			"modId": rootProject.archivesBaseName,
+
+			"minecraft": rootProject.minecraft,
+			"minecraft_min": rootProject.minecraft_min,
+			"loaderBase": "${rootProject.loader.toString().replaceFirst("\\.\\d+\$", "")}"
+		])
+
+		/* filter {
+			it.replace("example_key", rootProject.exampleVar)
+		} */
 	}
 }
 

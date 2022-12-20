@@ -1,11 +1,13 @@
 {
   "schemaVersion": 1,
-  "id": "wmch",
-  "version": "1.5.6",
+  "id": "${modId}",
+  "version": "${version}",
 
   "name": "Where's My Chat History",
-  "description": "A versatile client-side chat mod that makes chat more customizable, just check out the config and the GitHub page for more info!",
-  "authors": ["MechanicalArcane"],
+  "description": "A versatile client-side chat mod that makes chat more customizable, check out the config and the GitHub page for more info!",
+  "authors": [
+    "MechanicalArcane"
+  ],
   "contributors": [],
   "contact": {
     "homepage": "https://curseforge.com/minecraft/mc-mods/wmch",
@@ -18,17 +20,24 @@
 
   "environment": "client",
   "entrypoints": {
-    "client": ["mechanicalarcane.wmch.WMCH"],
-    "modmenu": ["mechanicalarcane.wmch.integration.ModMenuIntegration"]
+    "client": [
+      "${group}.WMCH"
+    ],
+    "modmenu": [
+      "${group}.integration.ModMenuIntegration"
+    ]
   },
   "mixins": [
-    "wmch.mixins.json"
+    "${modId}.mixins.json"
   ],
 
   "depends": {
     "java": ">=17",
-    "minecraft": "1.19.x",
-    "fabricloader": ">=0.14.0",
+    "minecraft": [
+      ">=${minecraft_min}",
+      "<=${minecraft}"
+    ],
+    "fabricloader": ">=${loaderBase}",
     "fabric": "*"
   },
   "recommends": {
