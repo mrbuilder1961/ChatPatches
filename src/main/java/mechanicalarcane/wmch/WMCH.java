@@ -35,7 +35,7 @@ public class WMCH implements ClientModInitializer {
 	 * Validates the newly created Config object.
 	 * Initializes the ChatLog.
 	 * Registers the CopyMessageCommand on client's server initialization.
-	 * Registers a callback to {@link WMCH#writeCachedData(boolean)} with false
+	 * Registers a callback to {@link ChatLog#serialize(boolean)} with false
 	 * to save data on normal game exits.
 	 * Registers a callback to World Join events which loads cached data and
 	 * adds boundary lines.
