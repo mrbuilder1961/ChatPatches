@@ -63,7 +63,7 @@ If you would like to help translate WMCH into other languages, you can:
 - Meteor Client's BetterChat features
 - MoreChatHistory
 
-## Wont fix/add
+## Won't fix/add
 
 1. When you hover over the timestamp, by default it shows more detailed time information.
 I was going to implement a system that, when the `hover` option was toggled off, it would just not render the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However, unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added. This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
