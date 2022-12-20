@@ -1,6 +1,6 @@
 package mechanicalarcane.wmch.mixin;
 
-import mechanicalarcane.wmch.WMCH;
+import mechanicalarcane.wmch.util.ChatLog;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -27,7 +27,7 @@ public abstract class MinecraftClientMixin {
             target = "Lnet/minecraft/client/MinecraftClient;cleanUpAfterCrash()V"
         )
     })
-    private void saveCachedDataOnCrash(CallbackInfo ci) {
-        WMCH.writeCachedData(true);
+    private void saveChatlogOnCrash(CallbackInfo ci) {
+        ChatLog.serialize(true);
     }
 }

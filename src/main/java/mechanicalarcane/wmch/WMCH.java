@@ -17,7 +17,6 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.network.message.MessageMetadata;
 
@@ -50,7 +49,7 @@ public class WMCH implements ClientModInitializer {
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> CopyMessageCommand.register(dispatcher) );
 
-		ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> WMCH.writeCachedData(false));
+		ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> ChatLog.serialize(false));
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
 
@@ -85,20 +84,5 @@ public class WMCH implements ClientModInitializer {
 		});
 
 		LOGGER.info("[WMCH()] Finished setting up!");
-	}
-
-
-	/**
-	 * The callback method which saves cached message data.
-	 * Injected into {@link MinecraftClient#run} to ensure
-	 * saving whenever (reasonably) possible.
-	 * @param crashed {@code true} if a crash occurred
-	*/
-	public static void writeCachedData(boolean crashed) {
-		try {
-			ChatLog.serialize(crashed);
-		} catch(Exception e) {
-			LOGGER.warn("[WMCH.writeCachedData({})] An error occurred while trying to save the chat log{}:", crashed, crashed ? " after a crash" : "", e);
-		}
 	}
 }

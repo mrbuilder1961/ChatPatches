@@ -36,14 +36,16 @@ public class ChatLog {
 
     private static boolean initialized = false;
     private static boolean savedAfterCrash = false;
-    private static ChatLog.Data data = new Data(100);
+    private static ChatLog.Data data = new Data( Data.DEFAULT_SIZE );
     private static FileChannel channel;
-    private static String rawData;
+    private static String rawData = "{\"history\":[],\"messages\":[]}"; // prevents a few errors if the channel doesn't initialize
 
     public static boolean loaded = false;
 
     /** Micro class for serializing, used separately from ChatLog for simplification */
     private static class Data {
+        public static int DEFAULT_SIZE = 100;
+
         public List<Text> messages;
         public List<String> history;
 
@@ -57,13 +59,15 @@ public class ChatLog {
     /** Initializes the ChatLog file and opens file connections. */
     public static void initialize() {
         if(!initialized) {
+
             try( FileInputStream inStream = new FileInputStream(file) ) {
+
                 channel = FileChannel.open(file.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
                 rawData = new String(inStream.readAllBytes());
 
                 initialized = true;
             } catch(IOException e) {
-                LOGGER.error("[ChatLog()] Couldn't create ChatLog file connections:", e);
+                LOGGER.error("[ChatLog()] Couldn't create file connections:", e);
             }
         }
     }
@@ -83,7 +87,7 @@ public class ChatLog {
             LOGGER.info("[ChatLog.deserialize] Old ChatLog file type detected, updating...");
             try {
                 write("{\"history\":[],\"messages\":");
-                channel.position(channel.size());
+                channel.position( channel.size() );
                 write("}");
 
                 fileSize = channel.size();
@@ -91,7 +95,7 @@ public class ChatLog {
                 LOGGER.error("[ChatLog.deserialize] An I/O error occurred while trying to update the chat log:", e);
             }
         } else if(rawData.length() < 2) {
-            data = new Data(100);
+            data = new Data( Data.DEFAULT_SIZE );
             loaded = true;
 
             return;
@@ -103,7 +107,7 @@ public class ChatLog {
         } catch (com.google.gson.JsonSyntaxException e) {
             LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
-            data = new Data(100);
+            data = new Data( Data.DEFAULT_SIZE );
             loaded = true;
             return;
         }
@@ -129,14 +133,17 @@ public class ChatLog {
             channel.truncate(str.getBytes().length);
             write(str);
 
-            if(data.messages.size() > 0)
-                LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), Util.CHATLOG_PATH);
-            else {
-                data.history.clear();
-                LOGGER.info("[ChatLog.serialize] Cleared the chat log located at '{}'", Util.CHATLOG_PATH);
-            }
+
+            LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), Util.CHATLOG_PATH);
+
         } catch (IOException e) {
-            LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to write the chat log:", e);
+
+            if(crashing) {
+                LOGGER.warn("[ChatLog.serialize] An I/O error occurred while trying to save the chat log after a crash:", e);
+                LOGGER.debug("[ChatLog.serialize] Salvaged chat log data:\n{}", rawData);
+            } else
+                LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
+
         } finally {
             if(crashing)
                 savedAfterCrash = true;
@@ -144,7 +151,10 @@ public class ChatLog {
     }
 
 
-    /** Shorthand for writing Strings to {@code ChatLog.channel} */
+    /**
+     * Shorthand for writing Strings to {@code ChatLog.channel},
+     * writes the string and then sets the channel's position to 0.
+     */
     private static void write(String str) throws IOException {
         channel.write( ByteBuffer.wrap(str.getBytes()) );
         channel.position(0);
@@ -152,11 +162,11 @@ public class ChatLog {
 
     /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@link Config#maxMsgs}. */
     private static void enforceSizes() {
-        if( data.messages.size() <= config.maxMsgs && data.history.size() <= config.maxMsgs )
-            return;
+        if(data.messages.size() > config.maxMsgs)
+            data.messages = data.messages.subList(0, config.maxMsgs + 1);
 
-        data.messages.removeIf(msg -> data.messages.indexOf(msg) > config.maxMsgs);
-        data.history.removeIf(sent -> data.history.indexOf(sent) > config.maxMsgs);
+        if(data.history.size() > config.maxMsgs)
+            data.history = data.history.subList(0, config.maxMsgs + 1);
     }
 
     public static void restore(MinecraftClient client) {
@@ -185,6 +195,4 @@ public class ChatLog {
     }
     public static void clearMessages() { data.messages.clear(); }
     public static void clearHistory() { data.history.clear(); }
-    public static List<Text> getMessages() { return data.messages; }
-    public static List<String> getHistory() { return data.history; }
 }
