@@ -31,14 +31,13 @@ public class WMCH implements ClientModInitializer {
 
 
 	/**
-	 * Initializes MixinExtras for more Mixin annotations.
-	 * Validates the newly created Config object.
-	 * Initializes the ChatLog.
-	 * Registers the CopyMessageCommand on client's server initialization.
-	 * Registers a callback to {@link ChatLog#serialize(boolean)} with false
-	 * to save data on normal game exits.
-	 * Registers a callback to World Join events which loads cached data and
-	 * adds boundary lines.
+	 * <ol>
+	 * 	<li> Initializes MixinExtras for more Mixin annotations
+	 * 	<li> Initializes the ChatLog
+	 *	<li> Registers a callback on {@link ClientCommandRegistrationCallback#EVENT} for the {@link CopyMessageCommand}
+	 * 	<li> Registers a callback on {@link ClientLifecycleEvents#CLIENT_STOPPING} for {@link ChatLog#serialize(boolean)} on a normal game exit
+	 * 	<li> Registers a callback on {@link ClientPlayConnectionEvents#JOIN} for loading the {@link ChatLog} and adding boundary lines
+	 * </ol>
 	 */
 	@Override
 	public void onInitializeClient() {
@@ -49,7 +48,7 @@ public class WMCH implements ClientModInitializer {
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> CopyMessageCommand.register(dispatcher) );
 
-		ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> ChatLog.serialize(false));
+		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ChatLog.serialize(false));
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
 
