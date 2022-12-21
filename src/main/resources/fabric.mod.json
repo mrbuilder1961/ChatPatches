@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "${modId}",
+  "id": "${mod_id}",
   "version": "${version}",
 
   "name": "Where's My Chat History",
@@ -28,16 +28,13 @@
     ]
   },
   "mixins": [
-    "${modId}.mixins.json"
+    "${mod_id}.mixins.json"
   ],
 
   "depends": {
     "java": ">=17",
-    "minecraft": [
-      ">=${minecraft_min}",
-      "<=${minecraft}"
-    ],
-    "fabricloader": ">=${loaderBase}",
+    "minecraft": "<=${minecraft} >=${minecraft_min}",
+    "fabricloader": ">=${loader_base}.0",
     "fabric": "*"
   },
   "recommends": {
