@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an addition to the mod
-title: Jist of the suggestion - target version - SUGGESTION
+title: Suggestion summary - target version
 labels: suggestion
 assignees: ''
 

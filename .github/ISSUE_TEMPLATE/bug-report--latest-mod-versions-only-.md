@@ -1,7 +1,7 @@
 ---
 name: Bug report (latest mod versions ONLY)
-about: Create a report to get the bug fixed as soon as possible.
-title: Jist of bug - mc version and/or mod version - BUG
+about: Create a bug report to get the bug fixed as soon as possible.
+title: Bug summary - Minecraft and mod versions
 labels: bug
 assignees: ''
 
