@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "${mod_id}",
+  "id": "wmch",
   "version": "${version}",
 
   "name": "Where's My Chat History",
@@ -8,7 +8,9 @@
   "authors": [
     "MechanicalArcane"
   ],
-  "contributors": [],
+  "contributors": [
+    "FITFC (pt_br)"
+  ],
   "contact": {
     "homepage": "https://curseforge.com/minecraft/mc-mods/wmch",
     "issues": "https://github.com/mrbuilder1961/WheresMyChatHistory/issues",
@@ -21,20 +23,20 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "${group}.WMCH"
+      "mechanicalarcane.wmch.WMCH"
     ],
     "modmenu": [
-      "${group}.integration.ModMenuIntegration"
+      "mechanicalarcane.wmch.integration.ModMenuIntegration"
     ]
   },
   "mixins": [
-    "${mod_id}.mixins.json"
+    "wmch.mixins.json"
   ],
 
   "depends": {
     "java": ">=17",
-    "minecraft": "<=${minecraft} >=${minecraft_min}",
-    "fabricloader": ">=${loader_base}.0",
+    "minecraft": ">=1.19 <=1.19.2",
+    "fabricloader": ">=0.14.11",
     "fabric": "*"
   },
   "recommends": {
