@@ -67,7 +67,12 @@ dependencies {
 				}
 			}
 
-			println String.format("\t-> %s integration '%s' from '%s' %s", enabled ? "Loaded" : "Skipped", name, src, (func != "modImplementation" ? "using method '$func'" : ""))
+			println( String.format("\t-> %s integration '%s' with '%s' %s",
+				enabled ? "Loaded" : "Skipped",
+				name,
+				src,
+				(func != "modImplementation" ? "using method '$func'" : "")
+			))
 
 			++all
 		}
