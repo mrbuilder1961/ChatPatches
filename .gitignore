@@ -16,4 +16,4 @@ bin/
 run/
 remappedSrc/
 
-random/
+integrations/*.jar

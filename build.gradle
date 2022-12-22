@@ -14,11 +14,13 @@ version = "$rootProject.minecraft-$modVersion"
 
 repositories {
   	mavenCentral()
-	maven { url "https://jitpack.io" } // MixinExtras
-	maven { url "https://repo.essential.gg/repository/maven-public" } // MixinExtras
+
 	//maven { url "https://minecraft.guntram.de/maven/" } // CrowdinTranslate
 	maven { url "https://maven.shedaniel.me/" } // Cloth Config API
 	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
+
+	maven { url "https://jitpack.io" } // MixinExtras
+	maven { url "https://repo.essential.gg/repository/maven-public" } // MixinExtras
 }
 
 dependencies {
@@ -37,35 +39,37 @@ dependencies {
 
 
 	// integration files, toggleable in /random/integrations.properties
-	def integrationsFile = file("./random/integration.properties")
+	File integrationsFile = file("./integrations/integrations.properties")
 
 	if( integrationsFile.exists() ) {
-		println "Started loading dev testing integrations..."
+		println "Loading dev testing integrations..."
 
 		def integrations = new Properties(); integrationsFile.withInputStream { integrations.load(it) }
 		def loaded = 0
 		def all = 0
 
 		for(integration in integrations) {
-			def properties = integration.toString().split("=")
-			def data = properties[1].split(",")
-			def loc = (data[0].substring(data[0].indexOf("[")+1, data[0].indexOf("]"))).split("\\|") .stream().map({f -> f.endsWith(".jar") ? "random/integrations/" + f : f}).toList()
-			def enabled = Boolean.valueOf(data[1])
+			def name = integration.toString().split("=")[0]
+			def data = integration.toString().split("=")[1].split(",")
+			def src = data[0].endsWith(".jar") ? "./integrations/" + data[0] : data[0]
+			def enabled = data[1].equalsIgnoreCase("true")
 			def func = data.size() > 2 ? data[2] : "modImplementation"
 
-			def i = 0
-			for(f in loc) {
-				if(enabled) {
-					"${func}" ( f.endsWith(".jar") ? files(f) : f )
-				}
 
-				println ("\t-> " + (enabled ? "Loaded" : "Skipped") + " integration '${properties[0]}${i>0 ? "_"+i : ""}' at '${loc[i]}'" + (func != "modImplementation" ? " using method '$func'" : ""))
+			if(enabled) {
+				if( src.endsWith(".jar") && !file(src).exists() ) {
 
-				++i
-				++all
-				if(enabled)
+					System.err.println("Integration jar '" + src + "' doesn't exist")
+					enabled = false
+				} else {
+					"${func}" (src.endsWith(".jar") ? files(src) : src)
 					++loaded
+				}
 			}
+
+			println String.format("\t-> %s integration '%s' from '%s' %s", enabled ? "Loaded" : "Skipped", name, src, (func != "modImplementation" ? "using method '$func'" : ""))
+
+			++all
 		}
 		println "Finished loading $loaded/$all dev testing integrations\n"
 	}
