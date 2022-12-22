@@ -20,7 +20,7 @@ repositories {
 	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
 
 	maven { url "https://jitpack.io" } // MixinExtras
-	maven { url "https://repo.essential.gg/repository/maven-public" } // MixinExtras
+	maven { url "https://repo.essential.gg/repository/maven-public" } // Essential
 }
 
 dependencies {
