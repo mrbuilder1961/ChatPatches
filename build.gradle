@@ -29,7 +29,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:$project.loader"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api$project.minecraft"
 
-	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:0.1.0") ))
+	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:$project.mixin_extras") ))
 	//include( modImplementation("de.guntram.mcmod:crowdin-translate:$project.crowdin") )
 
 	modApi("me.shedaniel.cloth:cloth-config-fabric:$project.cloth_config") {
