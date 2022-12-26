@@ -20,12 +20,13 @@ If you would like to help translate WMCH into other languages, you can:
 - Create a pull request that adds or corrects a language file
 - Head over to [the CrowdIn page](https://crwd.in/wmch) and see how you can contribute
 
-## Setup developer workspace
+## Setup devenv / Build latest jars
 
 1. Download the latest ZIP (this page -> Code -> Download ZIP)
 2. Extract it to your desired folder
 3. Open a terminal/command prompt, then run `./gradlew build`
-4. Hopefully everything works!
+4a. For a devenv, open the folder in your IDE
+4b. For built jars, navigate to /build/libs/
 
 ## Configuration help
 
