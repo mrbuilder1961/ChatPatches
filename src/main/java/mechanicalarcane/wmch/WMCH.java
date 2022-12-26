@@ -27,7 +27,7 @@ public class WMCH implements ClientModInitializer {
 	public static Config config = Config.newConfig(false);
 	/** Contains the sender and timestamp data of the last received chat message. */
 	public static MessageMetadata lastMsgData = Util.NIL_METADATA;
-	private static String lastWorld = null;
+	private static String lastWorld = "";
 
 
 	/**
