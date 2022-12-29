@@ -25,7 +25,9 @@ If you would like to help translate WMCH into other languages, you can:
 1. Download the latest ZIP (this page -> Code -> Download ZIP)
 2. Extract it to your desired folder
 3. Open a terminal/command prompt, then run `./gradlew build`
+
 4a. For a devenv, open the folder in your IDE
+
 4b. For built jars, navigate to /build/libs/
 
 ## Configuration help
@@ -52,9 +54,7 @@ If you would like to help translate WMCH into other languages, you can:
 | Maximum chat messages     | `0x4000`                | The max amount of chat messages allowed to render. Vanilla is capped at 100, the true maximum is 32767. Keep in mind the higher the number, the more memory the chat will require to store all the messages. | `text.wmch.maxMsgs`       |
 
 ## Possible features
-- Localize logging messages?
-- Make certain messages copyable by default (on-click), such as the Open-To-LAN port
-- Chat search feature, with regex search capabilities
+- Chat search screen, with regex search capabilities
 - animate message receive
 - add buttons to the edge of chat input box OR in multiplayer menu screen (for WMCH settings and chat searcher)
 - buttons/variable input strings to easily message data (ex. coords or UUID)
