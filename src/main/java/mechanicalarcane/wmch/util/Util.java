@@ -25,14 +25,11 @@ public class Util {
 	public static final MessageMetadata NIL_METADATA = new MessageMetadata(NIL_UUID, Instant.EPOCH, 0);
 
 
-	/** These are used to fix bugs with messages modifying in counterproductive places */
+	/** These are used to fix bugs with messages modifying when unnecessary. */
 	public enum Flags {
-		INIT(0b10000),
-		LOADING_CHATLOG(0b00001),
-		RESET_NORMAL(0b00010),
-		RESET_FINISHING(0b00100),
-		RESET_FINAL(0b00110),
-		BOUNDARY_LINE(0b01000);
+		INIT(0b1000),
+		LOADING_CHATLOG(0b0001),
+		BOUNDARY_LINE(0b0010);
 
 		public static int flags = INIT.value;
 		public final int value;
@@ -43,8 +40,8 @@ public class Util {
 
 		public static String binary() { return Integer.toBinaryString(flags); }
 
-		public static boolean allSet(Flags... flags) { return Arrays.stream(flags).allMatch(Flags::isSet); }
-		public static boolean anySet(Flags... flags) { return Arrays.stream(flags).anyMatch(Flags::isSet); }
+		//public static boolean allSet(Flags... flags) { return Arrays.stream(flags).allMatch(Flags::isSet); }
+		//public static boolean anySet(Flags... flags) { return Arrays.stream(flags).anyMatch(Flags::isSet); }
 
 
 		public void set() { flags |= value; } // set this flag
@@ -76,14 +73,15 @@ public class Util {
 		return ((ChatHudAccessor) client.inGameHud.getChatHud());
 	}
 
-	/** If there's space to overwrite, runs {@code list.set(index, object)}. Otherwise runs {@code list.add(index, object)}. */
-	public static <T> List<T> setOrAdd(List<T> list, final int index, T object) {
+	/**
+	 * If there's space to overwrite, runs {@code list.set(index, object)}. Otherwise runs {@code list.add(index, object)}.
+	 */
+	public static <T> void setOrAdd(List<T> list, final int index, T object) {
 		if(list.size() > index)
 			list.set(index, object);
 		else
 			list.add(index, object);
 
-		return list;
 	}
 
 	/**

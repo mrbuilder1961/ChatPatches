@@ -101,7 +101,7 @@ public class ClothConfig extends Config {
             debug.addEntry(
                 entryBuilder.startIntSlider(
                     Util.formatString("&dEdit Flag.flags = (%d^10 / %s^2)".formatted(Flags.flags, Flags.binary()) ),
-                    Flags.flags, 0, 16
+                    Flags.flags, 0, 15
                 )
                     .setDefaultValue(0)
                     .setTooltip(Text.of("manually change bit flags"))
