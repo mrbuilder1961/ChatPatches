@@ -10,7 +10,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.network.message.MessageMetadata;
+import net.minecraft.network.message.SignedMessage;
 
 public class WMCH implements ClientModInitializer {
 	public static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("Where's My Chat History");
@@ -18,7 +18,7 @@ public class WMCH implements ClientModInitializer {
 
 	public static Config config = Config.newConfig(false);
 	/** Contains the sender and timestamp data of the last received chat message. */
-	public static MessageMetadata lastMsgData = Util.NIL_METADATA;
+	public static SignedMessage lastMsg = Util.NIL_MESSAGE;
 	private static String lastWorld = "";
 
 

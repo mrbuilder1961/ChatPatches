@@ -4,12 +4,11 @@ import com.mojang.authlib.GameProfile;
 import mechanicalarcane.wmch.mixin.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.network.message.MessageMetadata;
+import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Instant;
 import java.util.*;
 
 /**
@@ -17,7 +16,7 @@ import java.util.*;
  */
 public class Util {
 	public static final UUID NIL_UUID = new UUID(0, 0);
-	public static final MessageMetadata NIL_METADATA = new MessageMetadata(NIL_UUID, Instant.EPOCH, 0);
+	public static final SignedMessage NIL_MESSAGE = SignedMessage.ofUnsigned("");
 
 
 	/** These are used to fix bugs with messages modifying when unnecessary. */

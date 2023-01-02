@@ -1,14 +1,13 @@
 package mechanicalarcane.wmch.mixin;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.network.packet.s2c.play.RemoveMessageS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.s2c.play.HideMessageS2CPacket;
 
 @Environment(EnvType.CLIENT)
 @Mixin(value = ClientPlayNetworkHandler.class, priority = 400)
@@ -19,8 +18,8 @@ public abstract class CPNHMixin {
      * but based on how chat reports work, this is likely
      * not wanted.
      */
-    @Inject(method = "onHideMessage", at = @At("HEAD"), cancellable = true)
-    private void cancelHideMessage(HideMessageS2CPacket packet, CallbackInfo ci) {
+    @Inject(method = "onRemoveMessage", at = @At("HEAD"), cancellable = true)
+    private void cancelHideMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
         ci.cancel();
     }
 }

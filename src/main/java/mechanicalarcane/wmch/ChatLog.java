@@ -9,7 +9,6 @@ import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.util.Util;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.Text;
 
 import java.io.File;
@@ -180,7 +179,7 @@ public class ChatLog {
             data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
         if(data.messages.size() > 0)
             data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(
-                msg, MessageSignatureData.EMPTY, new MessageIndicator(0x382fb5, null, null, "Restored")
+                msg, null, new MessageIndicator(0x382fb5, null, null, "Restored")
             ));
 
         Util.Flags.LOADING_CHATLOG.remove();

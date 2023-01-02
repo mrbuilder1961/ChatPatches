@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import static mechanicalarcane.wmch.WMCH.config;
-import static mechanicalarcane.wmch.WMCH.lastMsgData;
+import static mechanicalarcane.wmch.WMCH.lastMsg;
 import static mechanicalarcane.wmch.util.Util.Flags.BOUNDARY_LINE;
 import static mechanicalarcane.wmch.util.Util.Flags.LOADING_CHATLOG;
 import static mechanicalarcane.wmch.util.Util.delAll;
@@ -44,8 +44,8 @@ public abstract class ChatHudMixin {
 
     @Shadow public abstract double getChatScale();
 
-
     @Shadow public abstract int getWidth();
+
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
@@ -75,20 +75,23 @@ public abstract class ChatHudMixin {
      * These methods shift various parts of the ChatHud by
      * {@link Config#shiftChat}, including the text, scroll
      * bar, indicator bar, and hover text.
+     * They all shift the y value, with the name of the parameter
+     * corresponding to the (yarn mapped) target variable name.
      */
-    @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 11) // try multiplying by guiScale for same pixel shift behavior?
-    private int moveChatText(int t) {
-        return t - (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
+    @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 31) // STORE ordinal=0 to not target all x stores
+    private int moveChatText(int x) {
+        return x - (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
     }
-    @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 1), ordinal = 9)
-    private int moveScrollBar(int q) {
-        return q + (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
+    @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 27)
+    private int moveScrollBar(int af) {
+        return af + (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
     }
-    // condensed to one method because the first part of both methods are almost identical
+    // condensed to one method because the first part of both methods are practically identical
     @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
     private double moveIndicatorAndHoverText(double e) {
         // small bug with this, hover text extends to above chat, likely includes indicator text as well
         // maybe check ChatHud#toChatLineY(double)
+        // prob unrelated to this bug, but indicator icons render weird so check that out and send some msgs w/ the icons + text
         return e + ( Math.abs(config.shiftChat) * this.getChatScale() );
     }
 
@@ -114,8 +117,8 @@ public abstract class ChatHudMixin {
             return message; // cancels modifications when loading the chatlog or when regenerating visibles
 
         final Style style = message.getStyle();
-        final boolean lastEmpty = lastMsgData.equals(Util.NIL_METADATA);
-        Date now = lastEmpty ? new Date() : Date.from(lastMsgData.timestamp());
+        final boolean lastEmpty = lastMsg.equals(Util.NIL_MESSAGE);
+        Date now = lastEmpty ? new Date() : Date.from(lastMsg.getTimestamp());
         boolean boundary = BOUNDARY_LINE.isSet() && config.boundary;
 
 
@@ -129,31 +132,31 @@ public abstract class ChatHudMixin {
                 .append(
                     !boundary && !lastEmpty && !config.nameStr.equals("<$>") && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
                         ? Text.empty().setStyle(style)
-                            .append( config.getFormattedName(Util.getProfile(client, lastMsgData.sender())) ) // add formatted name
-                            .append( // add first part of message (depending on Text style and whether it was a chat or system)
-                                message.getContent() instanceof TranslatableTextContent
-                                    ? net.minecraft.util.Util.make(() -> { // all message components
+                        .append( config.getFormattedName(Util.getProfile(client, lastMsg.getSender())) ) // add formatted name
+                        .append( // add first part of message (depending on Text style and whether it was a chat or system)
+                            message.getContent() instanceof TranslatableTextContent
+                                ? net.minecraft.util.Util.make(() -> { // all message components
 
-                                        MutableText text = Text.empty().setStyle(style);
-                                        List<Text> messages = Arrays.stream( ((TranslatableTextContent) message.getContent()).getArgs() ).map (arg -> (Text)arg ).toList();
+                                MutableText text = Text.empty().setStyle(style);
+                                List<Text> messages = Arrays.stream( ((TranslatableTextContent) message.getContent()).getArgs() ).map (arg -> (Text)arg ).toList();
 
-                                        for(int i = 1; i < messages.size(); ++i)
-                                            text.append( messages.get(i) );
+                                for(int i = 1; i < messages.size(); ++i)
+                                    text.append( messages.get(i) );
 
-                                        return text;
-                                    })
-                                    : Text.literal( ((LiteralTextContent) message.getContent()).string().split("> ")[1] ).setStyle(style) // default-style message with name
-                            )
-                            .append( // add any siblings (Texts with different styles)
-                                net.minecraft.util.Util.make(() -> {
+                                return text;
+                            })
+                                : Text.literal( ((LiteralTextContent) message.getContent()).string().split("> ")[1] ).setStyle(style) // default-style message with name
+                        )
+                        .append( // add any siblings (Texts with different styles)
+                            net.minecraft.util.Util.make(() -> {
 
-                                    MutableText msg = Text.empty().setStyle(style);
+                                MutableText msg = Text.empty().setStyle(style);
 
-                                    message.getSiblings().forEach(msg::append);
+                                message.getSiblings().forEach(msg::append);
 
-                                    return msg;
-                                })
-                            )
+                                return msg;
+                            })
+                        )
                         : message
                 );
 
@@ -210,8 +213,8 @@ public abstract class ChatHudMixin {
                 int dupes = (incSibs.size() > DUPE
                     ? Integer.parseInt( delAll( incSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
                     : lastSibs.size() > DUPE
-                        ? Integer.parseInt( delAll( lastSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
-                        : 1
+                    ? Integer.parseInt( delAll( lastSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
+                    : 1
                 ) + 1;
 
 
@@ -226,7 +229,7 @@ public abstract class ChatHudMixin {
                 text.getSiblings().set(OG_MSG, incSibs.get(OG_MSG));
 
                 // modifies the actual message to have a counter
-                messages.set( 0, new ChatHudLine(ticks, text, lastHudLine.headerSignature(), lastHudLine.indicator()) );
+                messages.set( 0, new ChatHudLine(ticks, text, lastHudLine.signature(), lastHudLine.indicator()) );
 
                 // modifies the rendered messages to have a counter
                 List<OrderedText> visibles = net.minecraft.client.util.ChatMessages.breakRenderedChatMessageLines(
