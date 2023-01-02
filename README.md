@@ -1,5 +1,5 @@
 [![Fabric Mod](https://img.shields.io/badge/modloader-fabric-eeeeee)](https://fabricmc.net/use/)
-[![Latest Version](https://img.shields.io/badge/version-1.5.6-blueviolet)](https://github.com/mrbuilder1961/WheresMyChatHistory/releases)
+[![Latest Version](https://img.shields.io/badge/version-1.5.7-blueviolet)](https://github.com/mrbuilder1961/WheresMyChatHistory/releases)
 [![Curseforge Download](https://cf.way2muchnoise.eu/full_560042_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/wmch)
 [![Modrinth Download](https://img.shields.io/badge/dynamic/json?&color=242629&labelColor=5ca424&label=modrinth&suffix=%20downloads&query=downloads&url=https://api.modrinth.com/v2/project/MOqt4Z5n&cacheSeconds=3600)](https://www.modrinth.com/mod/MOqt4Z5n)
 # Where's My Chat History
