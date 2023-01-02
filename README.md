@@ -14,6 +14,24 @@ This mod does quite a few things:
 
 Be on the lookout for new versions, issues, and possible future features!
 
+## FAQ
+- What Minecraft version can I use this with?
+    - The *latest Fabric* versions of Minecraft, plus 1.18.x and soon 1.16.x. *Quilt* appears to work, but I don't provide official support for it.
+- Will you make it for (older Minecraft version)? 
+  - Not likely. The oldest version I'll be making is 1.16.x.
+- Will you make this for Forge? 
+  - I doubt it. Fabric's API is simple and I don't feel like learning about it.
+- I found a bug/issue, what do I do?
+    - First, make sure you have the latest version of the mod for your Minecraft version. If it still persists, you can click on the Issues tab on this page, and nobody has opened one about your issue then create one! Note that a lack of provided information will increase time needed to fix.
+- It says I need to install Fabric but I already have it installed?
+    - [Install the Fabric API.](https://modrinth.com/mod/fabric-api)
+- Do servers need this mod? 
+  - It is client side, so no.
+- I can't access the config menu in-game! 
+  - You need the LATEST versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions) and [Mod Menu](https://modrinth.com/mod/modmenu/versions) to access it in game. Alternatively, you can edit it manually at `(directory)/config/wmch.json`.
+- My config is broken/not working!
+    - When you load one of the more recent mod versions, it makes a creates a new file with your old settings and resets the main file. You can access this copy at `(directory)/config/wmch_old.json`. By then opening both the new and old configs at the same time, you can copy and paste over the values. Make sure the settings have correct inputs (ex. `time` should be `true`/`false` not `123` or `"true"`). If you still are having problems, open a new issue on GitHub.
+
 ## Localization and Translation
 
 If you would like to help translate WMCH into other languages, you can:
@@ -67,7 +85,7 @@ If you would like to help translate WMCH into other languages, you can:
 ## Won't fix/add
 
 1. When you hover over the timestamp, by default it shows more detailed time information.
-I was going to implement a system that, when the `hover` option was toggled off, it would just not render the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However, unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added. This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
+   I was going to implement a system that, when the `hover` option was toggled off, it would just not render the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However, unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added. This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
 
 ## Changelog
 
