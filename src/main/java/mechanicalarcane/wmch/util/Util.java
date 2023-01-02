@@ -1,21 +1,16 @@
 package mechanicalarcane.wmch.util;
 
-import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import mechanicalarcane.wmch.mixin.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.network.message.MessageMetadata;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Random functions that are of some random, obsolete use
@@ -91,7 +86,7 @@ public class Util {
 	 * @param iterable The Iterable to search in.
 	 * @param test Predicate to find the item you're looking for.
 	 */
-	public static <T> List<T> find(Iterable<T> iterable, Predicate<T> test) {
+	/*public static <T> List<T> find(Iterable<T> iterable, Predicate<T> test) {
 		List<T> matches = Lists.newArrayList();
 
 		for(T item : iterable)
@@ -99,7 +94,7 @@ public class Util {
 				matches.add(item);
 
 		return matches;
-	}
+	}*/
 
 
 	/**
@@ -144,29 +139,6 @@ public class Util {
 	/** Removes all intended (ampersand or section sign) + formatting code sequences from {@code formatted}. */
 	public static String strip(String formatted) {
 		return delAll(formatted, "(?i)(?<!\\\\)([&§][0-9a-fk-or])+");
-	}
-
-	/** Returns a list of all substrings in {@code input} that matched {@code regex}. */
-	public static List<String> capture(String regex, String input) {
-		Matcher matcher = Pattern.compile(regex).matcher(input);
-		List<String> captures = Lists.newArrayListWithCapacity(0); //? err from 0
-
-		while(matcher.find())
-			captures.add( matcher.group() );
-
-		return captures;
-	}
-
-	/** Constructs a Text object from an OrderedText */
-	public static String reorder(OrderedText orderedText) {
-		StringBuilder builder = new StringBuilder();
-
-		orderedText.accept((ix, style, cp) -> {
-			builder.append(Character.toString(cp));
-			return true;
-		});
-
-		return builder.toString();
 	}
 
 	/**
