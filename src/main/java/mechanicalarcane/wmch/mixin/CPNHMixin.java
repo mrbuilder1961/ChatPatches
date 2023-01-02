@@ -15,9 +15,9 @@ import net.minecraft.network.packet.s2c.play.HideMessageS2CPacket;
 public abstract class CPNHMixin {
     /**
      * Prevents messages from being hidden.
-     * This may be deleted; but I currently
-     * don't understand why a sent message
-     * would need to be hidden.
+     * Extremely unclear implementation on Mojang's part,
+     * but based on how chat reports work, this is likely
+     * not wanted.
      */
     @Inject(method = "onHideMessage", at = @At("HEAD"), cancellable = true)
     private void cancelHideMessage(HideMessageS2CPacket packet, CallbackInfo ci) {
