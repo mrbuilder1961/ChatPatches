@@ -2,18 +2,18 @@
     "text.wmch.title": "Onde está a configuração do meu histórico de bate-papo",
 
     "text.wmch.time": "Alternar carimbo de data/hora",
-    "text.wmch.timeStr": "Texto do carimbo de data/hora",
+    "text.wmch.timeDate": "Texto do carimbo de data/hora",
     "text.wmch.timeFormat": "Modificadores de carimbo de data/hora",
     "text.wmch.timeColor": "Cor do carimbo de data/hora",
     "text.wmch.desc.time": "Um carimbo de data/hora deve aparecer na frente de todas as mensagens?",
-    "text.wmch.desc.timeStr": "O texto que é usado para o carimbo de data/hora. Para texto dinâmico, pesquise online por 'string de formato de data java'.",
+    "text.wmch.desc.timeDate": "O texto que é usado para o carimbo de data/hora. Para texto dinâmico, pesquise online por 'string de formato de data java'.",
     "text.wmch.desc.timeFormat": "A string de e comercial (&) e códigos de formatação que se aplicam à string de tempo.",
     "text.wmch.desc.timeColor": "A cor que é 'preenchida' quando aplicável no texto do carimbo de data/hora.",
 
     "text.wmch.hover": "Passe o mouse",
-    "text.wmch.hoverStr": "Passe o texto",
+    "text.wmch.hoverDate": "Passe o texto",
     "text.wmch.desc.hover": "O texto que aparece quando você passa o mouse sobre o carimbo de data/hora deve mostrar?",
-    "text.wmch.desc.hoverStr": "O texto que aparece ao passar o mouse sobre o texto do carimbo de data/hora. Para texto dinâmico, pesquise online por 'string de formato de data java'.",
+    "text.wmch.desc.hoverDate": "O texto que aparece ao passar o mouse sobre o texto do carimbo de data/hora. Para texto dinâmico, pesquise online por 'string de formato de data java'.",
 
     "text.wmch.counter": "Alternância do contador de mensagens",
     "text.wmch.counterStr": "Texto do contador de mensagens",
@@ -30,11 +30,11 @@
     "text.wmch.desc.boundaryColor": "A cor que é 'preenchida' onde aplicável no texto de limite, por exemplo '&r' será substituída por esta cor.",
 
     "text.wmch.saveChat": "Alternar registro de bate-papo",
-    "text.wmch.shiftHudPos": "Interface de bate-papo de turno",
+    "text.wmch.shiftChat": "Interface de bate-papo de turno",
     "text.wmch.maxMsgs": "Máximo de mensagens de bate-papo",
     "text.wmch.nameStr": "Texto do nome do jogador",
     "text.wmch.desc.saveChat": "O bate-papo deve ser salvo em um log para que possa ser adicionado novamente ao bate-papo em outra sessão de jogo?",
-    "text.wmch.desc.shiftHudPos": "Essa interface de bate-papo deve ser aumentada em cerca de 10 pixels para não obstruir a barra de blindagem?",
+    "text.wmch.desc.shiftChat": "Essa interface de bate-papo deve ser aumentada em cerca de 10 pixels para não obstruir a barra de blindagem?",
     "text.wmch.desc.maxMsgs": "A quantidade máxima de mensagens de chat permitidas para processar. Vanilla tem esse conjunto como 100, o máximo permitido é 32.767. Tenha em mente que quanto maior o valor, mais memória o chat requer.",
     "text.wmch.desc.nameStr": "O texto que substitui o nome do jogador nas mensagens de bate-papo. Vanilla é <$>, sem colchetes é $; onde $ representa o nome do jogador. Aplica-se apenas a mensagens do jogador.",
 
@@ -43,7 +43,6 @@
     "text.wmch.category.counter": "contador duplicado",
     "text.wmch.category.boundary": "Limite da Sessão",
     "text.wmch.category.hud": "Interface de bate-papo",
-    "text.wmch.category.other": "Outro",
 
     "text.wmch.copymessage.index": "mensagem copiada %d: '%s'",
     "text.wmch.copymessage.index.missing": "A mensagem %d não existe",
