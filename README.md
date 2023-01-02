@@ -24,11 +24,11 @@ Be on the lookout for new versions, issues, and possible future features!
 - I found a bug/issue, what do I do? 
   - First, make sure you have the latest version of the mod for your Minecraft version. If it still persists, you can click on the Issues tab on this page, and nobody has opened one about your issue then create one! Note that a lack of provided information will increase time needed to fix.
 - It says I need to install Fabric but I already have it installed?
-  - Install the Fabric API
+  - [Install the Fabric API.](https://modrinth.com/mod/fabric-api)
 - Do servers need this mod? 
   - It is client side, so no.
 - I can't access the config menu in-game! 
-  - You need the LATEST versions of both Cloth Config and Mod Menu to access it in game. Alternatively, you can edit it manually at `(directory)/config/wmch.json`.
+  - You need the LATEST versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions) and [Mod Menu](https://modrinth.com/mod/modmenu/versions) to access it in game. Alternatively, you can edit it manually at `(directory)/config/wmch.json`.
 - My config is broken/not working!
   - When you load one of the more recent mod versions, it makes a creates a new file with your old settings and resets the main file. You can access this copy at `(directory)/config/wmch_old.json`. By then opening both the new and old configs at the same time, you can copy and paste over the values. Make sure the settings have correct inputs (ex. `time` should be `true`/`false` not `123` or `"true"`). If you still are having problems, open a new issue on GitHub.
 
