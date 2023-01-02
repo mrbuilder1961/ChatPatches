@@ -1,15 +1,7 @@
-/*
- * Planning:
- * Regex GUI needs toMatch, toReplace, '&' char for color formatting,
- * Small explanation, credit to Vazkii, save, delete, preview i/o
- */
-
 package mechanicalarcane.wmch;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import mechanicalarcane.wmch.config.Config;
-import mechanicalarcane.wmch.util.ChatLog;
-import mechanicalarcane.wmch.util.CopyMessageCommand;
 import mechanicalarcane.wmch.util.Util;
 import mechanicalarcane.wmch.util.Util.Flags;
 import net.fabricmc.api.ClientModInitializer;

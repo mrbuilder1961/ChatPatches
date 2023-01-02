@@ -2,7 +2,7 @@ package mechanicalarcane.wmch.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import mechanicalarcane.wmch.config.Config;
-import mechanicalarcane.wmch.util.ChatLog;
+import mechanicalarcane.wmch.ChatLog;
 import mechanicalarcane.wmch.util.Util;
 import mechanicalarcane.wmch.util.Util.Flags;
 import net.fabricmc.api.EnvType;

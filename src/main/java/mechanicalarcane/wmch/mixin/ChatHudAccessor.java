@@ -1,6 +1,6 @@
 package mechanicalarcane.wmch.mixin;
 
-import mechanicalarcane.wmch.util.CopyMessageCommand;
+import mechanicalarcane.wmch.CopyMessageCommand;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.hud.ChatHud;
