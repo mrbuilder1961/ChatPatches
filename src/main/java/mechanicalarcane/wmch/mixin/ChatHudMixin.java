@@ -172,6 +172,7 @@ public abstract class ChatHudMixin {
      * Adds duplicate/spam counters to consecutive, (case-insensitively) equal messages.
      *
      * @implNote
+     * <ol>
      * <li> IF {@code COUNTER} is enabled AND message count >0 AND the message isn't a boundary line, continue.
      * <li> (cache last message, incoming's text siblings and last's text siblings)
      * <li> IF not regenerating visible messages AND the incoming and last messages are loosely equal, continue.
@@ -179,9 +180,9 @@ public abstract class ChatHudMixin {
      * <li> Modify the last message to have a dupe counter
      * <li> Update the existing timestamp (if present)
      * <li> Replace old message body with incoming text
-     * <li> Remove the most recent chat line and replace it with the newly updated one,
-     * <li> Create and then add the rendered messages to the chat hud,
-     * <li> Exit.
+     * <li> Break updated message by width into a list of renderable messages
+     * <li> Insert them into the hud
+     * <li> Cancel to prevent duplicating this message
      */
     @Inject(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
