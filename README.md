@@ -10,6 +10,7 @@ This mod does quite a few things:
 - Keeps chat history and previously sent messages across ALL worlds and servers
 - Lets you modify vanilla player names to anything more appealing than triangle brackets
 - Minimize spam by enabling the counter that shows how many duplicate messages have been sent in a row
+- Shift the chat hud up by 10 pixels so it doesn't overlap with the armor bar
 - All of this is configurable, with much more to offer!
 
 Be on the lookout for new versions, issues, and possible future features!
