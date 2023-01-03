@@ -12,10 +12,10 @@ import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.text.Text;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
@@ -62,11 +62,13 @@ public class ChatLog {
     /** Initializes the ChatLog file and opens file connections. */
     public static void initialize() {
         if(!initialized) {
+            boolean existedBefore = file.exists();
 
-            try( FileInputStream inStream = new FileInputStream(file) ) {
-
+            try {
                 channel = FileChannel.open(file.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-                rawData = new String(inStream.readAllBytes());
+
+                if(existedBefore) // only load the data if the file existed before, otherwise use empty preset
+                    rawData = new String( Files.readAllBytes( file.toPath() ) );
 
                 initialized = true;
             } catch(IOException e) {
