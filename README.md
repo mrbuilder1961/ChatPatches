@@ -13,7 +13,9 @@ This mod does quite a few things:
 - Shift the chat hud up by 10 pixels so it doesn't overlap with the armor bar
 - All of this is configurable, with much more to offer!
 
-Be on the lookout for new versions, issues, and possible future features!
+This mod serves as a configurable bundle of [More Chat History](https://www.curseforge.com/minecraft/mc-mods/more-chat-history), [When Was That Again](https://www.curseforge.com/minecraft/mc-mods/wwta), [Don't Clear Chat History](https://www.curseforge.com/minecraft/mc-mods/dont-clear-chat-history), [No Angled Brackets](https://www.curseforge.com/minecraft/mc-mods/no-angled-brackets), [Clear Spam](https://www.curseforge.com/minecraft/mc-mods/clearspam), and [Chat Up!](https://www.curseforge.com/minecraft/mc-mods/chat-up) all together!
+
+Be on the lookout for new versions, issues, and future features!
 
 ## FAQ
 - What Minecraft version can I use this with? 
