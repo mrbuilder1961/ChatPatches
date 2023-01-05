@@ -1,6 +1,7 @@
 package mechanicalarcane.wmch.util;
 
 import com.mojang.authlib.GameProfile;
+import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.mixin.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
@@ -67,6 +68,7 @@ public class Util {
 		return ((ChatHudAccessor) client.inGameHud.getChatHud());
 	}
 
+
 	/**
 	 * If there's space to overwrite, runs {@code list.set(index, object)}. Otherwise runs {@code list.add(index, object)}.
 	 */
@@ -119,7 +121,6 @@ public class Util {
 	}
 
 
-
 	public static String delAll(String str, String... regexes) {
 		for(String regex : regexes)
 			str = str.replaceAll(regex, "");
@@ -154,5 +155,18 @@ public class Util {
 	 */
 	public static MutableText formatString(String plain) {
 		return Text.literal( plain.replaceAll("(?i)(?m)(?<!\\\\)&([0-9a-fk-or])", "§$1") );
+	}
+
+
+	public static void tryRunOrFallback(Runnable tryExecute, Runnable elseExecute, Class<? extends Exception>... exceptions) throws Exception {
+		try {
+			tryExecute.run();
+		} catch(Exception e) {
+
+			if( Arrays.asList(exceptions).contains( e.getClass() ) )
+				elseExecute.run();
+			else
+				WMCH.LOGGER.error("[Util.tryRunOrFallback] An unexpected exception was thrown while running:", e);
+		}
 	}
 }

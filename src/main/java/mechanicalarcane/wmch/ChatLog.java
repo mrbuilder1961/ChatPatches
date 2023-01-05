@@ -15,6 +15,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
@@ -31,8 +34,8 @@ public class ChatLog {
     public static final String CHATLOG_PATH = WMCH.FABRICLOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
     private static final File file = new File(CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
-        .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, typeOfSrc, context) -> Text.Serializer.toJsonTree(src))
-        .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, typeOfSrc, context) -> Text.Serializer.fromJson(json))
+        .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serializer.toJsonTree(src))
+        .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, type, context) -> Text.Serializer.fromJson(json))
         .registerTypeAdapter(Text.class, (InstanceCreator<Text>) type -> Text.empty())
     .create();
 
@@ -40,13 +43,14 @@ public class ChatLog {
     private static boolean savedAfterCrash = false;
     private static ChatLog.Data data = new Data( Data.DEFAULT_SIZE );
     private static FileChannel channel;
-    private static String rawData = "{\"history\":[],\"messages\":[]}"; // prevents a few errors if the channel doesn't initialize
+    private static String rawData = Data.EMPTY_DATA;
 
     public static boolean loaded = false;
 
 
     /** Micro class for serializing, used separately from ChatLog for simplification */
     private static class Data {
+        public static final String EMPTY_DATA = "{\"history\":[],\"messages\":[]}"; // prevents a few errors if the channel doesn't initialize
         public static int DEFAULT_SIZE = 100;
 
         public List<Text> messages;
@@ -67,12 +71,34 @@ public class ChatLog {
             try {
                 channel = FileChannel.open(file.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
-                if(existedBefore) // only load the data if the file existed before, otherwise use empty preset
-                    rawData = new String( Files.readAllBytes( file.toPath() ) );
+                // only load the data if the file existed before, otherwise use empty preset
+                if(existedBefore)
+                    rawData = Files.readString( file.toPath() );
 
                 initialized = true;
+
+            } catch(MalformedInputException e) {
+                // if the file was not encoded with UTF-8, read the data
+                LOGGER.warn("[ChatLog()] ChatLog file encoding was '{}', not UTF-8. Complex text characters may have been replaced with question marks.", Charset.defaultCharset().name());
+
+                try {
+                    // force-writes the string as UTF-8
+                    Files.writeString(file.toPath(), new String( Files.readAllBytes(file.toPath()) ), StandardOpenOption.TRUNCATE_EXISTING);
+                    initialize();
+
+                } catch (IOException ex) {
+                    LOGGER.error("[ChatLog()] Couldn't connect to '{}', resetting:", CHATLOG_PATH, e);
+
+                    // final attempt to reset the file
+                    try {
+                        Files.writeString(file.toPath(), Data.EMPTY_DATA, StandardOpenOption.TRUNCATE_EXISTING);
+                    } catch (IOException exc) {
+                        LOGGER.error("[ChatLog()] Couldn't connect to '{}':", CHATLOG_PATH, e);
+                    }
+                }
+
             } catch(IOException e) {
-                LOGGER.error("[ChatLog()] Couldn't create file connections:", e);
+                LOGGER.error("[ChatLog()] Couldn't connect to '{}':", CHATLOG_PATH, e);
             }
         }
     }
@@ -120,7 +146,7 @@ public class ChatLog {
         loaded = true;
 
         LOGGER.info("[ChatLog.deserialize] Read the chat log {} containing {} messages and {} sent messages from '{}'",
-			fileSize != -1 ? "(using "+fileSize+" bytes of data)" : "",
+			fileSize != -1 ? "(using " + fileSize + " bytes of data)" : "",
             data.messages.size(), data.history.size(),
             CHATLOG_PATH
 		);
@@ -137,7 +163,6 @@ public class ChatLog {
             // removes any overflowing file data so no corrupted JSON is stored
             channel.truncate(str.getBytes().length);
             write(str);
-
 
             LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
 
@@ -157,11 +182,12 @@ public class ChatLog {
 
 
     /**
-     * Shorthand for writing Strings to {@code ChatLog.channel},
-     * writes the string and then sets the channel's position to 0.
+     * Shorthand for writing Strings to {@code ChatLog.channel};
+     * writes the string in {@link StandardCharsets#UTF_8} and
+     * then sets the channel's position to 0.
      */
     private static void write(String str) throws IOException {
-        channel.write( ByteBuffer.wrap(str.getBytes()) );
+        channel.write( ByteBuffer.wrap( str.getBytes(StandardCharsets.UTF_8) ) );
         channel.position(0);
     }
 
