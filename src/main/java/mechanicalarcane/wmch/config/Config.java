@@ -77,20 +77,25 @@ public class Config {
     }
 
 
-    /** Adds the {@code TIME_FORMAT} and {@code TIME_STR} strings together, adds a space, then formats them. */
-    public MutableText getFormattedTime(Date when) {
+    /**
+     * Creates a timestamp in a Text object using the specified time.
+     * Uses the {@link #timeFormat}, {@link #timeDate}, and {@link #timeColor}
+     * config options. Note that this still creates a timestamp even if
+     * {@link #time} is false.
+     */
+    public MutableText makeTimestamp(Date when) {
         return (
             Util.formatString( fillVars(timeFormat, new SimpleDateFormat(timeDate).format(when)) + " " )
         ).fillStyle( Style.EMPTY.withColor(timeColor) );
     }
 
     /**
-     * If the {@code HOVER} option is enabled, returns a Style with a
-     * formatted HoverEvent and ClickEvent and {@code TIME_COLOR} applied.
-     * Otherwise, returns a Style with only {@code TIME_COLOR} applied.
-     * @param when The time to use for formatting the hover time string
+     * Creates a text Style that contains extra timestamp information
+     * when hovered over in-game. Uses {@link #hoverFormat}, {@link #hoverDate},
+     * and {@link #hoverColor} to format the tooltip text. If {@link #hover} is
+     * false, this will return a Style with only {@link #timeColor} used.
      */
-    public Style getHoverStyle(Date when) {
+    public Style makeHoverStyle(Date when) {
         MutableText hoverText = Util.formatString(
             fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when))
         ).fillStyle( Style.EMPTY.withColor(hoverColor) );
@@ -102,7 +107,7 @@ public class Config {
         ;
     }
 
-    public MutableText getFormattedName(GameProfile player) {
+    public MutableText formatPlayername(GameProfile player) {
         String name = player.getName();
         return Util.formatString( fillVars(nameStr, name) + " " )
             .setStyle( Style.EMPTY
@@ -116,13 +121,13 @@ public class Config {
             );
     }
 
-    public MutableText getFormattedCounter(int dupes) {
+    public MutableText makeDupeCounter(int dupes) {
         return
             Util.formatString(" " + fillVars(counterStr, Integer.toString(dupes)))
                 .fillStyle( Style.EMPTY.withColor(counterColor) );
     }
 
-    public MutableText getFormattedBoundary(String levelName) {
+    public MutableText makeBoundaryLine(String levelName) {
         return
             Util.formatString( fillVars(boundaryStr, levelName) )
                 .fillStyle(Style.EMPTY.withColor(boundaryColor));

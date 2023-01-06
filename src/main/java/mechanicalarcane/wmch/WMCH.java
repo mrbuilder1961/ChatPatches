@@ -1,6 +1,7 @@
 package mechanicalarcane.wmch;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
+import mechanicalarcane.wmch.chatlog.ChatLog;
 import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.util.Util;
 import mechanicalarcane.wmch.util.Util.Flags;
@@ -56,7 +57,7 @@ public class WMCH implements ClientModInitializer {
 					String levelName = (lastWorld = current).substring(2); // makes a variable to update lastWorld in a cleaner way
 
 					Flags.BOUNDARY_LINE.set();
-					client.inGameHud.getChatHud().addMessage( config.getFormattedBoundary(levelName) );
+					client.inGameHud.getChatHud().addMessage( config.makeBoundaryLine(levelName) );
 					Flags.BOUNDARY_LINE.remove();
 
 				} catch(Exception e) {

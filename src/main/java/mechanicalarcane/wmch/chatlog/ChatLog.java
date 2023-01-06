@@ -1,10 +1,11 @@
-package mechanicalarcane.wmch;
+package mechanicalarcane.wmch.chatlog;
 
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
+import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.util.Util;
 import net.minecraft.client.MinecraftClient;

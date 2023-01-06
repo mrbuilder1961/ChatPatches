@@ -2,7 +2,7 @@ package mechanicalarcane.wmch.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import mechanicalarcane.wmch.config.Config;
-import mechanicalarcane.wmch.ChatLog;
+import mechanicalarcane.wmch.chatlog.ChatLog;
 import mechanicalarcane.wmch.util.Util;
 import mechanicalarcane.wmch.util.Util.Flags;
 import net.fabricmc.api.EnvType;
@@ -126,13 +126,13 @@ public abstract class ChatHudMixin {
             Text.empty().setStyle(style)
                 .append(
                     !boundary && config.time
-                        ? config.getFormattedTime(now).setStyle( config.getHoverStyle(now) )
+                        ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) )
                         : Text.empty()
                 )
                 .append(
                     !boundary && !lastEmpty && !config.nameStr.equals("<$>") && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
                         ? Text.empty().setStyle(style)
-                        .append( config.getFormattedName(Util.getProfile(client, lastMsg.getSender())) ) // add formatted name
+                        .append( config.formatPlayername(Util.getProfile(client, lastMsg.getSender())) ) // add formatted name
                         .append( // add first part of message (depending on Text style and whether it was a chat or system)
                             message.getContent() instanceof TranslatableTextContent
                                 ? net.minecraft.util.Util.make(() -> { // all message components
@@ -219,7 +219,7 @@ public abstract class ChatHudMixin {
 
 
                 // modifies the message to have a counter and timestamp
-                Util.setOrAdd( text.getSiblings(), DUPE, config.getFormattedCounter(dupes) );
+                Util.setOrAdd( text.getSiblings(), DUPE, config.makeDupeCounter(dupes) );
 
                 // IF the last message had a timestamp, update it
                 if( !lastSibs.get(TIME).getString().isEmpty() )

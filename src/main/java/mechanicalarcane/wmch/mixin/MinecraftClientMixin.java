@@ -1,6 +1,6 @@
 package mechanicalarcane.wmch.mixin;
 
-import mechanicalarcane.wmch.ChatLog;
+import mechanicalarcane.wmch.chatlog.ChatLog;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
