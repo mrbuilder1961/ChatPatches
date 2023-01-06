@@ -1,5 +1,5 @@
 [![Fabric Mod](https://img.shields.io/badge/modloader-fabric-eeeeee)](https://fabricmc.net/use/)
-[![Latest Version](https://img.shields.io/badge/version-1.19.2--1.5.7-blueviolet)](https://github.com/mrbuilder1961/WheresMyChatHistory/releases)
+[![Latest Version](https://img.shields.io/badge/version-1.19.2--2.1.154-blueviolet)](https://github.com/mrbuilder1961/WheresMyChatHistory/releases)
 [![Curseforge Download](https://cf.way2muchnoise.eu/full_560042_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/wmch)
 [![Modrinth Download](https://img.shields.io/badge/dynamic/json?&color=242629&labelColor=5ca424&label=modrinth&suffix=%20downloads&query=downloads&url=https://api.modrinth.com/v2/project/MOqt4Z5n&cacheSeconds=3600)](https://www.modrinth.com/mod/MOqt4Z5n)
 # Where's My Chat History
@@ -18,13 +18,14 @@ This mod serves as a configurable bundle of [More Chat History](https://www.curs
 Be on the lookout for new versions, issues, and future features!
 
 ## FAQ
-- What Minecraft version can I use this with? 
+
+- What Minecraft version can I use this with?
   - The *latest Fabric* versions of Minecraft, plus 1.18.x and soon 1.16.x. *Quilt* appears to work, but I don't provide official support for it.
 - Will you make it for (older Minecraft version)? 
   - Not likely. The oldest version I'll be making is 1.16.x.
 - Will you make this for Forge? 
   - I doubt it. Fabric's API is simple and I don't feel like learning about it.
-- I found a bug/issue, what do I do? 
+- I found a bug/issue, what do I do?
   - First, make sure you have the latest version of the mod for your Minecraft version. If it still persists, you can click on the Issues tab on this page, and nobody has opened one about your issue then create one! Note that a lack of provided information will increase time needed to fix.
 - It says I need to install Fabric but I already have it installed?
   - [Install the Fabric API.](https://modrinth.com/mod/fabric-api)
@@ -88,7 +89,7 @@ If you would like to help translate WMCH into other languages, you can:
 ## Won't fix/add
 
 1. When you hover over the timestamp, by default it shows more detailed time information.
-I was going to implement a system that, when the `hover` option was toggled off, it would just not render the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However, unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added. This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
+   I was going to implement a system that, when the `hover` option was toggled off, it would just not render the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However, unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added. This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
 
 ## Changelog
 

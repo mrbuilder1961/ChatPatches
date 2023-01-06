@@ -4,7 +4,17 @@
 # against bad commits.
 
 name: build
-on: [pull_request, push]
+on:
+  # Don't build if only text-based files were changed.
+  # Prevents waiting for unnecessary checks/actions
+  push:
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
 
 jobs:
   build:
