@@ -24,13 +24,13 @@ jobs:
         java: [
           17, # Current Java LTS & minimum supported by Minecraft
         ]
-        # and run on both Linux and Windows
-        os: [ubuntu-20.04, windows-2022]
+        # and run on the latest dists of Linux, MacOs, and Windows
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout repository
         uses: actions/checkout@v3
-        
+
       - name: validate gradle wrapper
         uses: gradle/wrapper-validation-action@v1
 
@@ -53,6 +53,6 @@ jobs:
         with:
           name: jars
           path: |
-            build/libs/ 
+            build/libs/
             build/devlibs/
             !build/devlibs/*-sources.jar
