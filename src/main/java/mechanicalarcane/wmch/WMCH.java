@@ -25,7 +25,6 @@ public class WMCH implements ClientModInitializer {
 	/**
 	 * <ol>
 	 * 	<li> Initializes MixinExtras for more Mixin annotations
-	 * 	<li> Initializes the ChatLog
 	 *	<li> Registers a callback on {@link ClientCommandRegistrationCallback#EVENT} for the {@link CopyMessageCommand}
 	 * 	<li> Registers a callback on {@link ClientLifecycleEvents#CLIENT_STOPPING} for {@link ChatLog#serialize(boolean)} on a normal game exit
 	 * 	<li> Registers a callback on {@link ClientPlayConnectionEvents#JOIN} for loading the {@link ChatLog} and adding boundary lines
@@ -35,8 +34,6 @@ public class WMCH implements ClientModInitializer {
 	public void onInitializeClient() {
 		MixinExtrasBootstrap.init();
 		//CrowdinTranslate.downloadTranslations("wmch"); // use github workflow thing
-
-		ChatLog.initialize();
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> CopyMessageCommand.register(dispatcher) );
 
