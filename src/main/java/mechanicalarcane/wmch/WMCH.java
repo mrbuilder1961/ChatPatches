@@ -34,7 +34,6 @@ public class WMCH implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		MixinExtrasBootstrap.init();
-		//CrowdinTranslate.downloadTranslations("wmch"); // use github workflow thing
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> CopyMessageCommand.register(dispatcher) );
 

@@ -40,18 +40,16 @@ Be on the lookout for new versions, issues, and future features!
 ## Localization and Translation
 
 If you would like to help translate WMCH into other languages, you can:
-- Create a pull request that adds or corrects a language file
-- Head over to [the CrowdIn page](https://crwd.in/wmch) and see how you can contribute
+- Create a pull request that adds or corrects a language file *(preferred)*
+- Create an issue on GitHub with the language file attached
 
 ## Setup devenv / Build latest jars
 
 1. Download the latest ZIP (this page -> Code -> Download ZIP)
 2. Extract it to your desired folder
 3. Open a terminal/command prompt, then run `./gradlew build`
-
-4a. For a devenv, open the folder in your IDE
-
-4b. For built jars, navigate to /build/libs/
+4. [For a devenv]: open the folder in your IDE
+5. [For built jars]: navigate to `/build/libs/`
 
 ## Configuration help
 
@@ -86,11 +84,6 @@ If you would like to help translate WMCH into other languages, you can:
 
 - Meteor Client's BetterChat features
 - MoreChatHistory
-
-## Won't fix/add
-
-1. When you hover over the timestamp, by default it shows more detailed time information.
-   I was going to implement a system that, when the `hover` option was toggled off, it would just not render the text rather than not add the HoverEvent entirely; so if it's toggled back on it would render. However, unless I've glossed over a simpler method, this would take up wayyy too much extra memory just for this purpose, so that will not be added. This also applies for most other options: if you toggle it off, it will probably not work on old messages if you toggle it back on again.
 
 ## Changelog
 
