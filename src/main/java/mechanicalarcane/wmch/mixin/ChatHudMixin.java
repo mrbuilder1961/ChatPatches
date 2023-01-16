@@ -8,6 +8,7 @@ import mechanicalarcane.wmch.util.Util.Flags;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -35,7 +36,7 @@ import static mechanicalarcane.wmch.util.Util.delAll;
 
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatHud.class, priority = 400)
-public abstract class ChatHudMixin {
+public abstract class ChatHudMixin extends DrawableHelper {
     @Shadow @Final private MinecraftClient client;
 
     @Shadow @Final private List<ChatHudLine> messages;
