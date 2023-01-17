@@ -1,8 +1,8 @@
 package mechanicalarcane.wmch.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.chatlog.ChatLog;
+import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.util.Util;
 import mechanicalarcane.wmch.util.Util.Flags;
 import net.fabricmc.api.EnvType;
@@ -50,7 +50,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
-    private void clear(boolean clearHistory, CallbackInfo ci) {
+    private void wmch$clear(boolean clearHistory, CallbackInfo ci) {
         if(!clearHistory) {
             client.getMessageHandler().processAll();
             visibleMessages.clear();
@@ -67,7 +67,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
         at = @At(value = "CONSTANT", args = "intValue=100")
     )
-    private int increaseMaxMessages(int hundred) {
+    private int wmch$increaseMaxMessages(int hundred) {
         return config.maxMsgs;
     }
 
@@ -80,16 +80,16 @@ public abstract class ChatHudMixin extends DrawableHelper {
      * corresponding to the (yarn mapped) target variable name.
      */
     @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 31) // STORE ordinal=0 to not target all x stores
-    private int moveChatText(int x) {
+    private int wmch$moveChatText(int x) {
         return x - (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
     }
     @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 27)
-    private int moveScrollBar(int af) {
+    private int wmch$moveScrollBar(int af) {
         return af + (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
     }
     // condensed to one method because the first part of both methods are practically identical
     @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
-    private double moveIndicatorAndHoverText(double e) {
+    private double wmch$moveIndicatorAndHoverText(double e) {
         // small bug with this, hover text extends to above chat, likely includes indicator text as well
         // maybe check ChatHud#toChatLineY(double)
         // prob unrelated to this bug, but indicator icons render weird so check that out and send some msgs w/ the icons + text
@@ -100,7 +100,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
     /**
      * Modifies the incoming message by adding timestamps, nicer
      * playernames, hover events, and duplicate counters in conjunction with
-     * {@link #addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
+     * {@link #wmch$addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
      *
      * @implNote
      * <li> Extra {@link Text} parameter is required to get access to {@code refreshing},
@@ -113,7 +113,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
         at = @At("HEAD"),
         argsOnly = true
     )
-    private Text modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
+    private Text wmch$modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
         if( LOADING_CHATLOG.isSet() || refreshing )
             return message; // cancels modifications when loading the chatlog or when regenerating visibles
 
@@ -167,7 +167,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-    private void saveHistory(String message, CallbackInfo ci) {
+    private void wmch$saveHistory(String message, CallbackInfo ci) {
         if( !Flags.LOADING_CHATLOG.isSet() )
             ChatLog.addHistory(message);
     }
@@ -193,7 +193,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
         at = @At("HEAD"),
         cancellable = true
     )
-    private void addCounter(Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing, CallbackInfo ci) {
+    private void wmch$addCounter(Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing, CallbackInfo ci) {
         // IF counter is enabled AND not refreshing AND messages >0 AND the message isn't a boundary line, continue
         if(config.counter && !refreshing && !messages.isEmpty() && !BOUNDARY_LINE.isSet() ) {
             // indexes from (customized) messages

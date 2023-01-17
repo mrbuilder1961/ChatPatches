@@ -33,7 +33,7 @@ public abstract class MessageHandlerMixin {
      * for the NoChatReports {@code convertToGameMessage} option and then finally caches the metadata.
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
-    private void cacheChatSender(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
+    private void wmch$cacheChatSender(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         client.options.getOnlyShowSecureChat().setValue(false);
 
         WMCH.lastMsg = message;
@@ -47,7 +47,7 @@ public abstract class MessageHandlerMixin {
      * returns {@code true}.
      */
     @Inject(method = "onGameMessage", at = @At("HEAD"))
-    private void cacheGameSender(Text message, boolean overlay, CallbackInfo ci) {
+    private void wmch$cacheGameSender(Text message, boolean overlay, CallbackInfo ci) {
 
         if( Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+$", message.getString()) ) {
 
