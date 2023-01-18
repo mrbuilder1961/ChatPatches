@@ -156,17 +156,4 @@ public class Util {
 	public static MutableText formatString(String plain) {
 		return Text.literal( plain.replaceAll("(?i)(?m)(?<!\\\\)&([0-9a-fk-or])", "§$1") );
 	}
-
-
-	public static void tryRunOrFallback(Runnable tryExecute, Runnable elseExecute, Class<? extends Exception>... exceptions) throws Exception {
-		try {
-			tryExecute.run();
-		} catch(Exception e) {
-
-			if( Arrays.asList(exceptions).contains( e.getClass() ) )
-				elseExecute.run();
-			else
-				WMCH.LOGGER.error("[Util.tryRunOrFallback] An unexpected exception was thrown while running:", e);
-		}
-	}
 }
