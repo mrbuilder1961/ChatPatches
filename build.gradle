@@ -1,6 +1,10 @@
+import groovy.json.JsonSlurper
+
 plugins {
 	id "fabric-loom" version "1.0-SNAPSHOT"
 	id "maven-publish"
+	id "com.modrinth.minotaur" version "2.+"
+	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -104,6 +108,7 @@ jar {
 	}
 }
 
+
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
@@ -112,9 +117,63 @@ publishing {
 	}
 
 	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
+	repositories {}
+}
+
+
+publish {
+	tasks.publish.dependsOn(tasks.curseforge)
+	tasks.publish.dependsOn(tasks.modrinth)
+}
+
+curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
+	apiKey = new JsonSlurper().parseText(file("secrets.json").text).curseforge
+	project {
+		id = "560042"
+		releaseType = "release"
+		changelogType = "markdown"
+		changelog = file("latest_changelog.md")
+
+		mainArtifact remapJar
+		for(String target : rootProject.targets.split(",")) {
+			addGameVersion target
+		}
+
+		relations {
+			requiredDependency "fabric-api"
+
+			optionalDependency "cloth-config"
+			optionalDependency "modmenu"
+
+			tool "no-chat-reports"
+
+			incompatible "morechathistory"
+		}
+
+		options {
+			forgeGradleIntegration = false
+		}
+	}
+}
+
+modrinth { // https://github.com/modrinth/minotaur#groovy
+	token = new JsonSlurper().parseText(file("secrets.json").text).modrinth
+	projectId = "MOqt4Z5n"
+	versionNumber = modVersion // Will fail if Modrinth has this version already
+	versionType = "release"
+	uploadFile = remapJar
+	gameVersions = Arrays.asList( rootProject.targets.split(",") ) // Must be an array
+	loaders = Arrays.asList( rootProject.loaders.split(",") )
+	changelog = file("latest_changelog.md").text
+
+	dependencies {
+		required.project "fabric-api"
+
+		optional.project "cloth-config"
+		optional.project "modmenu"
+
+		optional.project "no-chat-reports"
+
+		incompatible.project "morechathistory"
 	}
 }
