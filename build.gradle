@@ -12,8 +12,8 @@ targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = rootProject.archives_base_name
 group = rootProject.group
-def modVersion = rootProject.version
-version = "$rootProject.minecraft-$modVersion"
+version = rootProject.version
+// tokens revert to empty strings set without valid keys in secrets.json
 def tokens = file("secrets.json").exists() ? new JsonSlurper().parseText(file("secrets.json").text) : new JsonSlurper().parseText("{\"modrinth\": \"\", \"curseforge\": \"\"}")
 
 
@@ -84,10 +84,10 @@ dependencies {
 }
 
 processResources {
-	inputs.property "version", modVersion
+	inputs.property "version", version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": modVersion
+		expand "version": version
 
 		/* filter {
 			it.replace("example_key", rootProject.exampleVar)
@@ -160,7 +160,7 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 modrinth { // https://github.com/modrinth/minotaur#groovy
 	token = tokens.modrinth
 	projectId = "MOqt4Z5n"
-	versionNumber = modVersion // Will fail if Modrinth has this version already
+	versionNumber = version // Will fail if Modrinth has this version already
 	versionType = "release"
 	uploadFile = remapJar
 	gameVersions = Arrays.asList( rootProject.targets.split(",") ) // Must be an array
