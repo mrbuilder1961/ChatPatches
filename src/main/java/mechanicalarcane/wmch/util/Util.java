@@ -1,7 +1,6 @@
 package mechanicalarcane.wmch.util;
 
 import com.mojang.authlib.GameProfile;
-import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.mixin.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
