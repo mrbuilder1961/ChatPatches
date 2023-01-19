@@ -148,7 +148,7 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 
 			tool "no-chat-reports"
 
-			incompatible "morechathistory"
+			incompatible "more-chat-history"
 		}
 
 		options {
