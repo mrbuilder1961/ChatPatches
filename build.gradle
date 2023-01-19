@@ -14,6 +14,7 @@ archivesBaseName = rootProject.archives_base_name
 group = rootProject.group
 def modVersion = rootProject.version
 version = "$rootProject.minecraft-$modVersion"
+def tokens = file("secrets.json").exists() ? new JsonSlurper().parseText(file("secrets.json").text) : new JsonSlurper().parseText("{\"modrinth\": \"\", \"curseforge\": \"\"}")
 
 
 repositories {
@@ -127,7 +128,7 @@ publish {
 }
 
 curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
-	apiKey = new JsonSlurper().parseText(file("secrets.json").text).curseforge
+	apiKey = tokens.curseforge
 	project {
 		id = "560042"
 		releaseType = "release"
@@ -157,7 +158,7 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 }
 
 modrinth { // https://github.com/modrinth/minotaur#groovy
-	token = new JsonSlurper().parseText(file("secrets.json").text).modrinth
+	token = tokens.modrinth
 	projectId = "MOqt4Z5n"
 	versionNumber = modVersion // Will fail if Modrinth has this version already
 	versionType = "release"
