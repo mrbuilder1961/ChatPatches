@@ -135,10 +135,15 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 		changelogType = "markdown"
 		changelog = file("latest_changelog.md")
 
-		mainArtifact remapJar
-		for(String target : rootProject.targets.split(",")) {
+		// adds Java versions, modloaders, and mc versions
+		addGameVersion "Java 17"
+		addGameVersion "Java 18"
+		for(String target : rootProject.targets.split(","))
 			addGameVersion target
-		}
+		for(String loader : rootProject.loaders.split(","))
+			addGameVersion loader.capitalize()
+
+		mainArtifact remapJar
 
 		relations {
 			requiredDependency "fabric-api"
@@ -152,6 +157,7 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 		}
 
 		options {
+			debug=true
 			forgeGradleIntegration = false
 		}
 	}
