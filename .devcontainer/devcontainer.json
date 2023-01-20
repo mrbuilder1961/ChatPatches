@@ -9,7 +9,8 @@
 
 			"extensions": [
 				"vscjava.vscode-java-pack",
-				"vscjava.vscode-gradle"
+				"vscjava.vscode-gradle",
+				"github.copilot"
 			]
 		}
 	},
