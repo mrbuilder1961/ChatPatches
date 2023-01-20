@@ -14,7 +14,7 @@ archivesBaseName = rootProject.archives_base_name
 group = rootProject.group
 version = rootProject.version
 // tokens revert to empty strings set without valid keys in secrets.json
-def tokens = file("secrets.json").exists() ? new JsonSlurper().parseText(file("secrets.json").text) : new JsonSlurper().parseText("{\"modrinth\": \"\", \"curseforge\": \"\"}")
+def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
 
 
 repositories {
@@ -157,7 +157,6 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 		}
 
 		options {
-			debug=true
 			forgeGradleIntegration = false
 		}
 	}

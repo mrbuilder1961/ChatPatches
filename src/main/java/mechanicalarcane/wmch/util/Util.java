@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * Random functions that are of some random, obsolete use
- */
+/** Random functions that are of some random, obsolete use */
 public class Util {
 	public static final UUID NIL_UUID = new UUID(0, 0);
 	public static final SignedMessage NIL_MESSAGE = SignedMessage.ofUnsigned("");

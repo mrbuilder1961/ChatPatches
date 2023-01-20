@@ -14,7 +14,7 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.network.message.SignedMessage;
 
 public class WMCH implements ClientModInitializer {
-	public static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("Where's My Chat History");
+	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Where's My Chat History");
 	public static final FabricLoader FABRICLOADER = FabricLoader.getInstance();
 
 	public static Config config = Config.newConfig(false);
