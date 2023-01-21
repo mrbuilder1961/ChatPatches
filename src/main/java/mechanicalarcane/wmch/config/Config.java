@@ -1,6 +1,9 @@
 package mechanicalarcane.wmch.config;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
 import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.util.Util;
@@ -10,6 +13,8 @@ import net.minecraft.text.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -136,20 +141,25 @@ public class Config {
 
     /** Loads the config settings saved at {@link Config#CONFIG_PATH} into this Config instance */
     public static void read() {
-        try(FileReader fr = new FileReader(CONFIG_PATH)) {
-            config = new Gson().fromJson(fr, config.getClass());
 
-            LOGGER.info("[Config.read] Loaded config info from '{}'!", CONFIG_PATH);
-        } catch(JsonIOException | JsonSyntaxException e) {
+        if( !Files.exists(Path.of(CONFIG_PATH)) )
+            config = newConfig(true);
+        
+        else
+            try(FileReader fr = new FileReader(CONFIG_PATH)) {
+                config = new Gson().fromJson(fr, config.getClass());
 
-            LOGGER.info("[Config.read] The config couldn't be loaded; copying old data and resetting...");
-            writeCopy();
-            reset();
+                LOGGER.info("[Config.read] Loaded config info from '{}'!", CONFIG_PATH);
+            } catch(JsonIOException | JsonSyntaxException e) {
 
-        } catch(IOException e) {
-            reset();
-            LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", CONFIG_PATH, e);
-        }
+                LOGGER.info("[Config.read] The config couldn't be loaded; copying old data and resetting...");
+                writeCopy();
+                reset();
+
+            } catch(IOException e) {
+                reset();
+                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", CONFIG_PATH, e);
+            }
     }
 
     /** Saves the {@code WMCH.config} instance to {@link Config#CONFIG_PATH} */
