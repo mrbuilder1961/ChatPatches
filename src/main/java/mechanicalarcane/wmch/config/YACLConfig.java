@@ -65,29 +65,16 @@ public class YACLConfig extends Config {
             }
         });
 
-        return YetAnotherConfigLib.createBuilder()
+
+        YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder()
             .title(Text.translatable("text.wmch.title"))
-                .category(category("time")
-                    .options(timeOpts)
-                    .build()
-                )
-                .category(category("hover")
-                    .options(hoverOpts)
-                    .build()
-                )
-                .category(category("counter")
-                    .options(counterOpts)
-                    .build()
-                )
-                .category(category("boundary")
-                    .options(boundaryOpts)
-                    .build()
-                )
-                .category(category("hud")
-                    .options(hudOpts)
-                    .build()
-                )
-                .category(category("help")//HELP/INFO
+                .category( category("time").options(timeOpts).build() )
+                .category( category("hover").options(hoverOpts).build() )
+                .category( category("counter").options(counterOpts).build() )
+                .category( category("boundary").options(boundaryOpts).build() )
+                .category( category("hud").options(hudOpts).build() )
+
+                .category( category("help")
                     // hardcoded text labels
                     .option(dev.isxander.yacl.api.Option.createBuilder(Text.class)
                         .name(Text.empty())//del
@@ -111,44 +98,48 @@ public class YACLConfig extends Config {
                     )
                     .build()
                 )
-                .category(category("debug")
-                    .option(dev.isxander.yacl.api.Option.createBuilder(Integer.class)
-                        .available(WMCH.FABRICLOADER.isDevelopmentEnvironment())
-                        .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Util.Flags.flags, Util.Flags.binary())) )
-                        .controller(opt -> new IntegerSliderController(opt, 0, 0b1111, 1))
-                        .binding( Util.Flags.flags, () -> Util.Flags.flags, inc -> Util.Flags.flags = inc )
-                        .build()
-                    )
-                    .option(ButtonOption.createBuilder()
-                        .available(WMCH.FABRICLOADER.isDevelopmentEnvironment())
-                        .name( Text.literal("Print GitHub Option table") )
-                        .controller(ActionController::new)
-                        .action((yaclScreen, buttonOption) -> {
-                            StringBuilder str = new StringBuilder();
+                .save(() -> {
+                    write();
+                    WMCH.LOGGER.info("[YACLConfig.save] Updated the config file at '{}'!", CONFIG_PATH);
+                });
 
-                            Config.getOptions().forEach(opt -> {
-                                str.append("\n| %s | %s | %s | `text.wmch.%s` |".formatted(
-                                    I18n.translate("text.wmch." + opt.key),
-                                    opt.get().getClass().equals( Integer.class ) && opt.key.contains("Color")
-                                        ? "`0x" + Integer.toHexString( (int)opt.def ).toUpperCase() + "` (`" + opt.def + "`)"
-                                        : "`" + opt.def + "`",
-                                    I18n.translate("text.wmch.desc." + opt.key),
-                                    opt.key
-                                ));
-                            });
-
-                            WMCH.LOGGER.warn("[ClothConfig.printGithubTables]" + str);
-                        })
-                        .build()
-                    )
+        // debug options
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
+            builder.category(category("Debug")
+                .option(dev.isxander.yacl.api.Option.createBuilder(Integer.class)
+                    .available(WMCH.FABRICLOADER.isDevelopmentEnvironment())
+                    .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Util.Flags.flags, Util.Flags.binary())) )
+                    .controller(opt -> new IntegerSliderController(opt, 0, 0b1111, 1))
+                    .binding( Util.Flags.flags, () -> Util.Flags.flags, inc -> Util.Flags.flags = inc )
                     .build()
                 )
-            .save(() -> {
-                write();
-                WMCH.LOGGER.info("[YACLConfig.save] Updated the config file at '{}'!", CONFIG_PATH);
-            })
-            .build()
-        .generateScreen(parent);
+                .option(ButtonOption.createBuilder()
+                    .available(WMCH.FABRICLOADER.isDevelopmentEnvironment())
+                    .name( Text.literal("Print GitHub Option table") )
+                    .controller(ActionController::new)
+                    .action((yaclScreen, buttonOption) -> {
+                        StringBuilder str = new StringBuilder();
+
+                        Config.getOptions().forEach(opt -> {
+                            str.append("\n| %s | %s | %s | `text.wmch.%s` |".formatted(
+                                I18n.translate("text.wmch." + opt.key),
+                                opt.get().getClass().equals( Integer.class ) && opt.key.contains("Color")
+                                    ? "`0x" + Integer.toHexString( (int)opt.def ).toUpperCase() + "` (`" + opt.def + "`)"
+                                    : "`" + opt.def + "`",
+                                I18n.translate("text.wmch.desc." + opt.key),
+                                opt.key
+                            ));
+                        });
+
+                        WMCH.LOGGER.warn("[ClothConfig.printGithubTables]" + str);
+                    })
+                    .build()
+                )
+                .build()
+            );
+        }
+
+        return builder.build().generateScreen(parent);
     }
 
 
