@@ -81,7 +81,7 @@ If you would like to help translate WMCH into other languages, you can:
 
 ## Changelog
 
-See [individual releases](https://github.com/mrbuilder1961/WheresMyChatHistory/releases) for specific changelogs or the [commit list](https://github.com/mrbuilder1961/WheresMyChatHistory/commits).
+See the `latest_changelog.md` for individual releases or the [commit list](https://github.com/mrbuilder1961/WheresMyChatHistory/commits) for fine-grain details.
 
 ## License
 This mod is available under the GNU LGPLv3 license. Check out [this](https://choosealicense.com/licenses/lgpl-3.0/) page for information.
