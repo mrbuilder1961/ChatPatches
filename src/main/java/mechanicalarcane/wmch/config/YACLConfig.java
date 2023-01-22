@@ -210,7 +210,8 @@ public class YACLConfig extends Config {
             .name( Text.translatable("text.wmch." + cat + "Color") )
             .tooltip( Text.translatable("text.wmch.desc." + cat + "Color") )
             .controller(ColorController::new)
-            .binding(Binding.generic( new Color(opt.def), () -> new Color(opt.get()), inc -> opt.set( inc.getRGB() ) ))
+            // don't save alpha bits
+            .binding(Binding.generic( new Color(opt.def), () -> new Color(opt.get()), inc -> opt.set( inc.getRGB() - 0xff000000 ) ))
             .build();
     }
 }
