@@ -158,7 +158,7 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 			incompatible "more-chat-history"
 		}
 
-		options {debug=true
+		options {
 			forgeGradleIntegration = false
 		}
 	}
@@ -173,7 +173,7 @@ modrinth { // https://github.com/modrinth/minotaur#groovy
 	gameVersions = Arrays.asList( rootProject.targets.split(",") ) // Must be an array
 	loaders = Arrays.asList( rootProject.loaders.split(",") )
 	changelog = file("latest_changelog.md").text
-debugMode=true
+
 	dependencies {
 		required.project "fabric-api"
 
