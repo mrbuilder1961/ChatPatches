@@ -35,12 +35,12 @@
 
   "depends": {
     "java": ">=17",
-    "minecraft": ">=1.19 <=1.19.2",
-    "fabricloader": ">=0.14.11",
+    "minecraft": ["1.19.1", "1.19.2"],
+    "fabricloader": ">=0.14.10",
     "fabric": "*"
   },
   "recommends": {
-    "cloth-config": "*",
+    "yacl": "*",
     "modmenu": "*"
   },
   "suggests": {

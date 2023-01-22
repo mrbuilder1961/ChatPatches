@@ -12,9 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.util.*;
 
-/**
- * Random functions that are of some random, obsolete use
- */
+/** Random functions that are of some random, obsolete use */
 public class Util {
 	public static final UUID NIL_UUID = new UUID(0, 0);
 	public static final MessageMetadata NIL_METADATA = new MessageMetadata(NIL_UUID, Instant.EPOCH, 0);
@@ -68,6 +66,7 @@ public class Util {
 		return ((ChatHudAccessor) client.inGameHud.getChatHud());
 	}
 
+
 	/**
 	 * If there's space to overwrite, runs {@code list.set(index, object)}. Otherwise runs {@code list.add(index, object)}.
 	 */
@@ -118,7 +117,6 @@ public class Util {
 				: "S_" + client.getCurrentServerEntry().name
 		;
 	}
-
 
 
 	public static String delAll(String str, String... regexes) {

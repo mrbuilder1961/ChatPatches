@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an addition to the mod
+about: Suggest an addition or change
 title: Suggestion summary - target version
 labels: suggestion
 assignees: ''

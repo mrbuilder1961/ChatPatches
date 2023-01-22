@@ -1,15 +1,21 @@
 package mechanicalarcane.wmch.config;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
 import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.util.Util;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.EntityType;
 import net.minecraft.text.*;
 
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,7 +31,7 @@ public class Config {
     public static final String CONFIG_PATH = WMCH.FABRICLOADER.getConfigDir().toString() + separator + "wmch.json";
     private static final Config DEFAULTS = new Config();
     public static final boolean hasModMenu = WMCH.FABRICLOADER.isModLoaded("modmenu");
-    public static final boolean hasClothConfig = WMCH.FABRICLOADER.isModLoaded("cloth-config");
+    public static final boolean hasYACL = WMCH.FABRICLOADER.isModLoaded("yet-another-config-lib");
 
     // configurable
     public boolean time = true, hover = true, counter = true, boundary = true;
@@ -35,16 +41,20 @@ public class Config {
     public int timeColor = 0xff55ff, hoverColor = 0xffffff, counterColor = 0xffff55, boundaryColor = 0x55ffff;
     public boolean saveChat = true;
     public int shiftChat = 10;
-    public String nameStr = "$";
+    public String nameFormat = "$";
     public int maxMsgs = 16384;
 
 
     /** Creates a new Config or ClothConfig depending on installed mods. */
     public static Config newConfig(boolean reset) {
-        config = (hasModMenu && hasClothConfig) ? new ClothConfig() : new Config();
+        config = (hasModMenu && hasYACL) ? new YACLConfig() : new Config();
         if(!reset)
             read();
         return config;
+    }
+
+    public Screen getConfigScreen(Screen parent) {
+        return null;
     }
 
 
@@ -104,12 +114,12 @@ public class Config {
             .withHoverEvent( hover ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText) : null )
             .withClickEvent( hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText.getString()) : null )
             .withColor(timeColor)
-            ;
+        ;
     }
 
     public MutableText formatPlayername(GameProfile player) {
         String name = player.getName();
-        return Util.formatString( fillVars(nameStr, name) + " " )
+        return Util.formatString( fillVars(nameFormat, name) + " " )
             .setStyle( Style.EMPTY
                 .withHoverEvent(
                     new HoverEvent(
@@ -136,20 +146,25 @@ public class Config {
 
     /** Loads the config settings saved at {@link Config#CONFIG_PATH} into this Config instance */
     public static void read() {
-        try(FileReader fr = new FileReader(CONFIG_PATH)) {
-            config = new Gson().fromJson(fr, config.getClass());
 
-            LOGGER.info("[Config.read] Loaded config info from '{}'!", CONFIG_PATH);
-        } catch(JsonIOException | JsonSyntaxException e) {
+        if( !Files.exists(Path.of(CONFIG_PATH)) )
+            config = newConfig(true);
+        
+        else
+            try(FileReader fr = new FileReader(CONFIG_PATH)) {
+                config = new Gson().fromJson(fr, config.getClass());
 
-            LOGGER.info("[Config.read] The config couldn't be loaded; copying old data and resetting...");
-            writeCopy();
-            reset();
+                LOGGER.info("[Config.read] Loaded config info from '{}'!", CONFIG_PATH);
+            } catch(JsonIOException | JsonSyntaxException e) {
 
-        } catch(IOException e) {
-            reset();
-            LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", CONFIG_PATH, e);
-        }
+                LOGGER.info("[Config.read] The config couldn't be loaded; copying old data and resetting...");
+                writeCopy();
+                reset();
+
+            } catch(IOException e) {
+                reset();
+                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", CONFIG_PATH, e);
+            }
     }
 
     /** Saves the {@code WMCH.config} instance to {@link Config#CONFIG_PATH} */
@@ -159,7 +174,7 @@ public class Config {
             new GsonBuilder()
                 .excludeFieldsWithModifiers(Modifier.STATIC)
                 .setPrettyPrinting()
-                .create()
+            .create()
                 .toJson(config, config.getClass(), fw);
 
             LOGGER.info("[Config.write] Saved config info to '{}'!", CONFIG_PATH);
@@ -210,6 +225,9 @@ public class Config {
 
         public T get() { return val; }
 
+        @SuppressWarnings("unchecked")
+        public Class<T> getType() { return (Class<T>) def.getClass(); }
+
         /**
          * Sets this Option's value to {@code obj} in {@code this} and also in the config;
          * assuming {@code obj.getClass().equals(T.class)} returns true.
@@ -235,9 +253,8 @@ public class Config {
             this.set(obj, true);
         }
 
-        public boolean changed() {
+        /*public boolean changed() {
             return !val.equals(def);
-        }
-
+        }*/
     }
 }

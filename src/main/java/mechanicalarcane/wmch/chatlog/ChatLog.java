@@ -10,7 +10,6 @@ import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.util.Util;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.Text;
 
 import java.io.IOException;
@@ -36,10 +35,10 @@ public class ChatLog {
         .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serializer.toJsonTree(src))
         .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, type, context) -> Text.Serializer.fromJson(json))
         .registerTypeAdapter(Text.class, (InstanceCreator<Text>) type -> Text.empty())
-        .create();
+    .create();
 
     private static boolean savedAfterCrash = false;
-    private static ChatLog.Data data = new Data( Data.DEFAULT_SIZE );
+    private static ChatLog.Data data = new Data();
 
     public static boolean loaded = false;
 
@@ -55,6 +54,10 @@ public class ChatLog {
         private Data(int size) {
             messages = Lists.newArrayListWithExpectedSize(size);
             history = Lists.newArrayListWithExpectedSize(size);
+        }
+
+        private Data() {
+            this(DEFAULT_SIZE);
         }
     }
 
@@ -80,7 +83,7 @@ public class ChatLog {
             try {
                 rawData = Files.readString(file);
 
-            } catch (MalformedInputException mie) { // thrown if the file is not encoded with UTF-8
+            } catch (MalformedInputException notUTF8) { // thrown if the file is not encoded with UTF-8
                 LOGGER.warn("[ChatLog.deserialize] ChatLog file encoding was '{}', not UTF-8. Complex text characters may have been replaced with question marks.", Charset.defaultCharset().name());
 
                 try {
@@ -88,28 +91,32 @@ public class ChatLog {
                     Files.writeString(file, new String(Files.readAllBytes(file)), StandardOpenOption.TRUNCATE_EXISTING);
                     rawData = Files.readString(file);
 
-                } catch (IOException ex) {
-                    LOGGER.error("[ChatLog.deserialize] Couldn't rewrite the ChatLog at '{}', resetting:", CHATLOG_PATH, ex);
+                } catch (IOException ioexc) {
+                    LOGGER.error("[ChatLog.deserialize] Couldn't rewrite the ChatLog at '{}', resetting:", CHATLOG_PATH, ioexc);
 
                     // final attempt to reset the file
                     try {
-                        Files.writeString(file, Data.EMPTY_DATA, StandardOpenOption.TRUNCATE_EXISTING);
                         rawData = Data.EMPTY_DATA; // just in case of corruption from previous failures
-                    } catch (IOException exc) {
-                        LOGGER.error("[ChatLog.deserialize] Couldn't reset the ChatLog at '{}':", CHATLOG_PATH, exc);
+                        Files.writeString(file, Data.EMPTY_DATA, StandardOpenOption.TRUNCATE_EXISTING);
+                    } catch (IOException ioerr) {
+                        LOGGER.error("[ChatLog.deserialize] Couldn't reset the ChatLog at '{}':", CHATLOG_PATH, ioerr);
                     }
                 }
 
-            } catch (IOException ioe) {
-                LOGGER.error("[ChatLog.deserialize] Couldn't access the ChatLog at '{}':", CHATLOG_PATH, ioe);
-                // rawData is empty
+            } catch (IOException e) {
+                LOGGER.error("[ChatLog.deserialize] Couldn't access the ChatLog at '{}':", CHATLOG_PATH, e);
+                // rawData is EMPTY DATA
             }
+        } else {
+            data = new Data();
+            loaded = true;
+            return;
         }
 
 
         // if the file has invalid data (doesn't start with a '{'), reset it
         if( rawData.length() < 2 || !rawData.startsWith("{") ) {
-            data = new Data( Data.DEFAULT_SIZE );
+            data = new Data();
             loaded = true;
 
             return;
@@ -121,7 +128,7 @@ public class ChatLog {
         } catch (com.google.gson.JsonSyntaxException e) {
             LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
-            data = new Data( Data.DEFAULT_SIZE );
+            data = new Data();
             loaded = true;
             return;
         }
@@ -129,9 +136,9 @@ public class ChatLog {
         loaded = true;
 
         LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}'",
-            data.messages.size(), data.history.size(),
+			data.messages.size(), data.history.size(),
             CHATLOG_PATH
-        );
+		);
     }
 
     public static void serialize(boolean crashing) {
@@ -172,7 +179,7 @@ public class ChatLog {
             data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
         if(data.messages.size() > 0)
             data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(
-                msg, MessageSignatureData.EMPTY, new MessageIndicator(0x382fb5, null, null, "Restored")
+                msg, null, new MessageIndicator(0x382fb5, null, null, "Restored")
             ));
 
         Util.Flags.LOADING_CHATLOG.remove();

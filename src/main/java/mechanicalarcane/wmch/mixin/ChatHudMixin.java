@@ -1,13 +1,14 @@
 package mechanicalarcane.wmch.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.chatlog.ChatLog;
+import mechanicalarcane.wmch.config.Config;
 import mechanicalarcane.wmch.util.Util;
 import mechanicalarcane.wmch.util.Util.Flags;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -35,7 +36,7 @@ import static mechanicalarcane.wmch.util.Util.delAll;
 
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatHud.class, priority = 400)
-public abstract class ChatHudMixin {
+public abstract class ChatHudMixin extends DrawableHelper {
     @Shadow @Final private MinecraftClient client;
 
     @Shadow @Final private List<ChatHudLine> messages;
@@ -44,12 +45,12 @@ public abstract class ChatHudMixin {
 
     @Shadow public abstract double getChatScale();
 
-
     @Shadow public abstract int getWidth();
+
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
-    private void clear(boolean clearHistory, CallbackInfo ci) {
+    private void wmch$clear(boolean clearHistory, CallbackInfo ci) {
         if(!clearHistory) {
             client.getMessageHandler().processAll();
             visibleMessages.clear();
@@ -66,7 +67,7 @@ public abstract class ChatHudMixin {
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
         at = @At(value = "CONSTANT", args = "intValue=100")
     )
-    private int increaseMaxMessages(int hundred) {
+    private int wmch$increaseMaxMessages(int hundred) {
         return config.maxMsgs;
     }
 
@@ -75,6 +76,8 @@ public abstract class ChatHudMixin {
      * These methods shift various parts of the ChatHud by
      * {@link Config#shiftChat}, including the text, scroll
      * bar, indicator bar, and hover text.
+     * They all shift the y value, with the name of the parameter
+     * corresponding to the (yarn mapped) target variable name.
      */
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 11) // try multiplying by guiScale for same pixel shift behavior?
     private int moveChatText(int t) {
@@ -86,9 +89,10 @@ public abstract class ChatHudMixin {
     }
     // condensed to one method because the first part of both methods are almost identical
     @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
-    private double moveIndicatorAndHoverText(double e) {
+    private double wmch$moveIndicatorAndHoverText(double e) {
         // small bug with this, hover text extends to above chat, likely includes indicator text as well
         // maybe check ChatHud#toChatLineY(double)
+        // prob unrelated to this bug, but indicator icons render weird so check that out and send some msgs w/ the icons + text
         return e + ( Math.abs(config.shiftChat) * this.getChatScale() );
     }
 
@@ -96,7 +100,7 @@ public abstract class ChatHudMixin {
     /**
      * Modifies the incoming message by adding timestamps, nicer
      * playernames, hover events, and duplicate counters in conjunction with
-     * {@link #addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
+     * {@link #wmch$addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
      *
      * @implNote
      * <li> Extra {@link Text} parameter is required to get access to {@code refreshing},
@@ -109,7 +113,7 @@ public abstract class ChatHudMixin {
         at = @At("HEAD"),
         argsOnly = true
     )
-    private Text modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
+    private Text wmch$modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
         if( LOADING_CHATLOG.isSet() || refreshing )
             return message; // cancels modifications when loading the chatlog or when regenerating visibles
 
@@ -127,33 +131,33 @@ public abstract class ChatHudMixin {
                         : Text.empty()
                 )
                 .append(
-                    !boundary && !lastEmpty && !config.nameStr.equals("<$>") && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
+                    !boundary && !lastEmpty && !config.nameFormat.equals("<$>") && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
                         ? Text.empty().setStyle(style)
-                            .append( config.formatPlayername(Util.getProfile(client, lastMsgData.sender())) ) // add formatted name
-                            .append( // add first part of message (depending on Text style and whether it was a chat or system)
-                                message.getContent() instanceof TranslatableTextContent
-                                    ? net.minecraft.util.Util.make(() -> { // all message components
+                        .append( config.formatPlayername(Util.getProfile(client, lastMsgData.sender())) ) // add formatted name
+                        .append( // add first part of message (depending on Text style and whether it was a chat or system)
+                            message.getContent() instanceof TranslatableTextContent
+                                ? net.minecraft.util.Util.make(() -> { // all message components
 
-                                        MutableText text = Text.empty().setStyle(style);
-                                        List<Text> messages = Arrays.stream( ((TranslatableTextContent) message.getContent()).getArgs() ).map (arg -> (Text)arg ).toList();
+                                MutableText text = Text.empty().setStyle(style);
+                                List<Text> messages = Arrays.stream( ((TranslatableTextContent) message.getContent()).getArgs() ).map (arg -> (Text)arg ).toList();
 
-                                        for(int i = 1; i < messages.size(); ++i)
-                                            text.append( messages.get(i) );
+                                for(int i = 1; i < messages.size(); ++i)
+                                    text.append( messages.get(i) );
 
-                                        return text;
-                                    })
-                                    : Text.literal( ((LiteralTextContent) message.getContent()).string().split("> ")[1] ).setStyle(style) // default-style message with name
-                            )
-                            .append( // add any siblings (Texts with different styles)
-                                net.minecraft.util.Util.make(() -> {
+                                return text;
+                            })
+                                : Text.literal( ((LiteralTextContent) message.getContent()).string().split("> ")[1] ).setStyle(style) // default-style message with name
+                        )
+                        .append( // add any siblings (Texts with different styles)
+                            net.minecraft.util.Util.make(() -> {
 
-                                    MutableText msg = Text.empty().setStyle(style);
+                                MutableText msg = Text.empty().setStyle(style);
 
-                                    message.getSiblings().forEach(msg::append);
+                                message.getSiblings().forEach(msg::append);
 
-                                    return msg;
-                                })
-                            )
+                                return msg;
+                            })
+                        )
                         : message
                 );
 
@@ -163,7 +167,7 @@ public abstract class ChatHudMixin {
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-    private void saveHistory(String message, CallbackInfo ci) {
+    private void wmch$saveHistory(String message, CallbackInfo ci) {
         if( !Flags.LOADING_CHATLOG.isSet() )
             ChatLog.addHistory(message);
     }
@@ -189,7 +193,7 @@ public abstract class ChatHudMixin {
         at = @At("HEAD"),
         cancellable = true
     )
-    private void addCounter(Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing, CallbackInfo ci) {
+    private void wmch$addCounter(Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing, CallbackInfo ci) {
         // IF counter is enabled AND not refreshing AND messages >0 AND the message isn't a boundary line, continue
         if(config.counter && !refreshing && !messages.isEmpty() && !BOUNDARY_LINE.isSet() ) {
             // indexes from (customized) messages
@@ -210,8 +214,8 @@ public abstract class ChatHudMixin {
                 int dupes = (incSibs.size() > DUPE
                     ? Integer.parseInt( delAll( incSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
                     : lastSibs.size() > DUPE
-                        ? Integer.parseInt( delAll( lastSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
-                        : 1
+                    ? Integer.parseInt( delAll( lastSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
+                    : 1
                 ) + 1;
 
 

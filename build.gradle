@@ -1,6 +1,10 @@
+import groovy.json.JsonSlurper
+
 plugins {
 	id "fabric-loom" version "1.0-SNAPSHOT"
 	id "maven-publish"
+	id "com.modrinth.minotaur" version "2.+"
+	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -8,19 +12,18 @@ targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = rootProject.archives_base_name
 group = rootProject.group
-def modVersion = rootProject.version
-version = "$rootProject.minecraft-$modVersion"
+version = rootProject.version
+// tokens revert to empty strings when no secrets.json exists
+def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
 
 
 repositories {
   	mavenCentral()
 
-	//maven { url "https://minecraft.guntram.de/maven/" } // CrowdinTranslate
-	maven { url "https://maven.shedaniel.me/" } // Cloth Config API
-	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
-
 	maven { url "https://jitpack.io" } // MixinExtras
-	maven { url "https://repo.essential.gg/repository/maven-public" } // Essential
+
+	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
+	maven { url "https://maven.isxander.dev/releases" } // YACL
 }
 
 dependencies {
@@ -29,18 +32,16 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:$project.loader"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api$project.minecraft"
 
+	// Jar-In-Jar, apply annotation processor, and add MixinExtras
 	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:$project.mixin_extras") ))
-	//include( modImplementation("de.guntram.mcmod:crowdin-translate:$project.crowdin") )
 
-	modApi("me.shedaniel.cloth:cloth-config-fabric:$project.cloth_config") {
-        exclude(group: "net.fabricmc.fabric-api")
-    }
 	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
+	modImplementation "dev.isxander:yet-another-config-lib:$project.yacl"
 
 
-	// integration files, toggleable in /random/integrations.properties
+	// integration files, toggleable in /integrations/integrations.properties
+	// put jar files in /integrations/ and see the .properties file for more info
 	File integrationsFile = file("./integrations/integrations.properties")
-
 	if( integrationsFile.exists() ) {
 		println "Loading dev testing integrations..."
 
@@ -81,15 +82,19 @@ dependencies {
 }
 
 processResources {
-	inputs.property "version", modVersion
+	inputs.property "version", version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": modVersion
+		expand "version": version
 
 		/* filter {
 			it.replace("example_key", rootProject.exampleVar)
 		} */
 	}
+
+	File changelog = file("latest_changelog.md")
+	if( changelog.exists() )
+		file("latest_changelog.md").text = changelog.text.replaceAll( "\\\$#(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/WheresMyChatHistory/issues/\$1)" )
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -106,6 +111,7 @@ jar {
 	}
 }
 
+
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
@@ -114,9 +120,67 @@ publishing {
 	}
 
 	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
+	repositories {}
+}
+
+
+publish {
+	dependsOn tasks.processResources, tasks.curseforge, tasks.modrinth
+}
+
+curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
+	apiKey = tokens.curseforge
+	project {
+		id = "560042"
+		releaseType = "release"
+		changelogType = "markdown"
+		changelog = file("latest_changelog.md")
+
+		// adds Java versions, modloaders, and mc versions
+		addGameVersion "Java 17"
+		addGameVersion "Java 18"
+		for(String target : rootProject.targets.split(","))
+			addGameVersion target
+		for(String loader : rootProject.loaders.split(","))
+			addGameVersion loader.capitalize()
+
+		mainArtifact remapJar
+
+		relations {
+			requiredDependency "fabric-api"
+
+			optionalDependency "modmenu"
+			optionalDependency "yacl"
+
+			tool "no-chat-reports"
+
+			incompatible "more-chat-history"
+		}
+
+		options {
+			forgeGradleIntegration = false
+		}
+	}
+}
+
+modrinth { // https://github.com/modrinth/minotaur#groovy
+	token = tokens.modrinth
+	projectId = "MOqt4Z5n"
+	versionNumber = version // Will fail if Modrinth has this version already
+	versionType = "release"
+	uploadFile = remapJar
+	gameVersions = Arrays.asList( rootProject.targets.split(",") ) // Must be an array
+	loaders = Arrays.asList( rootProject.loaders.split(",") )
+	changelog = file("latest_changelog.md").text
+
+	dependencies {
+		required.project "fabric-api"
+
+		optional.project "modmenu"
+		optional.project "yacl"
+
+		optional.project "no-chat-reports"
+
+		incompatible.project "morechathistory"
 	}
 }

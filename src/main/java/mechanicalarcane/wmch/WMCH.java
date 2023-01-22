@@ -14,7 +14,7 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.network.message.MessageMetadata;
 
 public class WMCH implements ClientModInitializer {
-	public static final org.apache.logging.log4j.Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger("Where's My Chat History");
+	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Where's My Chat History");
 	public static final FabricLoader FABRICLOADER = FabricLoader.getInstance();
 
 	public static Config config = Config.newConfig(false);
@@ -26,7 +26,6 @@ public class WMCH implements ClientModInitializer {
 	/**
 	 * <ol>
 	 * 	<li> Initializes MixinExtras for more Mixin annotations
-	 * 	<li> Initializes the ChatLog
 	 *	<li> Registers a callback on {@link ClientCommandRegistrationCallback#EVENT} for the {@link CopyMessageCommand}
 	 * 	<li> Registers a callback on {@link ClientLifecycleEvents#CLIENT_STOPPING} for {@link ChatLog#serialize(boolean)} on a normal game exit
 	 * 	<li> Registers a callback on {@link ClientPlayConnectionEvents#JOIN} for loading the {@link ChatLog} and adding boundary lines
@@ -35,7 +34,6 @@ public class WMCH implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		MixinExtrasBootstrap.init();
-		//CrowdinTranslate.downloadTranslations("wmch"); // use github workflow thing
 
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, access) -> CopyMessageCommand.register(dispatcher) );
 

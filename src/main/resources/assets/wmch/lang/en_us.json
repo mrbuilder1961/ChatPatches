@@ -1,8 +1,8 @@
 {
     "text.wmch.title": "Where's My Chat History Configuration",
 
-    "text.wmch.dateFormat": "For date and time formatting information, visit &9&nhttps://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html&r&f (click me!)",
-    "text.wmch.formatCodes": "For formatting code characters and which ones do what, visit &9&nhttps://minecraft.gamepedia.com/Formatting_codes&r&f (click me!)",
+    "text.wmch.dateFormat": "For date and time formatting information, click me!",
+    "text.wmch.formatCodes": "For formatting code characters and which ones do what, click me!",
 
     "text.wmch.time": "Timestamp toggle",
     "text.wmch.timeDate": "Timestamp text",
@@ -39,17 +39,18 @@
     "text.wmch.saveChat": "Chat log toggle",
     "text.wmch.shiftChat": "Shift chat",
     "text.wmch.maxMsgs": "Maximum chat messages",
-    "text.wmch.nameStr": "Playername text",
+    "text.wmch.nameFormat": "Playername text",
     "text.wmch.desc.saveChat": "Should the chat be saved into a log so it can be re-added back into the chat in another game session?",
     "text.wmch.desc.shiftChat": "Shifts the chat interface up to not obstruct the armor bar and/or health. Default is 10, set to 0 for no shift.",
     "text.wmch.desc.maxMsgs": "The max amount of chat messages allowed to render. Vanilla is capped at 100, the true maximum is 32767. Keep in mind the higher the number, the more memory the chat will require to store all the messages.",
-    "text.wmch.desc.nameStr": "The text that replaces the playername in chat messages. Vanilla is <$>, no triangle brackets is $; where $ is a placeholder for the playername. Only applies to player sent messages.",
+    "text.wmch.desc.nameFormat": "The text that replaces the playername in chat messages. Vanilla is <$>, no triangle brackets is $; where $ is a placeholder for the playername. Only applies to player sent messages.",
 
     "text.wmch.category.time": "Timestamp",
     "text.wmch.category.hover": "Hover Info",
     "text.wmch.category.counter": "Duplicate counter",
     "text.wmch.category.boundary": "Session Boundary",
     "text.wmch.category.hud": "Chat Interface",
+    "text.wmch.category.help": "Help",
 
     "text.wmch.copymessage.index": "Copied message %d: '%s'",
     "text.wmch.copymessage.index.missing": "Message %d doesn't exist",
