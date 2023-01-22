@@ -131,7 +131,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
                         : Text.empty()
                 )
                 .append(
-                    !boundary && !lastEmpty && !config.nameStr.equals("<$>") && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
+                    !boundary && !lastEmpty && !config.nameFormat.equals("<$>") && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
                         ? Text.empty().setStyle(style)
                         .append( config.formatPlayername(Util.getProfile(client, lastMsg.getSender())) ) // add formatted name
                         .append( // add first part of message (depending on Text style and whether it was a chat or system)

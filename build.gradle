@@ -13,18 +13,17 @@ targetCompatibility = JavaVersion.VERSION_17
 archivesBaseName = rootProject.archives_base_name
 group = rootProject.group
 version = rootProject.version
-// tokens revert to empty strings set without valid keys in secrets.json
+// tokens revert to empty strings when no secrets.json exists
 def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
 
 
 repositories {
   	mavenCentral()
 
-	maven { url "https://maven.shedaniel.me/" } // Cloth Config API
-	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
-
 	maven { url "https://jitpack.io" } // MixinExtras
-	maven { url "https://repo.essential.gg/repository/maven-public" } // Essential
+
+	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
+	maven { url "https://maven.isxander.dev/releases" } // YACL
 }
 
 dependencies {
@@ -33,15 +32,15 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:$project.loader"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api$project.minecraft"
 
+	// Jar-In-Jar, apply annotation processor, and add MixinExtras
 	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:$project.mixin_extras") ))
 
-	modApi("me.shedaniel.cloth:cloth-config-fabric:$project.cloth_config") {
-        exclude(group: "net.fabricmc.fabric-api")
-    }
 	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
+	modImplementation "dev.isxander:yet-another-config-lib:$project.yacl"
 
 
-	// integration files, toggleable in /random/integrations.properties
+	// integration files, toggleable in /integrations/integrations.properties
+	// put jar files in /integrations/ and see the .properties file for more info
 	File integrationsFile = file("./integrations/integrations.properties")
 
 	if( integrationsFile.exists() ) {
@@ -93,6 +92,10 @@ processResources {
 			it.replace("example_key", rootProject.exampleVar)
 		} */
 	}
+
+	File changelog = file("latest_changelog.md")
+	if( changelog.exists() )
+		file("latest_changelog.md").text = changelog.text.replaceAll( "\\\$#(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/WheresMyChatHistory/issues/\$1)" )
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -123,8 +126,7 @@ publishing {
 
 
 publish {
-	tasks.publish.dependsOn(tasks.curseforge)
-	tasks.publish.dependsOn(tasks.modrinth)
+	dependsOn tasks.processResources, tasks.curseforge, tasks.modrinth
 }
 
 curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
@@ -148,15 +150,15 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 		relations {
 			requiredDependency "fabric-api"
 
-			optionalDependency "cloth-config"
 			optionalDependency "modmenu"
+			optionalDependency "yacl"
 
 			tool "no-chat-reports"
 
 			incompatible "more-chat-history"
 		}
 
-		options {
+		options {debug=true
 			forgeGradleIntegration = false
 		}
 	}
@@ -171,12 +173,12 @@ modrinth { // https://github.com/modrinth/minotaur#groovy
 	gameVersions = Arrays.asList( rootProject.targets.split(",") ) // Must be an array
 	loaders = Arrays.asList( rootProject.loaders.split(",") )
 	changelog = file("latest_changelog.md").text
-
+debugMode=true
 	dependencies {
 		required.project "fabric-api"
 
-		optional.project "cloth-config"
 		optional.project "modmenu"
+		optional.project "yacl"
 
 		optional.project "no-chat-reports"
 

@@ -7,6 +7,7 @@ import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
 import mechanicalarcane.wmch.WMCH;
 import mechanicalarcane.wmch.util.Util;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.EntityType;
 import net.minecraft.text.*;
 
@@ -30,7 +31,7 @@ public class Config {
     public static final String CONFIG_PATH = WMCH.FABRICLOADER.getConfigDir().toString() + separator + "wmch.json";
     private static final Config DEFAULTS = new Config();
     public static final boolean hasModMenu = WMCH.FABRICLOADER.isModLoaded("modmenu");
-    public static final boolean hasClothConfig = WMCH.FABRICLOADER.isModLoaded("cloth-config");
+    public static final boolean hasYACL = WMCH.FABRICLOADER.isModLoaded("yet-another-config-lib");
 
     // configurable
     public boolean time = true, hover = true, counter = true, boundary = true;
@@ -40,16 +41,20 @@ public class Config {
     public int timeColor = 0xff55ff, hoverColor = 0xffffff, counterColor = 0xffff55, boundaryColor = 0x55ffff;
     public boolean saveChat = true;
     public int shiftChat = 10;
-    public String nameStr = "$";
+    public String nameFormat = "$";
     public int maxMsgs = 16384;
 
 
     /** Creates a new Config or ClothConfig depending on installed mods. */
     public static Config newConfig(boolean reset) {
-        config = (hasModMenu && hasClothConfig) ? new ClothConfig() : new Config();
+        config = (hasModMenu && hasYACL) ? new YACLConfig() : new Config();
         if(!reset)
             read();
         return config;
+    }
+
+    public Screen getConfigScreen(Screen parent) {
+        return null;
     }
 
 
@@ -114,7 +119,7 @@ public class Config {
 
     public MutableText formatPlayername(GameProfile player) {
         String name = player.getName();
-        return Util.formatString( fillVars(nameStr, name) + " " )
+        return Util.formatString( fillVars(nameFormat, name) + " " )
             .setStyle( Style.EMPTY
                 .withHoverEvent(
                     new HoverEvent(
@@ -219,6 +224,9 @@ public class Config {
 
 
         public T get() { return val; }
+
+        @SuppressWarnings("unchecked")
+        public Class<T> getType() { return (Class<T>) def.getClass(); }
 
         /**
          * Sets this Option's value to {@code obj} in {@code this} and also in the config;

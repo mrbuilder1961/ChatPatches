@@ -40,7 +40,7 @@
     "fabric": "*"
   },
   "recommends": {
-    "cloth-config": "*",
+    "yacl": "*",
     "modmenu": "*"
   },
   "suggests": {
