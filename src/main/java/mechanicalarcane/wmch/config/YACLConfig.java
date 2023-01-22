@@ -114,7 +114,7 @@ public class YACLConfig extends Config {
                 .category(category("debug")
                     .option(dev.isxander.yacl.api.Option.createBuilder(Integer.class)
                         .available(WMCH.FABRICLOADER.isDevelopmentEnvironment())
-                        .name( Text.literal("Edit Flags") )
+                        .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Util.Flags.flags, Util.Flags.binary())) )
                         .controller(opt -> new IntegerSliderController(opt, 0, 0b1111, 1))
                         .binding( Util.Flags.flags, () -> Util.Flags.flags, inc -> Util.Flags.flags = inc )
                         .build()
