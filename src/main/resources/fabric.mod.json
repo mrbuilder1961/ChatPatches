@@ -40,7 +40,7 @@
     "fabric": "*"
   },
   "recommends": {
-    "yacl": "*",
+    "yet-another-config-lib": "*",
     "modmenu": "*"
   },
   "suggests": {
