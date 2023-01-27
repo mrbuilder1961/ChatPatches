@@ -199,7 +199,7 @@ public class YACLConfig extends Config {
 
     private static dev.isxander.yacl.api.Option<Text> label(MutableText display, String tooltip, String url) {
         return dev.isxander.yacl.api.Option.createBuilder(Text.class)
-            .name(display)// delete this?
+            .name(display)
             .tooltip( Text.literal( tooltip == null ? "§9" + url : tooltip ) )
             .controller(LabelController::new)
             .binding( Binding.immutable(
