@@ -42,6 +42,7 @@ dependencies {
 	// integration files, toggleable in /integrations/integrations.properties
 	// put jar files in /integrations/ and see the .properties file for more info
 	File integrationsFile = file("./integrations/integrations.properties")
+
 	if( integrationsFile.exists() ) {
 		println "Loading dev testing integrations..."
 
@@ -94,7 +95,7 @@ processResources {
 
 	File changelog = file("latest_changelog.md")
 	if( changelog.exists() )
-		file("latest_changelog.md").text = changelog.text.replaceAll( "\\\$#(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/WheresMyChatHistory/issues/\$1)" )
+		file("latest_changelog.md").text = changelog.text.replaceAll( "##(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/WheresMyChatHistory/issues/\$1)" )
 }
 
 tasks.withType(JavaCompile).configureEach {

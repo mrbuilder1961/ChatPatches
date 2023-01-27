@@ -33,19 +33,15 @@ public class Config {
     public static final boolean hasModMenu = WMCH.FABRICLOADER.isModLoaded("modmenu");
     public static final boolean hasYACL = WMCH.FABRICLOADER.isModLoaded("yet-another-config-lib");
 
-    // configurable
-    public boolean time = true, hover = true, counter = true, boundary = true;
-    public String timeDate = "HH:mm:ss", hoverDate = "MM/dd/yyyy";
-    public String counterStr = "&8(&7x&e$&8)", boundaryStr = "&8[&b$&8]";
-    public String timeFormat = "[$]", hoverFormat = "$";
-    public int timeColor = 0xff55ff, hoverColor = 0xffffff, counterColor = 0xffff55, boundaryColor = 0x55ffff;
-    public boolean saveChat = true;
-    public int shiftChat = 10;
-    public String nameFormat = "$";
-    public int maxMsgs = 16384;
+    // categories: time, hover, counter, boundary, hud
+    public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
+    public boolean hover = true; public String hoverDate = "MM/dd/yyyy"; public String hoverFormat = "$"; public int hoverColor = 0xffffff;
+    public boolean counter = true; public String counterFormat = "&8(&7x&e$&8)"; public int counterColor = 0xffff55;
+    public boolean boundary = true; public String boundaryFormat = "&8[&b$&8]"; public int boundaryColor = 0x55ffff;
+    public boolean saveChat = true; public int shiftChat = 10; public String nameFormat = "<$>"; public int maxMsgs = 16384;
 
 
-    /** Creates a new Config or ClothConfig depending on installed mods. */
+    /** Creates a new Config or YACLConfig depending on installed mods. */
     public static Config newConfig(boolean reset) {
         config = (hasModMenu && hasYACL) ? new YACLConfig() : new Config();
         if(!reset)
@@ -106,11 +102,14 @@ public class Config {
      * false, this will return a Style with only {@link #timeColor} used.
      */
     public Style makeHoverStyle(Date when) {
+        final Style EMPTY = Style.EMPTY
+            .withBold(false).withItalic(false).withUnderline(false).withObfuscated(false).withStrikethrough(false);
+
         MutableText hoverText = Util.formatString(
             fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when))
-        ).fillStyle( Style.EMPTY.withColor(hoverColor) );
+        ).fillStyle( EMPTY.withColor(hoverColor) );
 
-        return Style.EMPTY
+        return EMPTY
             .withHoverEvent( hover ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText) : null )
             .withClickEvent( hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText.getString()) : null )
             .withColor(timeColor)
@@ -133,13 +132,13 @@ public class Config {
 
     public MutableText makeDupeCounter(int dupes) {
         return
-            Util.formatString(" " + fillVars(counterStr, Integer.toString(dupes)))
+            Util.formatString(" " + fillVars(counterFormat, Integer.toString(dupes)))
                 .fillStyle( Style.EMPTY.withColor(counterColor) );
     }
 
     public MutableText makeBoundaryLine(String levelName) {
         return
-            Util.formatString( fillVars(boundaryStr, levelName) )
+            Util.formatString( fillVars(boundaryFormat, levelName) )
                 .fillStyle(Style.EMPTY.withColor(boundaryColor));
     }
 

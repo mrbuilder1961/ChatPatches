@@ -16,17 +16,17 @@
     "text.wmch.desc.hoverDate": "O texto que aparece ao passar o mouse sobre o texto do carimbo de data/hora. Para texto dinâmico, pesquise online por 'string de formato de data java'.",
 
     "text.wmch.counter": "Alternância do contador de mensagens",
-    "text.wmch.counterStr": "Texto do contador de mensagens",
+    "text.wmch.counterFormat": "Texto do contador de mensagens",
     "text.wmch.counterColor": "Cor do contador de mensagens",
     "text.wmch.desc.counter": "Um contador de mensagens deve ser exibido após uma mensagem para indicar que várias foram enviadas?",
-    "text.wmch.desc.counterStr": "O texto adicionado ao final de uma mensagem para indicar que várias duplicatas foram enviadas. Deve incluir um $ para o número de duplicados.",
+    "text.wmch.desc.counterFormat": "O texto adicionado ao final de uma mensagem para indicar que várias duplicatas foram enviadas. Deve incluir um $ para o número de duplicados.",
     "text.wmch.desc.counterColor": "A cor que é 'preenchida' quando aplicável no texto do contador, por exemplo '&r' será substituída por esta cor.",
 
     "text.wmch.boundary": "Alternar limite",
-    "text.wmch.boundaryStr": "texto de limite",
+    "text.wmch.boundaryFormat": "Texto de limite",
     "text.wmch.boundaryColor": "Cor do limite",
     "text.wmch.desc.boundary": "Uma linha de limite deve aparecer depois de usar o bate-papo, sair e entrar novamente mais tarde?",
-    "text.wmch.desc.boundaryStr": "O texto que é mostrado quando uma linha de limite é inserida no chat, adicione e comercial (&) seguido de um código de formatação para embelezá-lo.",
+    "text.wmch.desc.boundaryFormat": "O texto que é mostrado quando uma linha de limite é inserida no chat, adicione e comercial (&) seguido de um código de formatação para embelezá-lo.",
     "text.wmch.desc.boundaryColor": "A cor que é 'preenchida' onde aplicável no texto de limite, por exemplo '&r' será substituída por esta cor.",
 
     "text.wmch.saveChat": "Alternar registro de bate-papo",
@@ -46,7 +46,5 @@
     "text.wmch.category.help": "Ajuda",
 
     "text.wmch.copymessage.index": "mensagem copiada %d: '%s'",
-    "text.wmch.copymessage.index.missing": "A mensagem %d não existe",
-
-    "text.wmch.mixin.incompatible": "Esta opção está desativada porque um ou mais dos mods listados estão instalados: %s\nIndependente de qual(is) mod(s) esteja(m) instalado(s), todos eles têm mixins conflitantes ou métodos que quebram o(s) método(s) que permite(em) esta opção funcionar."
+    "text.wmch.copymessage.index.missing": "A mensagem %d não existe"
 }

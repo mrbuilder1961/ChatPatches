@@ -13,6 +13,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.ClickEvent;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import org.apache.commons.compress.utils.Lists;
@@ -42,18 +43,28 @@ public class YACLConfig extends Config {
             if( !I18n.hasTranslation("text.wmch.category." + cat) )
                 cat = "hud";
 
-
-            dev.isxander.yacl.api.Option<?> yaclOpt;
             if(opt.key.contains("Color"))
-                yaclOpt = color(cat);
+                opt = new Option<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), opt.key) {
+                    @Override
+                    public Color get() {
+                        return new Color( (int)Config.getOption(key).get() );
+                    }
 
-            else yaclOpt =
+                    @Override
+                    public void set(Object value) {
+                        super.set( ((Color)value).getRGB() - 0xff000000 );
+                    }
+                };
+
+
+            dev.isxander.yacl.api.Option<?> yaclOpt =
                 dev.isxander.yacl.api.Option.createBuilder( opt.getType() )
                     .name( Text.translatable("text.wmch." + opt.key) )
                     .tooltip( Text.translatable("text.wmch.desc." + opt.key) )
                     .controller( getController(opt.key) )
                     .binding( getBinding(opt) )
                     .build();
+
 
             switch(cat) {
                 case "time" -> timeOpts.add(yaclOpt);
@@ -67,35 +78,21 @@ public class YACLConfig extends Config {
 
         YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder()
             .title(Text.translatable("text.wmch.title"))
-                .category( category("time").options(timeOpts).build() )
-                .category( category("hover").options(hoverOpts).build() )
-                .category( category("counter").options(counterOpts).build() )
-                .category( category("boundary").options(boundaryOpts).build() )
-                .category( category("hud").options(hudOpts).build() )
+                .category( category("time", timeOpts) )
+                .category( category("hover", hoverOpts) )
+                .category( category("counter", counterOpts) )
+                .category( category("boundary", boundaryOpts) )
+                .category( category("hud", hudOpts) )
 
-                .category( category("help")
-                    // hardcoded text labels
-                    .option(dev.isxander.yacl.api.Option.createBuilder(Text.class)
-                        .name(Text.empty())//del
-                        .tooltip( Text.literal("§9https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html") )
-                        .controller(LabelController::new)
-                        .binding(Binding.immutable(
-                            Text.translatable("text.wmch.dateFormat")
-                                .fillStyle( Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html")) )
-                        ))
-                        .build()
+                .category(
+                    category(
+                    "help",
+                        List.of(
+                            label( Text.translatable("text.wmch.dateFormat"), null, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
+                            label( Text.translatable("text.wmch.formatCodes"), null, "https://minecraft.gamepedia.com/Formatting_codes" ),
+                            label( Text.literal("README -> FAQ"), null, "https://github.com/mrbuilder1961/WheresMyChatHistory#faq" )
+                        )
                     )
-                    .option(dev.isxander.yacl.api.Option.createBuilder(Text.class)
-                        .name(Text.empty())//del
-                        .tooltip( Text.literal("§9https://minecraft.gamepedia.com/Formatting_codes") )
-                        .controller(LabelController::new)
-                        .binding(Binding.immutable(
-                            Text.translatable("text.wmch.formatCodes")
-                                .fillStyle( Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://minecraft.gamepedia.com/Formatting_codes")) )
-                        ))
-                        .build()
-                    )
-                    .build()
                 )
                 .save(() -> {
                     write();
@@ -104,35 +101,38 @@ public class YACLConfig extends Config {
 
         // debug options
         if(WMCH.FABRICLOADER.isDevelopmentEnvironment()) {
-            builder.category(category("Debug")
-                .option(dev.isxander.yacl.api.Option.createBuilder(Integer.class)
-                    .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Util.Flags.flags, Util.Flags.binary())) )
-                    .controller(opt -> new IntegerSliderController(opt, 0, 0b1111, 1))
-                    .binding( Util.Flags.flags, () -> Util.Flags.flags, inc -> Util.Flags.flags = inc )
-                    .build()
-                )
-                .option(ButtonOption.createBuilder()
-                    .name( Text.literal("Print GitHub Option table") )
-                    .controller(ActionController::new)
-                    .action((yaclScreen, buttonOption) -> {
-                        StringBuilder str = new StringBuilder();
+            builder.category(
+                category(
+                    "debug",
+                    List.of(
+                        dev.isxander.yacl.api.Option.createBuilder(Integer.class)
+                            .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Util.Flags.flags, Util.Flags.binary())) )
+                            .controller(opt -> new IntegerSliderController(opt, 0, 0b1111, 1))
+                            .binding( Util.Flags.flags, () -> Util.Flags.flags, inc -> Util.Flags.flags = inc )
+                            .build(),
 
-                        Config.getOptions().forEach(opt -> {
-                            str.append("\n| %s | %s | %s | `text.wmch.%s` |".formatted(
-                                I18n.translate("text.wmch." + opt.key),
-                                opt.get().getClass().equals( Integer.class ) && opt.key.contains("Color")
-                                    ? "`0x" + Integer.toHexString( (int)opt.def ).toUpperCase() + "` (`" + opt.def + "`)"
-                                    : "`" + opt.def + "`",
-                                I18n.translate("text.wmch.desc." + opt.key),
-                                opt.key
-                            ));
-                        });
+                        ButtonOption.createBuilder()
+                            .name( Text.literal("Print GitHub Option table") )
+                            .controller(ActionController::new)
+                            .action((yaclScreen, buttonOption) -> {
+                                StringBuilder str = new StringBuilder();
 
-                        WMCH.LOGGER.warn("[ClothConfig.printGithubTables]" + str);
-                    })
-                    .build()
+                                Config.getOptions().forEach(opt ->
+                                    str.append("\n| %s | %s | %s | `text.wmch.%s` |".formatted(
+                                        I18n.translate("text.wmch." + opt.key),
+                                        opt.get().getClass().equals( Integer.class ) && opt.key.contains("Color")
+                                            ? "`0x" + Integer.toHexString( (int)opt.def ).toUpperCase() + "` (`" + opt.def + "`)"
+                                            : "`" + opt.def + "`",
+                                        I18n.translate("text.wmch.desc." + opt.key),
+                                        opt.key
+                                    ))
+                                );
+
+                                WMCH.LOGGER.warn("[YACLConfig.printGithubTables]" + str);
+                            })
+                            .build()
+                    )
                 )
-                .build()
             );
         }
 
@@ -143,8 +143,11 @@ public class YACLConfig extends Config {
     @SuppressWarnings("unchecked")
     private static <T> Function<dev.isxander.yacl.api.Option<T>, Controller<T>> getController(String key) {
 
-        if( key.contains("Date") || key.contains("Format") || key.contains("Str") )
+        if( key.matches("^.*(?:Str|Date|Format)$") ) // endsWith "Str" "Date" or "Format"
             return opt -> (Controller<T>) new StringController((dev.isxander.yacl.api.Option<String>) opt);
+
+        else if( key.contains("Color") )
+            return opt -> (Controller<T>) new ColorController((dev.isxander.yacl.api.Option<Color>) opt);
 
         else if( key.equals("shiftChat") || key.equals("maxMsgs") )
             return opt -> (Controller<T>) new IntegerSliderController(
@@ -161,8 +164,9 @@ public class YACLConfig extends Config {
             return opt -> (Controller<T>) new BooleanController((dev.isxander.yacl.api.Option<Boolean>) opt, true);
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> Binding<T> getBinding(Option<?> option) {
-        @SuppressWarnings("unchecked") Option<T> o = (Option<T>) option;
+        Option<T> o = (Option<T>) option;
 
         if( o.key.contains("Date") )
             // must be able to successfully create a SimpleDateFormat
@@ -181,24 +185,28 @@ public class YACLConfig extends Config {
 
         else
             // every other setting either has no requirements or is already constrained with its controller
-            // this applies to all settings not containing 'Date' or 'Format'
-            // (options containing 'Str' and all boolean, int, and color options)
+            // this applies to all options containing 'Str' and all boolean, int, and color options.
+            // color options have type transformers to int overridden in the screen builder
             return Binding.generic(o.def, o::get, o::set);
     }
 
-    private static ConfigCategory.Builder category(String key) {
+    private static ConfigCategory category(String key, List<dev.isxander.yacl.api.Option<?>> options) {
         return ConfigCategory.createBuilder()
-            .name( Text.translatable("text.wmch.category." + key) );
+            .name( Text.translatable("text.wmch.category." + key) )
+            .options( options )
+            .build();
     }
 
-    private static dev.isxander.yacl.api.Option<Color> color(String cat) {
-        Option<Integer> opt = getOption(cat + "Color");
-
-        return dev.isxander.yacl.api.Option.createBuilder(Color.class)
-            .name( Text.translatable("text.wmch." + cat + "Color") )
-            .tooltip( Text.translatable("text.wmch.desc." + cat + "Color") )
-            .controller(ColorController::new)
-            .binding(Binding.generic( new Color(opt.def), () -> new Color(opt.get()), inc -> opt.set( inc.getRGB() - 0xff000000 ) )) // dont save alpha
+    private static dev.isxander.yacl.api.Option<Text> label(MutableText display, String tooltip, String url) {
+        return dev.isxander.yacl.api.Option.createBuilder(Text.class)
+            .name(display)
+            .tooltip( Text.literal( tooltip == null ? "§9" + url : tooltip ) )
+            .controller(LabelController::new)
+            .binding( Binding.immutable(
+                url == null
+                    ? display
+                    : display.fillStyle( Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url)) )
+            ))
             .build();
     }
 }

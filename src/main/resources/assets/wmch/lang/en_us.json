@@ -23,17 +23,17 @@
     "text.wmch.desc.hoverColor": "The color that's filled in where it would otherwise be blank white in the resulting hover text.",
 
     "text.wmch.counter": "Message counter toggle",
-    "text.wmch.counterStr": "Message counter text",
+    "text.wmch.counterFormat": "Message counter text",
     "text.wmch.counterColor": "Message counter color",
     "text.wmch.desc.counter": "Should a message counter show after messages to indicate multiple duplicates were sent?",
-    "text.wmch.desc.counterStr": "The text that's added to the end of a message to indicate multiple duplicates were sent. Requires a $ for the number of duplicates, also supports '&'s + formatting codes to modify it.",
+    "text.wmch.desc.counterFormat": "The text that's added to the end of a message to indicate multiple duplicates were sent. Requires a $ for the number of duplicates, also supports '&'s + formatting codes to modify it.",
     "text.wmch.desc.counterColor": "The color that's filled in where it would otherwise be blank white in the resulting duplicate counter.",
 
     "text.wmch.boundary": "Boundary toggle",
-    "text.wmch.boundaryStr": "Boundary text",
+    "text.wmch.boundaryFormat": "Boundary text",
     "text.wmch.boundaryColor": "Boundary color",
     "text.wmch.desc.boundary": "Should a boundary line show after chatting, leaving a world/server, and then joining another world/server later?",
-    "text.wmch.desc.boundaryStr": "The text that is formatted and used for the boundary line. Supports '&' + formatting codes to modify it.",
+    "text.wmch.desc.boundaryFormat": "The text that is formatted and used for the boundary line. Supports '&' + formatting codes to modify it; you can also add '\\n' to make a new line.",
     "text.wmch.desc.boundaryColor": "The color that's filled in where it would otherwise be blank white in the resulting boundary line.",
 
     "text.wmch.saveChat": "Chat log toggle",
@@ -42,7 +42,7 @@
     "text.wmch.nameFormat": "Playername text",
     "text.wmch.desc.saveChat": "Should the chat be saved into a log so it can be re-added back into the chat in another game session?",
     "text.wmch.desc.shiftChat": "Shifts the chat interface up to not obstruct the armor bar and/or health. Default is 10, set to 0 for no shift.",
-    "text.wmch.desc.maxMsgs": "The max amount of chat messages allowed to render. Vanilla is capped at 100, the true maximum is 32767. Keep in mind the higher the number, the more memory the chat will require to store all the messages.",
+    "text.wmch.desc.maxMsgs": "The max amount of chat messages allowed to render. Vanilla is capped at 100, the true maximum is 32767. Keep in mind the higher the number, the more memory the chat will use to store all the messages.",
     "text.wmch.desc.nameFormat": "The text that replaces the playername in chat messages. Vanilla is <$>, no triangle brackets is $; where $ is a placeholder for the playername. Only applies to player sent messages.",
 
     "text.wmch.category.time": "Timestamp",
@@ -53,7 +53,5 @@
     "text.wmch.category.help": "Help",
 
     "text.wmch.copymessage.index": "Copied message %d: '%s'",
-    "text.wmch.copymessage.index.missing": "Message %d doesn't exist",
-
-    "text.wmch.mixin.incompatible": "This Option is disabled because one or more of the mods listed are installed: %s\nRegardless of which mod(s) are installed, they all have at least one conflicting mixins or methods which break the method(s) that make this Option function."
+    "text.wmch.copymessage.index.missing": "Message %d doesn't exist"
 }
