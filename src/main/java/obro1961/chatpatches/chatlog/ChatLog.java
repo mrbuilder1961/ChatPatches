@@ -44,7 +44,7 @@ public class ChatLog {
     /** Micro class for serializing, used separately from ChatLog for simplification */
     private static class Data {
         public static final String EMPTY_DATA = "{\"history\":[],\"messages\":[]}"; // prevents a few errors if the channel doesn't initialize
-        public static int DEFAULT_SIZE = 100;
+        public static final int DEFAULT_SIZE = 100;
 
         public List<Text> messages;
         public List<String> history;
