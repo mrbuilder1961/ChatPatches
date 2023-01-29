@@ -1,10 +1,3 @@
 ## Changes with this version
-### Dependencies
-- Updated to Loom 1.1-SNAPSHOT
-
-### Technical
-- Added the mixin method prefix (`cps$`) to the mixin in MinecraftClientMixin
-
-### Other
-- Added old mod name to description header
-- Fixed README badge not displaying correctly
+- Added the `chatWidth` option: off by default, but allows for a greater chat width up to 630 pixels. when unused, just uses vanilla
+- Replaced the original "dynamic" `shiftChat` slider maximum (which didn't work correctly anyway) with a fixed max of 100 pixels

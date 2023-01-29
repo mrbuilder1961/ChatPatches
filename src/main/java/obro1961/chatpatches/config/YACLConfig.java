@@ -7,15 +7,14 @@ import dev.isxander.yacl.gui.controllers.ColorController;
 import dev.isxander.yacl.gui.controllers.LabelController;
 import dev.isxander.yacl.gui.controllers.slider.IntegerSliderController;
 import dev.isxander.yacl.gui.controllers.string.StringController;
-import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.util.Util;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.Util;
 import org.apache.commons.compress.utils.Lists;
 
 import java.awt.*;
@@ -63,6 +62,11 @@ public class YACLConfig extends Config {
                     .tooltip( Text.translatable("text.chatpatches.desc." + opt.key) )
                     .controller( getController(opt.key) )
                     .binding( getBinding(opt) )
+                    .flag(
+                        opt.key.equals("shiftChat") || opt.key.equals("chatWidth")
+                            ? new OptionFlag[] { client -> client.inGameHud.getChatHud().reset() }
+                            : new OptionFlag[0]
+                    )
                     .build();
 
 
@@ -149,17 +153,18 @@ public class YACLConfig extends Config {
         else if( key.contains("Color") )
             return opt -> (Controller<T>) new ColorController((dev.isxander.yacl.api.Option<Color>) opt);
 
-        else if( key.equals("shiftChat") || key.equals("maxMsgs") )
+        else if( Config.getOption(key).get() instanceof Integer ) // key is int but not color (shiftChat, maxMsgs, or chatWidth)
             return opt -> (Controller<T>) new IntegerSliderController(
                 (dev.isxander.yacl.api.Option<Integer>) opt,
                 0,
-                key.equals("shiftChat")
-                    ? (MinecraftClient.getInstance().getWindow().getY() / 2)
-                    : Short.MAX_VALUE,
-                key.equals("shiftChat")
-                    ? 1
-                    : 16
+                key.equals("maxMsgs")
+                    ? Short.MAX_VALUE
+                    : key.equals("shiftChat")
+                        ? 100
+                        : 630, // chatWidth
+                key.equals("maxMsgs") ? 16 : 1
             );
+
         else
             return opt -> (Controller<T>) new BooleanController((dev.isxander.yacl.api.Option<Boolean>) opt, true);
     }

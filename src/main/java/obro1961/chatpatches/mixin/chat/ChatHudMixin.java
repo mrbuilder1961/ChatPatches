@@ -1,6 +1,7 @@
 package obro1961.chatpatches.mixin.chat;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Util;
@@ -67,6 +68,11 @@ public abstract class ChatHudMixin extends DrawableHelper {
         return config.maxMsgs;
     }
 
+    // allows for a larger chat width (default is 320) up to the window width - padding
+    @ModifyReturnValue(method = "getWidth()I", at = @At("RETURN"))
+    private int cps$moreWidth(int defaultWidth) {
+        return config.chatWidth > 0 ? config.chatWidth : defaultWidth;
+    }
 
     /**
      * These methods shift various parts of the ChatHud by
@@ -91,7 +97,6 @@ public abstract class ChatHudMixin extends DrawableHelper {
         // prob unrelated to this bug, but indicator icons render weird so check that out and send some msgs w/ the icons + text
         return e + ( Math.abs(config.shiftChat) * this.getChatScale() );
     }
-
 
     /**
      * Modifies the incoming message by adding timestamps, nicer
