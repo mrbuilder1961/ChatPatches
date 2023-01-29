@@ -1,6 +1,6 @@
-package mechanicalarcane.wmch.mixin;
+package obro1961.chatpatches.mixin.chat;
 
-import mechanicalarcane.wmch.CopyMessageCommand;
+import obro1961.chatpatches.CopyMessageCommand;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.hud.ChatHud;

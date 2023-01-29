@@ -1,12 +1,12 @@
-package mechanicalarcane.wmch.config;
+package obro1961.chatpatches.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
-import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.util.Util;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.Util;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.EntityType;
 import net.minecraft.text.*;
@@ -23,15 +23,14 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.io.File.separator;
-import static mechanicalarcane.wmch.WMCH.LOGGER;
-import static mechanicalarcane.wmch.WMCH.config;
-import static mechanicalarcane.wmch.util.Util.fillVars;
+import static obro1961.chatpatches.ChatPatches.LOGGER;
+import static obro1961.chatpatches.ChatPatches.config;
 
 public class Config {
-    public static final String CONFIG_PATH = WMCH.FABRICLOADER.getConfigDir().toString() + separator + "wmch.json";
+    public static final String CONFIG_PATH = ChatPatches.FABRICLOADER.getConfigDir().toString() + separator + "chatpatches.json";
     private static final Config DEFAULTS = new Config();
-    public static final boolean hasModMenu = WMCH.FABRICLOADER.isModLoaded("modmenu");
-    public static final boolean hasYACL = WMCH.FABRICLOADER.isModLoaded("yet-another-config-lib");
+    public static final boolean hasModMenu = ChatPatches.FABRICLOADER.isModLoaded("modmenu");
+    public static final boolean hasYACL = ChatPatches.FABRICLOADER.isModLoaded("yet-another-config-lib");
 
     // categories: time, hover, counter, boundary, hud
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
@@ -69,7 +68,7 @@ public class Config {
         return options;
     }
 
-    /** Returns the value of the option in the {@link WMCH#config} identified by {@code key}. */
+    /** Returns the value of the option in the {@link ChatPatches#config} identified by {@code key}. */
     @SuppressWarnings("unchecked")
     public static <T> Option<T> getOption(String key) {
         try {
@@ -91,7 +90,7 @@ public class Config {
      */
     public MutableText makeTimestamp(Date when) {
         return (
-            Util.formatString( fillVars(timeFormat, new SimpleDateFormat(timeDate).format(when)) + " " )
+            Util.formatString( Util.fillVars(timeFormat, new SimpleDateFormat(timeDate).format(when)) + " " )
         ).fillStyle( Style.EMPTY.withColor(timeColor) );
     }
 
@@ -106,7 +105,7 @@ public class Config {
             .withBold(false).withItalic(false).withUnderline(false).withObfuscated(false).withStrikethrough(false);
 
         MutableText hoverText = Util.formatString(
-            fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when))
+            Util.fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when))
         ).fillStyle( EMPTY.withColor(hoverColor) );
 
         return EMPTY
@@ -118,7 +117,7 @@ public class Config {
 
     public MutableText formatPlayername(GameProfile player) {
         String name = player.getName();
-        return Util.formatString( fillVars(nameFormat, name) + " " )
+        return Util.formatString( Util.fillVars(nameFormat, name) + " " )
             .setStyle( Style.EMPTY
                 .withHoverEvent(
                     new HoverEvent(
@@ -132,13 +131,13 @@ public class Config {
 
     public MutableText makeDupeCounter(int dupes) {
         return
-            Util.formatString(" " + fillVars(counterFormat, Integer.toString(dupes)))
+            Util.formatString(" " + Util.fillVars(counterFormat, Integer.toString(dupes)))
                 .fillStyle( Style.EMPTY.withColor(counterColor) );
     }
 
     public MutableText makeBoundaryLine(String levelName) {
         return
-            Util.formatString( fillVars(boundaryFormat, levelName) )
+            Util.formatString( Util.fillVars(boundaryFormat, levelName) )
                 .fillStyle(Style.EMPTY.withColor(boundaryColor));
     }
 
@@ -166,7 +165,7 @@ public class Config {
             }
     }
 
-    /** Saves the {@code WMCH.config} instance to {@link Config#CONFIG_PATH} */
+    /** Saves the {@code ChatPatches.config} instance to {@link Config#CONFIG_PATH} */
     public static void write() {
         try(FileWriter fw = new FileWriter(CONFIG_PATH)) {
 
@@ -182,17 +181,17 @@ public class Config {
         }
     }
 
-    /** Overwrites the {@code WMCH.config} object with default values and saves it */
+    /** Overwrites the {@code ChatPatches.config} object with default values and saves it */
     public static void reset() {
         config = Config.newConfig(true);
         write();
     }
 
-    /** Copies the current Config file data to {@code ./wmch_old.json} for copying old configurations over */
+    /** Copies the current Config file data to {@code ./chatpatches_old.json} for copying old configurations over */
     public static void writeCopy() {
         try(
             FileInputStream cfg = new FileInputStream(CONFIG_PATH);
-            FileOutputStream copy = new FileOutputStream(CONFIG_PATH.replace("wmch", "wmch_old"))
+            FileOutputStream copy = new FileOutputStream(CONFIG_PATH.replace("chatpatches", "chatpatches_old"))
         ) {
             copy.write( cfg.readAllBytes() );
         } catch (IOException e) {

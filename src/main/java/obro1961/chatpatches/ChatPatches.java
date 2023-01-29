@@ -1,10 +1,9 @@
-package mechanicalarcane.wmch;
+package obro1961.chatpatches;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import mechanicalarcane.wmch.chatlog.ChatLog;
-import mechanicalarcane.wmch.config.Config;
-import mechanicalarcane.wmch.util.Util;
-import mechanicalarcane.wmch.util.Util.Flags;
+import obro1961.chatpatches.chatlog.ChatLog;
+import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.util.Util;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -13,8 +12,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.network.message.SignedMessage;
 
-public class WMCH implements ClientModInitializer {
-	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Where's My Chat History");
+public class ChatPatches implements ClientModInitializer {
+	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Chat Patches");
 	public static final FabricLoader FABRICLOADER = FabricLoader.getInstance();
 
 	public static Config config = Config.newConfig(false);
@@ -55,22 +54,22 @@ public class WMCH implements ClientModInitializer {
 				try {
 					String levelName = (lastWorld = current).substring(2); // makes a variable to update lastWorld in a cleaner way
 
-					Flags.BOUNDARY_LINE.set();
+					Util.Flags.BOUNDARY_LINE.set();
 					client.inGameHud.getChatHud().addMessage( config.makeBoundaryLine(levelName) );
-					Flags.BOUNDARY_LINE.remove();
+					Util.Flags.BOUNDARY_LINE.remove();
 
 				} catch(Exception e) {
-					LOGGER.warn("[WMCH.boundary] An error occurred while adding the boundary line:", e);
+					LOGGER.warn("[ChatPatches.boundary] An error occurred while adding the boundary line:", e);
 				}
 			}
 
 			// sets all messages (restored and boundary line) to a addedTime of 0 to prevent instant rendering (#42)
-			if(ChatLog.loaded && Flags.INIT.isSet())
+			if(ChatLog.loaded && Util.Flags.INIT.isSet())
 				Util.chatHud(client).getVisibleMessages().replaceAll( ln -> new ChatHudLine.Visible(0, ln.content(), ln.indicator(), ln.endOfEntry()) );
 
-			Flags.INIT.remove();
+			Util.Flags.INIT.remove();
 		});
 
-		LOGGER.info("[WMCH()] Finished setting up!");
+		LOGGER.info("[ChatPatches()] Finished setting up!");
 	}
 }

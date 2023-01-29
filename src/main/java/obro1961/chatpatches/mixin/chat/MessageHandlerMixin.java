@@ -1,8 +1,8 @@
-package mechanicalarcane.wmch.mixin;
+package obro1961.chatpatches.mixin.chat;
 
 import com.mojang.authlib.GameProfile;
-import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.util.Util;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.Util;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -29,14 +29,14 @@ public abstract class MessageHandlerMixin {
 
     /**
      * Caches the UUID of the player who sent the last message for name modification.
-     * This only works for vanilla chat messages, otherwise checks {@link #cacheGameSender}
+     * This only works for vanilla chat messages, otherwise checks {@link #cps$cacheGameData}
      * for the NoChatReports {@code convertToGameMessage} option and then finally caches the metadata.
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
-    private void wmch$cacheChatSender(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
+    private void cps$cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         client.options.getOnlyShowSecureChat().setValue(false);
 
-        WMCH.lastMsg = message;
+        ChatPatches.lastMsg = message;
     }
 
     /**
@@ -47,14 +47,14 @@ public abstract class MessageHandlerMixin {
      * returns {@code true}.
      */
     @Inject(method = "onGameMessage", at = @At("HEAD"))
-    private void wmch$cacheGameSender(Text message, boolean overlay, CallbackInfo ci) {
+    private void cps$cacheGameData(Text message, boolean overlay, CallbackInfo ci) {
 
         if( Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+$", message.getString()) ) {
 
             String name = StringUtils.substringBetween( Util.strip( message.getString() ), "<", ">" );
             UUID uuid = client.getSocialInteractionsManager().getUuid(name);
 
-            WMCH.lastMsg =
+            ChatPatches.lastMsg =
                 ( name == null || name.equals("") || uuid.equals(Util.NIL_UUID) )
                     ? Util.NIL_MESSAGE
                     : new SignedMessage(
@@ -66,7 +66,7 @@ public abstract class MessageHandlerMixin {
                     )
             ;
         } else {
-            WMCH.lastMsg = Util.NIL_MESSAGE;
+            ChatPatches.lastMsg = Util.NIL_MESSAGE;
         }
     }
 }

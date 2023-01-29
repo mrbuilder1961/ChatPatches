@@ -1,36 +1,36 @@
 {
   "schemaVersion": 1,
-  "id": "wmch",
+  "id": "chat_patches",
   "version": "${version}",
 
-  "name": "Where's My Chat History",
+  "name": "Chat Patches",
   "description": "A versatile client-side chat mod that makes chat more customizable, check out the config and the GitHub page for more info!",
   "authors": [
-    "MechanicalArcane"
+    "OBro1961"
   ],
   "contributors": [
     "FITFC (pt_br)"
   ],
   "contact": {
-    "homepage": "https://curseforge.com/minecraft/mc-mods/wmch",
-    "issues": "https://github.com/mrbuilder1961/WheresMyChatHistory/issues",
-    "sources": "https://github.com/mrbuilder1961/WheresMyChatHistory"
+    "homepage": "https://curseforge.com/minecraft/mc-mods/chatpatches",
+    "issues": "https://github.com/mrbuilder1961/ChatPatches/issues",
+    "sources": "https://github.com/mrbuilder1961/ChatPatches"
   },
 
   "license": "LGPLv3",
-  "icon": "assets/wmch/icon.png",
+  "icon": "assets/chatpatches/icon.png",
 
   "environment": "client",
   "entrypoints": {
     "client": [
-      "mechanicalarcane.wmch.WMCH"
+      "obro1961.chatpatches.ChatPatches"
     ],
     "modmenu": [
-      "mechanicalarcane.wmch.integration.ModMenuIntegration"
+      "obro1961.chatpatches.integration.ModMenuIntegration"
     ]
   },
   "mixins": [
-    "wmch.mixins.json"
+    "chatpatches.mixins.json"
   ],
 
   "depends": {

@@ -1,4 +1,4 @@
-package mechanicalarcane.wmch.config;
+package obro1961.chatpatches.config;
 
 import dev.isxander.yacl.api.*;
 import dev.isxander.yacl.gui.controllers.ActionController;
@@ -7,8 +7,8 @@ import dev.isxander.yacl.gui.controllers.ColorController;
 import dev.isxander.yacl.gui.controllers.LabelController;
 import dev.isxander.yacl.gui.controllers.slider.IntegerSliderController;
 import dev.isxander.yacl.gui.controllers.string.StringController;
-import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.util.Util;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.Util;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
@@ -40,7 +40,7 @@ public class YACLConfig extends Config {
 
         Config.getOptions().forEach(opt -> {
             String cat = opt.key.split("[A-Z]")[0];
-            if( !I18n.hasTranslation("text.wmch.category." + cat) )
+            if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
                 cat = "hud";
 
             if(opt.key.contains("Color"))
@@ -59,8 +59,8 @@ public class YACLConfig extends Config {
 
             dev.isxander.yacl.api.Option<?> yaclOpt =
                 dev.isxander.yacl.api.Option.createBuilder( opt.getType() )
-                    .name( Text.translatable("text.wmch." + opt.key) )
-                    .tooltip( Text.translatable("text.wmch.desc." + opt.key) )
+                    .name( Text.translatable("text.chatpatches." + opt.key) )
+                    .tooltip( Text.translatable("text.chatpatches.desc." + opt.key) )
                     .controller( getController(opt.key) )
                     .binding( getBinding(opt) )
                     .build();
@@ -77,7 +77,7 @@ public class YACLConfig extends Config {
 
 
         YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder()
-            .title(Text.translatable("text.wmch.title"))
+            .title(Text.translatable("text.chatpatches.title"))
                 .category( category("time", timeOpts) )
                 .category( category("hover", hoverOpts) )
                 .category( category("counter", counterOpts) )
@@ -88,19 +88,19 @@ public class YACLConfig extends Config {
                     category(
                     "help",
                         List.of(
-                            label( Text.translatable("text.wmch.dateFormat"), null, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
-                            label( Text.translatable("text.wmch.formatCodes"), null, "https://minecraft.gamepedia.com/Formatting_codes" ),
-                            label( Text.literal("README -> FAQ"), null, "https://github.com/mrbuilder1961/WheresMyChatHistory#faq" )
+                            label( Text.translatable("text.chatpatches.dateFormat"), null, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
+                            label( Text.translatable("text.chatpatches.formatCodes"), null, "https://minecraft.gamepedia.com/Formatting_codes" ),
+                            label( Text.literal("README -> FAQ"), null, "https://github.com/mrbuilder1961/ChatPatches#faq" )
                         )
                     )
                 )
                 .save(() -> {
                     write();
-                    WMCH.LOGGER.info("[YACLConfig.save] Updated the config file at '{}'!", CONFIG_PATH);
+                    ChatPatches.LOGGER.info("[YACLConfig.save] Updated the config file at '{}'!", CONFIG_PATH);
                 });
 
         // debug options
-        if(WMCH.FABRICLOADER.isDevelopmentEnvironment()) {
+        if(ChatPatches.FABRICLOADER.isDevelopmentEnvironment()) {
             builder.category(
                 category(
                     "debug",
@@ -118,17 +118,17 @@ public class YACLConfig extends Config {
                                 StringBuilder str = new StringBuilder();
 
                                 Config.getOptions().forEach(opt ->
-                                    str.append("\n| %s | %s | %s | `text.wmch.%s` |".formatted(
-                                        I18n.translate("text.wmch." + opt.key),
+                                    str.append("\n| %s | %s | %s | `text.chatpatches.%s` |".formatted(
+                                        I18n.translate("text.chatpatches." + opt.key),
                                         opt.get().getClass().equals( Integer.class ) && opt.key.contains("Color")
                                             ? "`0x" + Integer.toHexString( (int)opt.def ).toUpperCase() + "` (`" + opt.def + "`)"
                                             : "`" + opt.def + "`",
-                                        I18n.translate("text.wmch.desc." + opt.key),
+                                        I18n.translate("text.chatpatches.desc." + opt.key),
                                         opt.key
                                     ))
                                 );
 
-                                WMCH.LOGGER.warn("[YACLConfig.printGithubTables]" + str);
+                                ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables]" + str);
                             })
                             .build()
                     )
@@ -175,7 +175,7 @@ public class YACLConfig extends Config {
                     new SimpleDateFormat( inc.toString() );
                     o.set( inc );
                 } catch (IllegalArgumentException e) {
-                    WMCH.LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
+                    ChatPatches.LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
                 }
             });
 
@@ -192,7 +192,7 @@ public class YACLConfig extends Config {
 
     private static ConfigCategory category(String key, List<dev.isxander.yacl.api.Option<?>> options) {
         return ConfigCategory.createBuilder()
-            .name( Text.translatable("text.wmch.category." + key) )
+            .name( Text.translatable("text.chatpatches.category." + key) )
             .options( options )
             .build();
     }

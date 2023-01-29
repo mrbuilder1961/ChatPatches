@@ -1,4 +1,4 @@
-package mechanicalarcane.wmch.mixin;
+package obro1961.chatpatches.mixin.secure;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -19,7 +19,7 @@ public abstract class CPNHMixin {
      * not wanted.
      */
     @Inject(method = "onRemoveMessage", at = @At("HEAD"), cancellable = true)
-    private void wmch$cancelHideMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
+    private void cps$cancelHideMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
         ci.cancel();
     }
 }

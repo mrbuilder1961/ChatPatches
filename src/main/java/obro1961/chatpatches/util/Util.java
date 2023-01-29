@@ -1,7 +1,7 @@
-package mechanicalarcane.wmch.util;
+package obro1961.chatpatches.util;
 
 import com.mojang.authlib.GameProfile;
-import mechanicalarcane.wmch.mixin.ChatHudAccessor;
+import obro1961.chatpatches.mixin.chat.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.network.message.SignedMessage;

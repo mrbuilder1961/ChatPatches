@@ -1,16 +1,16 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "mechanicalarcane.wmch.mixin",
+  "package": "obro1961.chatpatches.mixin",
   "compatibilityLevel": "JAVA_17",
   "verbose": true,
   "mixins": [],
   "client": [
-    "ChatHudAccessor",
-    "MessageHandlerMixin",
-    "ChatHudMixin",
-    "CPNHMixin",
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "chat.ChatHudAccessor",
+    "chat.MessageHandlerMixin",
+    "chat.ChatHudMixin",
+    "secure.CPNHMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,13 +1,13 @@
-package mechanicalarcane.wmch.chatlog;
+package obro1961.chatpatches.chatlog;
 
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
-import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.config.Config;
-import mechanicalarcane.wmch.util.Util;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.util.Util;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.text.Text;
@@ -21,15 +21,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 import static java.io.File.separator;
-import static mechanicalarcane.wmch.WMCH.LOGGER;
-import static mechanicalarcane.wmch.WMCH.config;
 
 /**
  * Represents the chat log file in the
  * run directory located at {@link ChatLog#CHATLOG_PATH}.
  */
 public class ChatLog {
-    public static final String CHATLOG_PATH = WMCH.FABRICLOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    public static final String CHATLOG_PATH = ChatPatches.FABRICLOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
     private static final Path file = Path.of(CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serializer.toJsonTree(src))
@@ -84,7 +82,7 @@ public class ChatLog {
                 rawData = Files.readString(file);
 
             } catch (MalformedInputException notUTF8) { // thrown if the file is not encoded with UTF-8
-                LOGGER.warn("[ChatLog.deserialize] ChatLog file encoding was '{}', not UTF-8. Complex text characters may have been replaced with question marks.", Charset.defaultCharset().name());
+                ChatPatches.LOGGER.warn("[ChatLog.deserialize] ChatLog file encoding was '{}', not UTF-8. Complex text characters may have been replaced with question marks.", Charset.defaultCharset().name());
 
                 try {
                     // force-writes the string as UTF-8
@@ -92,19 +90,19 @@ public class ChatLog {
                     rawData = Files.readString(file);
 
                 } catch (IOException ioexc) {
-                    LOGGER.error("[ChatLog.deserialize] Couldn't rewrite the ChatLog at '{}', resetting:", CHATLOG_PATH, ioexc);
+                    ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't rewrite the ChatLog at '{}', resetting:", CHATLOG_PATH, ioexc);
 
                     // final attempt to reset the file
                     try {
                         rawData = Data.EMPTY_DATA; // just in case of corruption from previous failures
                         Files.writeString(file, Data.EMPTY_DATA, StandardOpenOption.TRUNCATE_EXISTING);
                     } catch (IOException ioerr) {
-                        LOGGER.error("[ChatLog.deserialize] Couldn't reset the ChatLog at '{}':", CHATLOG_PATH, ioerr);
+                        ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't reset the ChatLog at '{}':", CHATLOG_PATH, ioerr);
                     }
                 }
 
             } catch (IOException e) {
-                LOGGER.error("[ChatLog.deserialize] Couldn't access the ChatLog at '{}':", CHATLOG_PATH, e);
+                ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't access the ChatLog at '{}':", CHATLOG_PATH, e);
                 // rawData is EMPTY DATA
             }
         } else {
@@ -126,7 +124,7 @@ public class ChatLog {
             data = json.fromJson(rawData, Data.class);
             enforceSizes();
         } catch (com.google.gson.JsonSyntaxException e) {
-            LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
+            ChatPatches.LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
             data = new Data();
             loaded = true;
@@ -135,7 +133,7 @@ public class ChatLog {
 
         loaded = true;
 
-        LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}'",
+        ChatPatches.LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}'",
 			data.messages.size(), data.history.size(),
             CHATLOG_PATH
 		);
@@ -151,10 +149,10 @@ public class ChatLog {
             final String str = json.toJson(data, Data.class);
             Files.writeString(file, str, StandardOpenOption.TRUNCATE_EXISTING);
 
-            LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
+            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
 
         } catch (IOException e) {
-            LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
+            ChatPatches.LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
 
         } finally {
             if(crashing)
@@ -165,11 +163,11 @@ public class ChatLog {
 
     /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@link Config#maxMsgs}. */
     private static void enforceSizes() {
-        if(data.messages.size() > config.maxMsgs)
-            data.messages = data.messages.subList(0, config.maxMsgs + 1);
+        if(data.messages.size() > ChatPatches.config.maxMsgs)
+            data.messages = data.messages.subList(0, ChatPatches.config.maxMsgs + 1);
 
-        if(data.history.size() > config.maxMsgs)
-            data.history = data.history.subList(0, config.maxMsgs + 1);
+        if(data.history.size() > ChatPatches.config.maxMsgs)
+            data.history = data.history.subList(0, ChatPatches.config.maxMsgs + 1);
     }
 
     public static void restore(MinecraftClient client) {
@@ -183,17 +181,17 @@ public class ChatLog {
             ));
 
         Util.Flags.LOADING_CHATLOG.remove();
-        LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(),
+        ChatPatches.LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(),
             CHATLOG_PATH);
     }
 
 
     public static void addMessage(Text msg) {
-        if(data.messages.size() < config.maxMsgs)
+        if(data.messages.size() < ChatPatches.config.maxMsgs)
             data.messages.add(msg);
     }
     public static void addHistory(String msg) {
-        if(data.history.size() < config.maxMsgs)
+        if(data.history.size() < ChatPatches.config.maxMsgs)
             data.history.add(msg);
     }
     public static void clearMessages() { data.messages.clear(); }

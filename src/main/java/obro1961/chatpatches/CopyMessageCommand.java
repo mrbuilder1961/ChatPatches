@@ -1,11 +1,11 @@
-package mechanicalarcane.wmch;
+package obro1961.chatpatches;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import mechanicalarcane.wmch.util.Util;
+import obro1961.chatpatches.util.Util;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
@@ -26,7 +26,7 @@ public class CopyMessageCommand {
                 .then(
                     literal("index")
                         .then(
-                            argument("message_index", IntegerArgumentType.integer(0, WMCH.config.maxMsgs))
+                            argument("message_index", IntegerArgumentType.integer(0, ChatPatches.config.maxMsgs))
                                 .suggests(CopyMessageCommand::indexSuggestions)
                                 .executes(CopyMessageCommand::executeIndex)
                         )
@@ -47,10 +47,10 @@ public class CopyMessageCommand {
             String message = messages.get(i).content().getString();
 
             client.keyboard.setClipboard(message);
-            context.getSource().sendFeedback(Text.translatable("text.wmch.copymessage.index", i, message));
+            context.getSource().sendFeedback(Text.translatable("text.chatpatches.copymessage.index", i, message));
             return 1;
         } else {
-            context.getSource().sendError(Text.translatable("text.wmch.copymessage.index.missing", i));
+            context.getSource().sendError(Text.translatable("text.chatpatches.copymessage.index.missing", i));
             return 0;
         }
     }
