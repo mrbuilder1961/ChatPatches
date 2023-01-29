@@ -147,7 +147,7 @@ public class ChatLog {
             enforceSizes();
 
             final String str = json.toJson(data, Data.class);
-            Files.writeString(file, str, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(file, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
 
