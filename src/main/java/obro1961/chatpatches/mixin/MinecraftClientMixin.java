@@ -27,7 +27,7 @@ public abstract class MinecraftClientMixin {
             target = "Lnet/minecraft/client/MinecraftClient;cleanUpAfterCrash()V"
         )
     })
-    private void saveChatlogOnCrash(CallbackInfo ci) {
+    private void cps$saveChatlogOnCrash(CallbackInfo ci) {
         ChatLog.serialize(true);
     }
 }

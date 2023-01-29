@@ -19,7 +19,7 @@ public abstract class CPNHMixin {
      * not wanted.
      */
     @Inject(method = "onRemoveMessage", at = @At("HEAD"), cancellable = true)
-    private void cps$cancelHideMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
+    private void cps$cancelDelMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
         ci.cancel();
     }
 }
