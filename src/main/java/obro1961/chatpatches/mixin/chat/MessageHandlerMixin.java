@@ -1,7 +1,7 @@
-package mechanicalarcane.wmch.mixin;
+package obro1961.chatpatches.mixin.chat;
 
-import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.util.Util;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.Util;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -30,14 +30,14 @@ public abstract class MessageHandlerMixin {
 
     /**
      * Caches the UUID of the player who sent the last message for name modification.
-     * This only works for vanilla chat messages, otherwise checks {@link #wmch$cacheGameSender}
+     * This only works for vanilla chat messages, otherwise checks {@link #cps$cacheGameData}
      * and then caches the metadata.
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
-    private void wmch$cacheChatSender(SignedMessage message, MessageType.Parameters params, CallbackInfo ci) {
+    private void cps$cacheChatData(SignedMessage message, MessageType.Parameters params, CallbackInfo ci) {
         client.options.getOnlyShowSecureChat().setValue(false);
 
-        WMCH.lastMsgData = message.createMetadata();
+        ChatPatches.lastMsgData = message.createMetadata();
     }
 
     /**
@@ -47,20 +47,20 @@ public abstract class MessageHandlerMixin {
      * real player in-game.
      */
     @Inject(method = "onGameMessage", at = @At("HEAD"))
-    private void wmch$cacheGameSender(Text message, boolean overlay, CallbackInfo ci) {
+    private void cps$cacheGameData(Text message, boolean overlay, CallbackInfo ci) {
 
         if( Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+$", message.getString()) ) {
 
             String name = StringUtils.substringBetween( Util.strip( message.getString() ), "<", ">" );
             UUID uuid = client.getSocialInteractionsManager().getUuid(name);
 
-            WMCH.lastMsgData =
+            ChatPatches.lastMsgData =
                 ( name == null || name.equals("") || uuid.equals(Util.NIL_UUID) )
                     ? Util.NIL_METADATA
                     : new MessageMetadata(uuid, Instant.now(), 0)
             ;
         } else {
-            WMCH.lastMsgData = Util.NIL_METADATA;
+            ChatPatches.lastMsgData = Util.NIL_METADATA;
         }
     }
 }

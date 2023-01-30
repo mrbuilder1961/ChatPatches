@@ -1,4 +1,4 @@
-package mechanicalarcane.wmch.mixin;
+package obro1961.chatpatches.mixin.secure;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

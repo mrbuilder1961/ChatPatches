@@ -1,0 +1,50 @@
+{
+    "text.chatpatches.title": "Onde está a configuração do meu histórico de bate-papo",
+
+    "text.chatpatches.time": "Alternar carimbo de data/hora",
+    "text.chatpatches.timeDate": "Texto do carimbo de data/hora",
+    "text.chatpatches.timeFormat": "Modificadores de carimbo de data/hora",
+    "text.chatpatches.timeColor": "Cor do carimbo de data/hora",
+    "text.chatpatches.desc.time": "Um carimbo de data/hora deve aparecer na frente de todas as mensagens?",
+    "text.chatpatches.desc.timeDate": "O texto que é usado para o carimbo de data/hora. Para texto dinâmico, pesquise online por 'string de formato de data java'.",
+    "text.chatpatches.desc.timeFormat": "A string de e comercial (&) e códigos de formatação que se aplicam à string de tempo.",
+    "text.chatpatches.desc.timeColor": "A cor que é 'preenchida' quando aplicável no texto do carimbo de data/hora.",
+
+    "text.chatpatches.hover": "Passe o mouse",
+    "text.chatpatches.hoverDate": "Passe o texto",
+    "text.chatpatches.desc.hover": "O texto que aparece quando você passa o mouse sobre o carimbo de data/hora deve mostrar?",
+    "text.chatpatches.desc.hoverDate": "O texto que aparece ao passar o mouse sobre o texto do carimbo de data/hora. Para texto dinâmico, pesquise online por 'string de formato de data java'.",
+
+    "text.chatpatches.counter": "Alternância do contador de mensagens",
+    "text.chatpatches.counterFormat": "Texto do contador de mensagens",
+    "text.chatpatches.counterColor": "Cor do contador de mensagens",
+    "text.chatpatches.desc.counter": "Um contador de mensagens deve ser exibido após uma mensagem para indicar que várias foram enviadas?",
+    "text.chatpatches.desc.counterFormat": "O texto adicionado ao final de uma mensagem para indicar que várias duplicatas foram enviadas. Deve incluir um $ para o número de duplicados.",
+    "text.chatpatches.desc.counterColor": "A cor que é 'preenchida' quando aplicável no texto do contador, por exemplo '&r' será substituída por esta cor.",
+
+    "text.chatpatches.boundary": "Alternar limite",
+    "text.chatpatches.boundaryFormat": "Texto de limite",
+    "text.chatpatches.boundaryColor": "Cor do limite",
+    "text.chatpatches.desc.boundary": "Uma linha de limite deve aparecer depois de usar o bate-papo, sair e entrar novamente mais tarde?",
+    "text.chatpatches.desc.boundaryFormat": "O texto que é mostrado quando uma linha de limite é inserida no chat, adicione e comercial (&) seguido de um código de formatação para embelezá-lo.",
+    "text.chatpatches.desc.boundaryColor": "A cor que é 'preenchida' onde aplicável no texto de limite, por exemplo '&r' será substituída por esta cor.",
+
+    "text.chatpatches.saveChat": "Alternar registro de bate-papo",
+    "text.chatpatches.shiftChat": "Interface de bate-papo de turno",
+    "text.chatpatches.maxMsgs": "Máximo de mensagens de bate-papo",
+    "text.chatpatches.nameFormat": "Texto do nome do jogador",
+    "text.chatpatches.desc.saveChat": "O bate-papo deve ser salvo em um log para que possa ser adicionado novamente ao bate-papo em outra sessão de jogo?",
+    "text.chatpatches.desc.shiftChat": "Essa interface de bate-papo deve ser aumentada em cerca de 10 pixels para não obstruir a barra de blindagem?",
+    "text.chatpatches.desc.maxMsgs": "A quantidade máxima de mensagens de chat permitidas para processar. Vanilla tem esse conjunto como 100, o máximo permitido é 32.767. Tenha em mente que quanto maior o valor, mais memória o chat requer.",
+    "text.chatpatches.desc.nameFormat": "O texto que substitui o nome do jogador nas mensagens de bate-papo. Vanilla é <$>, sem colchetes é $; onde $ representa o nome do jogador. Aplica-se apenas a mensagens do jogador.",
+
+    "text.chatpatches.category.time": "Carimbo de data e hora",
+    "text.chatpatches.category.hover": "Informações de foco",
+    "text.chatpatches.category.counter": "contador duplicado",
+    "text.chatpatches.category.boundary": "Limite da Sessão",
+    "text.chatpatches.category.hud": "Interface de bate-papo",
+    "text.chatpatches.category.help": "Ajuda",
+
+    "text.chatpatches.copymessage.index": "mensagem copiada %d: '%s'",
+    "text.chatpatches.copymessage.index.missing": "A mensagem %d não existe"
+}

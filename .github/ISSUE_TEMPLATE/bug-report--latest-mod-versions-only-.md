@@ -26,8 +26,9 @@ Required information:
 - Fabric and API versions
 - YetAanotherConfigLib and Mod Menu versions (if installed)
 - list of all installed mods (can be a list *copied* from a log file **OR** a screenshot)
+
 Optional:
-- `wmch.json` file (DO NOT PASTE)
+- `chatpatches.json` file (pasted like: \`\`\`json\n\<config data>\n\`\`\`)
 - `chatlog.json` file (DO NOT PASTE)
 
 ### Additional context

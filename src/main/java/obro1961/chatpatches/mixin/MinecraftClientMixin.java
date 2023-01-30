@@ -1,6 +1,6 @@
-package mechanicalarcane.wmch.mixin;
+package obro1961.chatpatches.mixin;
 
-import mechanicalarcane.wmch.chatlog.ChatLog;
+import obro1961.chatpatches.chatlog.ChatLog;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -27,7 +27,7 @@ public abstract class MinecraftClientMixin {
             target = "Lnet/minecraft/client/MinecraftClient;cleanUpAfterCrash()V"
         )
     })
-    private void saveChatlogOnCrash(CallbackInfo ci) {
+    private void cps$saveChatlogOnCrash(CallbackInfo ci) {
         ChatLog.serialize(true);
     }
 }

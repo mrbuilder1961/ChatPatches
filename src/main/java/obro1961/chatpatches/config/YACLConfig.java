@@ -1,4 +1,4 @@
-package mechanicalarcane.wmch.config;
+package obro1961.chatpatches.config;
 
 import dev.isxander.yacl.api.*;
 import dev.isxander.yacl.gui.controllers.ActionController;
@@ -7,15 +7,14 @@ import dev.isxander.yacl.gui.controllers.ColorController;
 import dev.isxander.yacl.gui.controllers.LabelController;
 import dev.isxander.yacl.gui.controllers.slider.IntegerSliderController;
 import dev.isxander.yacl.gui.controllers.string.StringController;
-import mechanicalarcane.wmch.WMCH;
-import mechanicalarcane.wmch.util.Util;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.Util;
 import org.apache.commons.compress.utils.Lists;
 
 import java.awt.*;
@@ -40,7 +39,7 @@ public class YACLConfig extends Config {
 
         Config.getOptions().forEach(opt -> {
             String cat = opt.key.split("[A-Z]")[0];
-            if( !I18n.hasTranslation("text.wmch.category." + cat) )
+            if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
                 cat = "hud";
 
             if(opt.key.contains("Color"))
@@ -59,10 +58,15 @@ public class YACLConfig extends Config {
 
             dev.isxander.yacl.api.Option<?> yaclOpt =
                 dev.isxander.yacl.api.Option.createBuilder( opt.getType() )
-                    .name( Text.translatable("text.wmch." + opt.key) )
-                    .tooltip( Text.translatable("text.wmch.desc." + opt.key) )
+                    .name( Text.translatable("text.chatpatches." + opt.key) )
+                    .tooltip( Text.translatable("text.chatpatches.desc." + opt.key) )
                     .controller( getController(opt.key) )
                     .binding( getBinding(opt) )
+                    .flag(
+                        opt.key.equals("shiftChat") || opt.key.equals("chatWidth")
+                            ? new OptionFlag[] { client -> client.inGameHud.getChatHud().reset() }
+                            : new OptionFlag[0]
+                    )
                     .build();
 
 
@@ -77,7 +81,7 @@ public class YACLConfig extends Config {
 
 
         YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder()
-            .title(Text.translatable("text.wmch.title"))
+            .title(Text.translatable("text.chatpatches.title"))
                 .category( category("time", timeOpts) )
                 .category( category("hover", hoverOpts) )
                 .category( category("counter", counterOpts) )
@@ -88,19 +92,19 @@ public class YACLConfig extends Config {
                     category(
                     "help",
                         List.of(
-                            label( Text.translatable("text.wmch.dateFormat"), null, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
-                            label( Text.translatable("text.wmch.formatCodes"), null, "https://minecraft.gamepedia.com/Formatting_codes" ),
-                            label( Text.literal("README -> FAQ"), null, "https://github.com/mrbuilder1961/WheresMyChatHistory#faq" )
+                            label( Text.translatable("text.chatpatches.dateFormat"), null, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
+                            label( Text.translatable("text.chatpatches.formatCodes"), null, "https://minecraft.gamepedia.com/Formatting_codes" ),
+                            label( Text.literal("README -> FAQ"), null, "https://github.com/mrbuilder1961/ChatPatches#faq" )
                         )
                     )
                 )
                 .save(() -> {
                     write();
-                    WMCH.LOGGER.info("[YACLConfig.save] Updated the config file at '{}'!", CONFIG_PATH);
+                    ChatPatches.LOGGER.info("[YACLConfig.save] Updated the config file at '{}'!", CONFIG_PATH);
                 });
 
         // debug options
-        if(WMCH.FABRICLOADER.isDevelopmentEnvironment()) {
+        if(ChatPatches.FABRICLOADER.isDevelopmentEnvironment()) {
             builder.category(
                 category(
                     "debug",
@@ -118,17 +122,17 @@ public class YACLConfig extends Config {
                                 StringBuilder str = new StringBuilder();
 
                                 Config.getOptions().forEach(opt ->
-                                    str.append("\n| %s | %s | %s | `text.wmch.%s` |".formatted(
-                                        I18n.translate("text.wmch." + opt.key),
+                                    str.append("\n| %s | %s | %s | `text.chatpatches.%s` |".formatted(
+                                        I18n.translate("text.chatpatches." + opt.key),
                                         opt.get().getClass().equals( Integer.class ) && opt.key.contains("Color")
                                             ? "`0x" + Integer.toHexString( (int)opt.def ).toUpperCase() + "` (`" + opt.def + "`)"
                                             : "`" + opt.def + "`",
-                                        I18n.translate("text.wmch.desc." + opt.key),
+                                        I18n.translate("text.chatpatches.desc." + opt.key),
                                         opt.key
                                     ))
                                 );
 
-                                WMCH.LOGGER.warn("[YACLConfig.printGithubTables]" + str);
+                                ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables]" + str);
                             })
                             .build()
                     )
@@ -149,17 +153,18 @@ public class YACLConfig extends Config {
         else if( key.contains("Color") )
             return opt -> (Controller<T>) new ColorController((dev.isxander.yacl.api.Option<Color>) opt);
 
-        else if( key.equals("shiftChat") || key.equals("maxMsgs") )
+        else if( Config.getOption(key).get() instanceof Integer ) // key is int but not color (shiftChat, maxMsgs, or chatWidth)
             return opt -> (Controller<T>) new IntegerSliderController(
                 (dev.isxander.yacl.api.Option<Integer>) opt,
                 0,
-                key.equals("shiftChat")
-                    ? (MinecraftClient.getInstance().getWindow().getY() / 2)
-                    : Short.MAX_VALUE,
-                key.equals("shiftChat")
-                    ? 1
-                    : 16
+                key.equals("maxMsgs")
+                    ? Short.MAX_VALUE
+                    : key.equals("shiftChat")
+                        ? 100
+                        : 630, // chatWidth
+                key.equals("maxMsgs") ? 16 : 1
             );
+
         else
             return opt -> (Controller<T>) new BooleanController((dev.isxander.yacl.api.Option<Boolean>) opt, true);
     }
@@ -175,7 +180,7 @@ public class YACLConfig extends Config {
                     new SimpleDateFormat( inc.toString() );
                     o.set( inc );
                 } catch (IllegalArgumentException e) {
-                    WMCH.LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
+                    ChatPatches.LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
                 }
             });
 
@@ -192,7 +197,7 @@ public class YACLConfig extends Config {
 
     private static ConfigCategory category(String key, List<dev.isxander.yacl.api.Option<?>> options) {
         return ConfigCategory.createBuilder()
-            .name( Text.translatable("text.wmch.category." + key) )
+            .name( Text.translatable("text.chatpatches.category." + key) )
             .options( options )
             .build();
     }
