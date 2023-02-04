@@ -14,7 +14,7 @@ import net.minecraft.network.message.SignedMessage;
 
 public class ChatPatches implements ClientModInitializer {
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Chat Patches");
-	public static final FabricLoader FABRICLOADER = FabricLoader.getInstance();
+	public static final FabricLoader FABRIC_LOADER = FabricLoader.getInstance();
 
 	public static Config config = Config.newConfig(false);
 	/** Contains the sender and timestamp data of the last received chat message. */
