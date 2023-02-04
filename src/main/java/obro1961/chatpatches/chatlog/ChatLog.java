@@ -27,7 +27,7 @@ import static java.io.File.separator;
  * run directory located at {@link ChatLog#CHATLOG_PATH}.
  */
 public class ChatLog {
-    public static final String CHATLOG_PATH = ChatPatches.FABRICLOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    public static final String CHATLOG_PATH = ChatPatches.FABRIC_LOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
     private static final Path file = Path.of(CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serializer.toJsonTree(src))

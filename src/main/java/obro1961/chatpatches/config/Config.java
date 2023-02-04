@@ -27,10 +27,10 @@ import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 
 public class Config {
-    public static final String CONFIG_PATH = ChatPatches.FABRICLOADER.getConfigDir().toString() + separator + "chatpatches.json";
+    public static final String CONFIG_PATH = ChatPatches.FABRIC_LOADER.getConfigDir().toString() + separator + "chatpatches.json";
     private static final Config DEFAULTS = new Config();
-    public static final boolean hasModMenu = ChatPatches.FABRICLOADER.isModLoaded("modmenu");
-    public static final boolean hasYACL = ChatPatches.FABRICLOADER.isModLoaded("yet-another-config-lib");
+    public static final boolean hasModMenu = ChatPatches.FABRIC_LOADER.isModLoaded("modmenu");
+    public static final boolean hasYACL = ChatPatches.FABRIC_LOADER.isModLoaded("yet-another-config-lib");
 
     // categories: time, hover, counter, boundary, hud
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
@@ -147,7 +147,7 @@ public class Config {
 
         if( !Files.exists(Path.of(CONFIG_PATH)) )
             config = newConfig(true);
-        
+
         else
             try(FileReader fr = new FileReader(CONFIG_PATH)) {
                 config = new Gson().fromJson(fr, config.getClass());

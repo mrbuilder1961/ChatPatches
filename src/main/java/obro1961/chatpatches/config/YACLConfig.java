@@ -104,7 +104,7 @@ public class YACLConfig extends Config {
                 });
 
         // debug options
-        if(ChatPatches.FABRICLOADER.isDevelopmentEnvironment()) {
+        if(ChatPatches.FABRIC_LOADER.isDevelopmentEnvironment()) {
             builder.category(
                 category(
                     "debug",
