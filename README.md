@@ -88,7 +88,7 @@ If you would like to help translate Chat Patches into other languages, you can:
 ## Changelog
 
 See the `latest_changelog.md` file for individual releases, or the [GitHub commit list](https://github.com/mrbuilder1961/ChatPatches/commits) for fine-grain 
-details.
+details. You can also visit the [Modrinth Changelog page](https://modrinth.com/mod/chatpatches/changelog?g=1.19.1,1.19.2) for a filtered version and it will list all changes for each mod version.
 
 ## License
 This mod is available under the GNU LGPLv3 license. Check out [this](https://choosealicense.com/licenses/lgpl-3.0/) page for information.
