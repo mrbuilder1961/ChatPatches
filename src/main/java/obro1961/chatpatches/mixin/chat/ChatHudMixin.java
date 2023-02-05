@@ -50,6 +50,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
     private void cps$clear(boolean clearHistory, CallbackInfo ci) {
         if(!clearHistory) {
             client.getMessageHandler().processAll();
+            messages.clear();
             visibleMessages.clear();
             // empties the message cache (which on save clears chatlog.json)
             ChatLog.clearMessages();
