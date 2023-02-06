@@ -35,8 +35,10 @@ Be on the lookout for new versions, issues, and future features!
   - [Install the Fabric API.](https://modrinth.com/mod/fabric-api)
 - Do servers need this mod? 
   - It is client side, so no.
-- I can't access the config menu in-game! 
-  - You need the LATEST versions of both [YetAnotherConfigLib](https://modrinth.com/mod/yacl/versions) and [Mod Menu](https://modrinth.com/mod/modmenu/versions) to access it in game. Alternatively, you can edit it manually at `(directory)/config/chatpatches.json`.
+- I can't access the config menu in-game!
+  - <u>For 1.19.2+:</u> You need the LATEST versions of both [YetAnotherConfigLib](https://modrinth.com/mod/yacl/versions?l=fabric&c=release) and [Mod Menu](https://modrinth.com/mod/modmenu/versions?l=fabric&c=release) to access it in game.
+  - <u>For 1.16.x and 1.18.x:</u> You need the LATEST versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu](https://modrinth.com/mod/modmenu/versions?l=fabric&c=release) to access it in game.
+  - <u>For any version:</u> You can always edit the config at `(directory)/config/chatpatches.json`.
 - My config is broken/not working!
   - When you load one of the more recent mod versions, it makes a creates a new file with your old settings and resets the main file. You can access this 
     copy at `(directory)/config/chatpatches_old.json`. By then opening both the new and old configs at the same time, you can copy and paste over the values. 
