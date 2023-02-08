@@ -1,2 +1,5 @@
 ## Changes with this version
-- Fixed some messages not clearing when pressing F3+D and then changing chat settings
+- Fixed the config not always writing to disk
+- Removed one-use constants from Config
+- Renamed the Option subclass to ConfigOption to avoid conflicting with YACL's Option
+- No longer removes the `INIT` flag every time a world is loaded

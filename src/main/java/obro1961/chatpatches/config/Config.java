@@ -5,11 +5,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
-import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.util.Util;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.EntityType;
 import net.minecraft.text.*;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.Util;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -23,14 +23,11 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.io.File.separator;
-import static obro1961.chatpatches.ChatPatches.LOGGER;
-import static obro1961.chatpatches.ChatPatches.config;
+import static obro1961.chatpatches.ChatPatches.*;
 
 public class Config {
-    public static final String CONFIG_PATH = ChatPatches.FABRIC_LOADER.getConfigDir().toString() + separator + "chatpatches.json";
+    public static final String CONFIG_PATH = FABRIC_LOADER.getConfigDir().toString() + separator + "chatpatches.json";
     private static final Config DEFAULTS = new Config();
-    public static final boolean hasModMenu = ChatPatches.FABRIC_LOADER.isModLoaded("modmenu");
-    public static final boolean hasYACL = ChatPatches.FABRIC_LOADER.isModLoaded("yet-another-config-lib");
 
     // categories: time, hover, counter, boundary, hud
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
@@ -42,9 +39,14 @@ public class Config {
 
     /** Creates a new Config or YACLConfig depending on installed mods. */
     public static Config newConfig(boolean reset) {
-        config = (hasModMenu && hasYACL) ? new YACLConfig() : new Config();
+        config = (FABRIC_LOADER.isModLoaded("modmenu") && FABRIC_LOADER.isModLoaded("yet-another-config-lib"))
+            ? new YACLConfig()
+            : new Config();
+
         if(!reset)
             read();
+        write();
+
         return config;
     }
 
@@ -54,8 +56,8 @@ public class Config {
 
 
     /** Returns all Config options as a List of string keys and class types that can be used with {@link #getOption(String)}. */
-    public static List<Option<?>> getOptions() {
-        List<Option<?>> options = new ArrayList<>( Config.class.getDeclaredFields().length );
+    public static List<ConfigOption<?>> getOptions() {
+        List<ConfigOption<?>> options = new ArrayList<>( Config.class.getDeclaredFields().length );
 
         for(Field field : Config.class.getDeclaredFields()) {
 
@@ -70,14 +72,14 @@ public class Config {
 
     /** Returns the value of the option in the {@link ChatPatches#config} identified by {@code key}. */
     @SuppressWarnings("unchecked")
-    public static <T> Option<T> getOption(String key) {
+    public static <T> ConfigOption<T> getOption(String key) {
         try {
-            return new Option<>( (T)config.getClass().getField(key).get(config), (T)Config.class.getField(key).get(DEFAULTS), key );
+            return new ConfigOption<>( (T)config.getClass().getField(key).get(config), (T)Config.class.getField(key).get(DEFAULTS), key );
 
         } catch (IllegalAccessException | NoSuchFieldException e) {
             LOGGER.error("[Config.getOption({})] An error occurred while trying to get an option value, please report this on GitHub:", key, e);
 
-            return new Option<>( (T)new Object(), (T)new Object(), key );
+            return new ConfigOption<>( (T)new Object(), (T)new Object(), key );
         }
     }
 
@@ -184,7 +186,6 @@ public class Config {
     /** Overwrites the {@code ChatPatches.config} object with default values and saves it */
     public static void reset() {
         config = Config.newConfig(true);
-        write();
     }
 
     /** Copies the current Config file data to {@code ./chatpatches_old.json} for copying old configurations over */
@@ -204,7 +205,7 @@ public class Config {
      * String/Class pair for each Config field. This is
      * merely an abstraction used for simplification.
      */
-    public static class Option<T> {
+    public static class ConfigOption<T> {
         private T val;
         public final T def;
         public final String key;
@@ -214,7 +215,7 @@ public class Config {
          * @param def The default value for creation and resetting.
          * @param key The lang key of the Option; for identification
          */
-        public Option(T val, T def, String key) {
+        public ConfigOption(T val, T def, String key) {
             this.val = Objects.requireNonNull(val, "Cannot create a ConfigOption without a default value");
             this.def = Objects.requireNonNull(def, "Cannot create a ConfigOption without a default value");
             this.key = Objects.requireNonNull(key, "Cannot create a ConfigOption without a key");

@@ -1,10 +1,6 @@
 package obro1961.chatpatches;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import obro1961.chatpatches.chatlog.ChatLog;
-import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.Util;
-import obro1961.chatpatches.util.Util.Flags;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -12,6 +8,10 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.network.message.MessageMetadata;
+import obro1961.chatpatches.chatlog.ChatLog;
+import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.util.Util;
+import obro1961.chatpatches.util.Util.Flags;
 
 public class ChatPatches implements ClientModInitializer {
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Chat Patches");
@@ -65,10 +65,10 @@ public class ChatPatches implements ClientModInitializer {
 			}
 
 			// sets all messages (restored and boundary line) to a addedTime of 0 to prevent instant rendering (#42)
-			if(ChatLog.loaded && Flags.INIT.isSet())
-				Util.chatHud(client).getVisibleMessages().replaceAll( ln -> new ChatHudLine.Visible(0, ln.content(), ln.indicator(), ln.endOfEntry()) );
-
-			Flags.INIT.remove();
+			if(ChatLog.loaded && Flags.INIT.isSet()) {
+				Util.chatHud(client).getVisibleMessages().replaceAll(ln -> new ChatHudLine.Visible(0, ln.content(), ln.indicator(), ln.endOfEntry()));
+				Flags.INIT.remove();
+			}
 		});
 
 		LOGGER.info("[ChatPatches()] Finished setting up!");
