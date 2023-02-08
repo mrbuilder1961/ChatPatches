@@ -31,11 +31,11 @@ public class YACLConfig extends Config {
 
     @Override
     public Screen getConfigScreen(Screen parent) {
-        List<dev.isxander.yacl.api.Option<?>> timeOpts = Lists.newArrayList();
-        List<dev.isxander.yacl.api.Option<?>> hoverOpts = Lists.newArrayList();
-        List<dev.isxander.yacl.api.Option<?>> counterOpts = Lists.newArrayList();
-        List<dev.isxander.yacl.api.Option<?>> boundaryOpts = Lists.newArrayList();
-        List<dev.isxander.yacl.api.Option<?>> hudOpts = Lists.newArrayList();
+        List<Option<?>> timeOpts = Lists.newArrayList();
+        List<Option<?>> hoverOpts = Lists.newArrayList();
+        List<Option<?>> counterOpts = Lists.newArrayList();
+        List<Option<?>> boundaryOpts = Lists.newArrayList();
+        List<Option<?>> hudOpts = Lists.newArrayList();
 
         Config.getOptions().forEach(opt -> {
             String cat = opt.key.split("[A-Z]")[0];
@@ -43,7 +43,7 @@ public class YACLConfig extends Config {
                 cat = "hud";
 
             if(opt.key.contains("Color"))
-                opt = new Option<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), opt.key) {
+                opt = new ConfigOption<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), opt.key) {
                     @Override
                     public Color get() {
                         return new Color( (int)Config.getOption(key).get() );
@@ -56,8 +56,8 @@ public class YACLConfig extends Config {
                 };
 
 
-            dev.isxander.yacl.api.Option<?> yaclOpt =
-                dev.isxander.yacl.api.Option.createBuilder( opt.getType() )
+            Option<?> yaclOpt =
+                Option.createBuilder( opt.getType() )
                     .name( Text.translatable("text.chatpatches." + opt.key) )
                     .tooltip( Text.translatable("text.chatpatches.desc." + opt.key) )
                     .controller( getController(opt.key) )
@@ -109,7 +109,7 @@ public class YACLConfig extends Config {
                 category(
                     "debug",
                     List.of(
-                        dev.isxander.yacl.api.Option.createBuilder(Integer.class)
+                        Option.createBuilder(Integer.class)
                             .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Util.Flags.flags, Util.Flags.binary())) )
                             .controller(opt -> new IntegerSliderController(opt, 0, 0b1111, 1))
                             .binding( Util.Flags.flags, () -> Util.Flags.flags, inc -> Util.Flags.flags = inc )
@@ -145,17 +145,17 @@ public class YACLConfig extends Config {
 
 
     @SuppressWarnings("unchecked")
-    private static <T> Function<dev.isxander.yacl.api.Option<T>, Controller<T>> getController(String key) {
+    private static <T> Function<Option<T>, Controller<T>> getController(String key) {
 
         if( key.matches("^.*(?:Str|Date|Format)$") ) // endsWith "Str" "Date" or "Format"
-            return opt -> (Controller<T>) new StringController((dev.isxander.yacl.api.Option<String>) opt);
+            return opt -> (Controller<T>) new StringController((Option<String>) opt);
 
         else if( key.contains("Color") )
-            return opt -> (Controller<T>) new ColorController((dev.isxander.yacl.api.Option<Color>) opt);
+            return opt -> (Controller<T>) new ColorController((Option<Color>) opt);
 
         else if( Config.getOption(key).get() instanceof Integer ) // key is int but not color (shiftChat, maxMsgs, or chatWidth)
             return opt -> (Controller<T>) new IntegerSliderController(
-                (dev.isxander.yacl.api.Option<Integer>) opt,
+                (Option<Integer>) opt,
                 0,
                 key.equals("maxMsgs")
                     ? Short.MAX_VALUE
@@ -166,12 +166,12 @@ public class YACLConfig extends Config {
             );
 
         else
-            return opt -> (Controller<T>) new BooleanController((dev.isxander.yacl.api.Option<Boolean>) opt, true);
+            return opt -> (Controller<T>) new BooleanController((Option<Boolean>) opt, true);
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Binding<T> getBinding(Option<?> option) {
-        Option<T> o = (Option<T>) option;
+    private static <T> Binding<T> getBinding(ConfigOption<?> option) {
+        ConfigOption<T> o = (ConfigOption<T>) option;
 
         if( o.key.contains("Date") )
             // must be able to successfully create a SimpleDateFormat
@@ -195,15 +195,15 @@ public class YACLConfig extends Config {
             return Binding.generic(o.def, o::get, o::set);
     }
 
-    private static ConfigCategory category(String key, List<dev.isxander.yacl.api.Option<?>> options) {
+    private static ConfigCategory category(String key, List<Option<?>> options) {
         return ConfigCategory.createBuilder()
             .name( Text.translatable("text.chatpatches.category." + key) )
             .options( options )
             .build();
     }
 
-    private static dev.isxander.yacl.api.Option<Text> label(MutableText display, String tooltip, String url) {
-        return dev.isxander.yacl.api.Option.createBuilder(Text.class)
+    private static Option<Text> label(MutableText display, String tooltip, String url) {
+        return Option.createBuilder(Text.class)
             .name(display)
             .tooltip( Text.literal( tooltip == null ? "§9" + url : tooltip ) )
             .controller(LabelController::new)
