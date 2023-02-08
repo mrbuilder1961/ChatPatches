@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "chatpatches",
-  "version": "182.0.0",
+  "version": "${version}",
 
   "name": "Chat Patches",
   "description": "A versatile client-side chat mod that can do many things, just check out the config and the GitHub page for more info!",
@@ -40,7 +40,7 @@
     "fabric": "*"
   },
   "recommends": {
-    "modmenu": "*",
-    "cloth-config": "*"
+    "cloth-config": "*",
+    "modmenu": "*"
   }
 }
