@@ -1,13 +1,14 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "obro1961.wmch.mixins",
+  "package": "obro1961.chatpatches.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [],
   "client": [
-    "ChatHudMixin",
-    "ChatHudListenerMixin",
-    "ChatHudAccessorMixin"
+    "MinecraftClientMixin",
+    "chat.ChatHudAccessor",
+    "chat.ChatHudListenerMixin",
+    "chat.ChatHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

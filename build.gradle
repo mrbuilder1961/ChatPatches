@@ -1,49 +1,103 @@
+import groovy.json.JsonSlurper
+
 plugins {
-	id 'fabric-loom' version '0.12-SNAPSHOT'
-	id 'maven-publish'
+	id "fabric-loom" version "1.1-SNAPSHOT"
+	id "maven-publish"
+	id "com.modrinth.minotaur" version "2.+"
+	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-archivesBaseName = 'wmch'
-version = '1.5.0'
-group = 'obro1961.wmch'
-project.ext.set('minecraft_version', '1.18.2')
-project.ext.set('loader_version', '0.14.8')
-project.ext.set('api_version', '0.57.0+1.18.2')
-project.ext.set('yarn_mappings', '1.18.2+build.2') //! 1.18.2+build.3 not importing
+archivesBaseName = rootProject.archives_base_name
+group = rootProject.group
+version = rootProject.version
+// tokens revert to empty strings when no secrets.json exists
+def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
 
-project.ext.set('cloth_version', '6.2.62')
-project.ext.set('modmenu_version', '3.2.3')
 
 repositories {
-  	mavenCentral()
-	maven { url "https://maven.shedaniel.me/" }
-	maven { url "https://maven.terraformersmc.com/" }
-}
-dependencies {
-	// Versions changed in the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.ext.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.ext.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.ext.loader_version}"
+	mavenCentral()
 
-	// fabric api
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.ext.api_version}"
-		include "net.fabricmc.fabric-api:fabric-api:${project.ext.api_version}"
-	// config api
-	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.ext.cloth_version}") {
-        exclude(group: "net.fabricmc.fabric-api")
-    }
-	modImplementation "com.terraformersmc:modmenu:${project.ext.modmenu_version}"
+	maven { url "https://jitpack.io" } // MixinExtras
+
+	maven { url "https://maven.shedaniel.me/" } // Cloth Config
+	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:$project.minecraft"
+	mappings "net.fabricmc:yarn:$project.minecraft$project.yarn:v2"
+	modImplementation "net.fabricmc:fabric-loader:$project.loader"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api$project.minecraft"
+
+	// Jar-In-Jar, apply annotation processor, and add MixinExtras
+	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:$project.mixin_extras") ))
+
+	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config}") {
+		exclude(group: "net.fabricmc.fabric-api")
+	}
+	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
+
+
+	// integration files, toggleable in /integrations/integrations.properties
+	// put jar files in /integrations/ and see the .properties file for more info
+	File integrationsFile = file("./integrations/integrations.properties")
+
+	if( integrationsFile.exists() ) {
+		println "Loading dev testing integrations..."
+
+		def integrations = new Properties(); integrationsFile.withInputStream { integrations.load(it) }
+		def loaded = 0
+		def all = 0
+
+		for(integration in integrations) {
+			def name = integration.toString().split("=")[0]
+			def data = integration.toString().split("=")[1].split(",")
+			def src = data[0].endsWith(".jar") ? "./integrations/" + data[0] : data[0]
+			def enabled = data[1].equalsIgnoreCase("true")
+			def func = data.size() > 2 ? data[2] : "modImplementation"
+
+
+			if(enabled) {
+				if( src.endsWith(".jar") && !file(src).exists() ) {
+
+					System.err.println("Integration jar '" + src + "' doesn't exist")
+					enabled = false
+				} else {
+					"${func}" (src.endsWith(".jar") ? files(src) : src)
+					++loaded
+				}
+			}
+
+			println( String.format("\t-> %s integration '%s' with '%s' %s",
+					enabled ? "Loaded" : "Skipped",
+					name,
+					src,
+					(func != "modImplementation" ? "using method '$func'" : "")
+			))
+
+			++all
+		}
+		println "Finished loading $loaded/$all dev testing integrations\n"
+	}
 }
 
 processResources {
-	inputs.property "version", project.version
+	inputs.property "version", version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": project.version
+		expand "version": version
+
+		/* filter {
+			it.replace("example_key", rootProject.exampleVar)
+		} */
 	}
+
+	File changelog = file("latest_changelog.md")
+	if( changelog.exists() )
+		file("latest_changelog.md").text = changelog.text.replaceAll( "##(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/\$1)" )
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -51,9 +105,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 }
 
@@ -63,6 +114,7 @@ jar {
 	}
 }
 
+
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
@@ -71,10 +123,67 @@ publishing {
 	}
 
 	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
+	repositories {}
+}
+
+
+publish {
+	dependsOn tasks.processResources, tasks.curseforge, tasks.modrinth
+}
+
+curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
+	apiKey = tokens.curseforge
+	project {
+		id = "560042"
+		releaseType = "release"
+		changelogType = "markdown"
+		changelog = file("latest_changelog.md")
+
+		// adds Java versions, modloaders, and mc versions
+		addGameVersion "Java 17"
+		addGameVersion "Java 18"
+		for(String target : rootProject.targets.split(","))
+			addGameVersion target
+		for(String loader : rootProject.loaders.split(","))
+			addGameVersion loader.capitalize()
+
+		mainArtifact remapJar
+
+		relations {
+			requiredDependency "fabric-api"
+
+			optionalDependency "cloth-config"
+			optionalDependency "modmenu"
+
+			tool "no-chat-reports"
+
+			incompatible "more-chat-history"
+		}
+
+		options {
+			forgeGradleIntegration = false
+		}
+	}
+}
+
+modrinth { // https://github.com/modrinth/minotaur#groovy
+	token = tokens.modrinth
+	projectId = "MOqt4Z5n"
+	versionNumber = version // Will fail if Modrinth has this version already
+	versionType = "release"
+	uploadFile = remapJar
+	gameVersions = Arrays.asList( rootProject.targets.split(",") ) // Must be an array
+	loaders = Arrays.asList( rootProject.loaders.split(",") )
+	changelog = file("latest_changelog.md").text
+
+	dependencies {
+		required.project "fabric-api"
+
+		optional.project "cloth-config"
+		optional.project "modmenu"
+
+		optional.project "no-chat-reports"
+
+		incompatible.project "morechathistory"
 	}
 }

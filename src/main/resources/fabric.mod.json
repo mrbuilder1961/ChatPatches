@@ -1,41 +1,46 @@
 {
   "schemaVersion": 1,
-  "id": "wmch",
-  "version": "1.5.0",
+  "id": "chatpatches",
+  "version": "182.0.0",
 
-  "name": "Where's My Chat History",
+  "name": "Chat Patches",
   "description": "A versatile client-side chat mod that can do many things, just check out the config and the GitHub page for more info!",
-  "authors": ["MechanicalArcane (formerly OBro1961)"],
-  "contributors": [],
+  "authors": [
+    "OBro1961"
+  ],
+  "contributors": [
+    "FITFC (pt_br)"
+  ],
   "contact": {
-    "homepage": "https://curseforge.com/minecraft/mc-mods/wmch",
-    "issues": "https://github.com/mrbuilder1961/WheresMyChatHistory/issues",
-    "sources": "https://github.com/mrbuilder1961/WheresMyChatHistory"
+    "homepage": "https://curseforge.com/minecraft/mc-mods/chatpatches",
+    "issues": "https://github.com/mrbuilder1961/ChatPatches/issues",
+    "sources": "https://github.com/mrbuilder1961/ChatPatches"
   },
 
   "license": "CC0-1.0",
-  "icon": "assets/wmch/icon.png",
+  "icon": "assets/chatpatches/icon.png",
 
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
-    "main": ["obro1961.wmch.WMCH"],
-    "modmenu": ["obro1961.wmch.config.ModMenuIntegration"]
+    "client": [
+      "obro1961.chatpatches.ChatPatches"
+    ],
+    "modmenu": [
+      "obro1961.chatpatches.integration.ModMenuIntegration"
+    ]
   },
   "mixins": [
-    {
-      "config": "wmch.mixins.json",
-      "environment": "*"
-    }
+    "chatpatches.mixins.json"
   ],
 
   "depends": {
-    "fabricloader": ">=0.14.0",
-    "fabric": "*",
+    "java": ">=17",
     "minecraft": "1.18.x",
-    "java": ">=17"
+    "fabricloader": ">=0.14.0",
+    "fabric": "*"
   },
   "recommends": {
-    "modmenu": ">=3.2.3",
-    "cloth-config": ">=6.2.62"
+    "modmenu": "*",
+    "cloth-config": "*"
   }
 }
