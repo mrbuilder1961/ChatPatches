@@ -90,7 +90,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
     private int cps$moveScrollBar(int u) {
         return u + (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
     }
-    @ModifyVariable(method = "getText", argsOnly = true, at = @At("HEAD"), ordinal = 1, print = true)
+    @ModifyVariable(method = "getText", argsOnly = true, at = @At("HEAD"), ordinal = 1)
     private double cps$moveHoverText(double e) {
         // small bug with this, hover text extends to above chat
         // maybe check ChatHud#toChatLineY(double)
