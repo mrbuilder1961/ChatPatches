@@ -155,8 +155,6 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 			optionalDependency "cloth-config"
 			optionalDependency "modmenu"
 
-			tool "no-chat-reports"
-
 			incompatible "more-chat-history"
 		}
 
@@ -181,8 +179,6 @@ modrinth { // https://github.com/modrinth/minotaur#groovy
 
 		optional.project "cloth-config"
 		optional.project "modmenu"
-
-		optional.project "no-chat-reports"
 
 		incompatible.project "morechathistory"
 	}

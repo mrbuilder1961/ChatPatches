@@ -42,5 +42,8 @@
   "recommends": {
     "cloth-config": "*",
     "modmenu": "*"
+  },
+  "breaks": {
+    "morechathistory": "*"
   }
 }
