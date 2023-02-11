@@ -1,5 +1,6 @@
 package obro1961.chatpatches.config;
 
+import com.google.common.collect.Lists;
 import dev.isxander.yacl.api.*;
 import dev.isxander.yacl.gui.controllers.ActionController;
 import dev.isxander.yacl.gui.controllers.BooleanController;
@@ -15,7 +16,6 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.Util;
-import org.apache.commons.compress.utils.Lists;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
