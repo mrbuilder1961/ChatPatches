@@ -1,5 +1,6 @@
 package obro1961.chatpatches.config;
 
+import com.google.common.collect.Lists;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
@@ -11,7 +12,6 @@ import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.*;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.Util;
-import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;

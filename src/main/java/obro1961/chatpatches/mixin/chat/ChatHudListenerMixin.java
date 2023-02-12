@@ -27,8 +27,8 @@ public abstract class ChatHudListenerMixin {
      * Caches the GameProfile representing the most recent sender
      * of a chat message.
      *
-     * @apiNote {@code client.getNetworkHandler()} should never be null,
-     * because MinecraftClient.player is never null when in game
+     * @apiNote {@code client.getNetworkHandler()} should never be null
+     * because {@link MinecraftClient#player} is never null when in game,
      * (chat messages are only accessible in game) and it returns
      * based on {@code player}'s nullability.
      */

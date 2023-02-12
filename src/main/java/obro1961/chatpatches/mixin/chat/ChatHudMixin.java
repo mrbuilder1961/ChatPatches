@@ -14,7 +14,6 @@ import net.minecraft.text.Text;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Util;
-import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -84,17 +83,17 @@ public abstract class ChatHudMixin extends DrawableHelper {
      */
     @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 25)
     private double cps$moveChatText(double s) {
-        return s - Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
+        return s - Math.floor( (double)config.shiftChat / this.getChatScale() );
     }
     @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 20)
     private int cps$moveScrollBar(int u) {
-        return u + (int)Math.floor( (double)Math.abs(config.shiftChat) / this.getChatScale() );
+        return u + (int)Math.floor( (double)config.shiftChat / this.getChatScale() );
     }
     @ModifyVariable(method = "getText", argsOnly = true, at = @At("HEAD"), ordinal = 1)
     private double cps$moveHoverText(double e) {
         // small bug with this, hover text extends to above chat
         // maybe check ChatHud#toChatLineY(double)
-        return e + ( Math.abs(config.shiftChat) * this.getChatScale() );
+        return e + ( config.shiftChat * this.getChatScale() );
     }
 
     /**
@@ -108,7 +107,6 @@ public abstract class ChatHudMixin extends DrawableHelper {
      * <li> Doesn't modify when {@code refreshing} is true, as that signifies
      * re-rendering of chat messages on the hud.
      */
-    @Debug(export = true)
     @ModifyVariable(method = "addMessage(Lnet/minecraft/text/Text;IIZ)V", at = @At("HEAD"), argsOnly = true)
     private Text cps$modifyMessage(Text m, Text message, int id, int ticks, boolean refreshing) {
         if( Util.Flags.LOADING_CHATLOG.isSet() || refreshing )
@@ -152,7 +150,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
      * @implNote
      * <ol>
      * <li> IF {@code COUNTER} is enabled AND message count >0 AND the message isn't a boundary line, continue.
-     * <li> (cache last message, incoming's text siblings and last's text siblings)
+     * <li> (cache last message, incoming text siblings and last's text siblings)
      * <li> IF not regenerating visible messages AND the incoming and last messages are loosely equal, continue.
      * <li> (save number of duped messages from another counter and current check)
      * <li> Modify the last message to have a dupe counter
