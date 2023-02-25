@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "chat_patches",
+  "id": "chatpatches",
   "version": "${version}",
 
   "name": "Chat Patches",
