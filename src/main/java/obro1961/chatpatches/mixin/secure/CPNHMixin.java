@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Environment(EnvType.CLIENT)
-@Mixin(value = ClientPlayNetworkHandler.class, priority = 400)
+@Mixin(ClientPlayNetworkHandler.class)
 public abstract class CPNHMixin {
     /**
      * Prevents messages from being hidden.
@@ -18,7 +18,7 @@ public abstract class CPNHMixin {
      * but based on how chat reports work, this is likely
      * not wanted.
      */
-    @Inject(method = "onHideMessage", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "onHideMessage", at = @At("HEAD"), cancellable = true, require = 0)
     private void cancelHideMessage(HideMessageS2CPacket packet, CallbackInfo ci) {
         ci.cancel();
     }

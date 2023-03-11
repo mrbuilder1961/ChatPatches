@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 import static obro1961.chatpatches.ChatPatches.config;
 
 @Environment(EnvType.CLIENT)
-@Mixin(value = ChatHud.class, priority = 400)
+@Mixin(ChatHud.class)
 public abstract class ChatHudMixin extends DrawableHelper {
     @Shadow @Final private MinecraftClient client;
 
@@ -190,6 +190,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
      * <li> Break updated message by width into a list of renderable messages
      * <li> Insert them into the hud
      * <li> Cancel to prevent duplicating this message
+     * <li> Wraps the entire method in a try-catch to prevent any errors from (effectively) disabling the chat.
      */
     @Inject(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
@@ -197,67 +198,72 @@ public abstract class ChatHudMixin extends DrawableHelper {
         cancellable = true
     )
     private void cps$addCounter(Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing, CallbackInfo ci) {
-        // IF counter is enabled AND not refreshing AND messages >0 AND the message isn't a boundary line, continue
-        if(config.counter && !refreshing && !messages.isEmpty() && !Util.Flags.BOUNDARY_LINE.isSet() ) {
-            // indexes from (customized) messages
-            final int TIME = 0;
-            final int OG_MSG = 1;
-            final int DUPE = 2;
+        try {
+            // IF counter is enabled AND not refreshing AND messages >0 AND the message isn't a boundary line, continue
+            if(config.counter && !refreshing && !messages.isEmpty() && !Util.Flags.BOUNDARY_LINE.isSet() ) {
+                // indexes from (customized) messages
+                final int TIME = 0;
+                final int OG_MSG = 1;
+                final int DUPE = 2;
 
-            ChatHudLine lastHudLine = messages.get(0);
-            Text text = lastHudLine.content();
-            final List<Text> incSibs = m.getSiblings();
-            final List<Text> lastSibs = lastHudLine.content().getSiblings();
-
-
-            // IF the last and incoming message bodies are equal, continue
-            if( incSibs.get(OG_MSG).getString().equalsIgnoreCase( lastSibs.get(OG_MSG).getString()) ) {
-
-                // how many duped messages plus this one
-                int dupes = (incSibs.size() > DUPE
-                    ? Integer.parseInt( Util.delAll( incSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
-                    : lastSibs.size() > DUPE
-                    ? Integer.parseInt( Util.delAll( lastSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
-                    : 1
-                ) + 1;
+                ChatHudLine lastHudLine = messages.get(0);
+                Text text = lastHudLine.content();
+                final List<Text> incSibs = m.getSiblings();
+                final List<Text> lastSibs = lastHudLine.content().getSiblings();
 
 
-                // modifies the message to have a counter and timestamp
-                Util.setOrAdd( text.getSiblings(), DUPE, config.makeDupeCounter(dupes) );
+                // IF the last and incoming message bodies are equal, continue
+                if( incSibs.get(OG_MSG).getString().equalsIgnoreCase( lastSibs.get(OG_MSG).getString()) ) {
 
-                // IF the last message had a timestamp, update it
-                if( !lastSibs.get(TIME).getString().isEmpty() )
-                    text.getSiblings().set(TIME, incSibs.get(TIME));
+                    // how many duped messages plus this one
+                    int dupes = (incSibs.size() > DUPE
+                        ? Integer.parseInt( Util.delAll( incSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
+                        : lastSibs.size() > DUPE
+                        ? Integer.parseInt( Util.delAll( lastSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D") )
+                        : 1
+                    ) + 1;
 
-                // Replace the old text with the incoming text
-                text.getSiblings().set(OG_MSG, incSibs.get(OG_MSG));
 
-                // modifies the actual message to have a counter
-                messages.set( 0, new ChatHudLine(ticks, text, lastHudLine.headerSignature(), lastHudLine.indicator()) );
+                    // modifies the message to have a counter and timestamp
+                    Util.setOrAdd( text.getSiblings(), DUPE, config.makeDupeCounter(dupes) );
 
-                // modifies the rendered messages to have a counter
-                List<OrderedText> visibles = net.minecraft.client.util.ChatMessages.breakRenderedChatMessageLines(
-                    text,
-                    net.minecraft.util.math.MathHelper.floor( (double)this.getWidth() / this.getChatScale() ),
-                    client.textRenderer
-                );
+                    // IF the last message had a timestamp, update it
+                    if( !lastSibs.get(TIME).getString().isEmpty() )
+                        text.getSiblings().set(TIME, incSibs.get(TIME));
 
-                Collections.reverse(visibles);
+                    // Replace the old text with the incoming text
+                    text.getSiblings().set(OG_MSG, incSibs.get(OG_MSG));
 
-                for(OrderedText ordered : visibles)
-                    Util.setOrAdd(
-                        visibleMessages,
-                        visibles.indexOf(ordered),
-                        new ChatHudLine.Visible(
-                            ticks,
-                            ordered,
-                            lastHudLine.indicator(),
-                            ((visibles.indexOf(ordered)) == (visibles.size() - 1))
-                        )
+                    // modifies the actual message to have a counter
+                    messages.set( 0, new ChatHudLine(ticks, text, lastHudLine.signature(), lastHudLine.indicator()) );
+
+                    // modifies the rendered messages to have a counter
+                    List<OrderedText> visibles = net.minecraft.client.util.ChatMessages.breakRenderedChatMessageLines(
+                        text,
+                        net.minecraft.util.math.MathHelper.floor( (double)this.getWidth() / this.getChatScale() ),
+                        client.textRenderer
                     );
 
-                ci.cancel();
+                    Collections.reverse(visibles);
+
+                    for(OrderedText ordered : visibles)
+                        Util.setOrAdd(
+                            visibleMessages,
+                            visibles.indexOf(ordered),
+                            new ChatHudLine.Visible(
+                                ticks,
+                                ordered,
+                                lastHudLine.indicator(),
+                                ((visibles.indexOf(ordered)) == (visibles.size() - 1))
+                            )
+                        );
+
+                    ci.cancel();
+                }
             }
+        } catch (IndexOutOfBoundsException e) {
+            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' was not constructed properly.", m.getString());
+            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This is likely caused by a bug or mod incompatibility. Please report this on GitHub!", e);
         }
     }
 }

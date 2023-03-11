@@ -23,7 +23,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Environment(EnvType.CLIENT)
-@Mixin(value = MessageHandler.class, priority = 400)
+@Mixin(MessageHandler.class)
 public abstract class MessageHandlerMixin {
     @Shadow @Final private MinecraftClient client;
 

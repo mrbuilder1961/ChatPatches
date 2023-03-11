@@ -17,7 +17,7 @@ import java.util.List;
  * {@link CopyMessageCommand} execute methods.
  */
 @Environment(EnvType.CLIENT)
-@Mixin(value = ChatHud.class, priority = 400)
+@Mixin(ChatHud.class)
 public interface ChatHudAccessor {
     @Accessor
     List<ChatHudLine> getMessages();
