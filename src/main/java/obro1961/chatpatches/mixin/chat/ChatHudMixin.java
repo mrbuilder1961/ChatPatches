@@ -235,7 +235,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
                     text.getSiblings().set(OG_MSG, incSibs.get(OG_MSG));
 
                     // modifies the actual message to have a counter
-                    messages.set( 0, new ChatHudLine(ticks, text, lastHudLine.signature(), lastHudLine.indicator()) );
+                    messages.set( 0, new ChatHudLine(ticks, text, lastHudLine.headerSignature(), lastHudLine.indicator()) );
 
                     // modifies the rendered messages to have a counter
                     List<OrderedText> visibles = net.minecraft.client.util.ChatMessages.breakRenderedChatMessageLines(
