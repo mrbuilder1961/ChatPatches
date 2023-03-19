@@ -1,12 +1,12 @@
 package obro1961.chatpatches.util;
 
 import com.mojang.authlib.GameProfile;
-import obro1961.chatpatches.mixin.chat.ChatHudAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import obro1961.chatpatches.mixinesq.ChatHudAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

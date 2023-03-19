@@ -7,9 +7,8 @@
   "mixins": [],
   "client": [
     "MinecraftClientMixin",
-    "chat.ChatHudAccessor",
-    "chat.MessageHandlerMixin",
     "chat.ChatHudMixin",
+    "chat.MessageHandlerMixin",
     "secure.CPNHMixin"
   ],
   "injectors": {

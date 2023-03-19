@@ -13,6 +13,7 @@ import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.*;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.mixinesq.ChatHudAccessor;
 import obro1961.chatpatches.util.Util;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,18 +32,29 @@ import java.util.regex.Pattern;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.lastMsg;
 
+/**
+ * The main entrypoint mixin for most chat modifications.
+ * Implements {@link ChatHudAccessor} to widen access to
+ * extra fields and methods used elsewhere.
+ */
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatHud.class, priority = 400)
-public abstract class ChatHudMixin extends DrawableHelper {
+public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAccessor {
+    // shadowed fields used in scope of this mixin
     @Shadow @Final private MinecraftClient client;
 
     @Shadow @Final private List<ChatHudLine> messages;
     @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
 
 
+    // shadowed methods used in scope of this mixin
     @Shadow public abstract double getChatScale();
-
     @Shadow public abstract int getWidth();
+
+
+    // ChatHudAccessor methods used in scope outside this mixin
+    public List<ChatHudLine> getMessages() { return messages; }
+    public List<ChatHudLine.Visible> getVisibleMessages() { return visibleMessages; }
 
 
     /** Prevents the game from actually clearing chat history */
@@ -69,7 +81,7 @@ public abstract class ChatHudMixin extends DrawableHelper {
         return config.maxMsgs;
     }
 
-    // allows for a larger chat width (default is 320) up to the window width - padding
+    /** allows for a chat width larger than 320px */
     @ModifyReturnValue(method = "getWidth()I", at = @At("RETURN"))
     private int cps$moreWidth(int defaultWidth) {
         return config.chatWidth > 0 ? config.chatWidth : defaultWidth;
@@ -179,16 +191,17 @@ public abstract class ChatHudMixin extends DrawableHelper {
      *
      * @implNote
      * <ol>
-     * <li> IF {@code COUNTER} is enabled AND message count >0 AND the message isn't a boundary line, continue.
-     * <li> (cache last message, incoming's text siblings and last's text siblings)
-     * <li> IF not regenerating visible messages AND the incoming and last messages are loosely equal, continue.
-     * <li> (save number of duped messages from another counter and current check)
-     * <li> Modify the last message to have a dupe counter
-     * <li> Update the existing timestamp (if present)
-     * <li> Replace old message body with incoming text
-     * <li> Break updated message by width into a list of renderable messages
-     * <li> Insert them into the hud
-     * <li> Cancel to prevent duplicating this message
+     *     <li>IF {@code COUNTER} is enabled AND message count >0 AND the message isn't a boundary line, continue.</li>
+     *     <li>(cache last message, incoming's text siblings and last's text siblings)</li>
+     *     <li>IF not regenerating visible messages AND the incoming and last messages are loosely equal, continue.</li>
+     *     <li>(save number of duped messages from another counter and current check)</li>
+     *     <li>Modify the last message to have a dupe counter</li>
+     *     <li>Update the existing timestamp (if present)</li>
+     *     <li>Replace old message body with incoming text</li>
+     *     <li>Break updated message by width into a list of renderable messages</li>
+     *     <li>Insert them into the hud</li>
+     *     <li>Cancel to prevent duplicating this message</li>
+     * </ol>
      */
     @Inject(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
