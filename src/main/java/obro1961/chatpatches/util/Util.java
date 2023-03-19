@@ -105,6 +105,7 @@ public class Util {
 	 * @return A 2 item list consisting of the world name and whether
 	 * it was a ClientWorld or not.
 	 */
+	@SuppressWarnings("DataFlowIssue")
 	public static String currentWorldName(@NotNull MinecraftClient client) {
 		Objects.requireNonNull(client, "MinecraftClient must exist to access client data:");
 		String entryName;

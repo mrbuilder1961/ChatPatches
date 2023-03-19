@@ -251,9 +251,5 @@ public class Config {
         public void set(Object obj) {
             this.set(obj, true);
         }
-
-        /*public boolean changed() {
-            return !val.equals(def);
-        }*/
     }
 }

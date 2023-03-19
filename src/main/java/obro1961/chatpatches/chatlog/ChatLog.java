@@ -5,12 +5,12 @@ import com.google.gson.Gson;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
-import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.Util;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.text.Text;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.util.Util;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -49,13 +49,9 @@ public class ChatLog {
         public List<Text> messages;
         public List<String> history;
 
-        private Data(int size) {
-            messages = Lists.newArrayListWithExpectedSize(size);
-            history = Lists.newArrayListWithExpectedSize(size);
-        }
-
         private Data() {
-            this(DEFAULT_SIZE);
+            messages = Lists.newArrayListWithExpectedSize(DEFAULT_SIZE);
+            history = Lists.newArrayListWithExpectedSize(DEFAULT_SIZE);
         }
     }
 
