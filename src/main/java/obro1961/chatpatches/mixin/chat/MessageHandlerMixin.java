@@ -49,7 +49,7 @@ public abstract class MessageHandlerMixin {
     private void cps$cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         client.options.getOnlyShowSecureChat().setValue(false);
 
-        ChatPatches.lastMsg = new ChatUtils.MessageData(message.getContent(), sender, message.getTimestamp());
+        ChatPatches.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp());
     }
 
     /**
@@ -70,7 +70,7 @@ public abstract class MessageHandlerMixin {
             ChatPatches.lastMsg =
                 ( name == null || name.equals("") || uuid.equals(ChatUtils.NIL_UUID) )
                     ? ChatUtils.NIL_MESSAGE
-                    : new ChatUtils.MessageData( message, new GameProfile(uuid, name), Instant.now() );
+                    : new ChatUtils.MessageData( new GameProfile(uuid, name), Instant.now() );
         } else {
             ChatPatches.lastMsg = ChatUtils.NIL_MESSAGE;
         }
