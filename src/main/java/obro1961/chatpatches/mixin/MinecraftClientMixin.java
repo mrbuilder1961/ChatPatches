@@ -1,18 +1,22 @@
 package obro1961.chatpatches.mixin;
 
-import obro1961.chatpatches.chatlog.ChatLog;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import obro1961.chatpatches.chatlog.ChatLog;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Injects callbacks to game exit events so cached data can still be saved */
+/**
+ * An ugly but necessary mixin for a couple random things.
+ */
 @Environment(EnvType.CLIENT)
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin {
+
+    /** Injects callbacks to the game exit event, so cached data can still be saved. */
     @Inject(method = "run", at = {
         @At(
             value = "INVOKE",

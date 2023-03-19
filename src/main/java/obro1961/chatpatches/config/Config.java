@@ -9,7 +9,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.EntityType;
 import net.minecraft.text.*;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.util.Util;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -24,6 +23,8 @@ import java.util.Objects;
 
 import static java.io.File.separator;
 import static obro1961.chatpatches.ChatPatches.*;
+import static obro1961.chatpatches.util.StringTextUtils.fillVars;
+import static obro1961.chatpatches.util.StringTextUtils.toText;
 
 public class Config {
     public static final String CONFIG_PATH = FABRIC_LOADER.getConfigDir().toString() + separator + "chatpatches.json";
@@ -92,7 +93,7 @@ public class Config {
      */
     public MutableText makeTimestamp(Date when) {
         return (
-            Util.formatString( Util.fillVars(timeFormat, new SimpleDateFormat(timeDate).format(when)) + " " )
+            toText( fillVars(timeFormat, new SimpleDateFormat(timeDate).format(when)) + " " )
         ).fillStyle( Style.EMPTY.withColor(timeColor) );
     }
 
@@ -106,8 +107,8 @@ public class Config {
         final Style EMPTY = Style.EMPTY
             .withBold(false).withItalic(false).withUnderline(false).withObfuscated(false).withStrikethrough(false);
 
-        MutableText hoverText = Util.formatString(
-            Util.fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when))
+        MutableText hoverText = toText(
+            fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when))
         ).fillStyle( EMPTY.withColor(hoverColor) );
 
         return EMPTY
@@ -119,7 +120,7 @@ public class Config {
 
     public MutableText formatPlayername(GameProfile player) {
         String name = player.getName();
-        return Util.formatString( Util.fillVars(nameFormat, name) + " " )
+        return toText( fillVars(nameFormat, name) + " " )
             .setStyle( Style.EMPTY
                 .withHoverEvent(
                     new HoverEvent(
@@ -133,13 +134,13 @@ public class Config {
 
     public MutableText makeDupeCounter(int dupes) {
         return
-            Util.formatString(" " + Util.fillVars(counterFormat, Integer.toString(dupes)))
+            toText(" " + fillVars(counterFormat, Integer.toString(dupes)))
                 .fillStyle( Style.EMPTY.withColor(counterColor) );
     }
 
     public MutableText makeBoundaryLine(String levelName) {
         return
-            Util.formatString( Util.fillVars(boundaryFormat, levelName) )
+            toText( fillVars(boundaryFormat, levelName) )
                 .fillStyle(Style.EMPTY.withColor(boundaryColor));
     }
 

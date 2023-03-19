@@ -5,11 +5,11 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import obro1961.chatpatches.util.Util;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.text.Text;
+import obro1961.chatpatches.util.ChatUtils;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -40,7 +40,7 @@ public class CopyMessageCommand {
 
     private static int executeIndex(CommandContext<FabricClientCommandSource> context) {
         client = context.getSource().getClient();
-        List<ChatHudLine> messages = Util.chatHud(client).getMessages();
+        List<ChatHudLine> messages = ChatUtils.chatHud(client).getMessages();
         int i = context.getArgument("message_index", Integer.class);
 
         if(messages.size() > i) {
@@ -66,7 +66,7 @@ public class CopyMessageCommand {
 
     private static CompletableFuture<Suggestions> indexSuggestions(CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) {
         client = context.getSource().getClient();
-        List<ChatHudLine> messages = Util.chatHud(client).getMessages();
+        List<ChatHudLine> messages = ChatUtils.chatHud(client).getMessages();
 
         // loops over each message for suggesting
         for(ChatHudLine line : messages)

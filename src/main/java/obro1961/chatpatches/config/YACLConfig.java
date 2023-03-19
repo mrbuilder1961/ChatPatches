@@ -15,7 +15,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.util.Util;
+import obro1961.chatpatches.util.Flags;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
@@ -110,9 +110,9 @@ public class YACLConfig extends Config {
                     "debug",
                     List.of(
                         Option.createBuilder(Integer.class)
-                            .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Util.Flags.flags, Util.Flags.binary())) )
+                            .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Flags.flags, Integer.toBinaryString(Flags.flags))) )
                             .controller(opt -> new IntegerSliderController(opt, 0, 0b1111, 1))
-                            .binding( Util.Flags.flags, () -> Util.Flags.flags, inc -> Util.Flags.flags = inc )
+                            .binding( Flags.flags, () -> Flags.flags, inc -> Flags.flags = inc )
                             .build(),
 
                         ButtonOption.createBuilder()

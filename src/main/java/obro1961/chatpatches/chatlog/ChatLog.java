@@ -10,7 +10,7 @@ import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.Util;
+import obro1961.chatpatches.util.Flags;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -23,8 +23,7 @@ import java.util.List;
 import static java.io.File.separator;
 
 /**
- * Represents the chat log file in the
- * run directory located at {@link ChatLog#CHATLOG_PATH}.
+ * Represents the chat log file in the run directory located at {@link ChatLog#CHATLOG_PATH}.
  */
 public class ChatLog {
     public static final String CHATLOG_PATH = ChatPatches.FABRIC_LOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
@@ -135,6 +134,7 @@ public class ChatLog {
 		);
     }
 
+    /** Saves the chat log to {@link #CHATLOG_PATH}. */
     public static void serialize(boolean crashing) {
         if(crashing && savedAfterCrash)
             return;
@@ -166,8 +166,9 @@ public class ChatLog {
             data.history = data.history.subList(0, ChatPatches.config.maxMsgs + 1);
     }
 
+    /** Restores the chat log from {@link #data} into Minecraft. */
     public static void restore(MinecraftClient client) {
-        Util.Flags.LOADING_CHATLOG.set();
+        Flags.LOADING_CHATLOG.flag();
 
         if(data.history.size() > 0)
             data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
@@ -176,9 +177,8 @@ public class ChatLog {
                 msg, null, new MessageIndicator(0x382fb5, null, null, "Restored")
             ));
 
-        Util.Flags.LOADING_CHATLOG.remove();
-        ChatPatches.LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(),
-            CHATLOG_PATH);
+        Flags.LOADING_CHATLOG.remove();
+        ChatPatches.LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(), CHATLOG_PATH);
     }
 
 

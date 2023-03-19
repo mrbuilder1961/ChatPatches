@@ -4,6 +4,7 @@
   "package": "obro1961.chatpatches.mixin",
   "compatibilityLevel": "JAVA_17",
   "verbose": true,
+  "mixinPriority": 2000,
   "mixins": [],
   "client": [
     "MinecraftClientMixin",
