@@ -6,18 +6,15 @@
 name: build
 on:
   # Don't build if only text-based files were changed.
-  # Also ignore the devcontainer files
   # Prevents waiting for unnecessary checks/actions
   push:
     paths-ignore:
       - '**.md'
       - '**.txt'
-      - '.devcontainer/devcontainer.json'
   pull_request:
     paths-ignore:
       - '**.md'
       - '**.txt'
-      - '.devcontainer/devcontainer.json'
 
 jobs:
   build:
