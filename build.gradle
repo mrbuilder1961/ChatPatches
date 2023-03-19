@@ -30,7 +30,7 @@ dependencies {
 	minecraft "com.mojang:minecraft:$project.minecraft"
 	mappings "net.fabricmc:yarn:$project.minecraft$project.yarn:v2"
 	modImplementation "net.fabricmc:fabric-loader:$project.loader"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api$project.minecraft"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api"
 
 	// Jar-In-Jar, apply annotation processor, and add MixinExtras
 	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:$project.mixin_extras") ))
