@@ -9,26 +9,35 @@
 # Chat Patches (formerly Where's My Chat History)
 
 This mod does quite a few things:
-- Increases the maximum amount of chat messages to 16,384
+- Increases the maximum amount of chat messages from 100 to 16,384
 - Adds a timestamp in front of all messages, formatted as `[HOUR:MINUTE:SECOND]` in pink text, with a tooltip that renders a complete date
 - Keeps chat history and previously sent messages across ALL worlds and servers
-- Lets you modify vanilla player names to anything more appealing than triangle brackets
-- Minimize spam by enabling the counter that shows how many duplicate messages have been sent in a row
+- Can log chat messages for restoring them back into the chat in future Minecraft sessions
+- Lets you modify vanilla player names to anything you want (including not triangle brackets!)
+- Minimize spam by enabling a counter that shows how many duplicate messages have been sent in a row
 - Shift the chat hud up by 10 pixels, so it doesn't overlap with the armor bar
 - All of this is configurable, with much more to offer!
 
-This mod serves as a configurable bundle of [More Chat History](https://www.curseforge.com/minecraft/mc-mods/more-chat-history), [When Was That Again](https://www.curseforge.com/minecraft/mc-mods/wwta), [Don't Clear Chat History](https://www.curseforge.com/minecraft/mc-mods/dont-clear-chat-history), [No Angled Brackets](https://www.curseforge.com/minecraft/mc-mods/no-angled-brackets), [Clear Spam](https://www.curseforge.com/minecraft/mc-mods/clearspam), and [Chat Up!](https://www.curseforge.com/minecraft/mc-mods/chat-up) all together!
+This mod provides features from a multitude of other mods (in addition to new/original features!), 100% including:
+- [More Chat History](https://www.curseforge.com/minecraft/mc-mods/more-chat-history)
+- [When Was That Again](https://www.curseforge.com/minecraft/mc-mods/wwta)
+- [Don't Clear Chat History](https://www.curseforge.com/minecraft/mc-mods/dont-clear-chat-history)
+- [No Angled Brackets](https://www.curseforge.com/minecraft/mc-mods/no-angled-brackets)
+- [Clear Spam](https://www.curseforge.com/minecraft/mc-mods/clearspam)
+- [Chat Up!](https://www.curseforge.com/minecraft/mc-mods/chat-up)
 
 Be on the lookout for new versions, issues, and future features!
+
+\**Note: this readme may be outdated, make sure this file's GitHub branch is or includes the latest Minecraft version. I've decided to stop updating old READMEs, so make sure you are reading the most up-to-date one so you're not getting any false or out-of-date information.*
 
 ## FAQ
 
 - What Minecraft version can I use this with?
-  - The *latest Fabric* versions of Minecraft, plus 1.18.x and soon 1.16.x. *Quilt* appears to work, but I don't provide official support for it.
+  - The *latest Fabric* versions of Minecraft, plus 1.18.x. *Quilt* appears to work, but I don't provide official support for it.
 - Will you make it for (older Minecraft version)? 
-  - Not likely. The oldest version I'll be making is 1.16.x.
+  - Not likely. The oldest version I'll be making is 1.18.x. Any older version would only be supported if it is generally recognized as a modding-LTS version and if it is commonly requested, because backporting is boring and makes me want to die.
 - Will you make this for Forge? 
-  - I doubt it. Fabric's API is simple and I don't feel like learning about Forge's.
+  - Probably at some point after all the major changes I want to implement are finished. But right now, I doubt it. Fabric's API is simple and I am too lazy to learn Forge's until then.
 - I found a bug/issue, what do I do?
   - First, make sure you have the latest version of the mod for your Minecraft version. If it still persists, you can click on the Issues tab on this page, and nobody has opened one about your issue then create one! Note that a lack of provided information will increase time needed to fix.
 - It says I need to install Fabric but I already have it installed?
@@ -37,7 +46,7 @@ Be on the lookout for new versions, issues, and future features!
   - It is client side, so no.
 - I can't access the config menu in-game!
   - <u>For 1.19.2+:</u> You need the LATEST versions of both [YetAnotherConfigLib](https://modrinth.com/mod/yacl/versions?l=fabric&c=release) and [Mod Menu](https://modrinth.com/mod/modmenu/versions?l=fabric&c=release) to access it in game.
-  - <u>For 1.16.x and 1.18.x:</u> You need the LATEST versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu](https://modrinth.com/mod/modmenu/versions?l=fabric&c=release) to access it in game.
+  - <u>For 1.18.x:</u> You need the LATEST versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu](https://modrinth.com/mod/modmenu/versions?l=fabric&c=release) to access it in game.
   - <u>For any version:</u> You can always edit the config at `(directory)/config/chatpatches.json`.
 - My config is broken/not working!
   - When you load one of the more recent mod versions, it makes a creates a new file with your old settings and resets the main file. You can access this 
