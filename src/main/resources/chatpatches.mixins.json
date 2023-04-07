@@ -10,6 +10,7 @@
     "MinecraftClientMixin",
     "chat.ChatHudMixin",
     "chat.MessageHandlerMixin",
+    "gui.ChatScreenAccessor",
     "secure.CPNHMixin"
   ],
   "injectors": {

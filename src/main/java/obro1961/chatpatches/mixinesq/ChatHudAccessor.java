@@ -16,4 +16,9 @@ public interface ChatHudAccessor {
     List<ChatHudLine> getMessages();
     /** {@link ChatHud#visibleMessages} */
     List<ChatHudLine.Visible> getVisibleMessages();
+
+    /** {@link ChatHud#getChatScale()} */
+    double getChatScale();
+    /** {@link ChatHud#getWidth()} */
+    int getWidth();
 }

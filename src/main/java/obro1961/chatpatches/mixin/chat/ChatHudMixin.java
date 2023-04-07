@@ -45,19 +45,18 @@ import static obro1961.chatpatches.ChatPatches.lastMsg;
 @Environment(EnvType.CLIENT)
 @Mixin(ChatHud.class)
 public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAccessor {
-    // shadowed fields used in scope of this mixin
+    // shadowed fields used in this mixin
     @Shadow @Final private MinecraftClient client;
 
     @Shadow @Final private List<ChatHudLine> messages;
     @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
 
 
-    // shadowed methods used in scope of this mixin
+    // shadowed methods used in this mixin, and
+    // ChatHudAccessor methods used outside this mixin
     @Shadow public abstract double getChatScale();
     @Shadow public abstract int getWidth();
 
-
-    // ChatHudAccessor methods used in scope outside this mixin
     public List<ChatHudLine> getMessages() { return messages; }
     public List<ChatHudLine.Visible> getVisibleMessages() { return visibleMessages; }
 

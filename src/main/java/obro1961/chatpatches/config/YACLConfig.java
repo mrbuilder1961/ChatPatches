@@ -92,9 +92,11 @@ public class YACLConfig extends Config {
                     category(
                     "help",
                         List.of(
-                            label( Text.translatable("text.chatpatches.dateFormat"), null, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
-                            label( Text.translatable("text.chatpatches.formatCodes"), null, "https://minecraft.gamepedia.com/Formatting_codes" ),
-                            label( Text.literal("README -> FAQ"), null, "https://github.com/mrbuilder1961/ChatPatches#faq" )
+                            label( Text.translatable("text.chatpatches.date_format"), null, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
+                            label( Text.translatable("text.chatpatches.format_codes"), null, "https://minecraft.gamepedia.com/Formatting_codes" ),
+                            label( Text.translatable("text.chatpatches.faq"), null, "https://github.com/mrbuilder1961/ChatPatches#faq" ),
+                            label( Text.translatable("text.chatpatches.regex"), null, "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
+                            label( Text.translatable("text.chatpatches.regex_tester"), null, "https://regex101.com/" )
                         )
                     )
                 )

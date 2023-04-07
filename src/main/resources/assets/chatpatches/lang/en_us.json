@@ -1,8 +1,11 @@
 {
     "text.chatpatches.title": "Chat Patches Configuration",
 
-    "text.chatpatches.dateFormat": "For date and time formatting information, click me!",
-    "text.chatpatches.formatCodes": "For formatting code characters and which ones do what, click me!",
+    "text.chatpatches.date_format": "For date and time formatting information, click me!",
+    "text.chatpatches.format_codes": "For formatting code characters and which ones do what, click me!",
+    "text.chatpatches.faq": "For Frequently Asked Questions (FAQ), click me!",
+    "text.chatpatches.regex": "For regular expression information, click me!",
+    "text.chatpatches.regex_tester": "For testing regular expressions, click me!",
 
     "text.chatpatches.time": "Timestamp toggle",
     "text.chatpatches.timeDate": "Timestamp text",
@@ -41,11 +44,13 @@
     "text.chatpatches.chatWidth": "Override chat width",
     "text.chatpatches.maxMsgs": "Maximum chat messages",
     "text.chatpatches.nameFormat": "Playername text",
+    "text.chatpatches.chatSearchScreen": "Searchable chat screen",
     "text.chatpatches.desc.saveChat": "Should the chat be saved into a log so it can be re-added back into the chat in another game session?",
     "text.chatpatches.desc.shiftChat": "Shifts the chat interface up to not obstruct the armor bar and/or health. Default is 10, set to 0 for no shift.",
     "text.chatpatches.desc.chatWidth": "The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.",
     "text.chatpatches.desc.maxMsgs": "The max amount of chat messages allowed to save. Vanilla caps it at 100, this mod can increase it up to 32,767. Keep in mind a higher max equals higher memory usage.",
     "text.chatpatches.desc.nameFormat": "The text that replaces the playername in chat messages. Vanilla is '<$>', name only is '$'; where '$' is a placeholder for the playername. Only applies to player-sent messages.",
+    "text.chatpatches.desc.chatSearchScreen": "Should the chat screen contain a search feature and other capabilities? Note that this uses a custom, vanilla-overriding screen that may break or cause issues with other mods.",
 
     "text.chatpatches.category.time": "Timestamp",
     "text.chatpatches.category.hover": "Hover Info",
@@ -56,5 +61,14 @@
     "text.chatpatches.category.debug": "Debug",
 
     "text.chatpatches.copymessage.index": "Copied message %d: '%s'",
-    "text.chatpatches.copymessage.index.missing": "Message %d doesn't exist"
+    "text.chatpatches.copymessage.index.missing": "Message %d doesn't exist",
+
+    "text.chatpatches.search_suggestion": "Search...",
+    "text.chatpatches.search.caseSensitive": "Case sensitive",
+    "text.chatpatches.search.modifiers": "Modifiers",
+    "text.chatpatches.search.regex": "Regex",
+    "text.chatpatches.search.desc": "§bLeft click§r to toggle the search bar, or §dright click§r to toggle the settings menu.\n\n§aGreen§r the search matched, §eyellow§r means nothing matched, and §cred§r means the search is invalid.",
+    "text.chatpatches.search.desc.caseSensitive": "Should the search query only match text with the same capitalization?\n\n\"abc\" would match itself, \"Abc\", and \"ABC\"; case sensitive would only match \"abc\".\n§l§oNOTE:§r This applies to regex searching as well.",
+    "text.chatpatches.search.desc.modifiers": "Should the search query only match text with the same formatting modifiers?\n\n\"&e&labc\" wouldn't match \"abc\"; with modifiers it would only match \"§e§labc§r\".\nNOTE: Hex colors §ocan§r be matched in the format \"&#§cRR§aGG§9BB§r\", however support is §nnot§f guaranteed.",
+    "text.chatpatches.search.desc.regex": "Should the search query be used as a §2reg§rular §2ex§rpression?\n\nTo learn how to use regex, see the help section in the config.\n§l§oNOTE:§r Java regex §nrequires a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end."
 }
