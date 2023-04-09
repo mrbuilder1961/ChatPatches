@@ -43,6 +43,7 @@ public class ChatSearchScreen extends ChatScreen {
 	private static final int MENU_WIDTH = 146, MENU_HEIGHT = 76;
 	private static final int MENU_X = 2, MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 	public static String lastLastSearch = "";
+	public static String lastUnsentMessage = "";
 
 	private TexturedButtonWidget searchButton;
 	private boolean showSearch = true;
@@ -52,7 +53,7 @@ public class ChatSearchScreen extends ChatScreen {
 	private boolean showSettingsMenu = false;
 
 	public ChatSearchScreen(String originalChatText) {
-		super(originalChatText);
+		super( originalChatText.isEmpty() ? lastUnsentMessage : originalChatText );
 		this.client = Objects.requireNonNullElse(client, MinecraftClient.getInstance());
 	}
 
@@ -166,21 +167,21 @@ public class ChatSearchScreen extends ChatScreen {
 
 	@Override
 	public void tick() {
-		if( searchField.isFocused() ) {
-			chatField.setFocused(false);
+		if(searchField.isFocused())
 			searchField.tick();
-		} else {
-			searchField.setFocused(false);
+		else
 			chatField.tick();
-		}
 	}
 
 	@Override
 	public void removed() {
 		if( !searchField.getText().isEmpty() ) // assuming getText() never returns null...
-			ChatSearchScreen.lastLastSearch = Objects.requireNonNullElse(searchField.getText(), "");
+			ChatSearchScreen.lastLastSearch = searchField.getText();
 		else if( lastSearch != null )
 			ChatSearchScreen.lastLastSearch = lastSearch;
+
+		if( !chatField.getText().isEmpty() )
+			ChatSearchScreen.lastUnsentMessage = chatField.getText();
 
 		client.inGameHud.getChatHud().reset();
 	}
