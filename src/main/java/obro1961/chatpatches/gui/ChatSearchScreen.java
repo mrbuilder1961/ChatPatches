@@ -176,20 +176,27 @@ public class ChatSearchScreen extends ChatScreen {
 	@Override
 	public void removed() {
 		if( !searchField.getText().isEmpty() ) // assuming getText() never returns null...
-			ChatSearchScreen.lastLastSearch = searchField.getText();
+			lastLastSearch = searchField.getText();
 		else if( lastSearch != null )
-			ChatSearchScreen.lastLastSearch = lastSearch;
+			lastLastSearch = lastSearch;
 
 		if( !chatField.getText().isEmpty() )
-			ChatSearchScreen.lastUnsentMessage = chatField.getText();
+			lastUnsentMessage = chatField.getText();
 
 		client.inGameHud.getChatHud().reset();
 	}
 
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if( showSettingsMenu && keyCode == GLFW.GLFW_KEY_ESCAPE ) {
+		if(showSettingsMenu && keyCode == GLFW.GLFW_KEY_ESCAPE) {
 			showSettingsMenu = false;
+			return true;
+		}
+		if(keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+			if( this.sendMessage(chatField.getText(), true) ) {
+				chatField.setText( lastUnsentMessage = "" ); // empties the input and last unsent message
+				client.setScreen(null);
+			}
 			return true;
 		}
 
@@ -200,11 +207,9 @@ public class ChatSearchScreen extends ChatScreen {
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		// fixes chatField being unselectable
 		if( searchField.mouseClicked(mouseX, mouseY, button)) {
-			searchField.setFocused(true);
 			setFocused(searchField);
 			return true;
 		} else if( chatField.mouseClicked(mouseX, mouseY, button)) {
-			chatField.setFocused(true);
 			setFocused(chatField);
 			return true;
 		}
