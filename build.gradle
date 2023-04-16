@@ -15,6 +15,7 @@ group = rootProject.group
 version = rootProject.version
 // tokens revert to empty strings when no secrets.json exists
 def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
+def changelogText = "Changelog could not be found... 😬"
 
 
 repositories {
@@ -93,9 +94,19 @@ processResources {
 		} */
 	}
 
-	File changelog = file("latest_changelog.md")
-	if( changelog.exists() )
-		file("latest_changelog.md").text = changelog.text.replaceAll( "##(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/\$1)" )
+	File changelog = file("changelog.md")
+	if( changelog.exists() ) {
+		// replaces github issue numbers with links and fills out some variables
+		file("changelog.md").text = changelog.text
+			.replaceAll("##(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/\$1)")
+			.replaceAll("\\\$\\{version}", version.toString())
+			.replaceAll("\\\$\\{targets}", targets.replaceAll(",", ", "))
+			.replaceAll("\\\$\\{loaders}", loaders.split(",").collect { it.capitalize() }.join(", "))
+
+		// hackily gets the first changelog entry
+		def i = file("changelog.md").text.replaceFirst("## `1", "").indexOf("## `1")
+		changelogText = file("changelog.md").text.substring(0, i + 1)
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -108,8 +119,12 @@ java {
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
+		rename { "${it}_${project.archives_base_name}"}
 	}
+}
+
+build {
+	dependsOn tasks.processResources
 }
 
 
@@ -135,7 +150,7 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 		id = "560042"
 		releaseType = "release"
 		changelogType = "markdown"
-		changelog = file("latest_changelog.md")
+		changelog = changelogText
 
 		// adds Java versions, modloaders, and mc versions
 		addGameVersion "Java 17"
@@ -172,7 +187,7 @@ modrinth { // https://github.com/modrinth/minotaur#groovy
 	uploadFile = remapJar
 	gameVersions = Arrays.asList( rootProject.targets.split(",") ) // Must be an array
 	loaders = Arrays.asList( rootProject.loaders.split(",") )
-	changelog = file("latest_changelog.md").text
+	changelog = changelogText
 
 	dependencies {
 		required.project "fabric-api"
