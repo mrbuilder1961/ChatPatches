@@ -16,7 +16,7 @@ version = rootProject.version
 // tokens revert to empty strings when no secrets.json exists
 def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
 def changelogText = "Changelog could not be found... 😬"
-def noPublish = project.hasProperty("noPublish") ? project.getProperty("noPublish") : false
+def noPublish = project.hasProperty("noPublish") ? Boolean.parseBoolean(project.getProperty("noPublish")) : false
 
 repositories {
   	mavenCentral()
@@ -175,7 +175,7 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 
 		options {
 			forgeGradleIntegration = false
-			debug = noPublish;
+			debug = noPublish
 		}
 	}
 }
