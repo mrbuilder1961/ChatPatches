@@ -14,6 +14,8 @@
   - have any double hashtags (`##`) followed by a number replaced with a GitHub issue link
   - replace any instances of `${}` with either `version`, `targets`, or `loaders` in between the brackets with the appropriate value from the 
     `gradle.properties` file
+- You can now specify the `-PnoPublish=true` flag when running `./gradlew publish` to prevent the file from actually being published on Modrinth and 
+  Curseforge. This helps to avoid needing to add `debug=true` every time you want to double-check the changelog before publishing
 
 ## `194.4.3` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
 - Fixed [#73](https://www.github.com/mrbuilder1961/ChatPatches/issues/73), which was caused by a slight method change from `1.19.3` to `.4`. To fix this I simply removed it, which was fine
