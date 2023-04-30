@@ -1,6 +1,7 @@
 # Changelog
 
 ## `194.4.4` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
+- Updated dependencies, including YACL to `2.5.0-fabric` so you may need to update that as well
 - Fixed [#78](https://www.github.com/mrbuilder1961/ChatPatches/issues/78), which uses a large mixin instead of an entirely new screen to allow for compatibility with other mods
 - Removed the `chatSearchScreen` option because the search settings can be hidden and other mods should be compatible now
   - That being said, the only real difference is that the search settings button cannot be removed from the chat screen

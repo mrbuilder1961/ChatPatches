@@ -43,7 +43,7 @@
     "fabric": "*"
   },
   "recommends": {
-    "yet-another-config-lib": "*",
+    "yet_another_config_lib": "*",
     "modmenu": "*"
   },
   "suggests": {

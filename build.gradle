@@ -37,7 +37,7 @@ dependencies {
 	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:$project.mixin_extras") ))
 
 	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
-	modImplementation "dev.isxander:yet-another-config-lib:$project.yacl"
+	modImplementation "dev.isxander.yacl:yet-another-config-lib-fabric:$project.yacl"
 
 
 	// integration files, toggleable in /integrations/integrations.properties
