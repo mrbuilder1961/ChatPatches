@@ -2,7 +2,7 @@ package obro1961.chatpatches.util;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.MinecraftClient;
-import obro1961.chatpatches.mixinesq.ChatHudAccessor;
+import obro1961.chatpatches.accessor.ChatHudAccessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;

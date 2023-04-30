@@ -12,9 +12,9 @@ import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.*;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.mixinesq.ChatHudAccessor;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.Flags;
 import obro1961.chatpatches.util.RandomUtils;
@@ -151,31 +151,31 @@ public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAcce
                 .append(
                     !boundary && !lastEmpty && !config.nameFormat.equals("<$>") && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
                         ? Text.empty().setStyle(style)
-                        .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
-                        .append( // add first part of message (depending on Text style and whether it was a chat or system)
-                            message.getContent() instanceof TranslatableTextContent
-                                ? net.minecraft.util.Util.make(() -> { // all message components
+                            .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
+                            .append( // add first part of message (depending on Text style and whether it was a chat or system)
+                                message.getContent() instanceof TranslatableTextContent
+                                    ? net.minecraft.util.Util.make(() -> { // all message components
 
-                                    MutableText text = Text.empty().setStyle(style);
-                                    List<Text> messages = Arrays.stream( ((TranslatableTextContent) message.getContent()).getArgs() ).map( arg -> (Text)arg ).toList();
+                                        MutableText text = Text.empty().setStyle(style);
+                                        List<Text> messages = Arrays.stream( ((TranslatableTextContent) message.getContent()).getArgs() ).map( arg -> (Text)arg ).toList();
 
-                                    for(int i = 1; i < messages.size(); ++i)
-                                        text.append( messages.get(i) );
+                                        for(int i = 1; i < messages.size(); ++i)
+                                            text.append( messages.get(i) );
 
-                                    return text;
+                                        return text;
+                                    })
+                                    : Text.literal( ((LiteralTextContent) message.getContent()).string().split("> ")[1] ).setStyle(style) // default-style message with name
+                            )
+                            .append( // add any siblings (Texts with different styles)
+                                net.minecraft.util.Util.make(() -> {
+
+                                    MutableText msg = Text.empty().setStyle(style);
+
+                                    message.getSiblings().forEach(msg::append);
+
+                                    return msg;
                                 })
-                                : Text.literal( ((LiteralTextContent) message.getContent()).string().split("> ")[1] ).setStyle(style) // default-style message with name
-                        )
-                        .append( // add any siblings (Texts with different styles)
-                            net.minecraft.util.Util.make(() -> {
-
-                                MutableText msg = Text.empty().setStyle(style);
-
-                                message.getSiblings().forEach(msg::append);
-
-                                return msg;
-                            })
-                        )
+                            )
                         : message
                 );
 
@@ -202,7 +202,7 @@ public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAcce
      * @implNote
      * <ol>
      *     <li>IF {@code COUNTER} is enabled AND message count >0 AND the message isn't a boundary line, continue.</li>
-     *     <li>(cache last message, incoming's text siblings and last's text siblings)</li>
+     *     <li>(cache last message, incoming text siblings and last's text siblings)</li>
      *     <li>IF not regenerating visible messages AND the incoming and last messages are loosely equal, continue.</li>
      *     <li>(save number of duped messages from another counter and current check)</li>
      *     <li>Modify the last message to have a dupe counter</li>
@@ -240,9 +240,9 @@ public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAcce
                     // how many duped messages plus this one
                     int dupes = (incSibs.size() > DUPE
                         ? Integer.parseInt(StringTextUtils.delAll(incSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D"))
-                        : lastSibs.size() > DUPE
+                            : lastSibs.size() > DUPE
                         ? Integer.parseInt(StringTextUtils.delAll(lastSibs.get(DUPE).getString(), "(§[0-9a-fk-or])+", "\\D"))
-                        : 1
+                            : 1
                     ) + 1;
 
 

@@ -1,6 +1,11 @@
 # Changelog
 
 ## `194.4.4` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
+- Fixed [#78](https://www.github.com/mrbuilder1961/ChatPatches/issues/78), which uses a large mixin instead of an entirely new screen to allow for compatibility with other mods
+- Removed the `chatSearchScreen` option because the search settings can be hidden and other mods should be compatible now
+  - That being said, the only real difference is that the search settings button cannot be removed from the chat screen
+- Added the `messageDrafting` and `searchDrafting` options ([#79](https://www.github.com/mrbuilder1961/ChatPatches/issues/79)), which when toggled let any text in the fields persist after closing and reopening the chat
+- Tweaked the README config table to add double quotes around String options and removed the decimal numbers attached to Color options
 
 - Updated the changelog from only containing the latest version's changes to all of them starting from `194.4.0`. Unless you're a contributor, this doesn't 
   really matter

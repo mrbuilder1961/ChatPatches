@@ -1,4 +1,4 @@
-package obro1961.chatpatches.mixin.secure;
+package obro1961.chatpatches.mixin.security;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

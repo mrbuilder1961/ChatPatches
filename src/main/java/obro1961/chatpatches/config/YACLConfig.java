@@ -126,9 +126,13 @@ public class YACLConfig extends Config {
                                 Config.getOptions().forEach(opt ->
                                     str.append("\n| %s | %s | %s | `text.chatpatches.%s` |".formatted(
                                         I18n.translate("text.chatpatches." + opt.key),
-                                        opt.get().getClass().equals( Integer.class ) && opt.key.contains("Color")
-                                            ? "`0x" + Integer.toHexString( (int)opt.def ).toUpperCase() + "` (`" + opt.def + "`)"
-                                            : "`" + opt.def + "`",
+
+                                        ( opt.getType().equals(Integer.class) && opt.key.contains("Color") )
+                                            ? "`0x%06x`".formatted((int)opt.def) // change the 06 to 08 to print the alpha channel
+                                            : (opt.getType().equals(String.class))
+                                                ? "`\"" + opt.def + "\"`"
+                                                : "`" + opt.def + "`",
+
                                         I18n.translate("text.chatpatches.desc." + opt.key),
                                         opt.key
                                     ))

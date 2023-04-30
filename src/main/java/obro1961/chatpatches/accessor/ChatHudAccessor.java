@@ -1,4 +1,4 @@
-package obro1961.chatpatches.mixinesq;
+package obro1961.chatpatches.accessor;
 
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
