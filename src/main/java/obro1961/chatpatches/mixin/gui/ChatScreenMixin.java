@@ -106,7 +106,7 @@ public abstract class ChatScreenMixin extends Screen {
 		searchField.setMaxLength(384);
 		searchField.setDrawsBackground(false);
 		searchField.setSuggestion(SUGGESTION_TEXT);
-		searchField.setChangedListener(this::onSearchFieldUpdate);
+		searchField.setChangedListener(this::cps$onSearchFieldUpdate);
 		searchField.setText(searchDraft);
 
 		final int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
@@ -138,19 +138,19 @@ public abstract class ChatScreenMixin extends Screen {
 	@Inject(method = "render", at = @At("HEAD"))
 	public void cps$renderSearchStuff(MatrixStack matrices, int mX, int mY, float delta, CallbackInfo ci) {
 		searchButton.render(matrices, mX, mY, delta);
-		if( showSearch ) {
+		if(showSearch && !config.hideSearchButton) {
 			ChatScreen.fill(matrices, SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(matrices, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
-			if( searchError != null ) {
+			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
 				textRenderer.drawWithShadow(matrices, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), 0xD00000);
 			}
 		}
 
 		// renders the bg and the buttons for the settings menu
-		if(showSettingsMenu) {
+		if(showSettingsMenu && !config.hideSearchButton) {
 			RenderSystem.setShaderTexture(0, Identifier.of("chatpatches", "textures/gui/search_settings_panel.png"));
 			drawTexture(matrices, MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT);
 
@@ -163,14 +163,14 @@ public abstract class ChatScreenMixin extends Screen {
 	/** Only renders a chat hover tooltip if the mouse is not hovering over the settings menu while it's open */
 	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;renderTextHoverEffect(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/Style;II)V"))
 	public boolean cps$renderTooltipSmartly(ChatScreen me, MatrixStack matrices, Style style, int mX, int mY) {
-		return !showSettingsMenu || !isHoveringOverSettingsMenu(mX, mY);
+		return !showSettingsMenu || !cps$hoveringOverSettings(mX, mY);
 	}
 
 	@Inject(method = "resize", at = @At("TAIL"))
 	public void cps$updateSearchOnResize(MinecraftClient client, int width, int height, CallbackInfo ci) {
 		String text = searchField.getText();
 		searchField.setText(text);
-		onSearchFieldUpdate(text);
+		cps$onSearchFieldUpdate(text);
 
 		if(!text.isEmpty())
 			searchField.setSuggestion(null);
@@ -179,7 +179,7 @@ public abstract class ChatScreenMixin extends Screen {
 	@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;tick()V"))
 	public void cps$tickSearchField(TextFieldWidget chatField, Operation<Void> tick) {
 		if(updateSearchColor)
-			onSearchFieldUpdate(searchField.getText());
+			cps$onSearchFieldUpdate(searchField.getText());
 
 		if(searchField.isFocused() && !config.hideSearchButton)
 			searchField.tick();
@@ -246,7 +246,7 @@ public abstract class ChatScreenMixin extends Screen {
 
 
 			// ensures clicking on the empty space in the settings menu doesn't insert anything into the chat field
-			if( button == 0 && isHoveringOverSettingsMenu(mX, mY))
+			if(button == 0 && cps$hoveringOverSettings(mX, mY))
 				if(client.inGameHud.getChatHud().mouseClicked(mX, mY) || getTextStyleAt(mX, mY) != null)
 					cir.setReturnValue(false);
 		}
@@ -256,13 +256,13 @@ public abstract class ChatScreenMixin extends Screen {
 	// New/Unique methods
 
 	@Unique
-	private boolean isHoveringOverSettingsMenu(double mX, double mY) {
+	private boolean cps$hoveringOverSettings(double mX, double mY) {
 		return mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT;
 	}
 
 	/** Called when the search field is updated; also sets the regex error and the text input color. */
 	@Unique
-	private void onSearchFieldUpdate(String text) {
+	private void cps$onSearchFieldUpdate(String text) {
 		if(text.equals(lastSearch) && !updateSearchColor )
 			return;
 
@@ -273,13 +273,13 @@ public abstract class ChatScreenMixin extends Screen {
 				try {
 					Pattern.compile(text);
 					searchError = null;
-				} catch (PatternSyntaxException e) {
+				} catch(PatternSyntaxException e) {
 					searchError = e;
 					client.inGameHud.getChatHud().reset();
 				}
 			}
 
-			List<ChatHudLine.Visible> filtered = filterMessages( searchError != null ? null : text );
+			List<ChatHudLine.Visible> filtered = cps$filterMessages( searchError != null ? null : text );
 			if(searchError != null) {
 				searchField.setEditableColor(0xFF5555);
 				client.inGameHud.getChatHud().reset();
@@ -312,9 +312,9 @@ public abstract class ChatScreenMixin extends Screen {
 	 * list that is automatically repopulated with new messages when needed.
 	 */
 	@Unique
-	private List<ChatHudLine.Visible> filterMessages(String target) {
+	private List<ChatHudLine.Visible> cps$filterMessages(String target) {
 		if(target == null)
-			return createVisibles( ChatUtils.chatHud(client).getMessages() );
+			return cps$createVisibles( ChatUtils.chatHud(client).getMessages() );
 
 		List<ChatHudLine> msgs = Lists.newArrayList( ChatUtils.chatHud(client).getMessages() );
 
@@ -334,7 +334,7 @@ public abstract class ChatScreenMixin extends Screen {
 			);
 		});
 
-		return createVisibles(msgs);
+		return cps$createVisibles(msgs);
 	}
 
 	/**
@@ -344,7 +344,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * method, specifically everything before the {@code while} loop.
 	 */
 	@Unique
-	private List<ChatHudLine.Visible> createVisibles(List<ChatHudLine> messages) {
+	private List<ChatHudLine.Visible> cps$createVisibles(List<ChatHudLine> messages) {
 		List<ChatHudLine.Visible> generated = Lists.newArrayListWithExpectedSize(messages.size());
 		ChatHud chatHud = client.inGameHud.getChatHud();
 

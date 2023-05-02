@@ -1,5 +1,9 @@
 # Changelog
 
+## `194.4.6` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
+- Removed the floating gray search background when `hideSearchButton` is enabled ([#83](https://www.github.com/mrbuilder1961/ChatPatches/issues/83))
+- Also added the mixin prefix `cps$` to a few unique methods in `ChatScreenMixin` that previously were unmarked
+
 ## `194.4.5` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
 - Showing/hiding the chat search bar or the chat search settings will now persist after closing and reopening chat ([#81](https://www.github.com/mrbuilder1961/ChatPatches/issues/81))
 - You can now additionally hide the search button entirely, but keep in mind this disables all other chat searching functionality
