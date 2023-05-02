@@ -62,13 +62,13 @@ public abstract class ChatScreenMixin extends Screen {
 
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
+	@Unique private static boolean showSearch = true;
+	@Unique private static boolean showSettingsMenu = false; // doesn't really need to be static
 
 	@Unique private TextFieldWidget searchField;
 	@Unique private TexturedButtonWidget searchButton;
-	@Unique private boolean showSearch = true;
 	@Unique private String lastSearch;
 	@Unique private PatternSyntaxException searchError;
-	@Unique private boolean showSettingsMenu = false;
 
 	@Shadow	protected TextFieldWidget chatField;
 
@@ -108,12 +108,18 @@ public abstract class ChatScreenMixin extends Screen {
 		searchField.setSuggestion(SUGGESTION_TEXT);
 		searchField.setChangedListener(this::onSearchFieldUpdate);
 		searchField.setText(searchDraft);
-		addSelectableChild(searchField);
 
 		final int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
 		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0);
 		modifiers = new ChatSearchSetting("modifiers", false, yPos, 22);
 		regex = new ChatSearchSetting("regex", false, yPos, 44);
+
+		if(config.hideSearchButton) {
+			searchButton.visible = false;
+			searchField.visible = false;
+		} else {
+			addSelectableChild(searchField);
+		}
 	}
 
 	/**
@@ -132,13 +138,13 @@ public abstract class ChatScreenMixin extends Screen {
 	@Inject(method = "render", at = @At("HEAD"))
 	public void cps$renderSearchStuff(MatrixStack matrices, int mX, int mY, float delta, CallbackInfo ci) {
 		searchButton.render(matrices, mX, mY, delta);
-		if(showSearch) {
-			ChatScreen.fill(matrices, SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int)(width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
+		if( showSearch ) {
+			ChatScreen.fill(matrices, SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(matrices, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
-			if(searchError != null) {
-				int x = searchField.getX() + 8 + (int)(width * SEARCH_W_MULT);
+			if( searchError != null ) {
+				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
 				textRenderer.drawWithShadow(matrices, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), 0xD00000);
 			}
 		}
@@ -175,7 +181,7 @@ public abstract class ChatScreenMixin extends Screen {
 		if(updateSearchColor)
 			onSearchFieldUpdate(searchField.getText());
 
-		if(searchField.isFocused())
+		if(searchField.isFocused() && !config.hideSearchButton)
 			searchField.tick();
 		else
 			tick.call(chatField);

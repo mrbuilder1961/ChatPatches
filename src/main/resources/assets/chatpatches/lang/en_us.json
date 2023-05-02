@@ -46,6 +46,7 @@
     "text.chatpatches.nameFormat": "Playername text",
     "text.chatpatches.messageDrafting": "Chat drafting toggle",
     "text.chatpatches.searchDrafting": "Search drafting toggle",
+    "text.chatpatches.hideSearchButton": "Hide search button",
     "text.chatpatches.desc.saveChat": "Should the chat be saved into a log so it can be re-added back into the chat in another game session?",
     "text.chatpatches.desc.shiftChat": "Shifts the chat interface up to not obstruct the armor bar and/or health. Default is 10, set to 0 for no shift.",
     "text.chatpatches.desc.chatWidth": "The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.",
@@ -53,6 +54,7 @@
     "text.chatpatches.desc.nameFormat": "The text that replaces the playername in chat messages. Vanilla is '<$>', name only is '$'; where '$' is a placeholder for the playername. Only applies to player-sent messages.",
     "text.chatpatches.desc.messageDrafting": "Should any text in the chat field persist after closing and reopening the chat?",
     "text.chatpatches.desc.searchDrafting": "Should any text in the search field persist after closing and reopening the chat?",
+    "text.chatpatches.desc.hideSearchButton": "Should the search button be hidden? Note that this disables all search functionality.",
 
     "text.chatpatches.category.time": "Timestamp",
     "text.chatpatches.category.hover": "Hover Info",

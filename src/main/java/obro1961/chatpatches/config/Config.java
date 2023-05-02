@@ -36,7 +36,7 @@ public class Config {
     public boolean counter = true; public String counterFormat = "&8(&7x&e$&8)"; public int counterColor = 0xffff55;
     public boolean boundary = true; public String boundaryFormat = "&8[&b$&8]"; public int boundaryColor = 0x55ffff;
     public boolean saveChat = true; public int shiftChat = 10; public int chatWidth = 0; public String nameFormat = "<$>"; public int maxMsgs = 16384;
-    public boolean messageDrafting = false, searchDrafting = true;
+    public boolean messageDrafting = false, searchDrafting = true, hideSearchButton = false;
 
 
     /** Creates a new Config or YACLConfig depending on installed mods. */
