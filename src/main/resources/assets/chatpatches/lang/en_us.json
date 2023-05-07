@@ -60,14 +60,14 @@
     "text.chatpatches.category.hover": "Hover Info",
     "text.chatpatches.category.counter": "Duplicate counter",
     "text.chatpatches.category.boundary": "Session Boundary",
-    "text.chatpatches.category.hud": "Chat HUD",
+    "text.chatpatches.category.chat": "Chat Interface",
     "text.chatpatches.category.help": "Help",
     "text.chatpatches.category.debug": "Debug",
 
     "text.chatpatches.copymessage.index": "Copied message %d: '%s'",
     "text.chatpatches.copymessage.index.missing": "Message %d doesn't exist",
 
-    "text.chatpatches.search_suggestion": "Search...",
+    "text.chatpatches.searchSuggestion": "Search...",
     "text.chatpatches.search.caseSensitive": "Case sensitive",
     "text.chatpatches.search.modifiers": "Modifiers",
     "text.chatpatches.search.regex": "Regex",

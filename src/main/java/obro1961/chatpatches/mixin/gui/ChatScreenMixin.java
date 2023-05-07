@@ -53,7 +53,7 @@ import static obro1961.chatpatches.config.ChatSearchSetting.*;
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin extends Screen {
-	@Unique private static final String SUGGESTION_TEXT = Text.translatable("text.chatpatches.search_suggestion").getString();
+	@Unique private static final String SUGGESTION_TEXT = Text.translatable("text.chatpatches.searchSuggestion").getString();
 	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
 	@Unique private static final int SEARCH_X = 22, SEARCH_Y_OFFSET = -31, SEARCH_H = 12;
 	@Unique private static final double SEARCH_W_MULT = 0.25;

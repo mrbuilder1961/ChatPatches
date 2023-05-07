@@ -42,7 +42,7 @@
     "text.chatpatches.category.hover": "Informações de foco",
     "text.chatpatches.category.counter": "contador duplicado",
     "text.chatpatches.category.boundary": "Limite da Sessão",
-    "text.chatpatches.category.hud": "Interface de bate-papo",
+    "text.chatpatches.category.chat": "Interface de bate-papo",
     "text.chatpatches.category.help": "Ajuda",
 
     "text.chatpatches.copymessage.index": "mensagem copiada %d: '%s'",

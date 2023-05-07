@@ -35,12 +35,12 @@ public class YACLConfig extends Config {
         List<Option<?>> hoverOpts = Lists.newArrayList();
         List<Option<?>> counterOpts = Lists.newArrayList();
         List<Option<?>> boundaryOpts = Lists.newArrayList();
-        List<Option<?>> hudOpts = Lists.newArrayList();
+        List<Option<?>> chatOpts = Lists.newArrayList();
 
         Config.getOptions().forEach(opt -> {
             String cat = opt.key.split("[A-Z]")[0];
             if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
-                cat = "hud";
+                cat = "chat";
 
             if(opt.key.contains("Color"))
                 opt = new ConfigOption<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), opt.key) {
@@ -75,7 +75,7 @@ public class YACLConfig extends Config {
                 case "hover" -> hoverOpts.add(yaclOpt);
                 case "counter" -> counterOpts.add(yaclOpt);
                 case "boundary" -> boundaryOpts.add(yaclOpt);
-                case "hud" -> hudOpts.add(yaclOpt);
+                case "chat" -> chatOpts.add(yaclOpt);
             }
         });
 
@@ -86,7 +86,7 @@ public class YACLConfig extends Config {
                 .category( category("hover", hoverOpts) )
                 .category( category("counter", counterOpts) )
                 .category( category("boundary", boundaryOpts) )
-                .category( category("hud", hudOpts) )
+                .category( category("chat", chatOpts) )
 
                 .category(
                     category(

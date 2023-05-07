@@ -30,7 +30,7 @@ public class Config {
     public static final String CONFIG_PATH = FABRIC_LOADER.getConfigDir().toString() + separator + "chatpatches.json";
     private static final Config DEFAULTS = new Config();
 
-    // categories: time, hover, counter, boundary, hud
+    // categories: time, hover, counter, boundary, chat
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
     public boolean hover = true; public String hoverDate = "MM/dd/yyyy"; public String hoverFormat = "$"; public int hoverColor = 0xffffff;
     public boolean counter = true; public String counterFormat = "&8(&7x&e$&8)"; public int counterColor = 0xffff55;
