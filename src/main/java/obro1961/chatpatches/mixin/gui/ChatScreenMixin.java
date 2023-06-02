@@ -209,6 +209,12 @@ public abstract class ChatScreenMixin extends Screen {
 			}
 			cir.setReturnValue(true);
 		}
+		
+		// fixes #86 (pressing the up arrow key for sent history switches field focus)
+		if (keyCode == GLFW.GLFW_KEY_UP) {
+			setChatFromHistory(-1);
+			cir.setReturnValue(true);
+		}
 	}
 
 	@Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
