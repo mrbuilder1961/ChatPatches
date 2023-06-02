@@ -74,6 +74,7 @@ public abstract class ChatScreenMixin extends Screen {
 
 	@Shadow protected abstract Style getTextStyleAt(double x, double y);
 	@Shadow public abstract boolean sendMessage(String text, boolean addToHistory);
+	@Shadow public abstract void setChatFromHistory(int offset);
 
 
 	protected ChatScreenMixin(Text title) { super(title); }
