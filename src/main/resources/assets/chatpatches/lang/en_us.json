@@ -73,6 +73,6 @@
     "text.chatpatches.search.regex": "Regex",
     "text.chatpatches.search.desc": "§bLeft click§r to toggle the search bar, or §dright click§r to toggle the settings menu.\n\n§aGreen§r means the search matched, §eyellow§r means nothing matched, and §cred§r means the search is invalid.",
     "text.chatpatches.search.desc.caseSensitive": "Should the search query only match text with the same capitalization?\n\n\"abc\" would match itself, \"Abc\", and \"ABC\"; case sensitive would only match \"abc\".\n§l§oNOTE:§r This applies to regex searching as well.",
-    "text.chatpatches.search.desc.modifiers": "Should the search query allow matching text according to formatting modifiers?\n\n\"abc\" would match \"abc\" and \"§e§labc§r\"; with modifiers it would only match \"§e§labc§r\".\nNOTE: Hex colors §ocan§r be matched in the format \"&#§cRR§aGG§9BB§r\", however §nthis is in beta§f.",
+    "text.chatpatches.search.desc.modifiers": "Should the search query allow matching text according to formatting modifiers?\n\n\"abc\" would match \"abc\" and \"§e§labc§r\"; with modifiers it would only match \"abc\" and not \"§e§labc§r\".\nNOTE: Hex colors §ocan§r be matched in the format \"&#§cRR§aGG§9BB§r\", however §nthis is in beta§f.",
     "text.chatpatches.search.desc.regex": "Should the search query be used as a §2reg§rular §2ex§rpression?\n\nTo learn how to use regex, see the help section in the config.\n§l§oNOTE:§r Java regex §nrequires a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end."
 }
