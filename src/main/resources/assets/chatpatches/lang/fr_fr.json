@@ -102,5 +102,18 @@
   "text.chatpatches.selection_menu.timestampText": "Texte",
   "text.chatpatches.selection_menu.timestampHoverText": "Texte survolant",
   "text.chatpatches.selection_menu.unix": "Copier l'heure Unix",
-  "text.chatpatches.selection_menu.reply": "Répondre"
+  "text.chatpatches.selection_menu.reply": "Répondre",
+
+
+  "text.chatpatches.category.counter.compact": "§9CompactChat§r compteur de duplications",
+  "text.chatpatches.category.copy": "Menu de copie",
+  "text.chatpatches.category.desc.counter.compact": "Options concernant la méthode de duplication du chat plus \"manipulatrice\", basée sur le mod §9§nCompactChat§r.",
+  "text.chatpatches.category.desc.copy": "Options concernant la boîte de sélection et le menu de copie qui apparaissent lorsque vous faites un clic droit droit sur les messages du chat.",
+  "text.chatpatches.counterCompact": "Activation de la méthode CompactChat",
+  "text.chatpatches.counterCompactDistance": "Distance de vérification des messages",
+  "text.chatpatches.desc.counterCompact": "Le compteur de messages doit-il fonctionner comme celui du mod CompactChat ?",
+  "text.chatpatches.desc.counterCompactDistance": "La distance (incluse) jusqu'à laquelle les messages seront essayés d'être compactés. La valeur '-1' essaiera toute la liste de messages et '0' utilisera le nombre maximum de messages visibles à la fois, en fonction des échelles du chat et de l'interface graphique. Par exemple, en définissant cette valeur à '7', le prochain message reçu sera essayé d'être compacté avec l'un des 7 derniers messages déjà présents.",
+  "text.chatpatches.copyReplyFormat": "Format de texte de réponse",
+  "text.chatpatches.desc.copyReplyFormat": "Le texte qui est inséré dans la zone de chat après avoir cliqué avec le bouton droit sur un message du chat et cliqué sur le bouton 'Répondre' dans le menu de copie. Le symbole '$' est requis et sera remplacé par le nom de l'expéditeur du message.",
+  "text.chatpatches.copy.copied": "Composant de message copié : \"%s\" !"
 }
