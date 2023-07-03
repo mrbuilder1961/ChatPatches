@@ -8,6 +8,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -16,17 +17,27 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.util.ChatMessages;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.network.message.MessageSignatureData;
+import net.minecraft.text.HoverEvent;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
+import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.config.ChatSearchSetting;
+import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.gui.MenuButtonWidget;
 import obro1961.chatpatches.util.ChatUtils;
+import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.StringTextUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -36,13 +47,19 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 
+import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
+import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.config.ChatSearchSetting.*;
+import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
+import static obro1961.chatpatches.gui.MenuButtonWidget.of;
+import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
 
 /**
  * An extension of ChatScreen with searching capabilities.
@@ -53,17 +70,42 @@ import static obro1961.chatpatches.config.ChatSearchSetting.*;
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin extends Screen {
-	@Unique private static final String SUGGESTION_TEXT = Text.translatable("text.chatpatches.searchSuggestion").getString();
+	// search text
+	@Unique private static final String SUGGESTION = Text.translatable("text.chatpatches.search.suggestion").getString();
 	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
+	// copy menu text
+	@Unique private static final Text COPY_MENU_STRING = Text.translatable("text.chatpatches.copy.copyString");
+	@Unique private static final Text COPY_RAW_STRING = Text.translatable("text.chatpatches.copy.rawString");
+	@Unique private static final Text COPY_FORMATTED_STRING = Text.translatable("text.chatpatches.copy.formattedString");
+	@Unique private static final Text COPY_JSON_STRING = Text.translatable("text.chatpatches.copy.jsonString");
+	@Unique private static final Text COPY_MENU_TIMESTAMP = Text.translatable("text.chatpatches.copy.timestamp");
+	@Unique private static final Text COPY_TIMESTAMP_TEXT = Text.translatable("text.chatpatches.copy.timestampText");
+	@Unique private static final Text COPY_TIMESTAMP_HOVER_TEXT = Text.translatable("text.chatpatches.copy.timestampHoverText");
+	@Unique private static final Text COPY_UNIX = Text.translatable("text.chatpatches.copy.unix");
+	@Unique private static final Text COPY_MENU_LINKS = Text.translatable("text.chatpatches.copy.links");
+	@Unique private static final Function<Integer, Text> COPY_LINK_N = (n) -> Text.translatable("text.chatpatches.copy.linkN", n);
+	@Unique private static final Text COPY_MENU_SENDER = Text.translatable("text.chatpatches.copy.sender");
+	@Unique private static final Text COPY_NAME = Text.translatable("text.chatpatches.copy.name");
+	@Unique private static final Text COPY_UUID = Text.translatable("text.chatpatches.copy.uuid");
+	@Unique private static final Text COPY_MENU_REPLY = Text.translatable("text.chatpatches.copy.reply");
+	// coordinates and positioning
 	@Unique private static final int SEARCH_X = 22, SEARCH_Y_OFFSET = -31, SEARCH_H = 12;
 	@Unique private static final double SEARCH_W_MULT = 0.25;
 	@Unique private static final int MENU_WIDTH = 146, MENU_HEIGHT = 76;
 	@Unique private static final int MENU_X = 2, MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 
+	// search stuff
+	@Unique private static boolean showSearch = true;
+	@Unique private static boolean showSettingsMenu = false; // note: doesn't really need to be static
+	// copy menu stuff
+	@Unique private static boolean showCopyMenu = false; // true when a message was right-clicked on
+	@Unique private static ChatHudLine selectedLine = NIL_HUD_LINE;
+	@Unique private static Map<Text, MenuButtonWidget> mainButtons = new LinkedHashMap<>(); // buttons that appear on the initial click
+	@Unique private static Map<Text, MenuButtonWidget> hoverButtons = new LinkedHashMap<>(); // buttons that are revealed on hover
+	@Unique private static List<ChatHudLine.Visible> hoveredVisibles = new ArrayList<>();
+	// drafting
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
-	@Unique private static boolean showSearch = true;
-	@Unique private static boolean showSettingsMenu = false; // doesn't really need to be static
 
 	@Unique private TextFieldWidget searchField;
 	@Unique private TexturedButtonWidget searchButton;
@@ -94,19 +136,28 @@ public abstract class ChatScreenMixin extends Screen {
 	 *     <li>Initialize the search button</li>
 	 *     <li>Initialize the search field</li>
 	 *     <li>Initialize the setting options</li>
+	 *     <li>If {@link Config#hideSearchButton} is true, hide the search widgets</li>
+	 *     <li>If the copy menu hasn't already been initialized:</li>
+	 *     <ol>
+	 *     		<li>Initialize the hover buttons in {@link #hoverButtons}</li>
+	 *     		<li>Initialize the main buttons in {@link #mainButtons}</li>
+	 *     		<li>Increases the width for the {@link #COPY_MENU_SENDER} and {@link #COPY_MENU_REPLY} so there is more room for the player head icon</li>
+	 *     		<li>Updates the width of all {@link #mainButtons} to be the same max length, and updates all {@link #hoverButtons} to have the same x offset</li>
+	 *     </ol>
 	 * </ol>
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
 	protected void cps$initSearchStuff(CallbackInfo ci) {
 		chatField.setText(messageDraft);
 
-		searchButton = new TexturedButtonWidget(2, height - 35, 16, 16, 0, 0, 16, Identifier.of("chatpatches", "textures/gui/search_buttons.png"), 16, 32, button -> {});
+		searchButton = new TexturedButtonWidget(2, height - 35, 16, 16, 0, 0, 16, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_buttons.png"), 16, 32,
+			button -> {});
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));
 		searchField.setMaxLength(384);
 		searchField.setDrawsBackground(false);
-		searchField.setSuggestion(SUGGESTION_TEXT);
+		searchField.setSuggestion(SUGGESTION);
 		searchField.setChangedListener(this::cps$onSearchFieldUpdate);
 		searchField.setText(searchDraft);
 
@@ -121,19 +172,80 @@ public abstract class ChatScreenMixin extends Screen {
 		} else {
 			addSelectableChild(searchField);
 		}
+
+
+		// only render all this menu stuff if it hasn't already been initialized
+		if(!showCopyMenu) {
+			// hover menu buttons, column two
+			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> selectedLine.content().getString()));
+			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> Formatting.strip( selectedLine.content().getString() )));
+			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serializer.toJson(selectedLine.content())));
+			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
+			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString()));
+			hoverButtons.put(COPY_TIMESTAMP_HOVER_TEXT, of(1, COPY_TIMESTAMP_HOVER_TEXT, () -> {
+				HoverEvent hoverEvent = selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getStyle().getHoverEvent();
+				if(hoverEvent != null)
+					return hoverEvent.getValue(SHOW_TEXT).getString();
+				else
+					return "";
+			}));
+			hoverButtons.put(COPY_NAME, of(1, COPY_NAME, () -> {
+				Text message = selectedLine.content().getSiblings().get(ChatUtils.OG_MSG_INDEX);
+				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
+				return text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY).name.getString() : text.getString();
+			}));
+			hoverButtons.put(COPY_UUID, of(1, COPY_UUID, () -> {
+				Text message = selectedLine.content().getSiblings().get(ChatUtils.OG_MSG_INDEX);
+				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
+				return text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY).uuid.toString() : text.getString();
+			}));
+
+			// main menu buttons, column one
+			mainButtons.put(COPY_MENU_STRING, of(0, COPY_MENU_STRING, hoverButtons.get(COPY_RAW_STRING), hoverButtons.get(COPY_FORMATTED_STRING), hoverButtons.get(COPY_JSON_STRING)));
+			mainButtons.put(COPY_MENU_LINKS, of(0, COPY_MENU_LINKS, hoverButtons.get(COPY_LINK_N.apply(0))));
+			mainButtons.put(COPY_MENU_TIMESTAMP, of(0, COPY_MENU_TIMESTAMP, hoverButtons.get(COPY_TIMESTAMP_TEXT), hoverButtons.get(COPY_TIMESTAMP_HOVER_TEXT)));
+			mainButtons.put(COPY_UNIX, of(0, COPY_UNIX, () -> {
+				List<Text> siblings = selectedLine.content().getSiblings();
+				String time = siblings.size() > ChatUtils.TIMESTAMP_INDEX ? siblings.get(ChatUtils.TIMESTAMP_INDEX).getStyle().getInsertion() : null;
+				return time != null && !time.isEmpty() ? time : "?";
+			}));
+			mainButtons.put(COPY_MENU_SENDER, of(0, COPY_MENU_SENDER, hoverButtons.get(COPY_NAME), hoverButtons.get(COPY_UUID)));
+			mainButtons.put(COPY_MENU_REPLY, of(0, COPY_MENU_REPLY, () -> "").setOtherPressAction(menuButton ->
+				chatField.setText( StringTextUtils.fillVars(config.copyReplyFormat, hoverButtons.get(COPY_NAME).copySupplier.get())
+			)));
+
+			// these two get extra width for the player head icon that renders, so it has enough space
+			//mainButtons.get(COPY_MENU_SENDER).setWidth( mainButtons.get(COPY_MENU_SENDER).width + 20*2 );
+			//mainButtons.get(COPY_MENU_REPLY).setWidth( mainButtons.get(COPY_MENU_REPLY).width + 20*2 );
+			// updates the main buttons' widths and the hover buttons' x offsets to be the same, correct width to stack and align properly
+			int mainWidth = mainButtons.values().stream().mapToInt(button -> button.width).max().getAsInt() - 2 * MenuButtonWidget.padding;
+			mainWidth = Math.max(mainWidth, client.textRenderer.getWidth(COPY_MENU_SENDER) + 20*2);
+			int mW = mainWidth;
+			mainButtons.values().forEach(menuButton -> menuButton.setWidth(mW));
+			hoverButtons.values().forEach(menuButton -> menuButton.xOffset = mainButtons.get(COPY_MENU_STRING).width);
+		}
 	}
 
 	/**
-	 * @implNote Additionally renders search-related stuff:
+	 * @implNote Rendering order:
 	 * <ol>
-	 *     <li>The {@code searchButton}</li>
-	 *     <li>If the search bar should show, render:</li>
-	 *     		<li>The {@code searchField} background</li>
-	 *     		<li>The {@code searchField} itself</li>
-	 *     		<li>If the {@code searchError} is not null, render it</li>
-	 *     <li>If the settings menu should show, render:</li>
+	 *     <li>The {@link #searchButton}</li>
+	 *     <li>If the search bar should show:</li>
+	 *     <ol>
+	 *     		<li>The {@link #searchField} background</li>
+	 *     		<li>The {@link #searchField} itself</li>
+	 *     		<li>If it isn't null, the {@link #searchError}</li>
+	 *     </ol>
+	 *     <li>If the settings menu should show:</li>
+	 *     <ol>
 	 *     		<li>The settings menu background</li>
 	 *     		<li>The setting buttons themselves</li>
+	 *     </ol>
+	 *     <li>If the copy menu has been loaded and should show:</li>
+	 *     <ol>
+	 *     		<li>The outline around the selected chat message</li>
+	 *     		<li>The copy menu buttons (the menu itself)</li>
+	 *     </ol>
 	 * </ol>
 	 */
 	@Inject(method = "render", at = @At("HEAD"))
@@ -146,25 +258,73 @@ public abstract class ChatScreenMixin extends Screen {
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				textRenderer.drawWithShadow(matrices, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), 0xD00000);
+				textRenderer.drawWithShadow(matrices, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
 			}
 		}
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
-			RenderSystem.setShaderTexture(0, Identifier.of("chatpatches", "textures/gui/search_settings_panel.png"));
+			RenderSystem.setShaderTexture(0, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_settings_panel.png"));
 			drawTexture(matrices, MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT);
 
 			caseSensitive.button.render(matrices, mX, mY, delta);
 			modifiers.button.render(matrices, mX, mY, delta);
 			regex.button.render(matrices, mX, mY, delta);
 		}
+
+		// renders the copy menu's selection box and menu buttons
+		if( showCopyMenu && !hoveredVisibles.isEmpty() && !cps$isMouseOverSettingsMenu(mX, mY) ) {
+			ChatHud chatHud = client.inGameHud.getChatHud();
+			ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
+			List<ChatHudLine.Visible> visibles = chat.getVisibleMessages();
+
+
+			int hoveredParts = hoveredVisibles.size();
+			// ChatHud#render variables, most of which are based on the hovered message
+			final double s = chatHud.getChatScale();
+			final int lH = chat._getLineHeight();
+			final int sW = MathHelper.ceil(chatHud.getWidth() / s); // scaled width
+			final int sH = MathHelper.floor((client.getWindow().getScaledHeight() - 40) / s); // scaled height
+			int shift = MathHelper.floor(config.shiftChat / s);
+			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.getScrolledLines();
+			int hoveredY = sH - (i * lH) - shift;
+
+			matrices.push();
+			matrices.scale((float) s, (float) s, 1.0f);
+
+			int borderW = sW + 8;
+			int scissorY1 = MathHelper.floor((sH - (chatHud.getVisibleLineCount() * lH) - shift - 1) * s);
+			int scissorY2 = MathHelper.floor((sH - shift + 1) * s);
+			int selectionY1 = hoveredY - (lH * hoveredParts);
+			int selectionH = (lH * hoveredParts) + 1;
+
+			// cuts off any of the selection rect that goes past the chat hud
+			DrawableHelper.enableScissor(0, scissorY1, borderW, scissorY2);
+			DrawableHelper.drawBorder(matrices, 0, selectionY1, borderW, selectionH, config.copyColor);
+			DrawableHelper.disableScissor();
+
+			matrices.pop();
+
+
+			mainButtons.values().forEach(menuButton -> menuButton.render(matrices, mX, mY, delta));
+			hoverButtons.values().forEach(menuButton -> {
+				if(menuButton.is( COPY_LINK_N.apply(0) ))
+					mainButtons.get(COPY_MENU_LINKS).children.forEach(linkButton -> linkButton.render(matrices, mX, mY, delta));
+				else
+					menuButton.render(matrices, mX, mY, delta);
+			});
+		}
 	}
 
-	/** Only renders a chat hover tooltip if the mouse is not hovering over the settings menu while it's open */
+	/**
+	 * Only renders a tooltip if the mouse is not hovering over the (opened)
+	 * settings menu or the (shown) copy menu. In other words, returns
+	 * {@code true} if the mouse is NOT hovering over the <i>opened</i> settings
+	 * menu or the <i>shown</i> copy menu.
+	 * */
 	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;renderTextHoverEffect(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/Style;II)V"))
 	public boolean cps$renderTooltipSmartly(ChatScreen me, MatrixStack matrices, Style style, int mX, int mY) {
-		return !showSettingsMenu || !cps$hoveringOverSettings(mX, mY);
+		return !cps$isMouseOverSettingsMenu(mX, mY) && !cps$isMouseOverCopyMenu(mX, mY);
 	}
 
 	@Inject(method = "resize", at = @At("TAIL"))
@@ -172,6 +332,9 @@ public abstract class ChatScreenMixin extends Screen {
 		String text = searchField.getText();
 		searchField.setText(text);
 		cps$onSearchFieldUpdate(text);
+
+		if(showCopyMenu)
+			cps$loadCopyMenu(anchor.x, anchor.y);
 
 		if(!text.isEmpty())
 			searchField.setSuggestion(null);
@@ -188,10 +351,17 @@ public abstract class ChatScreenMixin extends Screen {
 			tick.call(chatField);
 	}
 
+	/**
+	 * Either resets or saves the drafts for the search and chat fields, depending on
+	 * {@link Config#searchDrafting} and {@link Config#messageDrafting}.
+	 * Additionally, resets the chat hud.
+	 */
 	@Inject(method = "removed", at = @At("TAIL"))
 	public void cps$onScreenCleared(CallbackInfo ci) {
 		searchDraft = ( config.searchDrafting && !searchField.getText().isBlank() ) ? searchField.getText() : "";
 		messageDraft = ( config.messageDrafting && !chatField.getText().isBlank() ) ? chatField.getText() : "";
+
+		cps$resetCopyMenu();
 
 		client.inGameHud.getChatHud().reset();
 	}
@@ -210,7 +380,7 @@ public abstract class ChatScreenMixin extends Screen {
 			}
 			cir.setReturnValue(true);
 		}
-		
+
 		// fixes #86 (pressing the up arrow key for sent history switches field focus)
 		if (keyCode == GLFW.GLFW_KEY_UP) {
 			setChatFromHistory(-1);
@@ -218,9 +388,32 @@ public abstract class ChatScreenMixin extends Screen {
 		}
 	}
 
+	/**
+	 * Returns {@code true} if the mouse clicked on any of the following:
+	 * <ul>
+	 * 		<li>{@link #searchField}: focuses itself</li>
+	 * 		<li>{@link #chatField}: focuses itself</li>
+	 * 		<li>{@link #searchButton}: if it was left, toggles {@link #showSearch}, if it was right, toggles {@link #showSettingsMenu}</li>
+	 * 		<li>If {@link #showSettingsMenu} is true, checks if these were clicked:</li>
+	 * 		<ul>
+	 * 			<li>{@link ChatSearchSetting#caseSensitive}</li>
+	 * 			<li>{@link ChatSearchSetting#modifiers}</li>
+	 * 			<li>{@link ChatSearchSetting#regex}</li>
+	 * 		</ul>
+	 * 		<li>Else if {@link #showSettingsMenu} is false:</li>
+	 * 		<ul>
+	 * 			<li>If the mouse right-clicked, tries to load the copy menu ({@link #cps$loadCopyMenu(double, double)})</li>
+	 * 			<li>Otherwise if the mouse left-clicked and {@link #showCopyMenu} is true, checks if any menu buttons were clicked on</li>
+	 * 			<li>If nothing was clicked on, disables {@link #showCopyMenu}</li>
+	 * 		</ul>
+	 * </ul>
+	 * Otherwise, if the mouse left-clicked, either the settings or the
+	 * copy menu is open, and a HoverEvent is being shown at the mouse pos,
+	 * returns false. This is to prevent tooltips from being clicked and
+	 * shown through the menus.
+	 */
 	@Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
 	public void cps$allowClickableWidgets(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-
 		// a little (not really) fixes chatField being unselectable
 		if(searchField.mouseClicked(mX, mY, button)) {
 			setFocused(searchField);
@@ -231,8 +424,8 @@ public abstract class ChatScreenMixin extends Screen {
 		}
 
 		// switch button id bc mouseClicked returns if button != 0
+		// 1 = right click, 0 = left click
 		if(searchButton.mouseClicked(mX, mY, button == 1 ? 0 : button)) {
-
 			if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
 				showSearch = !showSearch;
 			else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
@@ -244,18 +437,51 @@ public abstract class ChatScreenMixin extends Screen {
 		if(showSettingsMenu) {
 			if(caseSensitive.button.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-
 			if(modifiers.button.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-
 			if(regex.button.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
+		} else {
+			// if button is a right-click, then try and render the copy menu
+			if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+				RenderUtils.MousePos before = anchor;
+				anchor = RenderUtils.MousePos.of( (int)mX, (int)mY );
+				if( cps$loadCopyMenu(mX, mY) ) {
+					cir.setReturnValue(showCopyMenu = true);
+				} else {
+					anchor = before;
+					cir.setReturnValue(showCopyMenu = false);
+				}
+			} else if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT && showCopyMenu) {
+				// see if the mouse clicked on a menu button
+				if( mainButtons.values().stream().anyMatch(menuButton -> menuButton.mouseClicked(mX, mY, button)))
+					cir.setReturnValue(true);
 
+				if( hoverButtons.values().stream().anyMatch(hoverButton -> hoverButton.mouseClicked(mX, mY, button)))
+					cir.setReturnValue(true);
+				else if( mainButtons.get(COPY_MENU_LINKS).children.stream().anyMatch(linkButton -> linkButton.mouseClicked(mX, mY, button)))
+					cir.setReturnValue(true);
 
-			// ensures clicking on the empty space in the settings menu doesn't insert anything into the chat field
-			if(button == 0 && cps$hoveringOverSettings(mX, mY))
-				if(client.inGameHud.getChatHud().mouseClicked(mX, mY) || getTextStyleAt(mX, mY) != null)
-					cir.setReturnValue(false);
+				// otherwise the mouse clicked off of the copy menu, so reset the selection
+				cir.setReturnValue(showCopyMenu = false);
+			}
+		}
+
+		// ensures clicking/hovering over the settings menu or copy menu doesn't insert anything into the chat field
+		// aka tell the game nothing happened at the mouse click (return false)
+		if( button == 0 && (cps$isMouseOverSettingsMenu(mX, mY) || cps$isMouseOverCopyMenu(mX, mY)) )
+			if(client.inGameHud.getChatHud().mouseClicked(mX, mY) || getTextStyleAt(mX, mY) != null)
+				cir.setReturnValue(false);
+	}
+
+	/** Allows hovering over certain menu buttons to reveal/hide nested buttons. */
+	@Unique
+	@Override
+	public void mouseMoved(double mX, double mY) {
+		if(showCopyMenu) {
+			mainButtons.values().forEach(menuButton -> menuButton.mouseMoved(mX, mY));
+			// as of right now, all hover menu buttons have copy actions and don't utilize #onMouseMoved
+			//hoverButtons.values().forEach(menuButton -> menuButton.mouseMoved(mX, mY));
 		}
 	}
 
@@ -263,8 +489,215 @@ public abstract class ChatScreenMixin extends Screen {
 	// New/Unique methods
 
 	@Unique
-	private boolean cps$hoveringOverSettings(double mX, double mY) {
-		return mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT;
+	private boolean cps$isMouseOverSettingsMenu(double mX, double mY) {
+		return showSettingsMenu && (mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT);
+	}
+
+	@Unique
+	private boolean cps$isMouseOverCopyMenu(double mX, double mY) {
+		return showCopyMenu && Stream.concat(mainButtons.values().stream(), hoverButtons.values().stream()).anyMatch(menuButton -> menuButton.isMouseOver(mX, mY));
+	}
+
+
+	/**
+	 * Returns the full chat message at the given coordinates, calculated using
+	 * the built-in {@link ChatHud#getMessageLineIndex(double, double)},
+	 * {@link ChatHud#toChatLineX(double)}, and {@link ChatHud#toChatLineY(double)} methods
+	 * combined with some logic to determine the entire message from only the hovered
+	 * (visible) message.
+	 * <padding>Automatically adjusts the parameters {@code mX} and {@code mY} to be accurate values,
+	 * including any shifts according to {@link Config#shiftChat}. If either {@code mX} or
+	 * {@code mY} are equal to {@code -1}, then an empty List is returned.</padding>
+	 *
+	 * @implNote
+	 * <ol>
+	 *	 <li>Gets the hovered visible index from {@link ChatHud#getMessageLineIndex(double, double)}
+	 *	 with {@link ChatHud#toChatLineX(double)} and {@link ChatHud#toChatLineY(double)} as parameters</li>
+	 *	 <li>If the hovered index is -1 then return an empty string</li>
+	 *	 <li>If the hovered message **IS** end of entry (EoE):</li>
+	 *	 <ol>
+	 *	     <li>Starting at the hovered index +1, iterates up (+) through the visible message list until reaching another EoE message</li>
+	 *	     <li>Reduces the start index by one (-1) to refer to the first message rather than the end of another message</li>
+	 *	     <li>Saves the end index as the hovered index because we know it's EoE</li>
+	 *	 </ol>
+	 *	 <li>Otherwise when the hovered message **IS NOT** EoE:</li>
+	 *	 <ol>
+	 *	     <li>Starting at the hovered index, iterates up (+) through the visible message list until reaching another EoE message</li>
+	 *	     <li>Reduces the start index by one (-1) to refer to the first message rather than the end of another message</li>
+	 *		 <li>Then starting at the start index, iterates down (-) through the visible message list until reaching our EoE message </li>
+	 *	 </ol>
+	 *	 <li>Iterates through the range just determined from start to the end index, concatenating all the message parts into one message</li>
+	 *	 <li>Returns the full message</li>
+	 * </ol>
+	 */
+	@Unique
+	private @NotNull List<ChatHudLine.Visible> cps$getFullMessageAt(double mX, double mY) {
+		if(mX < 0 || mY < 0)
+			return new ArrayList<>(0);
+
+		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
+		final List<ChatHudLine.Visible> visibles = chatHud.getVisibleMessages();
+		// using LineIndex instead of Index bc during testing they both returned the same value; LineIndex has less code
+		final int hoveredIndex = chatHud._getMessageLineIndex(chatHud._toChatLineX(mX), chatHud._toChatLineY(mY + config.shiftChat));
+
+		if(hoveredIndex == -1)
+			return new ArrayList<>(0);
+
+		int start_index;
+		int end_index;
+
+
+		if(visibles.get(hoveredIndex).endOfEntry()) {
+			start_index = hoveredIndex + 1; // w/o the +1, the loop would exit immediately
+			while( start_index < visibles.size() && !visibles.get(start_index).endOfEntry() ) {
+				start_index++;
+			}
+			start_index--; // now the start_index is actually the start and not the end of another message
+
+			end_index = hoveredIndex; // end_index is the hovered index bc we know it's EoE
+		} else {
+			start_index = hoveredIndex;
+			while( start_index < visibles.size() && !visibles.get(start_index).endOfEntry() ) {
+				start_index++;
+			}
+			start_index--;
+
+			end_index = start_index;
+			while( end_index >= 0 && !visibles.get(end_index).endOfEntry() ) {
+				end_index--;
+			}
+			// we don't need to add 1 to end_index bc it's already the end of the message
+		}
+
+
+		// note that the start_index is always greater than the end_index bc the newest message index = 0
+		List<ChatHudLine.Visible> messageParts = new ArrayList<>(start_index - end_index);
+		for(int i = start_index; i >= end_index; i--)
+			messageParts.add( visibles.get(i) );
+
+		return messageParts;
+	}
+
+	/**
+	 * @return {@code true} if the copy menu was loaded in any working capacity,
+	 * {@code false} otherwise. Notably returns {@code false} if the coordinates
+	 * are invalid, if no message is detected at the mouse pos, or if the respective
+	 * {@link ChatHudLine} from {@link #cps$getFullMessageAt(double, double)} doesn't exist.
+	 *
+	 * @implNote The goal of this method is to do as much work as possible, so that
+	 * {@link #render(MatrixStack, int, int, float)} does minimal work and maximum rendering.
+	 */
+	@Unique
+	private boolean cps$loadCopyMenu(double mX, double mY) {
+		if(mX < 0 || mY < 0)
+			return false;
+		cps$resetCopyMenu();
+
+		hoveredVisibles = cps$getFullMessageAt(mX, mY);
+		if(hoveredVisibles.isEmpty())
+			return false;
+
+
+		ChatHud chatHud = client.inGameHud.getChatHud();
+		ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
+		String hoveredMessageFirst = StringTextUtils.reorder( hoveredVisibles.get(0).content(), false );
+
+		// warning: longer messages sometimes fail because extra spaces appear to be added,
+		// so i switched it to a startsWith() bc the first one never has extra spaces. /!\ can probably still fail /!\
+		// get hovered message index (messages) for all copying data
+		selectedLine =
+			chat.getMessages()
+				.stream()
+				.filter( msg -> Formatting.strip( msg.content().getString() ).startsWith(hoveredMessageFirst) )
+				.findFirst()
+				.orElse(NIL_HUD_LINE);
+		if(selectedLine.equals(NIL_HUD_LINE)) {
+			return false;
+		}
+
+
+		// decide which mainButtons should be rendering:
+		// COPY_MENU_STRING is already positioned, so we just let it show
+		mainButtons.get(COPY_MENU_STRING).button.visible = true;
+
+		// add link button
+		List<String> links = StringTextUtils.getLinks( selectedLine.content().getString() );
+		if( !links.isEmpty() ) {
+			for(String link : links) {
+				MenuButtonWidget linkButton = of(1, COPY_LINK_N.apply( links.indexOf(link) + 1 ), () -> link);
+				linkButton.xOffset = mainButtons.get(COPY_MENU_LINKS).width;
+				linkButton.button.setTooltip(Tooltip.of(Text.of( "§9" + link )));
+				mainButtons.get(COPY_MENU_LINKS).children.add(linkButton);
+			}
+			mainButtons.get(COPY_MENU_LINKS).readyToRender(true);
+		}
+
+		// add timestamp button
+		if( !selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString().isBlank() )
+			mainButtons.get(COPY_MENU_TIMESTAMP).readyToRender(true);
+		mainButtons.get(COPY_UNIX).readyToRender(true);
+
+		// add player data and reply buttons
+		Text originalMessage = selectedLine.content().getSiblings().size() > ChatUtils.OG_MSG_INDEX ? selectedLine.content().getSiblings().get(ChatUtils.OG_MSG_INDEX) : Text.empty();
+		Style style = originalMessage.getSiblings().size() > 0 ? originalMessage.getSiblings().get(ChatUtils.MSG_NAME_INDEX).getStyle() : Style.EMPTY;
+		if( !style.equals(Style.EMPTY) && style.getHoverEvent() != null && style.getHoverEvent().getAction() == HoverEvent.Action.SHOW_ENTITY ) {
+			PlayerListEntry player = client.getNetworkHandler().getPlayerListEntry( UUID.fromString(hoverButtons.get(COPY_UUID).copySupplier.get()) );
+			// gets the skin texture from the player, then the profile, and finally the NIL profile if all else fails
+			Identifier skinTexture =
+				player == null
+					? client.getSkinProvider().loadSkin( ChatUtils.NIL_MESSAGE.sender() )
+					: player.hasSkinTexture()
+						? player.getSkinTexture()
+						: client.getSkinProvider().loadSkin( player.getProfile() != null ? player.getProfile() : ChatUtils.NIL_MESSAGE.sender() );
+
+			mainButtons.get(COPY_MENU_SENDER).setTexture(skinTexture).readyToRender(true);
+			mainButtons.get(COPY_MENU_REPLY).setTexture(skinTexture).readyToRender(true);
+		}
+
+
+		// decide which hoverButtons should be rendering:
+		mainButtons.values().forEach(menuButton -> {
+			// for most buttons, aligns them, offsets them, and updates their tooltip
+			// for the link button, just aligns and offsets them
+			if(menuButton.is(COPY_MENU_LINKS))
+				for(int i = 0; i < menuButton.children.size();)
+					menuButton.children.get(i).alignTo(menuButton).offsetY(++i);
+			else
+				for(MenuButtonWidget child : menuButton.children)
+					child.alignTo(menuButton).offsetY(menuButton.children.indexOf(child) + 1).updateTooltip();
+		});
+
+		// get the most visible buttons from either menu and multiply those by the height of each button
+		long mainHeight = mainButtons.values().stream().filter(menuButton -> menuButton.button.visible).count();
+		long hoverHeight = hoverButtons.values().stream().filter(menuButton -> menuButton.button.visible).count();
+		int copyMenuHeight = (int) Math.max(mainHeight, hoverHeight) * MenuButtonWidget.height;
+		// if the menu goes off the screen, shift it up by the amount cut off + buffer just in case
+		if( copyMenuHeight + anchor.y > client.getWindow().getScaledHeight() )
+			anchor.y -= (copyMenuHeight - (client.getWindow().getScaledHeight() - anchor.y)) + 2;
+
+		return showCopyMenu = true;
+	}
+
+	/**
+	 * Hides the copy menu, clears hovered visibles and the selected message,
+	 * resets button offsets, and cancels rendering for all buttons.
+	 */
+	@Unique
+	private void cps$resetCopyMenu() {
+		showCopyMenu = false;
+		selectedLine = NIL_HUD_LINE;
+		hoveredVisibles.clear();
+
+		MenuButtonWidget.mainOffsets = 0;
+		MenuButtonWidget.hoverOffsets = 0;
+
+		mainButtons.values().forEach(MenuButtonWidget::cancelRender);
+		hoverButtons.values().forEach(menuButton -> {
+			if(menuButton.is( COPY_LINK_N.apply(0) ))
+				mainButtons.get(COPY_MENU_LINKS).children.clear(); // clears the nLinkButtons list if the button is the placeholder
+			else
+				menuButton.cancelRender();
+		});
 	}
 
 	/** Called when the search field is updated; also sets the regex error and the text input color. */
@@ -296,15 +729,16 @@ public abstract class ChatScreenMixin extends Screen {
 			} else {
 				searchField.setEditableColor(0x55FF55);
 
-				ChatUtils.chatHud(client).getVisibleMessages().clear();
-				ChatUtils.chatHud(client).getVisibleMessages().addAll(filtered);
+				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
+				chatHud.getVisibleMessages().clear();
+				chatHud.getVisibleMessages().addAll(filtered);
 			}
 		} else {
 			client.inGameHud.getChatHud().reset();
 
 			searchError = null;
 			searchField.setEditableColor(0xE0E0E0); // default from TextFieldWidget
-			searchField.setSuggestion(SUGGESTION_TEXT);
+			searchField.setSuggestion(SUGGESTION);
 		}
 
 		lastSearch = text;
@@ -320,10 +754,11 @@ public abstract class ChatScreenMixin extends Screen {
 	 */
 	@Unique
 	private List<ChatHudLine.Visible> cps$filterMessages(String target) {
+		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 		if(target == null)
-			return cps$createVisibles( ChatUtils.chatHud(client).getMessages() );
+			return cps$createVisibles( chatHud.getMessages() );
 
-		List<ChatHudLine> msgs = Lists.newArrayList( ChatUtils.chatHud(client).getMessages() );
+		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.getMessages() );
 
 		msgs.removeIf(hudLn -> {
 			String content = StringTextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);

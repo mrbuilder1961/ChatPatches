@@ -1,6 +1,13 @@
 {
     "text.chatpatches.title": "Onde está a configuração do meu histórico de bate-papo",
 
+    "text.chatpatches.category.time": "Carimbo de data e hora",
+    "text.chatpatches.category.hover": "Informações de foco",
+    "text.chatpatches.category.counter": "contador duplicado",
+    "text.chatpatches.category.boundary": "Limite da Sessão",
+    "text.chatpatches.category.chat": "Interface de bate-papo",
+    "text.chatpatches.category.help": "Ajuda",
+
     "text.chatpatches.time": "Alternar carimbo de data/hora",
     "text.chatpatches.timeDate": "Texto do carimbo de data/hora",
     "text.chatpatches.timeFormat": "Modificadores de carimbo de data/hora",
@@ -29,22 +36,12 @@
     "text.chatpatches.desc.boundaryFormat": "O texto que é mostrado quando uma linha de limite é inserida no chat, adicione e comercial (&) seguido de um código de formatação para embelezá-lo.",
     "text.chatpatches.desc.boundaryColor": "A cor que é 'preenchida' onde aplicável no texto de limite, por exemplo '&r' será substituída por esta cor.",
 
-    "text.chatpatches.saveChat": "Alternar registro de bate-papo",
+    "text.chatpatches.chatLog": "Alternar registro de bate-papo",
+    "text.chatpatches.chatMaxMessages": "Máximo de mensagens de bate-papo",
+    "text.chatpatches.chatNameFormat": "Texto do nome do jogador",
     "text.chatpatches.shiftChat": "Interface de bate-papo de turno",
-    "text.chatpatches.maxMsgs": "Máximo de mensagens de bate-papo",
-    "text.chatpatches.nameFormat": "Texto do nome do jogador",
-    "text.chatpatches.desc.saveChat": "O bate-papo deve ser salvo em um log para que possa ser adicionado novamente ao bate-papo em outra sessão de jogo?",
-    "text.chatpatches.desc.shiftChat": "Essa interface de bate-papo deve ser aumentada em cerca de 10 pixels para não obstruir a barra de blindagem?",
-    "text.chatpatches.desc.maxMsgs": "A quantidade máxima de mensagens de chat permitidas para processar. Vanilla tem esse conjunto como 100, o máximo permitido é 32.767. Tenha em mente que quanto maior o valor, mais memória o chat requer.",
-    "text.chatpatches.desc.nameFormat": "O texto que substitui o nome do jogador nas mensagens de bate-papo. Vanilla é <$>, sem colchetes é $; onde $ representa o nome do jogador. Aplica-se apenas a mensagens do jogador.",
-
-    "text.chatpatches.category.time": "Carimbo de data e hora",
-    "text.chatpatches.category.hover": "Informações de foco",
-    "text.chatpatches.category.counter": "contador duplicado",
-    "text.chatpatches.category.boundary": "Limite da Sessão",
-    "text.chatpatches.category.chat": "Interface de bate-papo",
-    "text.chatpatches.category.help": "Ajuda",
-
-    "text.chatpatches.copymessage.index": "mensagem copiada %d: '%s'",
-    "text.chatpatches.copymessage.index.missing": "A mensagem %d não existe"
+    "text.chatpatches.desc.chatLog": "O bate-papo deve ser salvo em um log para que possa ser adicionado novamente ao bate-papo em outra sessão de jogo?",
+    "text.chatpatches.desc.chatMaxMessages": "A quantidade máxima de mensagens de chat permitidas para processar. Vanilla tem esse conjunto como 100, o máximo permitido é 32.767. Tenha em mente que quanto maior o valor, mais memória o chat requer.",
+    "text.chatpatches.desc.chatNameFormat": "O texto que substitui o nome do jogador nas mensagens de bate-papo. Vanilla é <$>, sem colchetes é $; onde $ representa o nome do jogador. Aplica-se apenas a mensagens do jogador.",
+    "text.chatpatches.desc.shiftChat": "Essa interface de bate-papo deve ser aumentada em cerca de 10 pixels para não obstruir a barra de blindagem?"
 }

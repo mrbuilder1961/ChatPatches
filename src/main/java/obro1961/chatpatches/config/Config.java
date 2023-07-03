@@ -30,18 +30,20 @@ public class Config {
     public static final String CONFIG_PATH = FABRIC_LOADER.getConfigDir().toString() + separator + "chatpatches.json";
     private static final Config DEFAULTS = new Config();
 
-    // categories: time, hover, counter, boundary, chat
+    // categories: time, hover, counter, counter.compact, boundary, chat.hud, chat.screen, copy
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
     public boolean hover = true; public String hoverDate = "MM/dd/yyyy"; public String hoverFormat = "$"; public int hoverColor = 0xffffff;
     public boolean counter = true; public String counterFormat = "&8(&7x&e$&8)"; public int counterColor = 0xffff55;
+    public boolean counterCompact = false; public int counterCompactDistance = 0;
     public boolean boundary = true; public String boundaryFormat = "&8[&b$&8]"; public int boundaryColor = 0x55ffff;
-    public boolean saveChat = true; public int shiftChat = 10; public int chatWidth = 0; public String nameFormat = "<$>"; public int maxMsgs = 16384;
-    public boolean messageDrafting = false, searchDrafting = true, hideSearchButton = false;
+    public boolean chatLog = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>";
+    public int shiftChat = 10; public boolean messageDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
+    public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
 
 
     /** Creates a new Config or YACLConfig depending on installed mods. */
     public static Config newConfig(boolean reset) {
-        config = (FABRIC_LOADER.isModLoaded("modmenu") && FABRIC_LOADER.isModLoaded("yet-another-config-lib"))
+        config = (FABRIC_LOADER.isModLoaded("modmenu") && FABRIC_LOADER.isModLoaded("yet_another_config_lib_v3"))
             ? new YACLConfig()
             : new Config();
 
@@ -62,7 +64,6 @@ public class Config {
         List<ConfigOption<?>> options = new ArrayList<>( Config.class.getDeclaredFields().length );
 
         for(Field field : Config.class.getDeclaredFields()) {
-
             if(Modifier.isStatic( field.getModifiers() ))
                 continue;
 
@@ -95,7 +96,8 @@ public class Config {
     public MutableText makeTimestamp(Date when) {
         return (
             toText( fillVars(timeFormat, new SimpleDateFormat(timeDate).format(when)) + " " )
-        ).fillStyle( Style.EMPTY.withColor(timeColor) );
+                .fillStyle( Style.EMPTY.withColor(timeColor) )
+        );
     }
 
     /**
@@ -105,23 +107,20 @@ public class Config {
      * false, this will return a Style with only {@link #timeColor} used.
      */
     public Style makeHoverStyle(Date when) {
-        final Style EMPTY = Style.EMPTY
-            .withBold(false).withItalic(false).withUnderline(false).withObfuscated(false).withStrikethrough(false);
-
-        MutableText hoverText = toText(
-            fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when))
-        ).fillStyle( EMPTY.withColor(hoverColor) );
+        final Style EMPTY = Style.EMPTY.withBold(false).withItalic(false).withUnderline(false).withObfuscated(false).withStrikethrough(false);
+        MutableText hoverText = toText( fillVars(hoverFormat, new SimpleDateFormat(hoverDate).format(when)) ).fillStyle( EMPTY.withColor(hoverColor) );
 
         return EMPTY
             .withHoverEvent( hover ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText) : null )
             .withClickEvent( hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText.getString()) : null )
+            .withInsertion(String.valueOf( when.getTime() ))
             .withColor(timeColor)
         ;
     }
 
     public MutableText formatPlayername(GameProfile player) {
         String name = player.getName();
-        return toText( fillVars(nameFormat, name) + " " )
+        return toText( fillVars(chatNameFormat, name) + " " )
             .setStyle( Style.EMPTY
                 .withHoverEvent(
                     new HoverEvent(
@@ -139,10 +138,11 @@ public class Config {
                 .fillStyle( Style.EMPTY.withColor(counterColor) );
     }
 
-    public MutableText makeBoundaryLine(String levelName) {
-        return
-            toText( fillVars(boundaryFormat, levelName) )
-                .fillStyle(Style.EMPTY.withColor(boundaryColor));
+    public Text makeBoundaryLine(String levelName) {
+        // constructs w empty texts to not throw errors when comparing for the dupe counter
+        return Text.empty()
+            .append(toText( fillVars(boundaryFormat, levelName) ).fillStyle( Style.EMPTY.withColor(boundaryColor) ))
+            .append(Text.empty());
     }
 
 
@@ -198,7 +198,7 @@ public class Config {
         ) {
             copy.write( cfg.readAllBytes() );
         } catch (IOException e) {
-            LOGGER.error("An error occurred trying to copy the original config file from '{}':", CONFIG_PATH, e);
+            LOGGER.error("[Config.writeCopy] An error occurred trying to copy the original config file from '{}':", CONFIG_PATH, e);
         }
     }
 

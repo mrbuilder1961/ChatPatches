@@ -1,26 +1,23 @@
 package obro1961.chatpatches.config;
 
 import com.google.common.collect.Lists;
-import dev.isxander.yacl.api.*;
-import dev.isxander.yacl.gui.controllers.ActionController;
-import dev.isxander.yacl.gui.controllers.BooleanController;
-import dev.isxander.yacl.gui.controllers.ColorController;
-import dev.isxander.yacl.gui.controllers.LabelController;
-import dev.isxander.yacl.gui.controllers.slider.IntegerSliderController;
-import dev.isxander.yacl.gui.controllers.string.StringController;
+import dev.isxander.yacl3.api.*;
+import dev.isxander.yacl3.api.controller.*;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.Flags;
 
 import java.awt.*;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * The YetAnotherConfigLib config class.
@@ -34,16 +31,22 @@ public class YACLConfig extends Config {
         List<Option<?>> timeOpts = Lists.newArrayList();
         List<Option<?>> hoverOpts = Lists.newArrayList();
         List<Option<?>> counterOpts = Lists.newArrayList();
+        List<Option<?>> compactChatOpts = Lists.newArrayList();
         List<Option<?>> boundaryOpts = Lists.newArrayList();
-        List<Option<?>> chatOpts = Lists.newArrayList();
+        List<Option<?>> chatHudOpts = Lists.newArrayList();
+        List<Option<?>> chatScreenOpts = Lists.newArrayList();
+        List<Option<?>> copyMenuOpts = Lists.newArrayList();
 
         Config.getOptions().forEach(opt -> {
-            String cat = opt.key.split("[A-Z]")[0];
-            if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
-                cat = "chat";
+            String key = opt.key; // to fix "local variable opt.key must be final or effectively final"
+            String cat = key.split("[A-Z]")[0];
+            if( key.contains("counterCompact") )
+                cat = "compact";
+            else if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
+                cat = "screen";
 
-            if(opt.key.contains("Color"))
-                opt = new ConfigOption<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), opt.key) {
+            if(key.contains("Color"))
+                opt = new ConfigOption<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), key) {
                     @Override
                     public Color get() {
                         return new Color( (int)Config.getOption(key).get() );
@@ -51,19 +54,18 @@ public class YACLConfig extends Config {
 
                     @Override
                     public void set(Object value) {
-                        super.set( ((Color)value).getRGB() - 0xff000000 );
+                        super.set( ((Color)value).getRGB() - 0xff000000);
                     }
                 };
 
-
             Option<?> yaclOpt =
-                Option.createBuilder( opt.getType() )
-                    .name( Text.translatable("text.chatpatches." + opt.key) )
-                    .tooltip( Text.translatable("text.chatpatches.desc." + opt.key) )
-                    .controller( getController(opt.key) )
+                Option.createBuilder()
+                    .name( Text.translatable("text.chatpatches." + key) )
+                    .description( desc(opt) )
+                    .controller( me -> getController(me, key) )
                     .binding( getBinding(opt) )
                     .flag(
-                        opt.key.equals("shiftChat") || opt.key.equals("chatWidth")
+                        key.matches(".*[Cc]hat.*") // contains "chat" or "Chat" somewhere
                             ? new OptionFlag[] { client -> client.inGameHud.getChatHud().reset() }
                             : new OptionFlag[0]
                     )
@@ -74,8 +76,11 @@ public class YACLConfig extends Config {
                 case "time" -> timeOpts.add(yaclOpt);
                 case "hover" -> hoverOpts.add(yaclOpt);
                 case "counter" -> counterOpts.add(yaclOpt);
+                case "compact" -> compactChatOpts.add(yaclOpt);
                 case "boundary" -> boundaryOpts.add(yaclOpt);
-                case "chat" -> chatOpts.add(yaclOpt);
+                case "chat" -> chatHudOpts.add(yaclOpt);
+                case "screen" -> chatScreenOpts.add(yaclOpt);
+                case "copy" -> copyMenuOpts.add(yaclOpt);
             }
         });
 
@@ -84,19 +89,22 @@ public class YACLConfig extends Config {
             .title(Text.translatable("text.chatpatches.title"))
                 .category( category("time", timeOpts) )
                 .category( category("hover", hoverOpts) )
-                .category( category("counter", counterOpts) )
+                .category( category("counter", counterOpts, group(
+                    "counter.compact", compactChatOpts, Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modrinth.com/mod/compact-chat"))
+                )) )
                 .category( category("boundary", boundaryOpts) )
-                .category( category("chat", chatOpts) )
+                .category( category("chat", List.of(), group("chat.hud", chatHudOpts, null), group("chat.screen", chatScreenOpts, null)) )
+                .category( category("copy", copyMenuOpts) )
 
                 .category(
                     category(
                     "help",
                         List.of(
-                            label( Text.translatable("text.chatpatches.date_format"), null, "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
-                            label( Text.translatable("text.chatpatches.format_codes"), null, "https://minecraft.gamepedia.com/Formatting_codes" ),
-                            label( Text.translatable("text.chatpatches.faq"), null, "https://github.com/mrbuilder1961/ChatPatches#faq" ),
-                            label( Text.translatable("text.chatpatches.regex"), null, "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
-                            label( Text.translatable("text.chatpatches.regex_tester"), null, "https://regex101.com/" )
+                            label( Text.translatable("text.chatpatches.help.dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
+                            label( Text.translatable("text.chatpatches.help.formatCodes"), "https://minecraft.gamepedia.com/Formatting_codes" ),
+                            label( Text.translatable("text.chatpatches.help.faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
+                            label( Text.translatable("text.chatpatches.help.regex"), "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
+                            label( Text.translatable("text.chatpatches.help.regexTester"), "https://regex101.com/" )
                         )
                     )
                 )
@@ -111,15 +119,14 @@ public class YACLConfig extends Config {
                 category(
                     "debug",
                     List.of(
-                        Option.createBuilder(Integer.class)
+                        Option.<Integer>createBuilder()
                             .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Flags.flags, Integer.toBinaryString(Flags.flags))) )
-                            .controller(opt -> new IntegerSliderController(opt, 0, 0b1111, 1))
+                            .controller(opt -> IntegerSliderControllerBuilder.create(opt).range(0, 0b1111).step(1))
                             .binding( Flags.flags, () -> Flags.flags, inc -> Flags.flags = inc )
                             .build(),
 
                         ButtonOption.createBuilder()
                             .name( Text.literal("Print GitHub Option table") )
-                            .controller(ActionController::new)
                             .action((yaclScreen, buttonOption) -> {
                                 StringBuilder str = new StringBuilder();
 
@@ -128,7 +135,7 @@ public class YACLConfig extends Config {
                                         I18n.translate("text.chatpatches." + opt.key),
 
                                         ( opt.getType().equals(Integer.class) && opt.key.contains("Color") )
-                                            ? "`0x%06x`".formatted((int)opt.def) // change the 06 to 08 to print the alpha channel
+                                            ? "`0x%06x`".formatted(opt.def)
                                             : (opt.getType().equals(String.class))
                                                 ? "`\"" + opt.def + "\"`"
                                                 : "`" + opt.def + "`",
@@ -151,28 +158,20 @@ public class YACLConfig extends Config {
 
 
     @SuppressWarnings("unchecked")
-    private static <T> Function<Option<T>, Controller<T>> getController(String key) {
-
+    private static <T> ControllerBuilder<T> getController(Option<T> opt, String key) {
         if( key.matches("^.*(?:Str|Date|Format)$") ) // endsWith "Str" "Date" or "Format"
-            return opt -> (Controller<T>) new StringController((Option<String>) opt);
+            return (ControllerBuilder<T>) StringControllerBuilder.create( (Option<String>)opt );
 
         else if( key.contains("Color") )
-            return opt -> (Controller<T>) new ColorController((Option<Color>) opt);
+            return (ControllerBuilder<T>) ColorControllerBuilder.create( (Option<Color>)opt );
 
-        else if( Config.getOption(key).get() instanceof Integer ) // key is int but not color (shiftChat, maxMsgs, or chatWidth)
-            return opt -> (Controller<T>) new IntegerSliderController(
-                (Option<Integer>) opt,
-                0,
-                key.equals("maxMsgs")
-                    ? Short.MAX_VALUE
-                    : key.equals("shiftChat")
-                        ? 100
-                        : 630, // chatWidth
-                key.equals("maxMsgs") ? 16 : 1
-            );
+        else if( Config.getOption(key).get() instanceof Integer ) // key is int but not color
+            return (ControllerBuilder<T>) IntegerSliderControllerBuilder.create( (Option<Integer>)opt )
+                .range( getMinOrMax(key, true), getMinOrMax(key, false) )
+                .step( getInterval(key) );
 
         else
-            return opt -> (Controller<T>) new BooleanController((Option<Boolean>) opt, true);
+            return (ControllerBuilder<T>) BooleanControllerBuilder.create( (Option<Boolean>)opt ).coloured(true);
     }
 
     @SuppressWarnings("unchecked")
@@ -201,23 +200,96 @@ public class YACLConfig extends Config {
             return Binding.generic(o.def, o::get, o::set);
     }
 
-    private static ConfigCategory category(String key, List<Option<?>> options) {
-        return ConfigCategory.createBuilder()
+    /**
+     * Returns the appropriate minimum or maximum value for the given key.
+     * Used for upholding the disorganized yet clean look to this class.
+     */
+    private static int getMinOrMax(String key, boolean min) {
+        if(min) {
+            return switch(key) {
+                case "counterCompactDistance" -> -1;
+                default -> 0;
+            };
+        } else {
+            return switch(key) {
+                case "counterCompactDistance" -> 1024;
+                case "chatWidth" -> 630;
+                case "chatMaxMessages" -> Short.MAX_VALUE;
+                case "shiftChat" -> 100;
+                default -> 100; // fallback as required by the compiler
+            };
+        }
+    }
+
+    /** Returns the appropriate interval for the given key. */
+    private static int getInterval(String key) {
+        return switch(key) {
+            case "chatMaxMessages" -> 16;
+            default -> 1;
+        };
+    }
+
+
+    /** Note: puts groups before ungrouped options */
+    private static ConfigCategory category(String key, List<Option<?>> options, OptionGroup... groups) {
+        ConfigCategory.Builder builder = ConfigCategory.createBuilder()
+            .name( Text.translatable("text.chatpatches.category." + key) );
+
+        if( I18n.hasTranslation("text.chatpatches.category.desc." + key) )
+            builder.tooltip( Text.translatable("text.chatpatches.category.desc." + key) );
+        if( groups.length > 0 )
+            builder.groups( List.of(groups) );
+        if( !options.isEmpty() )
+            builder.options( options );
+
+        return builder.build();
+    }
+
+    private static OptionGroup group(String key, List<Option<?>> options, Style descriptionStyle) {
+        return OptionGroup.createBuilder()
             .name( Text.translatable("text.chatpatches.category." + key) )
+            .description(OptionDescription.of( Text.translatable("text.chatpatches.category.desc." + key).fillStyle(descriptionStyle != null ? descriptionStyle : Style.EMPTY) ))
             .options( options )
             .build();
     }
 
-    private static Option<Text> label(MutableText display, String tooltip, String url) {
-        return Option.createBuilder(Text.class)
-            .name(display)
-            .tooltip( Text.literal( tooltip == null ? "§9" + url : tooltip ) )
-            .controller(LabelController::new)
-            .binding( Binding.immutable(
-                url == null
-                    ? display
-                    : display.fillStyle( Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url)) )
-            ))
-            .build();
+    private static OptionDescription desc(ConfigOption<?> opt) {
+        OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
+
+        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase() + ".jpg";
+        Path imagePath = Path.of("");
+        Identifier id = Identifier.of(ChatPatches.MOD_ID, image);
+
+        try {
+            String path = "assets/" + ChatPatches.MOD_ID + "/" + image;
+            imagePath = Path.of( YACLConfig.class.getClassLoader().getResource(path).toURI() );
+        } catch(URISyntaxException | NullPointerException e) {
+            ChatPatches.LOGGER.warn("[YACLConfig.desc] No .jpg image found for '{}'", opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
+            image = "";
+            id = null;
+        }
+
+        if(id != null) {
+            try {
+                if(image.endsWith(".webp"))
+                    builder.webpImage(imagePath, id);
+                else
+                    builder.image(imagePath, id);
+            } catch(Throwable err) {
+                ChatPatches.LOGGER.error("[YACLConfig.desc] Either the Path provided or the Identifier created was invalid: '{}' => Identifier[{}:{}]",
+                    imagePath,
+                    ChatPatches.MOD_ID, image,
+                    err
+                );
+            }
+        }
+
+        return builder.build();
+    }
+
+    private static Option<Text> label(MutableText labelText, String urlTooltip) {
+        return LabelOption.create(
+            labelText.fillStyle( Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, urlTooltip)) )
+        );
     }
 }

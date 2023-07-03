@@ -164,9 +164,8 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 
 		relations {
 			requiredDependency "fabric-api"
-
-			optionalDependency "modmenu"
-			optionalDependency "yacl"
+			requiredDependency "modmenu"
+			requiredDependency "yacl"
 
 			tool "no-chat-reports"
 
@@ -194,9 +193,8 @@ modrinth { // https://github.com/modrinth/minotaur#groovy
 
 	dependencies {
 		required.project "fabric-api"
-
-		optional.project "modmenu"
-		optional.project "yacl"
+		required.project "modmenu"
+		required.project "yacl"
 
 		optional.project "no-chat-reports"
 

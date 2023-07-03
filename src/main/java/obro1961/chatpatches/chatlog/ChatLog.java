@@ -157,18 +157,18 @@ public class ChatLog {
     }
 
 
-    /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@link Config#maxMsgs}. */
+    /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@link Config#chatMaxMessages}. */
     private static void enforceSizes() {
-        if(data.messages.size() > ChatPatches.config.maxMsgs)
-            data.messages = data.messages.subList(0, ChatPatches.config.maxMsgs + 1);
+        if(data.messages.size() > ChatPatches.config.chatMaxMessages )
+            data.messages = data.messages.subList(0, ChatPatches.config.chatMaxMessages + 1);
 
-        if(data.history.size() > ChatPatches.config.maxMsgs)
-            data.history = data.history.subList(0, ChatPatches.config.maxMsgs + 1);
+        if(data.history.size() > ChatPatches.config.chatMaxMessages )
+            data.history = data.history.subList(0, ChatPatches.config.chatMaxMessages + 1);
     }
 
     /** Restores the chat log from {@link #data} into Minecraft. */
     public static void restore(MinecraftClient client) {
-        Flags.LOADING_CHATLOG.flag();
+        Flags.LOADING_CHATLOG.raise();
 
         if(data.history.size() > 0)
             data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
@@ -177,17 +177,17 @@ public class ChatLog {
                 msg, null, new MessageIndicator(0x382fb5, null, null, "Restored")
             ));
 
-        Flags.LOADING_CHATLOG.remove();
+        Flags.LOADING_CHATLOG.lower();
         ChatPatches.LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(), CHATLOG_PATH);
     }
 
 
     public static void addMessage(Text msg) {
-        if(data.messages.size() < ChatPatches.config.maxMsgs)
+        if(data.messages.size() < ChatPatches.config.chatMaxMessages )
             data.messages.add(msg);
     }
     public static void addHistory(String msg) {
-        if(data.history.size() < ChatPatches.config.maxMsgs)
+        if(data.history.size() < ChatPatches.config.chatMaxMessages )
             data.history.add(msg);
     }
     public static void clearMessages() { data.messages.clear(); }

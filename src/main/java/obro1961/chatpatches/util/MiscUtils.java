@@ -3,25 +3,13 @@ package obro1961.chatpatches.util;
 import net.minecraft.client.MinecraftClient;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
  * Random utilities that I think are useful but
  * don't fit in any other util class well enough.
  */
-public class RandomUtils {
-
-	// arrays and lists
-
-	/** Adds or sets {@code object} at {@code index} in {@code list} depending on the length of {@code list}. */
-	public static <T> void setOrAdd(List<T> list, final int index, T object) {
-		if(list.size() > index)
-			list.set(index, object);
-		else
-			list.add(index, object);
-	}
-
+public class MiscUtils {
 
 	// whatever category this falls under?
 

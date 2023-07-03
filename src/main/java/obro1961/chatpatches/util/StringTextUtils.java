@@ -1,10 +1,15 @@
 package obro1961.chatpatches.util;
 
+import com.google.common.collect.Lists;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A class containing various string and {@link Text} related utilities.
@@ -28,8 +33,24 @@ public class StringTextUtils {
 	}
 
 	/**
+	 * Returns a list of web URL links captured from {@code str}.
+	 * Returns an empty list if none are found.
+	 */
+	public static List<String> getLinks(String str) {
+		// slightly modified from https://stackoverflow.com/a/163398 to not include file links
+		final String urlRegex = "\\bhttps?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+		final Matcher matcher = Pattern.compile(urlRegex).matcher(str);
+		List<String> urls = Lists.newArrayList();
+
+		while(matcher.find())
+			urls.add(matcher.group());
+
+		return urls;
+	}
+
+	/**
 	 * Formats a String with {@code &} formatting codes into a {@link Text}.
-	 * Uses the same algorithm as {@link Text#of(String)}.
+	 * Uses the same base algorithm as {@link Text#of(String)}.
 	 * Doesn't support hex colors.
 	 */
 	public static MutableText toText(String unformatted) {

@@ -9,7 +9,8 @@
     "OBro1961"
   ],
   "contributors": [
-    "FITFC (pt_br)"
+    "FITFC (pt_br)",
+    "Calvineries (fr_fr)"
   ],
   "contact": {
     "homepage": "https://curseforge.com/minecraft/mc-mods/chatpatches",
@@ -40,12 +41,11 @@
     "java": ">=17",
     "minecraft": [ "1.19.3", "1.19.4" ],
     "fabricloader": ">=0.14.17",
-    "fabric": "*"
-  },
-  "recommends": {
-    "yet_another_config_lib": "*",
+    "fabric-api": "*",
+    "yet_another_config_lib_v3": "*",
     "modmenu": "*"
   },
+  "recommends": {},
   "suggests": {
     "nochatreports": "*"
   },

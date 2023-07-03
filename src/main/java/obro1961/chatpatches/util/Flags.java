@@ -4,7 +4,8 @@ package obro1961.chatpatches.util;
 public enum Flags {
 	INIT(0b1000),
 	LOADING_CHATLOG(0b0001),
-	BOUNDARY_LINE(0b0010);
+	BOUNDARY_LINE(0b0010),
+	ADDING_CONDENSED_MESSAGE(0b0100);
 
 	Flags(int value) {
 		this.value = value;
@@ -17,13 +18,13 @@ public enum Flags {
 	/** Set or remove this flag according to {@code set} in {@link #flags}. */
 	public void set(boolean set) {
 		if(set)
-			flag();
+			raise();
 		else
-			remove();
+			lower();
 	}
 
 	/** Set this flag to {@code true} in {@link #flags}. */
-	public void flag() {
+	public void raise() {
 		flags |= value;
 	}
 
@@ -32,14 +33,14 @@ public enum Flags {
 		flags ^= value;
 	}
 
-	/** Set this flag to {@code false} in {@link #flags}. */
-	public void remove() {
-		if(isSet())
+	/** Removes this flag's bits in {@link #flags}. */
+	public void lower() {
+		if( isRaised())
 			toggle();
 	}
 
 	/** Returns true if this flag has its bit(s) set in {@link #flags}. */
-	public boolean isSet() {
+	public boolean isRaised() {
 		return (flags & value) == value;
 	}
 }
