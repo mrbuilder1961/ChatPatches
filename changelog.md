@@ -1,6 +1,11 @@
 # Changelog
 
-## `194.5.0` for 1.19.3, 1.19.4 on Fabric, Quilt
+## Chat Patches `194.5.1` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
+- Fixed a couple README formatting issues
+- Changed the default config value for `counterFormat` to use '&r' so `counterColor` will appear to apply right out-of-the-box
+
+
+## Chat Patches `194.5.0` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
 ### Note: Based on popular opinion, Yet Another Config Lib and Mod Menu are now required.
 - Changed the "Chat HUD" config category to "Chat Interface" again, and split the options within it into 2 subcategories: "Heads Up Display (HUD)" and 
   "Screen" for more organization
@@ -94,7 +99,7 @@ Misc changes and developer stuff:
 
 This update officially fixes [#4](https://www.github.com/mrbuilder1961/ChatPatches/issues/4)!!! sorry for taking so long, but hey it's done now!
 
-## (TEMPLATE) `{version}` for Minecraft {targets} on {loaders}
+## (TEMPLATE) Chat Patches `{version}` for Minecraft {targets} on {loaders}
 - Changes go here
 
 Typically as a list but not required!
