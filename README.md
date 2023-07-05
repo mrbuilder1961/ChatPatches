@@ -32,7 +32,6 @@ This mod also provides features from a multitude of other mods, including:
 - [Compact Chat](https://modrinth.com/mod/compact-chat)
 
 Be on the lookout for new versions, issues, and future features!
-\**Note: this readme may be outdated, make sure this file's GitHub branch is or includes the latest Minecraft version. I've decided to stop updating old READMEs, so make sure you are reading the most up-to-date one so you're not getting any false or out-of-date information.*
 
 ## FAQ
 
@@ -49,7 +48,7 @@ Be on the lookout for new versions, issues, and future features!
 - Do servers need this mod? 
   - It is client side, so no.
 - I can't access the config menu in-game!
-  - <u>For 1.19.2+:</u> After ensuring YACL and Mod Menu are installed, if you still cannot access the config check, check for an error message and [open an 
+  - <u>For 1.19.2+:</u> After ensuring YACL and Mod Menu are installed, if you still cannot access the config, check for an error message and [open an 
     issue on GitHub](https://github.com/mrbuilder1961/ChatPatches/issues/new/choose). If there isn't an error message, [open an issue anyway](https://github.com/mrbuilder1961/ChatPatches/issues/new/choose) and follow the instructions in the issue template.
   - <u>For 1.18.x:</u> You need the LATEST versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu](https://modrinth.com/mod/modmenu/versions?l=fabric&c=release) to access it in game.
   - <u>For all versions:</u> You can always edit the config at `(directory)/config/chatpatches.json`.
@@ -61,8 +60,11 @@ Be on the lookout for new versions, issues, and future features!
 ## Localization and Translation
 
 If you would like to help translate Chat Patches into other languages, you can:
-- Create a pull request that adds or corrects a language file *(preferred)*
-- Create an issue on GitHub with the language file attached
+- [Create a pull request](https://github.com/mrbuilder1961/ChatPatches/compare) that adds, corrects, or updates a language file *(preferred)*
+- [Create an issue on GitHub](https://github.com/mrbuilder1961/ChatPatches/issues/new) with the language file attached
+- DM me on Discord (@obro1961)
+
+Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so you can receive your Contributor and Translator roles!
 
 ## Setup devenv / Build latest jars
 
@@ -85,7 +87,7 @@ If you would like to help translate Chat Patches into other languages, you can:
 | Hover decoration text     | `"$"`            | The string of '&' + formatting code modifiers and decoration text that create the detailed hover description. Requires a '$' as a placeholder for the formatted timestamp option above this one.                                                                                                                                                                                | `text.chatpatches.hoverFormat`            |
 | Hover text color          | `0xffffff`       | The color that's filled in where it would otherwise be blank white in the resulting hover text. To use this with other formatting modifiers, use '&r' in the decoration text option.                                                                                                                                                                                            | `text.chatpatches.hoverColor`             |
 | Message counter toggle    | `true`           | Should a message counter show after messages to indicate multiple duplicates were sent? Note: this is required to be enabled for the CompactChat options to work.                                                                                                                                                                                                               | `text.chatpatches.counter`                |
-| Message counter text      | `"&8(&7x&e$&8)"` | The text that's added to the end of a message to indicate multiple duplicates were sent. Requires a '$' for the number of duplicates, also supports '&' + formatting code modifiers. Still applies to the CompactChat method, if enabled.                                                                                                                                       | `text.chatpatches.counterFormat`          |
+| Message counter text      | `"&8(&7x&r$&8)"` | The text that's added to the end of a message to indicate multiple duplicates were sent. Requires a '$' for the number of duplicates, also supports '&' + formatting code modifiers. Still applies to the CompactChat method, if enabled.                                                                                                                                       | `text.chatpatches.counterFormat`          |
 | Message counter color     | `0xffff55`       | The color that's filled in where it would otherwise be blank white in the resulting duplicate counter. To use this with other formatting modifiers, use '&r' in the decoration text option. Still applies to the CompactChat method, if enabled.                                                                                                                                | `text.chatpatches.counterColor`           |
 | CompactChat method toggle | `false`          | Should the message counter behave like the one from the CompactChat mod?                                                                                                                                                                                                                                                                                                        | `text.chatpatches.counterCompact`         |
 | Message check distance    | `0`              | The distance (inclusive) up to which messages will be tried for compacting. Setting this to '-1' will try the entire message list, and '0' will try using the maximum amount of messages you can see at once, based on the chat and gui scales. For example, setting this to '7' will try to compact the next message received into one of the last 7 messages already present. | `text.chatpatches.counterCompactDistance` |
@@ -101,8 +103,8 @@ If you would like to help translate Chat Patches into other languages, you can:
 | Search drafting toggle    | `true`           | Should any text in the search field persist after closing and reopening the chat?                                                                                                                                                                                                                                                                                               | `text.chatpatches.searchDrafting`         |
 | Hide search button        | `false`          | Should the search button be hidden? Note that this disables all search functionality.                                                                                                                                                                                                                                                                                           | `text.chatpatches.hideSearchButton`       |
 | Vanilla chat clearing     | `false`          | Should chat messages clear after leaving a world/server like vanilla? Note this completely erases both the chat and chat log.                                                                                                                                                                                                                                                   | `text.chatpatches.vanillaClearing`        |
-| Message selection color   | `0xffa9dc69`     | The color of the selection box that's shown after right-clicking on a chat message. Supports transparency.                                                                                                                                                                                                                                                                      | `text.chatpatches.copyColor`              |
-| Reply text format         | `"/msg $ "`      | The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the copy menu. '$' is required and will be filled with the message sender's name.                                                                                                                                                                        | `text.chatpatches.copyReplyFormat`        |
+| Message selection color   | `0x55ffff`     | The color of the selection box that's shown after right-clicking on a chat message. Supports transparency.                                                                                                                                                                                                                                                                      | `text.chatpatches.copyColor`              |
+| Reply text format         | `"/msg $ "`        | The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the copy menu. '$' is required and will be filled with the message sender's name.                                                                                                                                                                        | `text.chatpatches.copyReplyFormat`        |
 
 ## Incompatibilities
 
