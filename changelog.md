@@ -2,7 +2,6 @@
 
 ## `194.5.0` for 1.19.3, 1.19.4 on Fabric, Quilt
 ### Note: Based on popular opinion, Yet Another Config Lib and Mod Menu are now required.
-New "major" version because of all the new features!
 - Changed the "Chat HUD" config category to "Chat Interface" again, and split the options within it into 2 subcategories: "Heads Up Display (HUD)" and 
   "Screen" for more organization
 - You can now use vanilla chat clearing (`vanillaClearing`) if you really want.. ([#85](https://www.github.com/mrbuilder1961/ChatPatches/issues/85))
@@ -24,6 +23,8 @@ New "major" version because of all the new features!
   `counterCompactDistance` for how many messages to check for duplicates
 - Updated YetAnotherConfigLib to 3.0.3-fabric, which overhauls the config UI to use a new tab system, but more notably has image previews now! For 
   this reason along with popular opinion, YACL is now required to load Chat Patches ([#91](https://www.github.com/mrbuilder1961/ChatPatches/issues/91))
+  - ***WARNING: The images currently crash the game, so they've been temporarily disabled until a bugfix is released. Check back in a week or so for the 
+    hotfix!***
 
 Misc changes and developer stuff:
 - Added some more detailed JavaDocs overall

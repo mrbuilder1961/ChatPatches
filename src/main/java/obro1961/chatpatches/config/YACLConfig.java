@@ -9,13 +9,10 @@ import net.minecraft.text.ClickEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.Flags;
 
 import java.awt.*;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -153,6 +150,7 @@ public class YACLConfig extends Config {
             );
         }
 
+        ChatPatches.LOGGER.warn("[YACLConfig.desc] Image preview temporarily disabled due to a YACL bug. I'm trying to get this fixed ASAP, so if you want updates join the discord: https://discord.gg/3MqBvNEyMz!");
         return builder.build().generateScreen(parent);
     }
 
@@ -256,16 +254,19 @@ public class YACLConfig extends Config {
     private static OptionDescription desc(ConfigOption<?> opt) {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
 
-        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase() + ".jpg";
+        // crashes in prod :(
+        /*String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase() + ".jpg";
         Path imagePath = Path.of("");
         Identifier id = Identifier.of(ChatPatches.MOD_ID, image);
 
         try {
             String path = "assets/" + ChatPatches.MOD_ID + "/" + image;
             imagePath = Path.of( YACLConfig.class.getClassLoader().getResource(path).toURI() );
-        } catch(URISyntaxException | NullPointerException e) {
-            ChatPatches.LOGGER.warn("[YACLConfig.desc] No .jpg image found for '{}'", opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
-            image = "";
+        } catch(URISyntaxException e) {
+            ChatPatches.LOGGER.error("[YACLConfig.desc] Error accessing image path for '{}':", opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(), e);
+            id = null;
+        } catch(NullPointerException npe) {
+            ChatPatches.LOGGER.info("[YACLConfig.desc] No .jpg image found for '{}'", opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
             id = null;
         }
 
@@ -282,7 +283,7 @@ public class YACLConfig extends Config {
                     err
                 );
             }
-        }
+        }*/
 
         return builder.build();
     }

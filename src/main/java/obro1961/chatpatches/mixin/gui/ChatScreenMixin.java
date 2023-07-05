@@ -192,12 +192,14 @@ public abstract class ChatScreenMixin extends Screen {
 			hoverButtons.put(COPY_NAME, of(1, COPY_NAME, () -> {
 				Text message = selectedLine.content().getSiblings().get(ChatUtils.OG_MSG_INDEX);
 				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
-				return text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY).name.getString() : text.getString();
+				HoverEvent.EntityContent player = text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY) : null;
+				return player != null ? player.name.getString() : text.getString();
 			}));
 			hoverButtons.put(COPY_UUID, of(1, COPY_UUID, () -> {
 				Text message = selectedLine.content().getSiblings().get(ChatUtils.OG_MSG_INDEX);
 				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
-				return text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY).uuid.toString() : text.getString();
+				HoverEvent.EntityContent player = text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY) : null;
+				return player != null ? player.uuid.toString() : text.getString();
 			}));
 
 			// main menu buttons, column one
@@ -300,7 +302,7 @@ public abstract class ChatScreenMixin extends Screen {
 
 			// cuts off any of the selection rect that goes past the chat hud
 			DrawableHelper.enableScissor(0, scissorY1, borderW, scissorY2);
-			DrawableHelper.drawBorder(matrices, 0, selectionY1, borderW, selectionH, config.copyColor);
+			DrawableHelper.drawBorder(matrices, 0, selectionY1, borderW, selectionH, config.copyColor + 0xff000000);
 			DrawableHelper.disableScissor();
 
 			matrices.pop();
