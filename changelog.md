@@ -3,7 +3,7 @@
 ## Chat Patches `194.5.1` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
 - Fixed a couple README formatting issues
 - Changed the default config value for `counterFormat` to use '&r' so `counterColor` will appear to apply right out-of-the-box
-
+- Updated the changelog snippet function in `build.gradle` that automatically populates new version descriptions when publishing
 
 ## Chat Patches `194.5.0` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
 ### Note: Based on popular opinion, Yet Another Config Lib and Mod Menu are now required.
