@@ -4,6 +4,7 @@
 - Fixed a couple README formatting issues
 - Changed the default config value for `counterFormat` to use '&r' so `counterColor` will appear to apply right out-of-the-box
 - Updated the changelog snippet function in `build.gradle` that automatically populates new version descriptions when publishing
+*If you noticed the larger file size, don't worry, most of it is just images. These will be compressed further in the future, when the YACL image-crashing bug is fixed.
 
 ## Chat Patches `194.5.0` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
 ### Note: Based on popular opinion, Yet Another Config Lib and Mod Menu are now required.
