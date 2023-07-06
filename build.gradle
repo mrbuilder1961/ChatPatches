@@ -103,9 +103,21 @@ processResources {
 			.replaceAll("\\\$\\{targets}", targets.replaceAll(",", ", "))
 			.replaceAll("\\\$\\{loaders}", loaders.split(",").collect { it.capitalize() }.join(", "))
 
+
 		// hackily gets the first changelog entry
-		def i = file("changelog.md").text.replaceFirst("## `1", "").indexOf("## `1")
-		changelogText = file("changelog.md").text.substring(0, i + 1)
+		String newEntryTitle = "## Chat Patches `" + version + "`"
+		int prevEntryIndex = file("changelog.md").text.replaceFirst(newEntryTitle, "").indexOf("## Chat Patches `") + newEntryTitle.length() - 2
+
+		changelogText = file("changelog.md").text.substring(0, prevEntryIndex)
+
+		// considers the changelog "malformed" if it doesn't end with word character(s), whitespace, or newline(s)
+		if( !changelogText.matches("(?s).*(\\s+|(\r?\n)+|\\w+)\$") ) {
+			noPublish = true
+			println "/!\\ Warning: /!\\ Changelog seemed malformed, this is probably caused by an invalid version (v$version). Cancelled publishing, just in case."
+		}
+
+		if(noPublish)
+			println "Using changelog text (__=start and end):\n__${changelogText}__"
 	}
 }
 
