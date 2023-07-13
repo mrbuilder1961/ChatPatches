@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
@@ -331,7 +332,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * menu or the <i>shown</i> copy menu.
 	 * */
 	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawHoverEvent(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Style;II)V"))
-	public boolean cps$renderTooltipSmartly(ChatScreen me, DrawContext drawContext, Style style, int mX, int mY) {
+	public boolean cps$renderTooltipSmartly(DrawContext drawContext, TextRenderer textRenderer, Style style, int mX, int mY) {
 		return !cps$isMouseOverSettingsMenu(mX, mY) && !cps$isMouseOverCopyMenu(mX, mY);
 	}
 

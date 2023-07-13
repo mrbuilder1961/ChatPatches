@@ -1,6 +1,10 @@
 # Changelog
 
-## Chat Patches `201.5.1` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
+## Chat Patches `201.5.2` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
+- I guess I lied about the version numbers thing... doesn't always make sense like in this situation
+- Fixed invalid mixin signature (not sure why my plugin to avoid this problem wasn't working...)
+
+- ## Chat Patches `201.5.1` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - Ported `194.5.1` to 1.20 ([#92](https://www.github.com/mrbuilder1961/ChatPatches/issues/92))
 - From now on, all mod versions with the same features will use identical version numbers (excluding the Minecraft version part) to
   make it easier to track changes across versions
