@@ -21,6 +21,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 import static java.io.File.separator;
+import static obro1961.chatpatches.ChatPatches.config;
 
 /**
  * Represents the chat log file in the run directory located at {@link ChatLog#CHATLOG_PATH}.
@@ -159,11 +160,17 @@ public class ChatLog {
 
     /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@link Config#chatMaxMessages}. */
     private static void enforceSizes() {
-        if(data.messages.size() > ChatPatches.config.chatMaxMessages )
-            data.messages = data.messages.subList(0, ChatPatches.config.chatMaxMessages + 1);
+        int oldMessageSize = data.messages.size();
+        if(oldMessageSize > config.chatMaxMessages ) {
+            data.messages = data.messages.subList(0, config.chatMaxMessages + 1);
+            ChatPatches.LOGGER.warn("[ChatLog.enforceSizes] ChatLog was full, trimmed to {} messages (removed {})", config.chatMaxMessages, oldMessageSize - config.chatMaxMessages);
+        }
 
-        if(data.history.size() > ChatPatches.config.chatMaxMessages )
-            data.history = data.history.subList(0, ChatPatches.config.chatMaxMessages + 1);
+        int oldHistorySize = data.history.size();
+        if(oldHistorySize > config.chatMaxMessages ) {
+            data.history = data.history.subList(0, config.chatMaxMessages + 1);
+            ChatPatches.LOGGER.warn("[ChatLog.enforceSizes] ChatLog was full, trimmed to {} sent messages (removed {})", config.chatMaxMessages, oldHistorySize - config.chatMaxMessages);
+        }
     }
 
     /** Restores the chat log from {@link #data} into Minecraft. */
@@ -183,12 +190,16 @@ public class ChatLog {
 
 
     public static void addMessage(Text msg) {
-        if(data.messages.size() < ChatPatches.config.chatMaxMessages )
+        if(data.messages.size() < config.chatMaxMessages )
             data.messages.add(msg);
+        else
+            ChatPatches.LOGGER.warn("[ChatLog.addMessage] ChatLog message capacity has been reached, ignoring message '{}'", msg.getString());
     }
     public static void addHistory(String msg) {
-        if(data.history.size() < ChatPatches.config.chatMaxMessages )
+        if(data.history.size() < config.chatMaxMessages )
             data.history.add(msg);
+        else
+            ChatPatches.LOGGER.warn("[ChatLog.addMessage] ChatLog history capacity has been reached, ignoring sent message '{}'", msg);
     }
     public static void clearMessages() { data.messages.clear(); }
     public static void clearHistory() { data.history.clear(); }

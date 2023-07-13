@@ -13,6 +13,7 @@ import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import obro1961.chatpatches.util.ChatUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.asm.mixin.Final;
@@ -68,11 +69,11 @@ public abstract class MessageHandlerMixin {
             UUID uuid = client.getSocialInteractionsManager().getUuid(name);
 
             ChatPatches.lastMsg =
-                ( name == null || name.equals("") || uuid.equals(ChatUtils.NIL_UUID) )
-                    ? ChatUtils.NIL_MESSAGE
+                ( name == null || name.isBlank() || uuid.equals(ChatUtils.NIL_UUID) )
+                    ? ChatUtils.NIL_MSG_DATA
                     : new ChatUtils.MessageData( new GameProfile(uuid, name), Instant.now() );
         } else {
-            ChatPatches.lastMsg = ChatUtils.NIL_MESSAGE;
+            ChatPatches.lastMsg = ChatUtils.NIL_MSG_DATA;
         }
     }
 }

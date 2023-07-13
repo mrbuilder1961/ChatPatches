@@ -43,7 +43,6 @@ dependencies {
 	// integration files, toggleable in /integrations/integrations.properties
 	// put jar files in /integrations/ and see the .properties file for more info
 	File integrationsFile = file("./integrations/integrations.properties")
-
 	if( integrationsFile.exists() ) {
 		println "Loading dev testing integrations..."
 

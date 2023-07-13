@@ -55,6 +55,7 @@ import java.util.stream.Stream;
 
 import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
 import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
+import static obro1961.chatpatches.ChatPatches.FABRIC_LOADER;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
@@ -119,14 +120,21 @@ public abstract class ChatScreenMixin extends Screen {
 	@Shadow public abstract void setChatFromHistory(int offset);
 
 
+	@Shadow private String originalChatText;
+
 	protected ChatScreenMixin(Text title) { super(title); }
 
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void cps$ensureClientExists(String originalChatText, CallbackInfo ci) {
+	private void cps$chatScreenInit(String originalChatText, CallbackInfo ci) {
 		this.client = Objects.requireNonNullElse(client, MinecraftClient.getInstance());
 
-		if(messageDraft.isBlank())
+
+		// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
+		if(config.messageDrafting && !messageDraft.isBlank() && FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
+			messageDraft = originalChatText;
+		// otherwise if message drafting is enabled and a draft exists, update the draft
+		else if(config.messageDrafting && messageDraft.isBlank())
 			messageDraft = originalChatText;
 	}
 
@@ -647,10 +655,10 @@ public abstract class ChatScreenMixin extends Screen {
 			// gets the skin texture from the player, then the profile, and finally the NIL profile if all else fails
 			Identifier skinTexture =
 				player == null
-					? client.getSkinProvider().loadSkin( ChatUtils.NIL_MESSAGE.sender() )
+					? client.getSkinProvider().loadSkin( ChatUtils.NIL_MSG_DATA.sender() )
 					: player.hasSkinTexture()
 						? player.getSkinTexture()
-						: client.getSkinProvider().loadSkin( player.getProfile() != null ? player.getProfile() : ChatUtils.NIL_MESSAGE.sender() );
+						: client.getSkinProvider().loadSkin( player.getProfile() != null ? player.getProfile() : ChatUtils.NIL_MSG_DATA.sender() );
 
 			mainButtons.get(COPY_MENU_SENDER).setTexture(skinTexture).readyToRender(true);
 			mainButtons.get(COPY_MENU_REPLY).setTexture(skinTexture).readyToRender(true);

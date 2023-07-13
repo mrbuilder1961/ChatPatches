@@ -1,12 +1,20 @@
 # Changelog
 
-## Chat Patches `194.5.1` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
+## Chat Patches `194.5.1` for Minecraft 1.19.4 on Fabric, Quilt
+- ***Removed compatibility with `1.19.3` because YetAnotherConfigLib 3.x doesn't support it***
+- Added zh_cn.json translations (HUGE thanks to [SJC08](https://github.com/SJC08)!)
+- Show Me What You Got now works with Chat Patches again! ([#88](https://www.github.com/mrbuilder1961/ChatPatches/issues/88))
+- Now some odd formatting mods/plugins should work with Chat Patches again ([#96](https://www.github.com/mrbuilder1961/ChatPatches/issues/96))
 - Fixed a couple README formatting issues
-- Changed the default config value for `counterFormat` to use '&r' so `counterColor` will appear to apply right out-of-the-box
+- Changed the default config value for `counterFormat` to use '&r' so `counterColor` will appear to apply right out-of-the-box; same fix applied to 
+  `boundaryFormat` for `boundaryColor`
 - Updated the changelog snippet function in `build.gradle` that automatically populates new version descriptions when publishing
-*If you noticed the larger file size, don't worry, most of it is just images. These will be compressed further in the future, when the YACL image-crashing bug is fixed.
+- Added some more loggers in `ChatLog` so if it runs out of space it should tell you... (open any issues if it randomly clears the log please!)
+- Switched the preview image file types from .jpg to .webp to reduce file size, and because YACL (is supposed to) support it well
+- *Unfortunately YACL still is crashing with the images, so they remain disabled. [I've opened up an issue on the YACL repo](https://github.com/isXander/YetAnotherConfigLib/issues/87), 
+  so hopefully it will be fixed soon! **Note: this is why the file size of the mod is much higher now.***
 
-## Chat Patches `194.5.0` for Minecraft 1.19.3, 1.19.4 on Fabric, Quilt
+## Chat Patches `194.5.0` for Minecraft 1.19.4 on Fabric, Quilt
 ### Note: Based on popular opinion, Yet Another Config Lib and Mod Menu are now required.
 - Changed the "Chat HUD" config category to "Chat Interface" again, and split the options within it into 2 subcategories: "Heads Up Display (HUD)" and 
   "Screen" for more organization

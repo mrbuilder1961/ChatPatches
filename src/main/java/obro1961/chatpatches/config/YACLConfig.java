@@ -150,7 +150,7 @@ public class YACLConfig extends Config {
             );
         }
 
-        ChatPatches.LOGGER.warn("[YACLConfig.desc] Image preview temporarily disabled due to a YACL bug. I'm trying to get this fixed ASAP, so if you want updates join the discord: https://discord.gg/3MqBvNEyMz!");
+        ChatPatches.LOGGER.warn("[YACLConfig.desc] Image preview temporarily disabled due to a YACL bug (https://github.com/isXander/YetAnotherConfigLib/issues/87). If you want updates join the discord: https://discord.gg/3MqBvNEyMz!");
         return builder.build().generateScreen(parent);
     }
 
@@ -254,8 +254,9 @@ public class YACLConfig extends Config {
     private static OptionDescription desc(ConfigOption<?> opt) {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
 
-        // crashes in prod :(
-        /*String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase() + ".jpg";
+        /*// still crashes in prod :(
+        String ext = "webp";
+        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase() + "." + ext;
         Path imagePath = Path.of("");
         Identifier id = Identifier.of(ChatPatches.MOD_ID, image);
 
@@ -266,7 +267,7 @@ public class YACLConfig extends Config {
             ChatPatches.LOGGER.error("[YACLConfig.desc] Error accessing image path for '{}':", opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(), e);
             id = null;
         } catch(NullPointerException npe) {
-            ChatPatches.LOGGER.info("[YACLConfig.desc] No .jpg image found for '{}'", opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
+            ChatPatches.LOGGER.info("[YACLConfig.desc] No .{} image found for '{}'", ext, opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
             id = null;
         }
 

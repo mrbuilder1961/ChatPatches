@@ -8,8 +8,8 @@
   "mixins": [],
   "client": [
     "MinecraftClientMixin",
-    "chat.ChatHudMixin",
     "chat.MessageHandlerMixin",
+    "gui.ChatHudMixin",
     "gui.ChatScreenMixin",
     "security.CPNHMixin"
   ],

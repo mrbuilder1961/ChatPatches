@@ -19,7 +19,7 @@ public class ChatPatches implements ClientModInitializer {
 
 	public static Config config = Config.newConfig(false);
 	/** Contains the sender and timestamp data of the last received chat message. */
-	public static ChatUtils.MessageData lastMsg = ChatUtils.NIL_MESSAGE;
+	public static ChatUtils.MessageData lastMsg = ChatUtils.NIL_MSG_DATA;
 	private static String lastWorld = "";
 
 

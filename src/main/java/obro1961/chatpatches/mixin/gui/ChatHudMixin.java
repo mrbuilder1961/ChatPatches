@@ -1,4 +1,4 @@
-package obro1961.chatpatches.mixin.chat;
+package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.lastMsg;
@@ -126,9 +126,6 @@ public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAcce
     // condensed to one method because the first part of both methods are practically identical
     @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
     private double cps$moveINDHoverText(double e) {
-        // small bug with this, hover text extends to above chat, likely includes indicator text as well
-        // maybe check ChatHud#toChatLineY(double)
-        // prob unrelated to this bug, but indicator icons render weird so check that out and send some msgs w/ the icons + text
         return e + ( config.shiftChat * this.getChatScale() );
     }
 
@@ -158,7 +155,8 @@ public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAcce
             return message; // cancels modifications when loading the chatlog, regenerating visibles, or sending a boundary message
 
         final Style style = message.getStyle();
-        boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MESSAGE);
+        final Matcher vanillaMatcher = ChatUtils.VANILLA_MESSAGE.matcher( message.getString() );
+        boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
         Date now = lastEmpty ? new Date() : Date.from(lastMsg.timestamp());
         String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
@@ -172,29 +170,63 @@ public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAcce
                         : Text.empty().setStyle( Style.EMPTY.withInsertion(nowTime) )
                 )
                 .append(
-                    !lastEmpty && !boundary && Pattern.matches("^<[a-zA-Z0-9_]{3,16}> .+", message.getString())
+                    !lastEmpty && !boundary && vanillaMatcher.matches()
                         ? Text.empty().setStyle(style)
                             .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
-                            .append( // add first part of message (depending on Text style and whether it was a chat or system)
-                                message.getContent() instanceof TranslatableTextContent ttc
-                                    ? net.minecraft.util.Util.make(() -> { // all message components
+                            .append( // add first part of message (depending on the Style and how it was constructed)
+                                net.minecraft.util.Util.make(() -> {
+                                    if(message.getContent() instanceof TranslatableTextContent ttc) { // most vanilla chat messages
 
                                         MutableText text = Text.empty().setStyle(style);
                                         List<Text> messages = Arrays.stream( ttc.getArgs() ).map( arg -> (Text)arg ).toList();
 
+                                        // i think the arg at i=0 is the player name in vanilla messages
                                         for(int i = 1; i < messages.size(); ++i)
                                             text.append( messages.get(i) );
 
                                         return text;
-                                    })
-                                    : Text.literal( ((LiteralTextContent) message.getContent()).string().split("> ")[1] ).setStyle(style) // default-style message with name
+                                    } else if(message.getContent() instanceof LiteralTextContent ltc) { // default-style message with name
+                                        // assuming the vanilla format '<name> message'
+                                        String[] splitMessage = ltc.string().split("> ");
+
+                                        if(splitMessage.length > 1)
+                                            return Text.literal(splitMessage[1]).setStyle(style);
+                                        else
+                                            //return Text.empty().setStyle(style); // use this? idk
+                                            return message.copyContentOnly().setStyle(style);
+                                    } else {
+                                        // text w/o siblings
+                                        return message.copyContentOnly().setStyle(style);
+                                    }
+                                })
                             )
                             .append( // add any siblings (Texts with different styles)
                                 net.minecraft.util.Util.make(() -> {
-
                                     MutableText msg = Text.empty().setStyle(style);
+                                    List<Text> siblings = message.getSiblings();
+                                    int i = -1; // index of the first '>' in the playername
 
-                                    message.getSiblings().forEach(msg::append);
+                                    // if the message uses the vanilla style but the main component doesn't have the full playername, then only add (the actual message) after it, (removes duped names)
+                                    if(vanillaMatcher.matches() && message.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains("> "))
+                                        i = siblings.stream().filter(sib -> sib.getString().contains(">")).mapToInt(siblings::indexOf).findFirst().orElse(i);
+
+                                    // if the vanilla-style message is formatted weird, then only add the text *after* the first '>' (end of playername)
+                                    if(i > -1) {
+                                        Text rightTri = siblings.get(i);
+                                        String rightTriStr = rightTri.getString();
+                                        String restOfStr = rightTriStr.substring( rightTriStr.indexOf(">") + 1 ).replaceAll("^\\s+", "");
+                                        // updates the sibling text and decrements the index, so it doesn't get skipped
+                                        if(!restOfStr.isEmpty()) {
+                                            siblings.set(i, Text.literal(restOfStr).setStyle(rightTri.getStyle()));
+                                            --i;
+                                        }
+                                    }
+
+                                    // if there was a split playername, add everything after the '>' (end of playername)
+                                    // (if there wasn't a split playername, add everything [-1 + 1 = 0])
+                                    // (if there was, only add after that part [i + 1 = after name component])
+                                    for(int j = i + 1; j < siblings.size(); ++j)
+                                        msg.append( siblings.get(j) );
 
                                     return msg;
                                 })
