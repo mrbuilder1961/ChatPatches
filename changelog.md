@@ -1,5 +1,10 @@
 # Changelog
 
+## Chat Patches `201.5.1` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
+- Ported `194.5.1` to 1.20 ([#92](https://www.github.com/mrbuilder1961/ChatPatches/issues/92))
+- From now on, all mod versions with the same features will use identical version numbers (excluding the Minecraft version part) to
+  make it easier to track changes across versions
+
 ## Chat Patches `194.5.1` for Minecraft 1.19.4 on Fabric, Quilt
 - ***Removed compatibility with `1.19.3` because YetAnotherConfigLib 3.x doesn't support it***
 - Added zh_cn.json translations (HUGE thanks to [SJC08](https://github.com/SJC08)!)

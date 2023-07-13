@@ -4,11 +4,10 @@ import com.google.common.collect.Lists;
 import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -19,7 +18,6 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.util.ChatMessages;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.OrderedText;
@@ -257,27 +255,29 @@ public abstract class ChatScreenMixin extends Screen {
 	 * </ol>
 	 */
 	@Inject(method = "render", at = @At("HEAD"))
-	public void cps$renderSearchStuff(MatrixStack matrices, int mX, int mY, float delta, CallbackInfo ci) {
-		searchButton.render(matrices, mX, mY, delta);
+	public void cps$renderSearchStuff(DrawContext drawContext, int mX, int mY, float delta, CallbackInfo ci) {
+		searchButton.render(drawContext, mX, mY, delta);
 		if(showSearch && !config.hideSearchButton) {
-			ChatScreen.fill(matrices, SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
-			searchField.render(matrices, mX, mY, delta);
+			drawContext.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
+			searchField.render(drawContext, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				textRenderer.drawWithShadow(matrices, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
+				drawContext.drawTextWithShadow(textRenderer, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
 			}
 		}
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
-			RenderSystem.setShaderTexture(0, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_settings_panel.png"));
-			drawTexture(matrices, MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT);
+			drawContext.drawTexture(
+				Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_settings_panel.png"),
+				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
+			);
 
-			caseSensitive.button.render(matrices, mX, mY, delta);
-			modifiers.button.render(matrices, mX, mY, delta);
-			regex.button.render(matrices, mX, mY, delta);
+			caseSensitive.button.render(drawContext, mX, mY, delta);
+			modifiers.button.render(drawContext, mX, mY, delta);
+			regex.button.render(drawContext, mX, mY, delta);
 		}
 
 		// renders the copy menu's selection box and menu buttons
@@ -297,8 +297,8 @@ public abstract class ChatScreenMixin extends Screen {
 			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.getScrolledLines();
 			int hoveredY = sH - (i * lH) - shift;
 
-			matrices.push();
-			matrices.scale((float) s, (float) s, 1.0f);
+			drawContext.getMatrices().push();
+			drawContext.getMatrices().scale((float) s, (float) s, 1.0f);
 
 			int borderW = sW + 8;
 			int scissorY1 = MathHelper.floor((sH - (chatHud.getVisibleLineCount() * lH) - shift - 1) * s);
@@ -307,19 +307,19 @@ public abstract class ChatScreenMixin extends Screen {
 			int selectionH = (lH * hoveredParts) + 1;
 
 			// cuts off any of the selection rect that goes past the chat hud
-			DrawableHelper.enableScissor(0, scissorY1, borderW, scissorY2);
-			DrawableHelper.drawBorder(matrices, 0, selectionY1, borderW, selectionH, config.copyColor + 0xff000000);
-			DrawableHelper.disableScissor();
+			drawContext.enableScissor(0, scissorY1, borderW, scissorY2);
+			drawContext.drawBorder(0, selectionY1, borderW, selectionH, config.copyColor + 0xff000000);
+			drawContext.disableScissor();
 
-			matrices.pop();
+			drawContext.getMatrices().pop();
 
 
-			mainButtons.values().forEach(menuButton -> menuButton.render(matrices, mX, mY, delta));
+			mainButtons.values().forEach(menuButton -> menuButton.render(drawContext, mX, mY, delta));
 			hoverButtons.values().forEach(menuButton -> {
 				if(menuButton.is( COPY_LINK_N.apply(0) ))
-					mainButtons.get(COPY_MENU_LINKS).children.forEach(linkButton -> linkButton.render(matrices, mX, mY, delta));
+					mainButtons.get(COPY_MENU_LINKS).children.forEach(linkButton -> linkButton.render(drawContext, mX, mY, delta));
 				else
-					menuButton.render(matrices, mX, mY, delta);
+					menuButton.render(drawContext, mX, mY, delta);
 			});
 		}
 	}
@@ -330,8 +330,8 @@ public abstract class ChatScreenMixin extends Screen {
 	 * {@code true} if the mouse is NOT hovering over the <i>opened</i> settings
 	 * menu or the <i>shown</i> copy menu.
 	 * */
-	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;renderTextHoverEffect(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/Style;II)V"))
-	public boolean cps$renderTooltipSmartly(ChatScreen me, MatrixStack matrices, Style style, int mX, int mY) {
+	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawHoverEvent(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Style;II)V"))
+	public boolean cps$renderTooltipSmartly(ChatScreen me, DrawContext drawContext, Style style, int mX, int mY) {
 		return !cps$isMouseOverSettingsMenu(mX, mY) && !cps$isMouseOverCopyMenu(mX, mY);
 	}
 
@@ -593,7 +593,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * {@link ChatHudLine} from {@link #cps$getFullMessageAt(double, double)} doesn't exist.
 	 *
 	 * @implNote The goal of this method is to do as much work as possible, so that
-	 * {@link #render(MatrixStack, int, int, float)} does minimal work and maximum rendering.
+	 * {@link #render(DrawContext, int, int, float)} does minimal work and maximum rendering.
 	 */
 	@Unique
 	private boolean cps$loadCopyMenu(double mX, double mY) {

@@ -1,12 +1,10 @@
 package obro1961.chatpatches.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.IconButtonWidget;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -164,7 +162,7 @@ public class MenuButtonWidget {
 		return false;
 	}
 
-	public void render(MatrixStack matrices, int mX, int mY, float delta) {
+	public void render(DrawContext drawContext, int mX, int mY, float delta) {
 		if(!button.visible || x() < 0 || y() < 0)
 			return;
 
@@ -174,17 +172,16 @@ public class MenuButtonWidget {
 		// fill: from (x, y) to (x+2p+w, y-1p-height)
 		// width: effectively w+2p
 		// height: effectively height+1p (with coords, height-1p);
-		button.render(matrices, mX, mY, delta);
+		button.render(drawContext, mX, mY, delta);
 
 		if(skinTexture != null) {
 			// thank you to dzwdz's Chat Heads for most of the code to draw the skin texture!
-			RenderSystem.setShaderTexture(0, skinTexture);
 
 			// draw base layer, then the hat
 			int x = anchor.x + xOffset + 1;
 			int y = anchor.y + yOffset + 1;
-			DrawableHelper.drawTexture(matrices, x, y, 16, 16, 8, 8, 8, 8, 64, 64);
-			DrawableHelper.drawTexture(matrices, x, y, 16, 16, 40, 8, 8, 8, 64, 64);
+			drawContext.drawTexture(skinTexture, x, y, 16, 16, 8, 8, 8, 8, 64, 64);
+			drawContext.drawTexture(skinTexture, x, y, 16, 16, 40, 8, 8, 8, 64, 64);
 		}
 	}
 }

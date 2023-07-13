@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -43,7 +42,7 @@ import static obro1961.chatpatches.util.ChatUtils.OG_MSG_INDEX;
  */
 @Environment(EnvType.CLIENT)
 @Mixin(ChatHud.class)
-public abstract class ChatHudMixin extends DrawableHelper implements ChatHudAccessor {
+public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow @Final private MinecraftClient client;
     @Shadow @Final private List<ChatHudLine> messages;
     @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
