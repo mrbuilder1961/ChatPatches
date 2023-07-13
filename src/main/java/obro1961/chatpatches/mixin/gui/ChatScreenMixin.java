@@ -120,8 +120,6 @@ public abstract class ChatScreenMixin extends Screen {
 	@Shadow public abstract void setChatFromHistory(int offset);
 
 
-	@Shadow private String originalChatText;
-
 	protected ChatScreenMixin(Text title) { super(title); }
 
 
@@ -134,7 +132,7 @@ public abstract class ChatScreenMixin extends Screen {
 		if(config.messageDrafting && !messageDraft.isBlank() && FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
 			messageDraft = originalChatText;
 		// otherwise if message drafting is enabled and a draft exists, update the draft
-		else if(config.messageDrafting && messageDraft.isBlank())
+		else if(messageDraft.isBlank())
 			messageDraft = originalChatText;
 	}
 
