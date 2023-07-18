@@ -141,7 +141,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * <li>This method causes all messages passed to it to be formatted in
      * a new structure for clear data access. This is done by mostly using
      * {@link MutableText#append(Text)}, which deliberately puts message
-     * components at specific indices, of which all should be laid out in
+     * components at specific indices, all of which should be laid out in
      * {@link ChatUtils}.</li>
      */
     @ModifyVariable(
@@ -151,7 +151,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     )
     private Text cps$modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
         if( refreshing || Flags.LOADING_CHATLOG.isRaised() || Flags.ADDING_CONDENSED_MESSAGE.isRaised() )
-            return message; // cancels modifications when loading the chatlog, regenerating visibles, or sending a boundary message
+            return message; // cancels modifications when loading the chatlog or regenerating visibles
 
         final Style style = message.getStyle();
         final Matcher vanillaMatcher = ChatUtils.VANILLA_MESSAGE.matcher( message.getString() );
@@ -186,7 +186,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                         return text;
                                     } else if(message.getContent() instanceof LiteralTextContent ltc) { // default-style message with name
                                         // assuming the vanilla format '<name> message'
-                                        String[] splitMessage = ltc.string().split("> ");
+                                        String[] splitMessage = ltc.string().split(">"); // for now we will always check for a singular bracket, just in case the space is missing
 
                                         if(splitMessage.length > 1)
                                             return Text.literal(splitMessage[1]).setStyle(style);
@@ -206,7 +206,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                     int i = -1; // index of the first '>' in the playername
 
                                     // if the message uses the vanilla style but the main component doesn't have the full playername, then only add (the actual message) after it, (removes duped names)
-                                    if(vanillaMatcher.matches() && message.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains("> "))
+                                    if(vanillaMatcher.matches() && message.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
                                         i = siblings.stream().filter(sib -> sib.getString().contains(">")).mapToInt(siblings::indexOf).findFirst().orElse(i);
 
                                     // if the vanilla-style message is formatted weird, then only add the text *after* the first '>' (end of playername)
