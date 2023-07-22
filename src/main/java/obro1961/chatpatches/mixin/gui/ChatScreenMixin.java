@@ -29,9 +29,10 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
-import obro1961.chatpatches.config.ChatSearchSettingButton;
+import obro1961.chatpatches.config.ChatSearchSetting;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.MenuButtonWidget;
+import obro1961.chatpatches.gui.SearchButtonWidget;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.StringTextUtils;
@@ -56,10 +57,11 @@ import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
 import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
 import static obro1961.chatpatches.ChatPatches.FABRIC_LOADER;
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.config.ChatSearchSettingButton.*;
+import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
+import static obro1961.chatpatches.util.SharedVariables.*;
 
 /**
  * An extension of ChatScreen with searching capabilities.
@@ -94,32 +96,15 @@ public abstract class ChatScreenMixin extends Screen {
 	@Unique private static final int MENU_WIDTH = 146, MENU_HEIGHT = 76;
 	@Unique private static final int MENU_X = 2, MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 
-	// search stuff
-	@Unique private static boolean showSearch = true;
-	@Unique private static boolean showSettingsMenu = false; // note: doesn't really need to be static
-	// copy menu stuff
-	@Unique private static boolean showCopyMenu = false; // true when a message was right-clicked on
-	@Unique private static ChatHudLine selectedLine = NIL_HUD_LINE;
-	@Unique private static Map<Text, MenuButtonWidget> mainButtons = new LinkedHashMap<>(); // buttons that appear on the initial click
-	@Unique private static Map<Text, MenuButtonWidget> hoverButtons = new LinkedHashMap<>(); // buttons that are revealed on hover
-	@Unique private static List<ChatHudLine.Visible> hoveredVisibles = new ArrayList<>();
-	// drafting
-	@Unique private static String searchDraft = "";
-	@Unique private static String messageDraft = "";
-
 	@Unique private TextFieldWidget searchField;
 	@Unique private TexturedButtonWidget searchButton;
 	@Unique private String lastSearch;
 	@Unique private PatternSyntaxException searchError;
 
 	@Shadow	protected TextFieldWidget chatField;
-
-	@Shadow protected abstract Style getTextStyleAt(double x, double y);
-
 	@Shadow private String originalChatText;
 
 	protected ChatScreenMixin(Text title) { super(title); }
-
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void cps$chatScreenInit(String originalChatText, CallbackInfo ci) {
@@ -152,24 +137,9 @@ public abstract class ChatScreenMixin extends Screen {
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
 	protected void cps$initSearchStuff(CallbackInfo ci) {
-		chatField.setText(messageDraft);
+		if (config.messageDrafting) chatField.setText(messageDraft);
 
-		searchButton = new TexturedButtonWidget(2, height - 35, 16, 16, 0, 0, 16, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_buttons.png"), 16, 32,
-			button -> {}) {
-			@Override
-			public boolean mouseClicked(double x, double y, int i) {
-				if(this.active && this.visible && this.clicked(x, y)) {
-					if(i == GLFW.GLFW_MOUSE_BUTTON_LEFT)
-						showSearch = !showSearch;
-					else if(i == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
-						showSettingsMenu = !showSettingsMenu;
- 					else {
-						return super.mouseClicked(x, y, i);
-					}
-				}
-				return false;
-			}
-		};
+		searchButton = new SearchButtonWidget(2, height - 35);
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));
@@ -180,17 +150,14 @@ public abstract class ChatScreenMixin extends Screen {
 		if(config.searchDrafting) searchField.setText(searchDraft);
 
 		final int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
-		caseSensitive = new ChatSearchSettingButton("caseSensitive", true, yPos, 0);
-		modifiers = new ChatSearchSettingButton("modifiers", false, yPos, 22);
-		regex = new ChatSearchSettingButton("regex", false, yPos, 44);
+		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0);
+		modifiers = new ChatSearchSetting("modifiers", false, yPos, 22);
+		regex = new ChatSearchSetting("regex", false, yPos, 44);
 
-		if(config.hideSearchButton) {
-			searchButton.visible = false;
-			searchField.visible = false;
-		} else {
+		if(!config.hideSearchButton) {
 			addSelectableChild(searchField);
+			addDrawableChild(searchButton);
 		}
-
 
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
@@ -270,7 +237,6 @@ public abstract class ChatScreenMixin extends Screen {
 	 */
 	@Inject(method = "render", at = @At("HEAD"))
 	public void cps$renderSearchStuff(DrawContext drawContext, int mX, int mY, float delta, CallbackInfo ci) {
-		searchButton.render(drawContext, mX, mY, delta);
 		if(showSearch && !config.hideSearchButton) {
 			drawContext.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(drawContext, mX, mY, delta);
@@ -396,15 +362,20 @@ public abstract class ChatScreenMixin extends Screen {
 		messageDraft = "";
 	}
 
+	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
+	private boolean cps$disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> operation) {
+		if(!config.hideSearchButton) return false;
+		return operation.call(chatField, mX, mY, button);
+	}
+
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
-	 * 		<li>{@link #searchButton}: if it was left, toggles {@link #showSearch}, if it was right, toggles {@link #showSettingsMenu}</li>
 	 * 		<li>If {@link #showSettingsMenu} is true, checks if these were clicked:</li>
 	 * 		<ul>
-	 * 			<li>{@link ChatSearchSettingButton#caseSensitive}</li>
-	 * 			<li>{@link ChatSearchSettingButton#modifiers}</li>
-	 * 			<li>{@link ChatSearchSettingButton#regex}</li>
+	 * 			<li>{@link ChatSearchSetting#caseSensitive}</li>
+	 * 			<li>{@link ChatSearchSetting#modifiers}</li>
+	 * 			<li>{@link ChatSearchSetting#regex}</li>
 	 * 		</ul>
 	 * 		<li>Else if {@link #showSettingsMenu} is false:</li>
 	 * 		<ul>
@@ -419,7 +390,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * shown through the menus.
 	 */
 	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;mouseClicked(DDI)Z", shift = At.Shift.AFTER), cancellable = true)
-	public void cps$allowClickableWidgets(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
+	public void cps$afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValue()) return;
 		if(showSettingsMenu) {
 			if(caseSensitive.button.mouseClicked(mX, mY, button))
@@ -453,12 +424,6 @@ public abstract class ChatScreenMixin extends Screen {
 				cir.setReturnValue(showCopyMenu = false);
 			}
 		}
-
-		// ensures clicking/hovering over the settings menu or copy menu doesn't insert anything into the chat field
-		// aka tell the game nothing happened at the mouse click (return false)
-		if( button == 0 && (cps$isMouseOverSettingsMenu(mX, mY) || cps$isMouseOverCopyMenu(mX, mY)) )
-			if(client.inGameHud.getChatHud().mouseClicked(mX, mY) || getTextStyleAt(mX, mY) != null)
-				cir.setReturnValue(false);
 	}
 
 	/** Allows hovering over certain menu buttons to reveal/hide nested buttons. */
@@ -733,8 +698,8 @@ public abstract class ChatScreenMixin extends Screen {
 
 	/**
 	 * Filters all {@link ChatHudLine} messages from the {@link #client}'s ChatHud
-	 * matching the target string (configuration applied from {@link ChatSearchSettingButton#caseSensitive},
-	 * {@link ChatSearchSettingButton#modifiers}, and {@link ChatSearchSettingButton#regex}) into a list of
+	 * matching the target string (configuration applied from {@link ChatSearchSetting#caseSensitive},
+	 * {@link ChatSearchSetting#modifiers}, and {@link ChatSearchSetting#regex}) into a list of
 	 * {@link ChatHudLine.Visible} visibleMessages to be rendered onto the ChatHud. This does <u>not</u>
 	 * mutate or modify the actual {@link ChatHud#messages} list, only the {@link ChatHud#visibleMessages}
 	 * list that is automatically repopulated with new messages when needed.
