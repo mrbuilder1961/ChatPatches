@@ -29,7 +29,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
-import obro1961.chatpatches.config.ChatSearchSetting;
+import obro1961.chatpatches.config.ChatSearchSettingButton;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.MenuButtonWidget;
 import obro1961.chatpatches.util.ChatUtils;
@@ -56,7 +56,7 @@ import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
 import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
 import static obro1961.chatpatches.ChatPatches.FABRIC_LOADER;
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.config.ChatSearchSetting.*;
+import static obro1961.chatpatches.config.ChatSearchSettingButton.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
@@ -115,9 +115,8 @@ public abstract class ChatScreenMixin extends Screen {
 	@Shadow	protected TextFieldWidget chatField;
 
 	@Shadow protected abstract Style getTextStyleAt(double x, double y);
-	@Shadow public abstract boolean sendMessage(String text, boolean addToHistory);
-	@Shadow public abstract void setChatFromHistory(int offset);
 
+	@Shadow private String originalChatText;
 
 	protected ChatScreenMixin(Text title) { super(title); }
 
@@ -131,8 +130,8 @@ public abstract class ChatScreenMixin extends Screen {
 		if(config.messageDrafting && !messageDraft.isBlank() && FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
 			messageDraft = originalChatText;
 		// otherwise if message drafting is enabled and a draft exists, update the draft
-		else if(messageDraft.isBlank())
-			messageDraft = originalChatText;
+		else if(config.messageDrafting && messageDraft.isBlank())
+			this.originalChatText = messageDraft;
 	}
 
 	/**
@@ -156,7 +155,21 @@ public abstract class ChatScreenMixin extends Screen {
 		chatField.setText(messageDraft);
 
 		searchButton = new TexturedButtonWidget(2, height - 35, 16, 16, 0, 0, 16, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_buttons.png"), 16, 32,
-			button -> {});
+			button -> {}) {
+			@Override
+			public boolean mouseClicked(double x, double y, int i) {
+				if(this.active && this.visible && this.clicked(x, y)) {
+					if(i == GLFW.GLFW_MOUSE_BUTTON_LEFT)
+						showSearch = !showSearch;
+					else if(i == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+						showSettingsMenu = !showSettingsMenu;
+ 					else {
+						return super.mouseClicked(x, y, i);
+					}
+				}
+				return false;
+			}
+		};
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));
@@ -164,12 +177,12 @@ public abstract class ChatScreenMixin extends Screen {
 		searchField.setDrawsBackground(false);
 		searchField.setSuggestion(SUGGESTION);
 		searchField.setChangedListener(this::cps$onSearchFieldUpdate);
-		searchField.setText(searchDraft);
+		if(config.searchDrafting) searchField.setText(searchDraft);
 
 		final int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
-		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0);
-		modifiers = new ChatSearchSetting("modifiers", false, yPos, 22);
-		regex = new ChatSearchSetting("regex", false, yPos, 44);
+		caseSensitive = new ChatSearchSettingButton("caseSensitive", true, yPos, 0);
+		modifiers = new ChatSearchSettingButton("modifiers", false, yPos, 22);
+		regex = new ChatSearchSettingButton("regex", false, yPos, 44);
 
 		if(config.hideSearchButton) {
 			searchButton.visible = false;
@@ -366,48 +379,32 @@ public abstract class ChatScreenMixin extends Screen {
 	 * Additionally, resets the chat hud.
 	 */
 	@Inject(method = "removed", at = @At("TAIL"))
-	public void cps$onScreenCleared(CallbackInfo ci) {
-		searchDraft = ( config.searchDrafting && !searchField.getText().isBlank() ) ? searchField.getText() : "";
-		messageDraft = ( config.messageDrafting && !chatField.getText().isBlank() ) ? chatField.getText() : "";
+	public void cps$onScreenClose(CallbackInfo ci) {
+		if(config.searchDrafting) searchDraft = searchField.getText();
+		if(config.messageDrafting) messageDraft = chatField.getText();
 
 		cps$resetCopyMenu();
-
-		client.inGameHud.getChatHud().reset();
 	}
 
-	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V"))
 	public void cps$allowClosingSettings(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-		if(showSettingsMenu && keyCode == GLFW.GLFW_KEY_ESCAPE) {
-			showSettingsMenu = false;
-			cir.setReturnValue(true);
-		}
+		showSettingsMenu = false;
+	}
 
-		if(keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-			if( sendMessage(chatField.getText(), true) ) {
-				chatField.setText( messageDraft = "" ); // clears the chat field and the message draft
-				client.setScreen(null);
-			}
-			cir.setReturnValue(true);
-		}
-
-		// fixes #86 (pressing the up arrow key for sent history switches field focus)
-		if (keyCode == GLFW.GLFW_KEY_UP) {
-			setChatFromHistory(-1);
-			cir.setReturnValue(true);
-		}
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1,shift = At.Shift.AFTER))
+	private void cps$onMessageSentCloseScreen(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+		messageDraft = "";
 	}
 
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
-	 * 		<li>{@link #searchField}: focuses itself</li>
-	 * 		<li>{@link #chatField}: focuses itself</li>
 	 * 		<li>{@link #searchButton}: if it was left, toggles {@link #showSearch}, if it was right, toggles {@link #showSettingsMenu}</li>
 	 * 		<li>If {@link #showSettingsMenu} is true, checks if these were clicked:</li>
 	 * 		<ul>
-	 * 			<li>{@link ChatSearchSetting#caseSensitive}</li>
-	 * 			<li>{@link ChatSearchSetting#modifiers}</li>
-	 * 			<li>{@link ChatSearchSetting#regex}</li>
+	 * 			<li>{@link ChatSearchSettingButton#caseSensitive}</li>
+	 * 			<li>{@link ChatSearchSettingButton#modifiers}</li>
+	 * 			<li>{@link ChatSearchSettingButton#regex}</li>
 	 * 		</ul>
 	 * 		<li>Else if {@link #showSettingsMenu} is false:</li>
 	 * 		<ul>
@@ -421,28 +418,9 @@ public abstract class ChatScreenMixin extends Screen {
 	 * returns false. This is to prevent tooltips from being clicked and
 	 * shown through the menus.
 	 */
-	@Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;mouseClicked(DDI)Z", shift = At.Shift.AFTER), cancellable = true)
 	public void cps$allowClickableWidgets(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		// a little (not really) fixes chatField being unselectable
-		if(searchField.mouseClicked(mX, mY, button)) {
-			setFocused(searchField);
-			cir.setReturnValue(true);
-		} else if(chatField.mouseClicked(mX, mY, button)) {
-			setFocused(chatField);
-			cir.setReturnValue(true);
-		}
-
-		// switch button id bc mouseClicked returns if button != 0
-		// 1 = right click, 0 = left click
-		if(searchButton.mouseClicked(mX, mY, button == 1 ? 0 : button)) {
-			if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
-				showSearch = !showSearch;
-			else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
-				showSettingsMenu = !showSettingsMenu;
-
-			cir.setReturnValue(true);
-		}
-
+		if(cir.getReturnValue()) return;
 		if(showSettingsMenu) {
 			if(caseSensitive.button.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
@@ -755,8 +733,8 @@ public abstract class ChatScreenMixin extends Screen {
 
 	/**
 	 * Filters all {@link ChatHudLine} messages from the {@link #client}'s ChatHud
-	 * matching the target string (configuration applied from {@link ChatSearchSetting#caseSensitive},
-	 * {@link ChatSearchSetting#modifiers}, and {@link ChatSearchSetting#regex}) into a list of
+	 * matching the target string (configuration applied from {@link ChatSearchSettingButton#caseSensitive},
+	 * {@link ChatSearchSettingButton#modifiers}, and {@link ChatSearchSettingButton#regex}) into a list of
 	 * {@link ChatHudLine.Visible} visibleMessages to be rendered onto the ChatHud. This does <u>not</u>
 	 * mutate or modify the actual {@link ChatHud#messages} list, only the {@link ChatHud#visibleMessages}
 	 * list that is automatically repopulated with new messages when needed.

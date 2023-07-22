@@ -9,8 +9,8 @@ import net.minecraft.text.Text;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 
 /** Represents a search setting pertaining to the {@link ChatScreenMixin} screen. */
-public class ChatSearchSetting {
-	public static ChatSearchSetting caseSensitive, modifiers, regex;
+public class ChatSearchSettingButton {
+	public static ChatSearchSettingButton caseSensitive, modifiers, regex;
 
 	public static boolean updateSearchColor = false;
 
@@ -20,7 +20,7 @@ public class ChatSearchSetting {
 	public boolean on;
 	private final Text name;
 
-	public ChatSearchSetting(String key, boolean on, final int y, int yOffset) {
+	public ChatSearchSettingButton(String key, boolean on, final int y, int yOffset) {
 		this.name = Text.translatable("text.chatpatches.search." + key);
 		this.on = on;
 

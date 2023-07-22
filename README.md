@@ -37,15 +37,15 @@ Be on the lookout for new versions, issues, and future features!
 
 - What Minecraft version can I use this with?
   - The *latest Fabric* versions of Minecraft, plus 1.18.x. *Quilt* appears to work, but I don't provide official support for it.
-- Will you make it for (older Minecraft version)? 
+- Will you make it for (older Minecraft version)?
   - Not likely. The oldest version I'll be making is 1.18.x. Any older version would only be supported if it is generally recognized as a modding-LTS version and if it is commonly requested, because backporting is boring and makes me want to die.
-- Will you make this for Forge? 
+- Will you make this for Forge?
   - Probably at some point after all the major changes I want to implement are finished. But right now, I doubt it. Fabric's API is simple, and I am too lazy to learn Forge's until then.
 - I found a bug/issue, what do I do?
-  - First, make sure you have the latest version of the mod for your Minecraft version. If it still persists, you can click on the Issues tab on this page, and nobody has opened one about your issue then create one! Note that a lack of provided information will increase time needed to fix.
+  - First, make sure you have the latest version of the mod for your Minecraft version. If it still persists,you can click on the Issues tab on this page, and nobody has opened one about your issue then create one! Note that a lack of provided information will increase time needed to fix.
 - It says I need to install Fabric, but I already have it installed?
   - [Install the Fabric API.](https://modrinth.com/mod/fabric-api)
-- Do servers need this mod? 
+- Do servers need this mod?
   - It is client side, so no.
 - I can't access the config menu in-game!
   - <u>For 1.19.2+:</u> After ensuring YACL and Mod Menu are installed, if you still cannot access the config, check for an error message and [open an

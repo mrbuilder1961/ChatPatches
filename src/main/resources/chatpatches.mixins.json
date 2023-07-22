@@ -11,6 +11,7 @@
     "chat.MessageHandlerMixin",
     "gui.ChatHudMixin",
     "gui.ChatScreenMixin",
+    "gui.ScreenMixin",
     "security.CPNHMixin"
   ],
   "injectors": {
