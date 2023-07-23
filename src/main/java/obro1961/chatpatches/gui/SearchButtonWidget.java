@@ -4,24 +4,29 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.util.Identifier;
 import obro1961.chatpatches.ChatPatches;
-
-import static obro1961.chatpatches.util.SharedVariables.*;
+import org.lwjgl.glfw.GLFW;
 
 public class SearchButtonWidget extends TexturedButtonWidget {
-    public SearchButtonWidget(int x, int y) {
-        super(x, y, 16, 16, 0, 0, 16, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_buttons.png"),
-                16, 32, button -> showSearch = !showSearch);
+    private final PressAction onLeftClick;
+    private final PressAction onRightClick;
+
+    public SearchButtonWidget(int x, int y, PressAction leftAction, PressAction rightAction) {
+        super(x, y, 16, 16, 0, 0, 16, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_buttons.png"), 16, 32, button -> {});
+        this.onLeftClick = leftAction;
+        this.onRightClick = rightAction;
     }
 
     @Override
-    public boolean mouseClicked(double x, double y, int i) {
+    public boolean mouseClicked(double x, double y, int buttonType) {
         if(active && visible) {
-            if(clicked(x, y) && i == 1){
+            if(clicked(x, y) && buttonType == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                 this.playDownSound(MinecraftClient.getInstance().getSoundManager());
-                showSettingsMenu = !showSettingsMenu;
+                onLeftClick.onPress(this);
                 return true;
-            } else {
-                return super.mouseClicked(x, y, i);
+            } else { // buttonType == GLFW.GLFW_MOUSE_BUTTON_RIGHT
+                this.playDownSound(MinecraftClient.getInstance().getSoundManager());
+                onRightClick.onPress(this);
+                return true;
             }
         } else {
             return false;

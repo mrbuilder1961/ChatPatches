@@ -7,7 +7,6 @@
 - Added Ignore Hide Message Packet option toggle (`chatHidePacket`)
 - Fixed chat focus bug again, inline with #86 and #101 above
 - Re-implemented another part of the overall fix for [#99](https://www.github.com/mrbuilder1961/ChatPatches/issues/99) (checks that `chatNameFormat` was modified before applying it)
-- Removed residual checks to increase performance
 - Removed all `cps$` prefixes as mixin will automatically add them
 
 - ## Chat Patches `201.5.2` for Minecraft 1.20, 1.20.1 on Fabric, Quilt

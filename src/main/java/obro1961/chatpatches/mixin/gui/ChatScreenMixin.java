@@ -55,13 +55,12 @@ import java.util.stream.Stream;
 
 import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
 import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
-import static obro1961.chatpatches.ChatPatches.FABRIC_LOADER;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
-import static obro1961.chatpatches.util.SharedVariables.*;
+import static obro1961.chatpatches.util.SharedVariables.FABRIC_LOADER;
 
 /**
  * An extension of ChatScreen with searching capabilities.
@@ -95,6 +94,19 @@ public abstract class ChatScreenMixin extends Screen {
 	@Unique private static final double SEARCH_W_MULT = 0.25;
 	@Unique private static final int MENU_WIDTH = 146, MENU_HEIGHT = 76;
 	@Unique private static final int MENU_X = 2, MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
+
+	// search stuff
+	@Unique private static boolean showSearch = true;
+	@Unique private static boolean showSettingsMenu = false; // note: doesn't really need to be static
+	// copy menu stuff
+	@Unique private static boolean showCopyMenu = false; // true when a message was right-clicked on
+	@Unique private static ChatHudLine selectedLine = NIL_HUD_LINE;
+	@Unique private static Map<Text, MenuButtonWidget> mainButtons = new LinkedHashMap<>(); // buttons that appear on the initial click
+	@Unique private static Map<Text, MenuButtonWidget> hoverButtons = new LinkedHashMap<>(); // buttons that are revealed on hover
+	@Unique private static List<ChatHudLine.Visible> hoveredVisibles = new ArrayList<>();
+	// drafting
+	@Unique private static String searchDraft = "";
+	@Unique private static String messageDraft = "";
 
 	@Unique private TextFieldWidget searchField;
 	@Unique private TexturedButtonWidget searchButton;
@@ -136,7 +148,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
 	protected void initSearchStuff(CallbackInfo ci) {
-		searchButton = new SearchButtonWidget(2, height - 35);
+		searchButton = new SearchButtonWidget(2, height - 35, me -> showSearch = !showSearch, me -> showSettingsMenu = !showSettingsMenu);
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));

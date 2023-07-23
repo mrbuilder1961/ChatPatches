@@ -11,6 +11,7 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.Flags;
+import obro1961.chatpatches.util.SharedVariables;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
@@ -111,7 +112,7 @@ public class YACLConfig extends Config {
                 });
 
         // debug options
-        if(ChatPatches.FABRIC_LOADER.isDevelopmentEnvironment()) {
+        if(SharedVariables.FABRIC_LOADER.isDevelopmentEnvironment()) {
             builder.category(
                 category(
                     "debug",

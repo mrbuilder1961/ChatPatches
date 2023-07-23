@@ -3,23 +3,18 @@ package obro1961.chatpatches;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.Flags;
 import obro1961.chatpatches.util.MiscUtils;
 
 public class ChatPatches implements ClientModInitializer {
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Chat Patches");
-	public static final FabricLoader FABRIC_LOADER = FabricLoader.getInstance();
 	public static final String MOD_ID = "chatpatches";
 
 	public static Config config = Config.newConfig(false);
-	/** Contains the sender and timestamp data of the last received chat message. */
-	public static ChatUtils.MessageData lastMsg = ChatUtils.NIL_MSG_DATA;
 	private static String lastWorld = "";
 
 

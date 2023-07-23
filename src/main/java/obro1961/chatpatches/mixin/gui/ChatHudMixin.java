@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.ChatPatches.lastMsg;
 import static obro1961.chatpatches.util.ChatUtils.OG_MSG_INDEX;
+import static obro1961.chatpatches.util.SharedVariables.lastMsg;
 
 /**
  * The main entrypoint mixin for most chat modifications.

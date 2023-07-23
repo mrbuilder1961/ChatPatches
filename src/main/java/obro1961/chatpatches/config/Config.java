@@ -22,7 +22,9 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.io.File.separator;
-import static obro1961.chatpatches.ChatPatches.*;
+import static obro1961.chatpatches.ChatPatches.LOGGER;
+import static obro1961.chatpatches.ChatPatches.config;
+import static obro1961.chatpatches.util.SharedVariables.FABRIC_LOADER;
 import static obro1961.chatpatches.util.StringTextUtils.fillVars;
 import static obro1961.chatpatches.util.StringTextUtils.toText;
 

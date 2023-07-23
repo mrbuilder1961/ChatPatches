@@ -17,6 +17,7 @@ import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import obro1961.chatpatches.util.ChatUtils;
+import obro1961.chatpatches.util.SharedVariables;
 import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,7 +49,7 @@ public abstract class MessageHandlerMixin {
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
-        ChatPatches.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp());
+        SharedVariables.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp());
     }
 
     /**
@@ -61,7 +62,7 @@ public abstract class MessageHandlerMixin {
         String name = ChatUtils.VANILLA_MESSAGE.matcher(string).matches() ? StringUtils.substringBetween(string, "<", ">") : null;
         UUID uuid = name == null ? Util.NIL_UUID : this.client.getSocialInteractionsManager().getUuid(name);
 
-        ChatPatches.lastMsg = !uuid.equals(Util.NIL_UUID)
+        SharedVariables.lastMsg = !uuid.equals(Util.NIL_UUID)
             ? new ChatUtils.MessageData(new GameProfile(uuid, name), Instant.now())
             : ChatUtils.NIL_MSG_DATA;
     }
