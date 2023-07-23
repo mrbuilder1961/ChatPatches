@@ -250,8 +250,13 @@ public class Config {
                 LOGGER.error("[ConfigOption.set({})] An error occurred trying to set a config option:", obj, e);
             }
         }
+
         public void set(Object obj) {
             this.set(obj, true);
+        }
+
+        public boolean changed() {
+            return !val.equals(def);
         }
     }
 }

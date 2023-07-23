@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static obro1961.chatpatches.ChatPatches.config;
 
@@ -29,6 +30,12 @@ public class ChatUtils {
 	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Instant.EPOCH);
 	public static final int TIMESTAMP_INDEX = 0, OG_MSG_INDEX = 1, DUPE_COUNTER_INDEX = 2; // indices of all main (modified message) components
 	public static final int MSG_NAME_INDEX = 0, MSG_MSG_INDEX = 1, MSG_FORMATTED_TEXT_INDEX = 2; // indices of all OG_MSG_INDEX components
+	/**
+	 * Matches a vanilla message, with captures for the playername and message.
+	 * Considers a message invalid if {@link net.minecraft.SharedConstants#isValidChar(char)}
+	 * would return false.
+	 */
+	public static final Pattern VANILLA_MESSAGE = Pattern.compile("^<(?<name>[a-zA-Z0-9_]{3,16})> (?<message>[^\\u0000-\\u001f\\u007f§]+)$");
 
 	/**
 	 * Tries to condense the {@code index} message into the incoming message

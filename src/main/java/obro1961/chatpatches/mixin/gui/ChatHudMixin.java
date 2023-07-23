@@ -29,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.lastMsg;
@@ -153,10 +154,12 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
             return message; // cancels modifications when loading the chatlog or regenerating visibles
 
         final Style style = message.getStyle();
+        final Matcher vanillaMatcher = ChatUtils.VANILLA_MESSAGE.matcher( message.getString() );
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
         Date now = lastEmpty ? new Date() : Date.from(lastMsg.timestamp());
         String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
+
 
         Text modified =
             Text.empty().setStyle(style)
@@ -166,7 +169,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         : Text.empty().setStyle( Style.EMPTY.withInsertion(nowTime) )
                 )
                 .append(
-                    !lastEmpty && !boundary && !config.chatNameFormat.equals("<$>") /* Do not perform format */
+                    !lastEmpty && !boundary && vanillaMatcher.matches() && Config.getOption("chatNameFormat").changed()
                         ? Text.empty().setStyle(style)
                             .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
                             .append( // add first part of message (depending on the Style and how it was constructed)
@@ -186,7 +189,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                         String[] splitMessage = ltc.string().split(">"); // for now we will always check for a singular bracket, just in case the space is missing
 
                                         if(splitMessage.length > 1)
-                                            return Text.literal(splitMessage[1]).setStyle(style);
+                                            // removes any preceding whitespace
+                                            return Text.literal( splitMessage[1].replaceAll("^\\s+", "") ).setStyle(style);
                                         else
                                             //return Text.empty().setStyle(style); // use this? idk
                                             return message.copyContentOnly().setStyle(style);
