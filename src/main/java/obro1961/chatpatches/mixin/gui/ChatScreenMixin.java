@@ -108,15 +108,14 @@ public abstract class ChatScreenMixin extends Screen {
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void cps$chatScreenInit(String originalChatText, CallbackInfo ci) {
-		this.client = Objects.requireNonNullElse(client, MinecraftClient.getInstance());
-
-
-		// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
-		if(config.messageDrafting && !messageDraft.isBlank() && FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
-			messageDraft = originalChatText;
-		// otherwise if message drafting is enabled and a draft exists, update the draft
-		else if(config.messageDrafting && messageDraft.isBlank())
-			this.originalChatText = messageDraft;
+		if(config.messageDrafting && messageDraft.isBlank()) {
+			// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
+			if(FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
+				messageDraft = originalChatText;
+				// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
+			else if (!originalChatText.equals("/"))
+				this.originalChatText = messageDraft;
+		}
 	}
 
 	/**

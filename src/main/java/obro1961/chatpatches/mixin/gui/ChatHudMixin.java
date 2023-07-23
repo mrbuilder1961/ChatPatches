@@ -29,7 +29,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.lastMsg;
@@ -154,12 +153,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
             return message; // cancels modifications when loading the chatlog or regenerating visibles
 
         final Style style = message.getStyle();
-        final Matcher vanillaMatcher = ChatUtils.VANILLA_MESSAGE.matcher( message.getString() );
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
         Date now = lastEmpty ? new Date() : Date.from(lastMsg.timestamp());
         String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
-
 
         Text modified =
             Text.empty().setStyle(style)
@@ -169,7 +166,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         : Text.empty().setStyle( Style.EMPTY.withInsertion(nowTime) )
                 )
                 .append(
-                    !lastEmpty && !boundary && vanillaMatcher.matches()
+                    !lastEmpty && !boundary && !config.chatNameFormat.equals("<$>") /* Do not perform format */
                         ? Text.empty().setStyle(style)
                             .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
                             .append( // add first part of message (depending on the Style and how it was constructed)
@@ -206,7 +203,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                     int i = -1; // index of the first '>' in the playername
 
                                     // if the message uses the vanilla style but the main component doesn't have the full playername, then only add (the actual message) after it, (removes duped names)
-                                    if(vanillaMatcher.matches() && message.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
+                                    if(message.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
                                         i = siblings.stream().filter(sib -> sib.getString().contains(">")).mapToInt(siblings::indexOf).findFirst().orElse(i);
 
                                     // if the vanilla-style message is formatted weird, then only add the text *after* the first '>' (end of playername)
