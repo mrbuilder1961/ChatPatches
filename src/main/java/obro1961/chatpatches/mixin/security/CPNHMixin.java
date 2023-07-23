@@ -18,10 +18,11 @@ public abstract class CPNHMixin {
      * Prevents messages from being hidden.
      * Extremely unclear implementation on Mojang's part,
      * but based on how chat reports work, this is likely
-     * not wanted.
+     * unwanted. Configurable using {@link obro1961.chatpatches.config.Config#chatHidePacket}.
      */
     @Inject(method = "onRemoveMessage", at = @At("HEAD"), cancellable = true, require = 0)
     private void cancelDelMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
-        if(config.chatHidePacket) ci.cancel();
+        if(config.chatHidePacket)
+            ci.cancel();
     }
 }

@@ -112,8 +112,8 @@ public abstract class ChatScreenMixin extends Screen {
 			// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
 			if(FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
 				messageDraft = originalChatText;
-				// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
-			else if (!originalChatText.equals("/"))
+			// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
+			else if(!originalChatText.equals("/"))
 				this.originalChatText = messageDraft;
 		}
 	}
@@ -144,7 +144,8 @@ public abstract class ChatScreenMixin extends Screen {
 		searchField.setDrawsBackground(false);
 		searchField.setSuggestion(SUGGESTION);
 		searchField.setChangedListener(this::onSearchFieldUpdate);
-		if(config.searchDrafting) searchField.setText(searchDraft);
+		if(config.searchDrafting)
+			searchField.setText(searchDraft);
 
 		final int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
 		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0);
@@ -155,6 +156,7 @@ public abstract class ChatScreenMixin extends Screen {
 			addSelectableChild(searchField);
 			addDrawableChild(searchButton);
 		}
+
 
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
@@ -343,26 +345,33 @@ public abstract class ChatScreenMixin extends Screen {
 	 */
 	@Inject(method = "removed", at = @At("TAIL"))
 	public void onScreenClose(CallbackInfo ci) {
-		if(config.searchDrafting) searchDraft = searchField.getText();
-		if(config.messageDrafting) messageDraft = chatField.getText();
+		if(config.searchDrafting)
+			searchDraft = searchField.getText();
+		if(config.messageDrafting)
+			messageDraft = chatField.getText();
 
 		resetCopyMenu();
 	}
 
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V"))
+	/** Closes the settings menu if the escape key was pressed and it was already open */
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0), cancellable = true)
 	public void allowClosingSettings(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-		showSettingsMenu = false;
+		if(showSettingsMenu) {
+			showSettingsMenu = false;
+			cir.setReturnValue(true);
+		}
 	}
-
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1,shift = At.Shift.AFTER))
-	private void onMessageSentCloseScreen(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
+	private void onMessageSentEmptyDraft(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
 		messageDraft = "";
 	}
 
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
-	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> operation) {
-		if(!config.hideSearchButton) return false;
-		return operation.call(chatField, mX, mY, button);
+	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
+		if(!config.hideSearchButton)
+			return false;
+		return mouseClicked.call(chatField, mX, mY, button);
 	}
 
 	/**
@@ -388,7 +397,9 @@ public abstract class ChatScreenMixin extends Screen {
 	 */
 	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;mouseClicked(DDI)Z", shift = At.Shift.AFTER), cancellable = true)
 	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		if(cir.getReturnValue()) return;
+		if(cir.getReturnValue())
+			return;
+
 		if(showSettingsMenu) {
 			if(caseSensitive.button.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);

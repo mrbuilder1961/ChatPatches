@@ -1,14 +1,14 @@
 # Changelog
 
 ## Chat Patches `201.5.3` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
-- Better #86 fix, also fixed AutoCompletion up key shows the message history instead of the previous suggestion ([#101](https://www.github.com/mrbuilder1961/ChatPatches/issues/101))
+- Better [#86](https://www.github.com/mrbuilder1961/ChatPatches/issues/86) fix, also with auto-complete suggestor not going up when pressing the up key ([#101](https://www.github.com/mrbuilder1961/ChatPatches/issues/101))
 - Fixed elements added by other mods are not clickable
-- Fix Tweakeroo message draft not working
-- Add Ignore Hide Message Packet toggle
-- Fix Chat focus bug again
-- Add chat name format check
-- Remove residual checks to increase performance
-- Remove all cps$ as mixin would automatically add them
+- Fixed Tweakeroo message draft not working
+- Added Ignore Hide Message Packet option toggle (`chatHidePacket`)
+- Fixed chat focus bug again, inline with #86 and #101 above
+- Re-implemented another part of the overall fix for [#99](https://www.github.com/mrbuilder1961/ChatPatches/issues/99) (checks that `chatNameFormat` was modified before applying it)
+- Removed residual checks to increase performance
+- Removed all `cps$` prefixes as mixin will automatically add them
 
 - ## Chat Patches `201.5.2` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - I guess I lied about the version numbers thing... doesn't always make sense like in this situation

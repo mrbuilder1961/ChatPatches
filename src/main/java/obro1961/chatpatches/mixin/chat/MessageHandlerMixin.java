@@ -53,17 +53,16 @@ public abstract class MessageHandlerMixin {
 
     /**
      * Does the same thing as {@link #cacheChatData} if
-     * the message is formatted like a vanilla chat message
-     * and contains a valid playername.
+     * the message contains a valid playername.
      */
-    @WrapOperation(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/message/MessageHandler;extractSender(Lnet/minecraft/text/Text;)Ljava/util/UUID;"))
-    private UUID cacheGameData(MessageHandler instance, Text text, Operation<UUID> operation) {
-        String string = TextVisitFactory.removeFormattingCodes(text);
-        String name = StringUtils.substringBetween(string, "<", ">");
+    @Inject(method = "onGameMessage", at = @At("HEAD"))
+    private void cacheGameData(Text message, boolean overlay, CallbackInfo ci) {
+        String string = TextVisitFactory.removeFormattingCodes(message);
+        String name = ChatUtils.VANILLA_MESSAGE.matcher(string).matches() ? StringUtils.substringBetween(string, "<", ">") : null;
         UUID uuid = name == null ? Util.NIL_UUID : this.client.getSocialInteractionsManager().getUuid(name);
-        ChatPatches.lastMsg = uuid != Util.NIL_UUID
-                ? new ChatUtils.MessageData(new GameProfile(uuid, name), Instant.now())
-                : ChatUtils.NIL_MSG_DATA;
-        return uuid;
+
+        ChatPatches.lastMsg = !uuid.equals(Util.NIL_UUID)
+            ? new ChatUtils.MessageData(new GameProfile(uuid, name), Instant.now())
+            : ChatUtils.NIL_MSG_DATA;
     }
 }
