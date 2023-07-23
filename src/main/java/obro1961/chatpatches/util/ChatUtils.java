@@ -34,7 +34,7 @@ public class ChatUtils {
 	 * Tries to condense the {@code index} message into the incoming message
 	 * if they're case-insensitively equal. This method is functionally
 	 * similar to the original
-	 * {@link ChatHudMixin#cps$addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
+	 * {@link ChatHudMixin#addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
 	 * before {@code v194.5.0}.
 	 * <padding><br>The main difference is that this method
 	 * removes the old message and edits the incoming message, rather than

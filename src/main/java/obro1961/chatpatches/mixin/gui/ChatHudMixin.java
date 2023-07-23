@@ -75,7 +75,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
-    private void cps$clear(boolean clearHistory, CallbackInfo ci) {
+    private void clear(boolean clearHistory, CallbackInfo ci) {
         if(!config.vanillaClearing) {
             if(!clearHistory) {
                 client.getMessageHandler().processAll();
@@ -96,13 +96,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
         at = @At(value = "CONSTANT", args = "intValue=100")
     )
-    private int cps$moreMessages(int hundred) {
+    private int moreMessages(int hundred) {
         return config.chatMaxMessages;
     }
 
     /** allows for a chat width larger than 320px */
     @ModifyReturnValue(method = "getWidth()I", at = @At("RETURN"))
-    private int cps$moreWidth(int defaultWidth) {
+    private int moreWidth(int defaultWidth) {
         return config.chatWidth > 0 ? config.chatWidth : defaultWidth;
     }
 
@@ -114,23 +114,23 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * corresponding to the (yarn mapped) target variable name.
      */
     @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 31) // STORE ordinal=0 to not target all x stores
-    private int cps$moveChatText(int x) {
+    private int moveChatText(int x) {
         return x - MathHelper.floor(config.shiftChat / this.getChatScale());
     }
     @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 27)
-    private int cps$moveScrollBar(int af) {
+    private int moveScrollBar(int af) {
         return af + MathHelper.floor(config.shiftChat / this.getChatScale());
     }
     // condensed to one method because the first part of both methods are practically identical
     @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
-    private double cps$moveINDHoverText(double e) {
+    private double moveINDHoverText(double e) {
         return e + ( config.shiftChat * this.getChatScale() );
     }
 
     /**
      * Modifies the incoming message by adding timestamps, nicer
      * playernames, hover events, and duplicate counters in conjunction with
-     * {@link #cps$addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
+     * {@link #addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
      *
      * @implNote
      * <li>Extra {@link Text} parameter is required to get access to
@@ -148,7 +148,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         at = @At("HEAD"),
         argsOnly = true
     )
-    private Text cps$modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
+    private Text modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
         if( refreshing || Flags.LOADING_CHATLOG.isRaised() || Flags.ADDING_CONDENSED_MESSAGE.isRaised() )
             return message; // cancels modifications when loading the chatlog or regenerating visibles
 
@@ -236,13 +236,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-    private void cps$addHistory(String message, CallbackInfo ci) {
+    private void addHistory(String message, CallbackInfo ci) {
         if( !Flags.LOADING_CHATLOG.isRaised() )
             ChatLog.addHistory(message);
     }
 
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
-    private void cps$dontLogRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
+    private void dontLogRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
         if( Flags.LOADING_CHATLOG.isRaised() && indicator != null )
             ci.cancel();
     }
@@ -278,7 +278,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * @apiNote This injector is pretty ugly and could definitely be cleaner and more concise, but I'm going to deal with it
      * in the future when I API-ify the rest of the mod. When that happens, this flag-add-flag-cancel method will be replaced
      * with a simple (enormous) method call alongside
-     * {@link #cps$modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)} in a @{@link ModifyVariable}
+     * {@link #modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)} in a @{@link ModifyVariable}
      * handler.
      */
     @Inject(
@@ -286,7 +286,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         at = @At("HEAD"),
         cancellable = true
     )
-    private void cps$addCounter(Text incoming, MessageSignatureData msd, int ticks, MessageIndicator mi, boolean refreshing, CallbackInfo ci) {
+    private void addCounter(Text incoming, MessageSignatureData msd, int ticks, MessageIndicator mi, boolean refreshing, CallbackInfo ci) {
         try {
             if( config.counter && !refreshing && !messages.isEmpty() && !Flags.ADDING_CONDENSED_MESSAGE.isRaised() && (!Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing) ) {
                 // condenses the incoming message into the last message if it is the same

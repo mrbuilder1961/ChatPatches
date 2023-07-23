@@ -21,7 +21,7 @@ public abstract class CPNHMixin {
      * not wanted.
      */
     @Inject(method = "onRemoveMessage", at = @At("HEAD"), cancellable = true, require = 0)
-    private void cps$cancelDelMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
+    private void cancelDelMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
         if(config.chatHidePacket) ci.cancel();
     }
 }

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class ScreenMixin {
     // Block focus switches if chat screen is opened
     @WrapWithCondition(method = "keyPressed", at = @At(value = "INVOKE",target = "Lnet/minecraft/client/gui/screen/Screen;switchFocus(Lnet/minecraft/client/gui/navigation/GuiNavigationPath;)V"))
-    private boolean cps$onSwitchFocus(Screen screen, GuiNavigationPath path) {
+    private boolean onSwitchFocus(Screen screen, GuiNavigationPath path) {
         return !(screen instanceof ChatScreen);
     }
 }

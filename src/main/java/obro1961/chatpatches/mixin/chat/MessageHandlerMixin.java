@@ -31,7 +31,7 @@ import java.util.UUID;
 /**
  * A mixin used to cache the metadata of the most recent message
  * received by the client. This is used in
- * {@link ChatHudMixin#cps$modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)}
+ * {@link ChatHudMixin#modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)}
  * to provide more accurate timestamp data, the correct player
  * name, and the player's UUID.
  */
@@ -43,21 +43,21 @@ public abstract class MessageHandlerMixin {
 
     /**
      * Caches the metadata of the last message received by the client.
-     * Only applies to vanilla chat messages, otherwise checks {@link #cps$cacheGameData}
+     * Only applies to vanilla chat messages, otherwise checks {@link #cacheGameData}
      * for other potentially player messages that have been modified by the server.
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
-    private void cps$cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
+    private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         ChatPatches.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp());
     }
 
     /**
-     * Does the same thing as {@link #cps$cacheChatData} if
+     * Does the same thing as {@link #cacheChatData} if
      * the message is formatted like a vanilla chat message
      * and contains a valid playername.
      */
     @WrapOperation(method = "onGameMessage", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/message/MessageHandler;extractSender(Lnet/minecraft/text/Text;)Ljava/util/UUID;"))
-    private UUID cps$cacheGameData(MessageHandler instance, Text text, Operation<UUID> operation) {
+    private UUID cacheGameData(MessageHandler instance, Text text, Operation<UUID> operation) {
         String string = TextVisitFactory.removeFormattingCodes(text);
         String name = StringUtils.substringBetween(string, "<", ">");
         UUID uuid = name == null ? Util.NIL_UUID : this.client.getSocialInteractionsManager().getUuid(name);
