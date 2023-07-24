@@ -40,13 +40,17 @@ public abstract class MessageHandlerMixin {
 
 
     /**
-     * Caches the metadata of the last message received by the client.
+     * Caches the metadata of the last *player* message received by the client.
      * Only applies to vanilla chat messages, otherwise checks {@link #cacheGameData}
      * for other potentially player messages that have been modified by the server.
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
-        SharedVariables.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp(), true);
+        // only logs the metadata if it was a player-sent message (otherwise tries to format some commands like /msg and /me)
+        if( params.type().chat().translationKey().equals("chat.type.text") )
+            SharedVariables.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp(), true);
+        else
+            SharedVariables.lastMsg = ChatUtils.NIL_MSG_DATA;
     }
 
     /**
@@ -56,11 +60,11 @@ public abstract class MessageHandlerMixin {
     @Inject(method = "onGameMessage", at = @At("HEAD"))
     private void cacheGameData(Text message, boolean overlay, CallbackInfo ci) {
         String string = TextVisitFactory.removeFormattingCodes(message);
-        String name = StringUtils.substringBetween(string, "<", ">");
-        UUID uuid = name == null ? Util.NIL_UUID : this.client.getSocialInteractionsManager().getUuid(name);
+        String name = ChatUtils.VANILLA_MESSAGE.matcher(string).matches() ? StringUtils.substringBetween(string, "<", ">") : null;
+        UUID uuid = name == null ? Util.NIL_UUID : client.getSocialInteractionsManager().getUuid(name);
 
         SharedVariables.lastMsg = !uuid.equals(Util.NIL_UUID)
-            ? new ChatUtils.MessageData(new GameProfile(uuid, name), Instant.now(), ChatUtils.VANILLA_MESSAGE.matcher(string).matches())
+            ? new ChatUtils.MessageData(new GameProfile(uuid, name), Instant.now(), true)
             : ChatUtils.NIL_MSG_DATA;
     }
 }

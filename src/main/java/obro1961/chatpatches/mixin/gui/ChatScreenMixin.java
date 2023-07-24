@@ -173,8 +173,8 @@ public abstract class ChatScreenMixin extends Screen {
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
 			// hover menu buttons, column two
-			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> selectedLine.content().getString()));
-			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> Formatting.strip( selectedLine.content().getString() )));
+			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> StringTextUtils.toText( selectedLine.content().getString() ).getString()));
+			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> StringTextUtils.reorder( selectedLine.content().asOrderedText(), true )));
 			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serializer.toJson(selectedLine.content())));
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
 			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString()));

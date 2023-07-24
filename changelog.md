@@ -8,6 +8,8 @@
 - Fixed chat focus bug again, inline with #86 and #101 above
 - Re-implemented another part of the overall fix for [#99](https://www.github.com/mrbuilder1961/ChatPatches/issues/99) (checks that `chatNameFormat` was modified before applying it)
 - Removed all `cps$` prefixes as mixin will automatically add them
+- Swapped the copy menu's Copy Raw String and Copy Formatted String functions. Copy Formatted String now copies the message with <&?> codes, although 
+  they do sometimes redundantly repeat.
 
 - ## Chat Patches `201.5.2` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - I guess I lied about the version numbers thing... doesn't always make sense like in this situation
