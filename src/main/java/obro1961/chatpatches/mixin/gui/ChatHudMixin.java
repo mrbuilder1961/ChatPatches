@@ -10,6 +10,7 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.*;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -29,7 +30,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.ChatUtils.OG_MSG_INDEX;
@@ -154,7 +154,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
             return message; // cancels modifications when loading the chatlog or regenerating visibles
 
         final Style style = message.getStyle();
-        final Matcher vanillaMatcher = ChatUtils.VANILLA_MESSAGE.matcher( message.getString() );
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
         Date now = lastEmpty ? new Date() : Date.from(lastMsg.timestamp());
@@ -169,11 +168,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         : Text.empty().setStyle( Style.EMPTY.withInsertion(nowTime) )
                 )
                 .append(
-                    !lastEmpty && !boundary && vanillaMatcher.matches() && Config.getOption("chatNameFormat").changed()
+                    !lastEmpty && !boundary && Config.getOption("chatNameFormat").changed() && lastMsg.vanilla()
                         ? Text.empty().setStyle(style)
                             .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
                             .append( // add first part of message (depending on the Style and how it was constructed)
-                                net.minecraft.util.Util.make(() -> {
+                                Util.make(() -> {
                                     if(message.getContent() instanceof TranslatableTextContent ttc) { // most vanilla chat messages
 
                                         MutableText text = Text.empty().setStyle(style);
@@ -201,7 +200,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                 })
                             )
                             .append( // add any siblings (Texts with different styles)
-                                net.minecraft.util.Util.make(() -> {
+                                Util.make(() -> {
                                     MutableText msg = Text.empty().setStyle(style);
                                     List<Text> siblings = message.getSiblings();
                                     int i = -1; // index of the first '>' in the playername

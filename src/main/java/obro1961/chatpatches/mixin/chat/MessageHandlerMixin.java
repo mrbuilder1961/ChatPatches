@@ -1,7 +1,5 @@
 package obro1961.chatpatches.mixin.chat;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -14,7 +12,6 @@ import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextVisitFactory;
 import net.minecraft.util.Util;
-import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.SharedVariables;
@@ -49,7 +46,7 @@ public abstract class MessageHandlerMixin {
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
-        SharedVariables.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp());
+        SharedVariables.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp(), true);
     }
 
     /**
@@ -59,11 +56,11 @@ public abstract class MessageHandlerMixin {
     @Inject(method = "onGameMessage", at = @At("HEAD"))
     private void cacheGameData(Text message, boolean overlay, CallbackInfo ci) {
         String string = TextVisitFactory.removeFormattingCodes(message);
-        String name = ChatUtils.VANILLA_MESSAGE.matcher(string).matches() ? StringUtils.substringBetween(string, "<", ">") : null;
+        String name = StringUtils.substringBetween(string, "<", ">");
         UUID uuid = name == null ? Util.NIL_UUID : this.client.getSocialInteractionsManager().getUuid(name);
 
         SharedVariables.lastMsg = !uuid.equals(Util.NIL_UUID)
-            ? new ChatUtils.MessageData(new GameProfile(uuid, name), Instant.now())
+            ? new ChatUtils.MessageData(new GameProfile(uuid, name), Instant.now(), ChatUtils.VANILLA_MESSAGE.matcher(string).matches())
             : ChatUtils.NIL_MSG_DATA;
     }
 }
