@@ -18,18 +18,17 @@ public class SearchButtonWidget extends TexturedButtonWidget {
 
     @Override
     public boolean mouseClicked(double x, double y, int buttonType) {
-        if(active && visible) {
-            if(clicked(x, y) && buttonType == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if(active && visible && clicked(x, y)) {
+            if(buttonType == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                 this.playDownSound(MinecraftClient.getInstance().getSoundManager());
                 onLeftClick.onPress(this);
                 return true;
-            } else { // buttonType == GLFW.GLFW_MOUSE_BUTTON_RIGHT
+            } else if(buttonType == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
                 this.playDownSound(MinecraftClient.getInstance().getSoundManager());
                 onRightClick.onPress(this);
                 return true;
             }
-        } else {
-            return false;
         }
+        return false;
     }
 }
