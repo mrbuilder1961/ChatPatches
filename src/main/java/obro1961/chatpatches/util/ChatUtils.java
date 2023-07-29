@@ -27,7 +27,7 @@ import static obro1961.chatpatches.ChatPatches.config;
  */
 public class ChatUtils {
 	public static final UUID NIL_UUID = new UUID(0, 0);
-	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Instant.EPOCH);
+	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Instant.EPOCH, false);
 	public static final int TIMESTAMP_INDEX = 0, OG_MSG_INDEX = 1, DUPE_COUNTER_INDEX = 2; // indices of all main (modified message) components
 	public static final int MSG_NAME_INDEX = 0, MSG_MSG_INDEX = 1, MSG_FORMATTED_TEXT_INDEX = 2; // indices of all OG_MSG_INDEX components
 	/**
@@ -37,12 +37,11 @@ public class ChatUtils {
 	 */
 	public static final Pattern VANILLA_MESSAGE = Pattern.compile("^<(?<name>[a-zA-Z0-9_]{3,16})> (?<message>[^\\u0000-\\u001f\\u007f§]+)$");
 
-
 	/**
 	 * Tries to condense the {@code index} message into the incoming message
 	 * if they're case-insensitively equal. This method is functionally
 	 * similar to the original
-	 * {@link ChatHudMixin#cps$addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
+	 * {@link ChatHudMixin#addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
 	 * before {@code v194.5.0}.
 	 * <padding><br>The main difference is that this method
 	 * removes the old message and edits the incoming message, rather than
@@ -111,5 +110,5 @@ public class ChatUtils {
 
 
 	/** Represents the metadata of a chat message. */
-	public record MessageData(GameProfile sender, Instant timestamp) {}
+	public record MessageData(GameProfile sender, Instant timestamp, boolean vanilla) {}
 }

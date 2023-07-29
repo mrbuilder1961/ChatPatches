@@ -11,6 +11,7 @@ import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Flags;
+import obro1961.chatpatches.util.SharedVariables;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -27,7 +28,7 @@ import static obro1961.chatpatches.ChatPatches.config;
  * Represents the chat log file in the run directory located at {@link ChatLog#CHATLOG_PATH}.
  */
 public class ChatLog {
-    public static final String CHATLOG_PATH = ChatPatches.FABRIC_LOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    public static final String CHATLOG_PATH = SharedVariables.FABRIC_LOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
     private static final Path file = Path.of(CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serializer.toJsonTree(src))

@@ -1,6 +1,17 @@
 # Changelog
 
-## Chat Patches `201.5.2` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
+## Chat Patches `201.5.3` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
+- Better [#86](https://www.github.com/mrbuilder1961/ChatPatches/issues/86) fix, also with auto-complete suggestor not going up when pressing the up key ([#101](https://www.github.com/mrbuilder1961/ChatPatches/issues/101))
+- Fixed elements added by other mods are not clickable
+- Fixed Tweakeroo message draft not working
+- Added Ignore Hide Message Packet option toggle (`chatHidePacket`)
+- Fixed chat focus bug again, inline with #86 and #101 above
+- Re-implemented another part of the overall fix for [#99](https://www.github.com/mrbuilder1961/ChatPatches/issues/99) (checks that `chatNameFormat` was modified before applying it)
+- Removed all `cps$` prefixes as mixin will automatically add them
+- Swapped the copy menu's Copy Raw String and Copy Formatted String functions. Copy Formatted String now copies the message with <&?> codes, although 
+  they do sometimes redundantly repeat.
+
+- ## Chat Patches `201.5.2` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - I guess I lied about the version numbers thing... doesn't always make sense like in this situation
 - Fixed invalid mixin signature (not sure why my plugin to avoid this problem wasn't working...)
 

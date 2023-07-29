@@ -22,7 +22,9 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.io.File.separator;
-import static obro1961.chatpatches.ChatPatches.*;
+import static obro1961.chatpatches.ChatPatches.LOGGER;
+import static obro1961.chatpatches.ChatPatches.config;
+import static obro1961.chatpatches.util.SharedVariables.FABRIC_LOADER;
 import static obro1961.chatpatches.util.StringTextUtils.fillVars;
 import static obro1961.chatpatches.util.StringTextUtils.toText;
 
@@ -36,7 +38,7 @@ public class Config {
     public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = 0xffff55;
     public boolean counterCompact = false; public int counterCompactDistance = 0;
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
-    public boolean chatLog = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>";
+    public boolean chatLog = true, chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>";
     public int shiftChat = 10; public boolean messageDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
 
@@ -250,8 +252,13 @@ public class Config {
                 LOGGER.error("[ConfigOption.set({})] An error occurred trying to set a config option:", obj, e);
             }
         }
+
         public void set(Object obj) {
             this.set(obj, true);
+        }
+
+        public boolean changed() {
+            return !val.equals(def);
         }
     }
 }

@@ -10,6 +10,7 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.*;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -29,11 +30,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.ChatPatches.lastMsg;
 import static obro1961.chatpatches.util.ChatUtils.OG_MSG_INDEX;
+import static obro1961.chatpatches.util.SharedVariables.lastMsg;
 
 /**
  * The main entrypoint mixin for most chat modifications.
@@ -76,7 +76,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
-    private void cps$clear(boolean clearHistory, CallbackInfo ci) {
+    private void clear(boolean clearHistory, CallbackInfo ci) {
         if(!config.vanillaClearing) {
             if(!clearHistory) {
                 client.getMessageHandler().processAll();
@@ -97,13 +97,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
         at = @At(value = "CONSTANT", args = "intValue=100")
     )
-    private int cps$moreMessages(int hundred) {
+    private int moreMessages(int hundred) {
         return config.chatMaxMessages;
     }
 
     /** allows for a chat width larger than 320px */
     @ModifyReturnValue(method = "getWidth()I", at = @At("RETURN"))
-    private int cps$moreWidth(int defaultWidth) {
+    private int moreWidth(int defaultWidth) {
         return config.chatWidth > 0 ? config.chatWidth : defaultWidth;
     }
 
@@ -115,23 +115,23 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * corresponding to the (yarn mapped) target variable name.
      */
     @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 31) // STORE ordinal=0 to not target all x stores
-    private int cps$moveChatText(int x) {
+    private int moveChatText(int x) {
         return x - MathHelper.floor(config.shiftChat / this.getChatScale());
     }
     @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 27)
-    private int cps$moveScrollBar(int af) {
+    private int moveScrollBar(int af) {
         return af + MathHelper.floor(config.shiftChat / this.getChatScale());
     }
     // condensed to one method because the first part of both methods are practically identical
     @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
-    private double cps$moveINDHoverText(double e) {
+    private double moveINDHoverText(double e) {
         return e + ( config.shiftChat * this.getChatScale() );
     }
 
     /**
      * Modifies the incoming message by adding timestamps, nicer
      * playernames, hover events, and duplicate counters in conjunction with
-     * {@link #cps$addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
+     * {@link #addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
      *
      * @implNote
      * <li>Extra {@link Text} parameter is required to get access to
@@ -149,12 +149,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         at = @At("HEAD"),
         argsOnly = true
     )
-    private Text cps$modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
+    private Text modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
         if( refreshing || Flags.LOADING_CHATLOG.isRaised() || Flags.ADDING_CONDENSED_MESSAGE.isRaised() )
             return message; // cancels modifications when loading the chatlog or regenerating visibles
 
         final Style style = message.getStyle();
-        final Matcher vanillaMatcher = ChatUtils.VANILLA_MESSAGE.matcher( message.getString() );
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
         Date now = lastEmpty ? new Date() : Date.from(lastMsg.timestamp());
@@ -169,11 +168,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         : Text.empty().setStyle( Style.EMPTY.withInsertion(nowTime) )
                 )
                 .append(
-                    !lastEmpty && !boundary && vanillaMatcher.matches()
+                    !lastEmpty && !boundary && Config.getOption("chatNameFormat").changed() && lastMsg.vanilla()
                         ? Text.empty().setStyle(style)
                             .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
                             .append( // add first part of message (depending on the Style and how it was constructed)
-                                net.minecraft.util.Util.make(() -> {
+                                Util.make(() -> {
                                     if(message.getContent() instanceof TranslatableTextContent ttc) { // most vanilla chat messages
 
                                         MutableText text = Text.empty().setStyle(style);
@@ -189,7 +188,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                         String[] splitMessage = ltc.string().split(">"); // for now we will always check for a singular bracket, just in case the space is missing
 
                                         if(splitMessage.length > 1)
-                                            return Text.literal(splitMessage[1]).setStyle(style);
+                                            // removes any preceding whitespace
+                                            return Text.literal( splitMessage[1].replaceAll("^\\s+", "") ).setStyle(style);
                                         else
                                             //return Text.empty().setStyle(style); // use this? idk
                                             return message.copyContentOnly().setStyle(style);
@@ -200,13 +200,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                 })
                             )
                             .append( // add any siblings (Texts with different styles)
-                                net.minecraft.util.Util.make(() -> {
+                                Util.make(() -> {
                                     MutableText msg = Text.empty().setStyle(style);
                                     List<Text> siblings = message.getSiblings();
                                     int i = -1; // index of the first '>' in the playername
 
                                     // if the message uses the vanilla style but the main component doesn't have the full playername, then only add (the actual message) after it, (removes duped names)
-                                    if(vanillaMatcher.matches() && message.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
+                                    if(message.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
                                         i = siblings.stream().filter(sib -> sib.getString().contains(">")).mapToInt(siblings::indexOf).findFirst().orElse(i);
 
                                     // if the vanilla-style message is formatted weird, then only add the text *after* the first '>' (end of playername)
@@ -239,13 +239,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-    private void cps$addHistory(String message, CallbackInfo ci) {
+    private void addHistory(String message, CallbackInfo ci) {
         if( !Flags.LOADING_CHATLOG.isRaised() )
             ChatLog.addHistory(message);
     }
 
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
-    private void cps$dontLogRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
+    private void dontLogRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
         if( Flags.LOADING_CHATLOG.isRaised() && indicator != null )
             ci.cancel();
     }
@@ -281,7 +281,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * @apiNote This injector is pretty ugly and could definitely be cleaner and more concise, but I'm going to deal with it
      * in the future when I API-ify the rest of the mod. When that happens, this flag-add-flag-cancel method will be replaced
      * with a simple (enormous) method call alongside
-     * {@link #cps$modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)} in a @{@link ModifyVariable}
+     * {@link #modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)} in a @{@link ModifyVariable}
      * handler.
      */
     @Inject(
@@ -289,7 +289,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         at = @At("HEAD"),
         cancellable = true
     )
-    private void cps$addCounter(Text incoming, MessageSignatureData msd, int ticks, MessageIndicator mi, boolean refreshing, CallbackInfo ci) {
+    private void addCounter(Text incoming, MessageSignatureData msd, int ticks, MessageIndicator mi, boolean refreshing, CallbackInfo ci) {
         try {
             if( config.counter && !refreshing && !messages.isEmpty() && !Flags.ADDING_CONDENSED_MESSAGE.isRaised() && (!Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing) ) {
                 // condenses the incoming message into the last message if it is the same

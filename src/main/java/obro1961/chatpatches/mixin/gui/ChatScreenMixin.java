@@ -32,6 +32,7 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.config.ChatSearchSetting;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.MenuButtonWidget;
+import obro1961.chatpatches.gui.SearchButtonWidget;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.StringTextUtils;
@@ -54,12 +55,12 @@ import java.util.stream.Stream;
 
 import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
 import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
-import static obro1961.chatpatches.ChatPatches.FABRIC_LOADER;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
+import static obro1961.chatpatches.util.SharedVariables.FABRIC_LOADER;
 
 /**
  * An extension of ChatScreen with searching capabilities.
@@ -113,26 +114,20 @@ public abstract class ChatScreenMixin extends Screen {
 	@Unique private PatternSyntaxException searchError;
 
 	@Shadow	protected TextFieldWidget chatField;
-
-	@Shadow protected abstract Style getTextStyleAt(double x, double y);
-	@Shadow public abstract boolean sendMessage(String text, boolean addToHistory);
-	@Shadow public abstract void setChatFromHistory(int offset);
-
+	@Shadow private String originalChatText;
 
 	protected ChatScreenMixin(Text title) { super(title); }
 
-
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void cps$chatScreenInit(String originalChatText, CallbackInfo ci) {
-		this.client = Objects.requireNonNullElse(client, MinecraftClient.getInstance());
-
-
-		// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
-		if(config.messageDrafting && !messageDraft.isBlank() && FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
-			messageDraft = originalChatText;
-		// otherwise if message drafting is enabled and a draft exists, update the draft
-		else if(messageDraft.isBlank())
-			messageDraft = originalChatText;
+	private void chatScreenInit(String originalChatText, CallbackInfo ci) {
+		if(config.messageDrafting && !messageDraft.isBlank()) {
+			// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
+			if(FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
+				messageDraft = originalChatText;
+			// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
+			else if(!originalChatText.equals("/"))
+				this.originalChatText = messageDraft;
+		}
 	}
 
 	/**
@@ -152,38 +147,34 @@ public abstract class ChatScreenMixin extends Screen {
 	 * </ol>
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
-	protected void cps$initSearchStuff(CallbackInfo ci) {
-		chatField.setText(messageDraft);
-
-		searchButton = new TexturedButtonWidget(2, height - 35, 16, 16, 0, 0, 16, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_buttons.png"), 16, 32,
-			button -> {});
+	protected void initSearchStuff(CallbackInfo ci) {
+		searchButton = new SearchButtonWidget(2, height - 35, me -> showSearch = !showSearch, me -> showSettingsMenu = !showSettingsMenu);
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));
 		searchField.setMaxLength(384);
 		searchField.setDrawsBackground(false);
 		searchField.setSuggestion(SUGGESTION);
-		searchField.setChangedListener(this::cps$onSearchFieldUpdate);
-		searchField.setText(searchDraft);
+		searchField.setChangedListener(this::onSearchFieldUpdate);
+		if(config.searchDrafting)
+			searchField.setText(searchDraft);
 
 		final int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
 		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0);
 		modifiers = new ChatSearchSetting("modifiers", false, yPos, 22);
 		regex = new ChatSearchSetting("regex", false, yPos, 44);
 
-		if(config.hideSearchButton) {
-			searchButton.visible = false;
-			searchField.visible = false;
-		} else {
+		if(!config.hideSearchButton) {
 			addSelectableChild(searchField);
+			addDrawableChild(searchButton);
 		}
 
 
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
 			// hover menu buttons, column two
-			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> selectedLine.content().getString()));
-			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> Formatting.strip( selectedLine.content().getString() )));
+			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> StringTextUtils.toText( selectedLine.content().getString() ).getString()));
+			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> StringTextUtils.reorder( selectedLine.content().asOrderedText(), true )));
 			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serializer.toJson(selectedLine.content())));
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
 			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString()));
@@ -256,8 +247,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * </ol>
 	 */
 	@Inject(method = "render", at = @At("HEAD"))
-	public void cps$renderSearchStuff(DrawContext drawContext, int mX, int mY, float delta, CallbackInfo ci) {
-		searchButton.render(drawContext, mX, mY, delta);
+	public void renderSearchStuff(DrawContext drawContext, int mX, int mY, float delta, CallbackInfo ci) {
 		if(showSearch && !config.hideSearchButton) {
 			drawContext.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(drawContext, mX, mY, delta);
@@ -282,7 +272,7 @@ public abstract class ChatScreenMixin extends Screen {
 		}
 
 		// renders the copy menu's selection box and menu buttons
-		if( showCopyMenu && !hoveredVisibles.isEmpty() && !cps$isMouseOverSettingsMenu(mX, mY) ) {
+		if( showCopyMenu && !hoveredVisibles.isEmpty() && !isMouseOverSettingsMenu(mX, mY) ) {
 			ChatHud chatHud = client.inGameHud.getChatHud();
 			ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
 			List<ChatHudLine.Visible> visibles = chat.getVisibleMessages();
@@ -332,27 +322,27 @@ public abstract class ChatScreenMixin extends Screen {
 	 * menu or the <i>shown</i> copy menu.
 	 * */
 	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawHoverEvent(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Style;II)V"))
-	public boolean cps$renderTooltipSmartly(DrawContext drawContext, TextRenderer textRenderer, Style style, int mX, int mY) {
-		return !cps$isMouseOverSettingsMenu(mX, mY) && !cps$isMouseOverCopyMenu(mX, mY);
+	public boolean renderTooltipSmartly(DrawContext drawContext, TextRenderer textRenderer, Style style, int mX, int mY) {
+		return !isMouseOverSettingsMenu(mX, mY) && !isMouseOverCopyMenu(mX, mY);
 	}
 
 	@Inject(method = "resize", at = @At("TAIL"))
-	public void cps$updateSearchOnResize(MinecraftClient client, int width, int height, CallbackInfo ci) {
+	public void updateSearchOnResize(MinecraftClient client, int width, int height, CallbackInfo ci) {
 		String text = searchField.getText();
 		searchField.setText(text);
-		cps$onSearchFieldUpdate(text);
+		onSearchFieldUpdate(text);
 
 		if(showCopyMenu)
-			cps$loadCopyMenu(anchor.x, anchor.y);
+			loadCopyMenu(anchor.x, anchor.y);
 
 		if(!text.isEmpty())
 			searchField.setSuggestion(null);
 	}
 
 	@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;tick()V"))
-	public void cps$tickSearchField(TextFieldWidget chatField, Operation<Void> tick) {
+	public void tickSearchField(TextFieldWidget chatField, Operation<Void> tick) {
 		if(updateSearchColor)
-			cps$onSearchFieldUpdate(searchField.getText());
+			onSearchFieldUpdate(searchField.getText());
 
 		if(searchField.isFocused() && !config.hideSearchButton)
 			searchField.tick();
@@ -366,43 +356,39 @@ public abstract class ChatScreenMixin extends Screen {
 	 * Additionally, resets the chat hud.
 	 */
 	@Inject(method = "removed", at = @At("TAIL"))
-	public void cps$onScreenCleared(CallbackInfo ci) {
-		searchDraft = ( config.searchDrafting && !searchField.getText().isBlank() ) ? searchField.getText() : "";
-		messageDraft = ( config.messageDrafting && !chatField.getText().isBlank() ) ? chatField.getText() : "";
+	public void onScreenClose(CallbackInfo ci) {
+		if(config.searchDrafting)
+			searchDraft = searchField.getText();
+		if(config.messageDrafting)
+			messageDraft = chatField.getText();
 
-		cps$resetCopyMenu();
-
-		client.inGameHud.getChatHud().reset();
+		resetCopyMenu();
 	}
 
-	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-	public void cps$allowClosingSettings(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-		if(showSettingsMenu && keyCode == GLFW.GLFW_KEY_ESCAPE) {
+	/** Closes the settings menu if the escape key was pressed and it was already open */
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0), cancellable = true)
+	public void allowClosingSettings(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+		if(showSettingsMenu) {
 			showSettingsMenu = false;
 			cir.setReturnValue(true);
 		}
+	}
+	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
+	private void onMessageSentEmptyDraft(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+		messageDraft = "";
+	}
 
-		if(keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-			if( sendMessage(chatField.getText(), true) ) {
-				chatField.setText( messageDraft = "" ); // clears the chat field and the message draft
-				client.setScreen(null);
-			}
-			cir.setReturnValue(true);
-		}
-
-		// fixes #86 (pressing the up arrow key for sent history switches field focus)
-		if (keyCode == GLFW.GLFW_KEY_UP) {
-			setChatFromHistory(-1);
-			cir.setReturnValue(true);
-		}
+	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
+	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
+		if(!config.hideSearchButton)
+			return false;
+		return mouseClicked.call(chatField, mX, mY, button);
 	}
 
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
-	 * 		<li>{@link #searchField}: focuses itself</li>
-	 * 		<li>{@link #chatField}: focuses itself</li>
-	 * 		<li>{@link #searchButton}: if it was left, toggles {@link #showSearch}, if it was right, toggles {@link #showSettingsMenu}</li>
 	 * 		<li>If {@link #showSettingsMenu} is true, checks if these were clicked:</li>
 	 * 		<ul>
 	 * 			<li>{@link ChatSearchSetting#caseSensitive}</li>
@@ -411,7 +397,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * 		</ul>
 	 * 		<li>Else if {@link #showSettingsMenu} is false:</li>
 	 * 		<ul>
-	 * 			<li>If the mouse right-clicked, tries to load the copy menu ({@link #cps$loadCopyMenu(double, double)})</li>
+	 * 			<li>If the mouse right-clicked, tries to load the copy menu ({@link #loadCopyMenu(double, double)})</li>
 	 * 			<li>Otherwise if the mouse left-clicked and {@link #showCopyMenu} is true, checks if any menu buttons were clicked on</li>
 	 * 			<li>If nothing was clicked on, disables {@link #showCopyMenu}</li>
 	 * 		</ul>
@@ -421,27 +407,10 @@ public abstract class ChatScreenMixin extends Screen {
 	 * returns false. This is to prevent tooltips from being clicked and
 	 * shown through the menus.
 	 */
-	@Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-	public void cps$allowClickableWidgets(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		// a little (not really) fixes chatField being unselectable
-		if(searchField.mouseClicked(mX, mY, button)) {
-			setFocused(searchField);
-			cir.setReturnValue(true);
-		} else if(chatField.mouseClicked(mX, mY, button)) {
-			setFocused(chatField);
-			cir.setReturnValue(true);
-		}
-
-		// switch button id bc mouseClicked returns if button != 0
-		// 1 = right click, 0 = left click
-		if(searchButton.mouseClicked(mX, mY, button == 1 ? 0 : button)) {
-			if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
-				showSearch = !showSearch;
-			else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
-				showSettingsMenu = !showSettingsMenu;
-
-			cir.setReturnValue(true);
-		}
+	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;mouseClicked(DDI)Z", shift = At.Shift.AFTER), cancellable = true)
+	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
+		if(cir.getReturnValue())
+			return;
 
 		if(showSettingsMenu) {
 			if(caseSensitive.button.mouseClicked(mX, mY, button))
@@ -455,7 +424,7 @@ public abstract class ChatScreenMixin extends Screen {
 			if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
 				RenderUtils.MousePos before = anchor;
 				anchor = RenderUtils.MousePos.of( (int)mX, (int)mY );
-				if( cps$loadCopyMenu(mX, mY) ) {
+				if( loadCopyMenu(mX, mY) ) {
 					cir.setReturnValue(showCopyMenu = true);
 				} else {
 					anchor = before;
@@ -475,12 +444,6 @@ public abstract class ChatScreenMixin extends Screen {
 				cir.setReturnValue(showCopyMenu = false);
 			}
 		}
-
-		// ensures clicking/hovering over the settings menu or copy menu doesn't insert anything into the chat field
-		// aka tell the game nothing happened at the mouse click (return false)
-		if( button == 0 && (cps$isMouseOverSettingsMenu(mX, mY) || cps$isMouseOverCopyMenu(mX, mY)) )
-			if(client.inGameHud.getChatHud().mouseClicked(mX, mY) || getTextStyleAt(mX, mY) != null)
-				cir.setReturnValue(false);
 	}
 
 	/** Allows hovering over certain menu buttons to reveal/hide nested buttons. */
@@ -498,12 +461,12 @@ public abstract class ChatScreenMixin extends Screen {
 	// New/Unique methods
 
 	@Unique
-	private boolean cps$isMouseOverSettingsMenu(double mX, double mY) {
+	private boolean isMouseOverSettingsMenu(double mX, double mY) {
 		return showSettingsMenu && (mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT);
 	}
 
 	@Unique
-	private boolean cps$isMouseOverCopyMenu(double mX, double mY) {
+	private boolean isMouseOverCopyMenu(double mX, double mY) {
 		return showCopyMenu && Stream.concat(mainButtons.values().stream(), hoverButtons.values().stream()).anyMatch(menuButton -> menuButton.isMouseOver(mX, mY));
 	}
 
@@ -540,7 +503,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * </ol>
 	 */
 	@Unique
-	private @NotNull List<ChatHudLine.Visible> cps$getFullMessageAt(double mX, double mY) {
+	private @NotNull List<ChatHudLine.Visible> getFullMessageAt(double mX, double mY) {
 		if(mX < 0 || mY < 0)
 			return new ArrayList<>(0);
 
@@ -591,18 +554,18 @@ public abstract class ChatScreenMixin extends Screen {
 	 * @return {@code true} if the copy menu was loaded in any working capacity,
 	 * {@code false} otherwise. Notably returns {@code false} if the coordinates
 	 * are invalid, if no message is detected at the mouse pos, or if the respective
-	 * {@link ChatHudLine} from {@link #cps$getFullMessageAt(double, double)} doesn't exist.
+	 * {@link ChatHudLine} from {@link #getFullMessageAt(double, double)} doesn't exist.
 	 *
 	 * @implNote The goal of this method is to do as much work as possible, so that
 	 * {@link #render(DrawContext, int, int, float)} does minimal work and maximum rendering.
 	 */
 	@Unique
-	private boolean cps$loadCopyMenu(double mX, double mY) {
+	private boolean loadCopyMenu(double mX, double mY) {
 		if(mX < 0 || mY < 0)
 			return false;
-		cps$resetCopyMenu();
+		resetCopyMenu();
 
-		hoveredVisibles = cps$getFullMessageAt(mX, mY);
+		hoveredVisibles = getFullMessageAt(mX, mY);
 		if(hoveredVisibles.isEmpty())
 			return false;
 
@@ -692,7 +655,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * resets button offsets, and cancels rendering for all buttons.
 	 */
 	@Unique
-	private void cps$resetCopyMenu() {
+	private void resetCopyMenu() {
 		showCopyMenu = false;
 		selectedLine = NIL_HUD_LINE;
 		hoveredVisibles.clear();
@@ -711,7 +674,7 @@ public abstract class ChatScreenMixin extends Screen {
 
 	/** Called when the search field is updated; also sets the regex error and the text input color. */
 	@Unique
-	private void cps$onSearchFieldUpdate(String text) {
+	private void onSearchFieldUpdate(String text) {
 		if(text.equals(lastSearch) && !updateSearchColor )
 			return;
 
@@ -728,7 +691,7 @@ public abstract class ChatScreenMixin extends Screen {
 				}
 			}
 
-			List<ChatHudLine.Visible> filtered = cps$filterMessages( searchError != null ? null : text );
+			List<ChatHudLine.Visible> filtered = filterMessages( searchError != null ? null : text );
 			if(searchError != null) {
 				searchField.setEditableColor(0xFF5555);
 				client.inGameHud.getChatHud().reset();
@@ -762,10 +725,10 @@ public abstract class ChatScreenMixin extends Screen {
 	 * list that is automatically repopulated with new messages when needed.
 	 */
 	@Unique
-	private List<ChatHudLine.Visible> cps$filterMessages(String target) {
+	private List<ChatHudLine.Visible> filterMessages(String target) {
 		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 		if(target == null)
-			return cps$createVisibles( chatHud.getMessages() );
+			return createVisibles( chatHud.getMessages() );
 
 		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.getMessages() );
 
@@ -785,7 +748,7 @@ public abstract class ChatScreenMixin extends Screen {
 			);
 		});
 
-		return cps$createVisibles(msgs);
+		return createVisibles(msgs);
 	}
 
 	/**
@@ -795,7 +758,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * method, specifically everything before the {@code while} loop.
 	 */
 	@Unique
-	private List<ChatHudLine.Visible> cps$createVisibles(List<ChatHudLine> messages) {
+	private List<ChatHudLine.Visible> createVisibles(List<ChatHudLine> messages) {
 		List<ChatHudLine.Visible> generated = Lists.newArrayListWithExpectedSize(messages.size());
 		ChatHud chatHud = client.inGameHud.getChatHud();
 
