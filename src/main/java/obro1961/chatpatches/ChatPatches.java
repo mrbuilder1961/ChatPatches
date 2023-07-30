@@ -15,6 +15,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 
 	public static Config config = Config.newConfig(false);
+
 	private static String lastWorld = "";
 
 
