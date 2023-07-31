@@ -104,7 +104,7 @@ public abstract class ChatScreenMixin extends Screen {
 	@Unique private static Map<Text, MenuButtonWidget> mainButtons = new LinkedHashMap<>(); // buttons that appear on the initial click
 	@Unique private static Map<Text, MenuButtonWidget> hoverButtons = new LinkedHashMap<>(); // buttons that are revealed on hover
 	@Unique private static List<ChatHudLine.Visible> hoveredVisibles = new ArrayList<>();
-	// drafting
+	// drafting (todo: can we remove these and instead use `originalChatText` and `lastSearch`?)
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
 
@@ -702,6 +702,8 @@ public abstract class ChatScreenMixin extends Screen {
 			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
 				searchField.setEditableColor(0x55FF55);
 
+				// todo: ensure that when this method is run, any successful matches are cached so subsequent searches only look through that list and are faster
+				// might alr be done, idk
 				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 				chatHud.getVisibleMessages().clear();
 				chatHud.getVisibleMessages().addAll(searchResults);
