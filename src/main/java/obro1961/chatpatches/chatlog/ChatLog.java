@@ -178,9 +178,9 @@ public class ChatLog {
     public static void restore(MinecraftClient client) {
         Flags.LOADING_CHATLOG.raise();
 
-        if(data.history.size() > 0)
+        if(!data.history.isEmpty())
             data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
-        if(data.messages.size() > 0)
+        if(!data.messages.isEmpty())
             data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(
                 msg, null, new MessageIndicator(0x382fb5, null, null, "Restored")
             ));

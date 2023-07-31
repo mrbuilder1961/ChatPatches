@@ -357,10 +357,13 @@ public abstract class ChatScreenMixin extends Screen {
 	 */
 	@Inject(method = "removed", at = @At("TAIL"))
 	public void onScreenClose(CallbackInfo ci) {
-		if(config.searchDrafting)
-			searchDraft = searchField.getText();
 		if(config.messageDrafting)
 			messageDraft = chatField.getText();
+
+		if(config.searchDrafting)
+			searchDraft = searchField.getText();
+		else if(!searchField.getText().isEmpty()) // reset the hud if it had anything in the field (helps fix #102)
+			client.inGameHud.getChatHud().reset();
 
 		resetCopyMenu();
 	}
@@ -379,13 +382,13 @@ public abstract class ChatScreenMixin extends Screen {
 		messageDraft = "";
 	}
 
+	/** Lets the {@link #chatField} widget be clicked in specific, weird circumstances (needs further testing). */
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
 	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
 		if(!config.hideSearchButton)
 			return false;
 		return mouseClicked.call(chatField, mX, mY, button);
 	}
-
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
@@ -402,14 +405,10 @@ public abstract class ChatScreenMixin extends Screen {
 	 * 			<li>If nothing was clicked on, disables {@link #showCopyMenu}</li>
 	 * 		</ul>
 	 * </ul>
-	 * Otherwise, if the mouse left-clicked, either the settings or the
-	 * copy menu is open, and a HoverEvent is being shown at the mouse pos,
-	 * returns false. This is to prevent tooltips from being clicked and
-	 * shown through the menus.
 	 */
-	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;mouseClicked(DDI)Z", shift = At.Shift.AFTER), cancellable = true)
+	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;getChatHud()Lnet/minecraft/client/gui/hud/ChatHud;"), cancellable = true)
 	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		if(cir.getReturnValue())
+		if(cir.getReturnValue() != null && cir.getReturnValue()) // w/o this a weird error occurs, probably because of the return value not being set yet
 			return;
 
 		if(showSettingsMenu) {
@@ -419,6 +418,9 @@ public abstract class ChatScreenMixin extends Screen {
 				cir.setReturnValue(true);
 			if(regex.button.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
+
+			if(client.inGameHud.getChatHud().getTextStyleAt(mX, mY) != null && isMouseOverSettingsMenu(mX, mY))
+				cir.setReturnValue(false);
 		} else {
 			// if button is a right-click, then try and render the copy menu
 			if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
@@ -432,12 +434,12 @@ public abstract class ChatScreenMixin extends Screen {
 				}
 			} else if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT && showCopyMenu) {
 				// see if the mouse clicked on a menu button
-				if( mainButtons.values().stream().anyMatch(menuButton -> menuButton.mouseClicked(mX, mY, button)))
+				if( mainButtons.values().stream().anyMatch(menuButton -> menuButton.mouseClicked(mX, mY, button)) )
 					cir.setReturnValue(true);
 
-				if( hoverButtons.values().stream().anyMatch(hoverButton -> hoverButton.mouseClicked(mX, mY, button)))
+				if( hoverButtons.values().stream().anyMatch(hoverButton -> hoverButton.mouseClicked(mX, mY, button)) )
 					cir.setReturnValue(true);
-				else if( mainButtons.get(COPY_MENU_LINKS).children.stream().anyMatch(linkButton -> linkButton.mouseClicked(mX, mY, button)))
+				else if( mainButtons.get(COPY_MENU_LINKS).children.stream().anyMatch(linkButton -> linkButton.mouseClicked(mX, mY, button)) )
 					cir.setReturnValue(true);
 
 				// otherwise the mouse clicked off of the copy menu, so reset the selection
@@ -583,9 +585,8 @@ public abstract class ChatScreenMixin extends Screen {
 				.filter( msg -> Formatting.strip( msg.content().getString() ).startsWith(hoveredMessageFirst) )
 				.findFirst()
 				.orElse(NIL_HUD_LINE);
-		if(selectedLine.equals(NIL_HUD_LINE)) {
+		if(selectedLine.equals(NIL_HUD_LINE))
 			return false;
-		}
 
 
 		// decide which mainButtons should be rendering:
@@ -675,35 +676,35 @@ public abstract class ChatScreenMixin extends Screen {
 	/** Called when the search field is updated; also sets the regex error and the text input color. */
 	@Unique
 	private void onSearchFieldUpdate(String text) {
-		if(text.equals(lastSearch) && !updateSearchColor )
+		// if text equals last search and shouldn't update the search color OR text is null, cancel
+		if(text.equals( lastSearch != null ? lastSearch : "" ) && !updateSearchColor)
 			return;
 
 		if(!text.isEmpty()) {
 			searchField.setSuggestion(null);
 
+			// if regex is enabled and the text is invalid, set the error and color
 			if(regex.on) {
 				try {
 					Pattern.compile(text);
 					searchError = null;
 				} catch(PatternSyntaxException e) {
 					searchError = e;
+					searchField.setEditableColor(0xFF5555);
 					client.inGameHud.getChatHud().reset();
 				}
 			}
 
-			List<ChatHudLine.Visible> filtered = filterMessages( searchError != null ? null : text );
-			if(searchError != null) {
-				searchField.setEditableColor(0xFF5555);
-				client.inGameHud.getChatHud().reset();
-			} else if(filtered.isEmpty()) {
+			List<ChatHudLine.Visible> searchResults = filterMessages( searchError != null ? null : text );
+			if(searchError == null && searchResults.isEmpty()) { // mark the text yellow if there are no results
 				searchField.setEditableColor(0xFFFF55);
 				client.inGameHud.getChatHud().reset();
-			} else {
+			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
 				searchField.setEditableColor(0x55FF55);
 
 				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 				chatHud.getVisibleMessages().clear();
-				chatHud.getVisibleMessages().addAll(filtered);
+				chatHud.getVisibleMessages().addAll(searchResults);
 			}
 		} else {
 			client.inGameHud.getChatHud().reset();
@@ -714,6 +715,7 @@ public abstract class ChatScreenMixin extends Screen {
 		}
 
 		lastSearch = text;
+		updateSearchColor = false;
 	}
 
 	/**

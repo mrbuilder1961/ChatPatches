@@ -10,6 +10,10 @@
 - Removed all `cps$` prefixes as mixin will automatically add them
 - Swapped the copy menu's Copy Raw String and Copy Formatted String functions. Copy Formatted String now copies the message with <&?> codes, although 
   they do sometimes redundantly repeat.
+- Fixed a large lag spike that would occur when opening the chat with a lot of messages loaded (##102)
+  - ***Note:** This will still happen if you have something in the search field and search drafting is enabled. However, this is **not considered a bug** 
+    because lag is to be expected when searching through large lists of data.*
+- Added a little more documentation
 
 - ## Chat Patches `201.5.2` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - I guess I lied about the version numbers thing... doesn't always make sense like in this situation
