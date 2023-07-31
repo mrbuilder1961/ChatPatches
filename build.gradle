@@ -3,6 +3,7 @@ import groovy.json.JsonSlurper
 plugins {
 	id "fabric-loom" version "1.3-SNAPSHOT"
 	id "maven-publish"
+	// todo: use https://github.com/modmuss50/mod-publish-plugin when more fleshed out
 	id "com.modrinth.minotaur" version "2.+"
 	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
@@ -108,7 +109,7 @@ processResources {
 		String newEntryTitle = "## Chat Patches `" + version + "`"
 		int prevEntryIndex = file("changelog.md").text.replaceFirst(newEntryTitle, "").indexOf("## Chat Patches `") + newEntryTitle.length() - 2
 
-		changelogText = file("changelog.md").text.substring(0, prevEntryIndex)
+		changelogText = file("changelog.md").text.substring(0, prevEntryIndex).replaceFirst("# Changelog\\s+", "")
 
 		// considers the changelog "malformed" if it doesn't end with word character(s), whitespace, or newline(s)
 		if( !changelogText.matches("(?s).*(\\s+|(\r?\n)+|\\w+)\$") ) {
