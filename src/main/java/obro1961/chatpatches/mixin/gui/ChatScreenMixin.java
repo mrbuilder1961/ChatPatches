@@ -406,7 +406,7 @@ public abstract class ChatScreenMixin extends Screen {
 	 * 		</ul>
 	 * </ul>
 	 */
-	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatInputSuggestor;mouseClicked(DDI)Z"), cancellable = true)
+	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;mouseClicked(DDI)Z", shift = At.Shift.AFTER), cancellable = true)
 	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValue() != null && cir.getReturnValue()) // w/o this a weird error occurs, probably because of the return value not being set yet
 			return;
