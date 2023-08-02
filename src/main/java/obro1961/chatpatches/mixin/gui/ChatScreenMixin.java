@@ -16,7 +16,6 @@ import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.util.ChatMessages;
 import net.minecraft.network.message.MessageSignatureData;
@@ -109,7 +108,7 @@ public abstract class ChatScreenMixin extends Screen {
 	@Unique private static String messageDraft = "";
 
 	@Unique private TextFieldWidget searchField;
-	@Unique private TexturedButtonWidget searchButton;
+	@Unique private SearchButtonWidget searchButton;
 	@Unique private String lastSearch;
 	@Unique private PatternSyntaxException searchError;
 
@@ -173,7 +172,7 @@ public abstract class ChatScreenMixin extends Screen {
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
 			// hover menu buttons, column two
-			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> StringTextUtils.toText( selectedLine.content().getString() ).getString()));
+			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> selectedLine.content().getString()));
 			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> StringTextUtils.reorder( selectedLine.content().asOrderedText(), true )));
 			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serializer.toJson(selectedLine.content())));
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
@@ -389,6 +388,21 @@ public abstract class ChatScreenMixin extends Screen {
 			return false;
 		return mouseClicked.call(chatField, mX, mY, button);
 	}
+	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;mouseClicked(DD)Z"))
+	private boolean fixMenuClickthroughClick(ChatHud chatHud, double mX, double mY, Operation<Boolean> mouseClicked) {
+		if(isMouseOverSettingsMenu(mX, mY) || isMouseOverCopyMenu(mX, mY))
+			return false;
+		else
+			return mouseClicked.call(chatHud, mX, mY);
+	}
+
+	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;getTextStyleAt(DD)Lnet/minecraft/text/Style;"))
+	private Style fixMenuClickthroughStyle(ChatScreen screen, double mX, double mY, Operation<Style> getTextStyleAt) {
+		if(isMouseOverSettingsMenu(mX, mY) || isMouseOverCopyMenu(mX, mY))
+			return null;
+		else
+			return getTextStyleAt.call(screen, mX, mY);
+	}
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
@@ -406,9 +420,9 @@ public abstract class ChatScreenMixin extends Screen {
 	 * 		</ul>
 	 * </ul>
 	 */
-	@Inject(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;mouseClicked(DDI)Z", shift = At.Shift.AFTER), cancellable = true)
+	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
 	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		if(cir.getReturnValue()) // w/o this a weird error occurs, probably because of the return value not being set yet
+		if(cir.getReturnValue())
 			return;
 
 		if(showSettingsMenu) {
@@ -418,21 +432,18 @@ public abstract class ChatScreenMixin extends Screen {
 				cir.setReturnValue(true);
 			if(regex.button.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-
-			if(client.inGameHud.getChatHud().getTextStyleAt(mX, mY) != null && isMouseOverSettingsMenu(mX, mY))
-				cir.setReturnValue(false);
 		} else {
 			// if button is a right-click, then try and render the copy menu
-			if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+			if( button == GLFW.GLFW_MOUSE_BUTTON_RIGHT ) {
 				RenderUtils.MousePos before = anchor;
-				anchor = RenderUtils.MousePos.of( (int)mX, (int)mY );
+				anchor = RenderUtils.MousePos.of((int) mX, (int) mY);
 				if( loadCopyMenu(mX, mY) ) {
 					cir.setReturnValue(showCopyMenu = true);
 				} else {
 					anchor = before;
 					cir.setReturnValue(showCopyMenu = false);
 				}
-			} else if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT && showCopyMenu) {
+			} else if( button == GLFW.GLFW_MOUSE_BUTTON_LEFT && showCopyMenu ) {
 				// see if the mouse clicked on a menu button
 				if( mainButtons.values().stream().anyMatch(menuButton -> menuButton.mouseClicked(mX, mY, button)) )
 					cir.setReturnValue(true);
