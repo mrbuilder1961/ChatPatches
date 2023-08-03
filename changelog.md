@@ -1,9 +1,10 @@
 # Changelog
 
-## Chat Patches `201.5.3` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
+## Chat Patches `201.5.4` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - Fixed right-clicking on chat messages not showing the copy menu (fixed [#106](https://www.github.com/mrbuilder1961/ChatPatches/issues/106), closed [#107](https://www.github.com/mrbuilder1961/ChatPatches/issues/107))
 - Added `ja_jp` translations (huge thanks to [co-91](https://github.com/co-91)!)
-- Fixed "Copy Raw String" sometimes having <&?> codes in it
+- Fixed "Copy Raw String" rarely formatting incorrectly
+- Switched the internal main directory from `main` to `client` to match the expected split sources standard
 
 ## Chat Patches `201.5.3` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - Better [#86](https://www.github.com/mrbuilder1961/ChatPatches/issues/86) fix, also with auto-complete suggestor not going up when pressing the up key ([#101](https://www.github.com/mrbuilder1961/ChatPatches/issues/101))

@@ -367,12 +367,13 @@ public abstract class ChatScreenMixin extends Screen {
 		resetCopyMenu();
 	}
 
-	/** Closes the settings menu if the escape key was pressed and it was already open */
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0), cancellable = true)
-	public void allowClosingSettings(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+	/** Closes the settings menu if the escape key was pressed and it was already open, otherwise closes the screen. */
+	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0))
+	public void allowClosingSettings(MinecraftClient client, Screen nullScreen, Operation<Void> setScreen) {
 		if(showSettingsMenu) {
 			showSettingsMenu = false;
-			cir.setReturnValue(true);
+		} else {
+			setScreen.call(client, null);
 		}
 	}
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
