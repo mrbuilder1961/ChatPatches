@@ -370,11 +370,10 @@ public abstract class ChatScreenMixin extends Screen {
 	/** Closes the settings menu if the escape key was pressed and it was already open, otherwise closes the screen. */
 	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0))
 	public void allowClosingSettings(MinecraftClient client, Screen nullScreen, Operation<Void> setScreen) {
-		if(showSettingsMenu) {
+		if(showSettingsMenu)
 			showSettingsMenu = false;
-		} else {
+		else
 			setScreen.call(client, null);
-		}
 	}
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
@@ -382,7 +381,7 @@ public abstract class ChatScreenMixin extends Screen {
 		messageDraft = "";
 	}
 
-	/** Lets the {@link #chatField} widget be clicked in specific, weird circumstances (needs further testing). */
+	/** Lets the {@link #chatField} widget be focused (?) when the search button isn't showing. (needs further testing) */
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
 	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
 		if(!config.hideSearchButton)
@@ -425,6 +424,9 @@ public abstract class ChatScreenMixin extends Screen {
 	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValue())
 			return;
+
+		if(searchField.mouseClicked(mX, mY, button))
+			cir.setReturnValue(true);
 
 		if(showSettingsMenu) {
 			if(caseSensitive.button.mouseClicked(mX, mY, button))

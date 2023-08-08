@@ -6,6 +6,7 @@ import net.minecraft.text.Text;
 public class RenderUtils {
 	public static final ChatHudLine NIL_HUD_LINE = new ChatHudLine(0, Text.empty(), null, null);
 
+
 	public static class MousePos {
 		public int x, y;
 

@@ -1,6 +1,9 @@
 # Changelog
 
 ## Chat Patches `201.5.5` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
+- YACL images now load without crashing the game! Enjoy preview images right from the get-go!
+- Started working on a fix for ##108, but it's not done yet
+- Fixed some minor grammar issues in the `fabric.mod.json` file
 - Reverted the `client` split sources change from `201.5.4` because it was causing issues and is unnecessary
 
 ## Chat Patches `201.5.4` for Minecraft 1.20, 1.20.1 on Fabric, Quilt

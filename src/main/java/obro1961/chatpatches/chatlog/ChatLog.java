@@ -136,6 +136,8 @@ public class ChatLog {
 		);
     }
 
+    //todo: either skip this entirely when chatlog is empty or make it a toggle
+    //double todo: make a few YACL opts for viewing and clearing chatlog data: history[# and clear], messages[# and clear], total size, and clear all
     /** Saves the chat log to {@link #CHATLOG_PATH}. */
     public static void serialize(boolean crashing) {
         if(crashing && savedAfterCrash)

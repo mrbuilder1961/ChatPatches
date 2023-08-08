@@ -3,12 +3,14 @@ package obro1961.chatpatches.config;
 import com.google.common.collect.Lists;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.Flags;
 import obro1961.chatpatches.util.SharedVariables;
@@ -151,7 +153,6 @@ public class YACLConfig extends Config {
             );
         }
 
-        ChatPatches.LOGGER.warn("[YACLConfig.desc] Image preview temporarily disabled due to a YACL bug (https://github.com/isXander/YetAnotherConfigLib/issues/87). If you want updates join the discord: https://discord.gg/3MqBvNEyMz!");
         return builder.build().generateScreen(parent);
     }
 
@@ -255,37 +256,18 @@ public class YACLConfig extends Config {
     private static OptionDescription desc(ConfigOption<?> opt) {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
 
-        /*// still crashes in prod :(
         String ext = "webp";
         String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase() + "." + ext;
-        Path imagePath = Path.of("");
         Identifier id = Identifier.of(ChatPatches.MOD_ID, image);
 
         try {
-            String path = "assets/" + ChatPatches.MOD_ID + "/" + image;
-            imagePath = Path.of( YACLConfig.class.getClassLoader().getResource(path).toURI() );
-        } catch(URISyntaxException e) {
-            ChatPatches.LOGGER.error("[YACLConfig.desc] Error accessing image path for '{}':", opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(), e);
-            id = null;
-        } catch(NullPointerException npe) {
-            ChatPatches.LOGGER.info("[YACLConfig.desc] No .{} image found for '{}'", ext, opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
-            id = null;
+            if( MinecraftClient.getInstance().getResourceManager().getResource(id).isPresent() )
+                builder.webpImage(id);
+            else
+                ChatPatches.LOGGER.debug("[YACLConfig.desc] No .{} image found for '{}'", ext, opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
+        } catch(Throwable e) {
+            ChatPatches.LOGGER.error("[YACLConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
         }
-
-        if(id != null) {
-            try {
-                if(image.endsWith(".webp"))
-                    builder.webpImage(imagePath, id);
-                else
-                    builder.image(imagePath, id);
-            } catch(Throwable err) {
-                ChatPatches.LOGGER.error("[YACLConfig.desc] Either the Path provided or the Identifier created was invalid: '{}' => Identifier[{}:{}]",
-                    imagePath,
-                    ChatPatches.MOD_ID, image,
-                    err
-                );
-            }
-        }*/
 
         return builder.build();
     }
