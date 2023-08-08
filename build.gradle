@@ -84,17 +84,6 @@ dependencies {
 	}
 }
 
-loom {
-	splitEnvironmentSourceSets()
-
-	mods {
-		"chatpatches" {
-			//sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
-}
-
 processResources {
 	inputs.property "version", version
 
