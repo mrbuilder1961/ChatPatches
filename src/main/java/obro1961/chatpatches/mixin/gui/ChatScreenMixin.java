@@ -274,17 +274,17 @@ public abstract class ChatScreenMixin extends Screen {
 		if( showCopyMenu && !hoveredVisibles.isEmpty() && !isMouseOverSettingsMenu(mX, mY) ) {
 			ChatHud chatHud = client.inGameHud.getChatHud();
 			ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
-			List<ChatHudLine.Visible> visibles = chat.getVisibleMessages();
+			List<ChatHudLine.Visible> visibles = chat.chatPatches$getVisibleMessages();
 
 
 			int hoveredParts = hoveredVisibles.size();
 			// ChatHud#render variables, most of which are based on the hovered message
 			final double s = chatHud.getChatScale();
-			final int lH = chat._getLineHeight();
+			final int lH = chat.chatPatches$getLineHeight();
 			final int sW = MathHelper.ceil(chatHud.getWidth() / s); // scaled width
 			final int sH = MathHelper.floor((client.getWindow().getScaledHeight() - 40) / s); // scaled height
 			int shift = MathHelper.floor(config.shiftChat / s);
-			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.getScrolledLines();
+			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.chatPatches$getScrolledLines();
 			int hoveredY = sH - (i * lH) - shift;
 
 			drawContext.getMatrices().push();
@@ -524,9 +524,9 @@ public abstract class ChatScreenMixin extends Screen {
 			return new ArrayList<>(0);
 
 		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-		final List<ChatHudLine.Visible> visibles = chatHud.getVisibleMessages();
+		final List<ChatHudLine.Visible> visibles = chatHud.chatPatches$getVisibleMessages();
 		// using LineIndex instead of Index bc during testing they both returned the same value; LineIndex has less code
-		final int hoveredIndex = chatHud._getMessageLineIndex(chatHud._toChatLineX(mX), chatHud._toChatLineY(mY + config.shiftChat));
+		final int hoveredIndex = chatHud.chatPatches$getMessageLineIndex(chatHud.chatPatches$toChatLineX(mX), chatHud.chatPatches$toChatLineY(mY + config.shiftChat));
 
 		if(hoveredIndex == -1)
 			return new ArrayList<>(0);
@@ -594,7 +594,7 @@ public abstract class ChatScreenMixin extends Screen {
 		// so i switched it to a startsWith() bc the first one never has extra spaces. /!\ can probably still fail /!\
 		// get hovered message index (messages) for all copying data
 		selectedLine =
-			chat.getMessages()
+			chat.chatPatches$getMessages()
 				.stream()
 				.filter( msg -> Formatting.strip( msg.content().getString() ).startsWith(hoveredMessageFirst) )
 				.findFirst()
@@ -719,8 +719,8 @@ public abstract class ChatScreenMixin extends Screen {
 				// todo: ensure that when this method is run, any successful matches are cached so subsequent searches only look through that list and are faster
 				// might alr be done, idk
 				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-				chatHud.getVisibleMessages().clear();
-				chatHud.getVisibleMessages().addAll(searchResults);
+				chatHud.chatPatches$getVisibleMessages().clear();
+				chatHud.chatPatches$getVisibleMessages().addAll(searchResults);
 			}
 		} else {
 			client.inGameHud.getChatHud().reset();
@@ -746,9 +746,9 @@ public abstract class ChatScreenMixin extends Screen {
 	private List<ChatHudLine.Visible> filterMessages(String target) {
 		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 		if(target == null)
-			return createVisibles( chatHud.getMessages() );
+			return createVisibles( chatHud.chatPatches$getMessages() );
 
-		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.getMessages() );
+		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.chatPatches$getMessages() );
 
 		msgs.removeIf(hudLn -> {
 			String content = StringTextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
