@@ -50,18 +50,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow private int scrolledLines;
 
 
-    // shadowed methods for normal (private-local) use
     @Shadow public abstract double getChatScale();
-    // shadowed methods just for the below bridge methods (mainly for ChatScreenMixin)
-    @Shadow protected abstract int getMessageLineIndex(double x, double y);
+    @Shadow public abstract int getVisibleLineCount();
     @Shadow protected abstract double toChatLineX(double x);
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
-
-    @Shadow public abstract int getVisibleLineCount();
-
+    @Shadow protected abstract int getMessageLineIndex(double x, double y);
     @Shadow protected abstract void addMessage(Text message, @Nullable MessageSignatureData signature, int ticks, @Nullable MessageIndicator indicator, boolean refresh);
-
     // ChatHudAccessor methods used outside this mixin
     public List<ChatHudLine> chatPatches$getMessages() { return messages; }
     public List<ChatHudLine.Visible> chatPatches$getVisibleMessages() { return visibleMessages; }
@@ -91,7 +86,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         }
     }
 
-    // uses ModifyExpressionValue to chain with other mods (aka not break)
     @ModifyExpressionValue(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
         at = @At(value = "CONSTANT", args = "intValue=100")

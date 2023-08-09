@@ -2,10 +2,10 @@
 
 ## Chat Patches `201.5.5` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - YACL images now load without crashing the game! Enjoy preview images right from the get-go!
-- Started working on a fix for [#108](https://www.github.com/mrbuilder1961/ChatPatches/issues/108), but it's not done yet
+- Fixed [#108](https://www.github.com/mrbuilder1961/ChatPatches/issues/108), thanks [replaceitem](https://github.com/replaceitem)!
 - Fixed some minor grammar issues in the `fabric.mod.json` file
 - Reverted the `client` split sources change from `201.5.4` because it was causing issues and is unnecessary
-- Fix some mod that injects into `ChatHud.clear()` not working
+- Fix some mods that inject into `ChatHud.clear()` not working
 - Changed `ChatHudAccessor` prefixes
 
 ## Chat Patches `201.5.4` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
