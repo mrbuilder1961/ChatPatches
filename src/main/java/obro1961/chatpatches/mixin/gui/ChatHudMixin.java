@@ -41,12 +41,12 @@ import static obro1961.chatpatches.util.SharedVariables.lastMsg;
  * extra fields and methods used elsewhere.
  */
 @Environment(EnvType.CLIENT)
-@Mixin(ChatHud.class)
+@Mixin(value = ChatHud.class, priority = 500)
 public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow @Final private MinecraftClient client;
     @Shadow @Final private List<ChatHudLine> messages;
     @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
-
+    @Shadow @Final private List<?> removalQueue;
     @Shadow private int scrolledLines;
 
 
@@ -63,24 +63,23 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow protected abstract void addMessage(Text message, @Nullable MessageSignatureData signature, int ticks, @Nullable MessageIndicator indicator, boolean refresh);
 
     // ChatHudAccessor methods used outside this mixin
-    public List<ChatHudLine> getMessages() { return messages; }
-    public List<ChatHudLine.Visible> getVisibleMessages() { return visibleMessages; }
-    public int getScrolledLines() { return scrolledLines; }
-    // these use underscores to avoid name conflicts with shadowed methods
-    // the function of these methods are exactly their shadowed counterparts
-    public int _getMessageLineIndex(double x, double y) { return getMessageLineIndex(x, y); }
-    public double _toChatLineX(double x) { return toChatLineX(x); }
-    public double _toChatLineY(double y) { return toChatLineY(y); }
-    public int _getLineHeight() { return getLineHeight(); }
+    public List<ChatHudLine> chatPatches$getMessages() { return messages; }
+    public List<ChatHudLine.Visible> chatPatches$getVisibleMessages() { return visibleMessages; }
+    public int chatPatches$getScrolledLines() { return scrolledLines; }
+    public int chatPatches$getMessageLineIndex(double x, double y) { return getMessageLineIndex(x, y); }
+    public double chatPatches$toChatLineX(double x) { return toChatLineX(x); }
+    public double chatPatches$toChatLineY(double y) { return toChatLineY(y); }
+    public int chatPatches$getLineHeight() { return getLineHeight(); }
 
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
     private void clear(boolean clearHistory, CallbackInfo ci) {
         if(!config.vanillaClearing) {
+            // Clear message using F3+D
             if(!clearHistory) {
                 client.getMessageHandler().processAll();
-                // removalQueue.clear(); // don't feel like using an access widener for whatever this does
+                removalQueue.clear();
                 messages.clear();
                 visibleMessages.clear();
                 // empties the message cache (which on save clears chatlog.json)

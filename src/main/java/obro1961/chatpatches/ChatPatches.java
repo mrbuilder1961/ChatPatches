@@ -40,7 +40,7 @@ public class ChatPatches implements ClientModInitializer {
 			ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 			String current = MiscUtils.currentWorldName(client);
 			// continues if the boundary line is enabled, >0 messages sent, and if the last and current worlds were servers, that they aren't the same
-			if( config.boundary && !chatHud.getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
+			if( config.boundary && !chatHud.chatPatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
 
 				try {
 					String levelName = (lastWorld = current).substring(2); // makes a variable to update lastWorld in a cleaner way
@@ -56,7 +56,7 @@ public class ChatPatches implements ClientModInitializer {
 
 			// sets all messages (restored and boundary line) to a addedTime of 0 to prevent instant rendering (#42)
 			if(ChatLog.loaded && Flags.INIT.isRaised()) {
-				chatHud.getVisibleMessages().replaceAll(ln -> new ChatHudLine.Visible(0, ln.content(), ln.indicator(), ln.endOfEntry()));
+				chatHud.chatPatches$getVisibleMessages().replaceAll(ln -> new ChatHudLine.Visible(0, ln.content(), ln.indicator(), ln.endOfEntry()));
 				Flags.INIT.lower();
 			}
 		});

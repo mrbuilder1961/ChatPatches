@@ -24,18 +24,18 @@ public interface ChatHudAccessor {
     }
 
     /** {@link ChatHud#messages} */
-    List<ChatHudLine> getMessages();
+    List<ChatHudLine> chatPatches$getMessages();
     /** {@link ChatHud#visibleMessages} */
-    List<ChatHudLine.Visible> getVisibleMessages();
+    List<ChatHudLine.Visible> chatPatches$getVisibleMessages();
     /** {@link ChatHud#scrolledLines} */
-    int getScrolledLines();
+    int chatPatches$getScrolledLines();
 
     /** {@link ChatHud#getMessageLineIndex(double, double)} */
-    int _getMessageLineIndex(double x, double y);
+    int chatPatches$getMessageLineIndex(double x, double y);
     /** {@link ChatHud#toChatLineX(double)} */
-    double _toChatLineX(double x);
+    double chatPatches$toChatLineX(double x);
     /** {@link ChatHud#toChatLineY(double)} */
-    double _toChatLineY(double y);
+    double chatPatches$toChatLineY(double y);
     /** {@link ChatHud#getLineHeight()} */
-    int _getLineHeight();
+    int chatPatches$getLineHeight();
 }
