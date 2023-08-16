@@ -284,7 +284,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     )
     private void addCounter(Text incoming, MessageSignatureData msd, int ticks, MessageIndicator mi, boolean refreshing, CallbackInfo ci) {
         try {
-            if( config.counter && !refreshing && !messages.isEmpty() && !Flags.ADDING_CONDENSED_MESSAGE.isRaised() && (!Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing) ) {
+            if( config.counter && !refreshing && !messages.isEmpty() && !Flags.ADDING_CONDENSED_MESSAGE.isRaised() ) {
                 // condenses the incoming message into the last message if it is the same
                 Text condensedLastMessage = ChatUtils.getCondensedMessage(incoming, 0);
 
