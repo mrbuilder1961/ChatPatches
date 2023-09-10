@@ -99,7 +99,9 @@ public class ChatUtils {
 				.stream()
 				.map( visible -> StringTextUtils.reorder(visible, false) )
 				.toList();
-			visibleMessages.removeIf(hudLine -> calcVisibles.stream().anyMatch(ot -> ot.equalsIgnoreCase( StringTextUtils.reorder(hudLine.content(), false) )));
+			if (config.counterCompact) {
+				visibleMessages.removeIf(hudLine -> calcVisibles.stream().anyMatch(ot -> ot.equalsIgnoreCase( StringTextUtils.reorder(hudLine.content(), false) )));
+			} else if (calcVisibles.get(0).equalsIgnoreCase(StringTextUtils.reorder(visibleMessages.get(0).content(), false))) visibleMessages.remove(0);
 
 			// same as {@code incoming} but with the appropriate transformations
 			return incomingParts.stream().map(Text::copy).reduce(MutableText.of( incoming.getContent() ), MutableText::append).setStyle( incoming.getStyle() );
