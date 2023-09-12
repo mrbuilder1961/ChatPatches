@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `201.5.6` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
+- Improve performance when using compact chat.
+
 ## Chat Patches `201.5.5` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - YACL images now load without crashing the game! Enjoy preview images right from the get-go!
 - Fixed [#108](https://www.github.com/mrbuilder1961/ChatPatches/issues/108), thanks [replaceitem](https://github.com/replaceitem)!
