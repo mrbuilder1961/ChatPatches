@@ -1,7 +1,7 @@
 [![Fabric Mod](https://img.shields.io/badge/modloader-fabric-eeeeee)](https://fabricmc.net/use/)
 [![Latest Version](https://img.shields.io/modrinth/v/MOqt4Z5n?color=blueviolet&label=latest%20version)](https://modrinth.com/mod/MOqt4Z5n)
 
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fmrbuilder1961%2FChatPatches%2Fbadge%3Fref%3D1.19.4&style=flat)](https://actions-badge.atrox.dev/mrbuilder1961/ChatPatches/goto?ref=1.19.3)
+[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fmrbuilder1961%2FChatPatches%2Fbadge%3Fref%3D1.19.4&style=flat)](https://actions-badge.atrox.dev/mrbuilder1961/ChatPatches/goto?ref=1.20.x)
 ![GitHub code size](https://img.shields.io/github/languages/code-size/mrbuilder1961/ChatPatches)
 
 [![Curseforge Download](https://cf.way2muchnoise.eu/full_560042_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/chatpatches)
