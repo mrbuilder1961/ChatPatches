@@ -1,8 +1,13 @@
 # Changelog
 
-## Chat Patches `201.5.6` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
-- Improve performance when using compact chat.
-- Make ModMenu a recommended dependency instead of a required one (##120)
+## Chat Patches `202.5.6` for Minecraft 1.20.2 on Fabric, Quilt
+- Improve performance when using compact chat ([#118](https://www.github.com/mrbuilder1961/ChatPatches/pull/118) -JustALittleWolf)
+- Fix longer messages sometimes not compacting properly ([#123](https://www.github.com/mrbuilder1961/ChatPatches/pull/123) -JustALittleWolf)
+- Make ModMenu a recommended dependency instead of a required one ([#120](https://www.github.com/mrbuilder1961/ChatPatches/issues/120))
+- Extract textures to individual `.png`s to align with Minecraft's new sprite system
+- Removed an unused button sprite
+- No longer writes the `chatlog.json` file to disk if the ChatLog is empty
+- Fixed the Copy Raw String button including formatting data ([#122](https://www.github.com/mrbuilder1961/ChatPatches/issues/122))
 
 ## Chat Patches `201.5.5` for Minecraft 1.20, 1.20.1 on Fabric, Quilt
 - YACL images now load without crashing the game! Enjoy preview images right from the get-go!

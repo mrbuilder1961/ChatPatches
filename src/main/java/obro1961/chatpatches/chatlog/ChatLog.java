@@ -136,12 +136,13 @@ public class ChatLog {
 		);
     }
 
-    //todo: either skip this entirely when chatlog is empty or make it a toggle
-    //double todo: make a few YACL opts for viewing and clearing chatlog data: history[# and clear], messages[# and clear], total size, and clear all
+    // todo: make a few YACL opts for viewing and clearing chatlog data: history[# and clear], messages[# and clear], total size, and clear all
     /** Saves the chat log to {@link #CHATLOG_PATH}. */
     public static void serialize(boolean crashing) {
         if(crashing && savedAfterCrash)
             return;
+        if(data.messages.isEmpty() && data.history.isEmpty())
+            return; // don't overwrite the file with an empty one if there's nothing to save
 
         try {
             enforceSizes();

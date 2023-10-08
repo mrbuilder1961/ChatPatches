@@ -2,12 +2,14 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.injector.WrapWithCondition;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.util.CommandHistoryManager;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.*;
 import net.minecraft.util.Util;
@@ -58,13 +60,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow protected abstract int getMessageLineIndex(double x, double y);
     @Shadow protected abstract void addMessage(Text message, @Nullable MessageSignatureData signature, int ticks, @Nullable MessageIndicator indicator, boolean refresh);
     // ChatHudAccessor methods used outside this mixin
-    public List<ChatHudLine> chatPatches$getMessages() { return messages; }
-    public List<ChatHudLine.Visible> chatPatches$getVisibleMessages() { return visibleMessages; }
-    public int chatPatches$getScrolledLines() { return scrolledLines; }
-    public int chatPatches$getMessageLineIndex(double x, double y) { return getMessageLineIndex(x, y); }
-    public double chatPatches$toChatLineX(double x) { return toChatLineX(x); }
-    public double chatPatches$toChatLineY(double y) { return toChatLineY(y); }
-    public int chatPatches$getLineHeight() { return getLineHeight(); }
+    public List<ChatHudLine> chatpatches$getMessages() { return messages; }
+    public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }
+    public int chatpatches$getScrolledLines() { return scrolledLines; }
+    public int chatpatches$getMessageLineIndex(double x, double y) { return getMessageLineIndex(x, y); }
+    public double chatpatches$toChatLineX(double x) { return toChatLineX(x); }
+    public double chatpatches$toChatLineY(double y) { return toChatLineY(y); }
+    public int chatpatches$getLineHeight() { return getLineHeight(); }
 
 
     /** Prevents the game from actually clearing chat history */
@@ -231,14 +233,20 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         return modified;
     }
 
-    @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
+    @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/ArrayListDeque;size()I"))
     private void addHistory(String message, CallbackInfo ci) {
         if( !Flags.LOADING_CHATLOG.isRaised() )
             ChatLog.addHistory(message);
     }
 
+    /** Disables logging commands to the vanilla command log if the Chat Patches' ChatLog is enabled. */
+    @WrapWithCondition(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/CommandHistoryManager;add(Ljava/lang/String;)V"))
+    private boolean disableCommandLog(CommandHistoryManager manager, String message) {
+        return !config.chatLog; // if the ChatLog is enabled, don't add to the vanilla command log
+    }
+
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
-    private void dontLogRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
+    private void ignoreRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
         if( Flags.LOADING_CHATLOG.isRaised() && indicator != null )
             ci.cancel();
     }

@@ -23,19 +23,21 @@ public interface ChatHudAccessor {
         return from(client.inGameHud.getChatHud());
     }
 
+    // unique methods, not present in ChatHud
     /** {@link ChatHud#messages} */
-    List<ChatHudLine> chatPatches$getMessages();
+    List<ChatHudLine> chatpatches$getMessages();
     /** {@link ChatHud#visibleMessages} */
-    List<ChatHudLine.Visible> chatPatches$getVisibleMessages();
+    List<ChatHudLine.Visible> chatpatches$getVisibleMessages();
     /** {@link ChatHud#scrolledLines} */
-    int chatPatches$getScrolledLines();
+    int chatpatches$getScrolledLines();
 
+    // renamed methods to access-widen them from ChatHud
     /** {@link ChatHud#getMessageLineIndex(double, double)} */
-    int chatPatches$getMessageLineIndex(double x, double y);
+    int chatpatches$getMessageLineIndex(double x, double y);
     /** {@link ChatHud#toChatLineX(double)} */
-    double chatPatches$toChatLineX(double x);
+    double chatpatches$toChatLineX(double x);
     /** {@link ChatHud#toChatLineY(double)} */
-    double chatPatches$toChatLineY(double y);
+    double chatpatches$toChatLineY(double y);
     /** {@link ChatHud#getLineHeight()} */
-    int chatPatches$getLineHeight();
+    int chatpatches$getLineHeight();
 }

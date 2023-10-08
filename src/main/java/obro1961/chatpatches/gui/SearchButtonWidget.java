@@ -1,17 +1,21 @@
 package obro1961.chatpatches.gui;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.util.Identifier;
-import obro1961.chatpatches.ChatPatches;
 import org.lwjgl.glfw.GLFW;
 
+import static obro1961.chatpatches.ChatPatches.id;
+
 public class SearchButtonWidget extends TexturedButtonWidget {
+    public static final ButtonTextures TEXTURES = new ButtonTextures(id("search_button_unfocused"), id("search_button_focused"));
+
     private final PressAction onLeftClick;
     private final PressAction onRightClick;
 
     public SearchButtonWidget(int x, int y, PressAction leftAction, PressAction rightAction) {
-        super(x, y, 16, 16, 0, 0, 16, Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_buttons.png"), 16, 32, button -> {});
+        super(x, y, 16, 16, TEXTURES, button -> {});
+
         this.onLeftClick = leftAction;
         this.onRightClick = rightAction;
     }
