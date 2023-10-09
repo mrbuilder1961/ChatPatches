@@ -20,7 +20,7 @@ public class ChatSearchSetting {
 	public boolean on;
 	private final Text name;
 
-	public ChatSearchSetting(String key, boolean on, final int y, int yOffset, ButtonWidget.PressAction onPress) {
+	public ChatSearchSetting(String key, boolean on, final int y, int yOffset) {
 		this.name = Text.translatable("text.chatpatches.search." + key);
 		this.on = on;
 
@@ -29,7 +29,9 @@ public class ChatSearchSetting {
 		ButtonWidget.PressAction UPDATE_BUTTON = button -> {
 			this.on = !this.on;
 			button.setMessage(this.name.copy().append(this.on ? TOGGLE_ON : TOGGLE_OFF));
-			onPress.onPress(button); // flags ChatScreenMixin to update the search text color
+
+			// flags ChatScreenMixin to update the search text color
+			updateSearchColor = true;
 		};
 
 		this.button = ButtonWidget.builder(text, UPDATE_BUTTON)

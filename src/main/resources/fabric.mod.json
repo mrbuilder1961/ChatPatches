@@ -16,7 +16,7 @@
     "ploxxy (uk_ua, bugfixes)",
     "Fiz-Victor (bugfixes)",
     "co-91 (ja_jp)",
-    "JustALittleWolf (#118, #123)"
+    "JustALittleWolf (#118)"
   ],
   "contact": {
     "homepage": "https://modrinth.com/mod/MOqt4Z5n",
@@ -45,7 +45,7 @@
 
   "depends": {
     "java": ">=17",
-    "minecraft": [ "1.20.2" ],
+    "minecraft": [ "1.20", "1.20.1" ],
     "fabricloader": ">=0.14.21",
     "fabric-api": "*",
     "yet_another_config_lib_v3": "*"

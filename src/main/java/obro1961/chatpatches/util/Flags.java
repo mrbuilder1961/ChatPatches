@@ -1,11 +1,11 @@
 package obro1961.chatpatches.util;
 
-/** These are used to fix bugs, especially with messages modifying where otherwise unwanted. */
+/** These are used to fix bugs with messages modifying when unwanted. */
 public enum Flags {
-	INIT(0b0001),
-	LOADING_CHATLOG(0b0010),
-	BOUNDARY_LINE(0b0100),
-	ADDING_CONDENSED_MESSAGE(0b1000);
+	INIT(0b1000),
+	LOADING_CHATLOG(0b0001),
+	BOUNDARY_LINE(0b0010),
+	ADDING_CONDENSED_MESSAGE(0b0100);
 
 	Flags(int value) {
 		this.value = value;

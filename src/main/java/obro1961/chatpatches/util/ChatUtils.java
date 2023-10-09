@@ -68,8 +68,8 @@ public class ChatUtils {
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final ChatHud chatHud = client.inGameHud.getChatHud();
 		final ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
-		final List<ChatHudLine> messages = chat.chatpatches$getMessages();
-		final List<ChatHudLine.Visible> visibleMessages = chat.chatpatches$getVisibleMessages();
+		final List<ChatHudLine> messages = chat.chatPatches$getMessages();
+		final List<ChatHudLine.Visible> visibleMessages = chat.chatPatches$getVisibleMessages();
 
 		ChatHudLine comparingLine = messages.get(index); // message being compared
 		List<Text> comparingParts = comparingLine.content().getSiblings();

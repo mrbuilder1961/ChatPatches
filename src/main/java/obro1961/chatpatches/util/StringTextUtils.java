@@ -15,9 +15,6 @@ import java.util.regex.Pattern;
  * A class containing various string and {@link Text} related utilities.
  */
 public class StringTextUtils {
-	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
-	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
-
 
 	/** Goes through each regex of {@code regexes} and removes <b>all</b> matches from {@code str}. */
 	public static String delAll(String str, String... regexes) {
@@ -59,8 +56,8 @@ public class StringTextUtils {
 	public static MutableText toText(String unformatted) {
 		return Text.literal(
 			unformatted
-				.replaceAll(NO_BACKSLASH_AMPERSAND_REGEX, "§$1")
-				.replaceAll(AMPERSAND_REGEX, "&$2")
+				.replaceAll("(?im)(?<!\\\\)&([0-9a-fk-or])", "§$1")
+				.replaceAll("(?im)(\\\\)+&([0-9a-fk-or])", "&$2")
 		);
 	}
 

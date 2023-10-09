@@ -4,11 +4,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextIconButtonWidget;
-import net.minecraft.client.util.SkinTextures;
+import net.minecraft.client.gui.widget.IconButtonWidget;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtils;
 
@@ -30,7 +30,7 @@ public class MenuButtonWidget {
 	public final Supplier<String> copySupplier; // for supplying the string to be copied when clicked; mostly uses ChatScreenMixin#selectedLine
 	public Consumer<MenuButtonWidget> otherPressAction = menuButton -> {}; // currently only for the reply button
 	public List<MenuButtonWidget> children; // the buttons that are rendered when this button is hovered over
-	public SkinTextures skinTexture; // the texture to render over this button, currently only used for the reply button
+	public Identifier skinTexture; // the texture to render over this button, currently only used for the reply button
 	public int xOffset, yOffset, localY = 0, width; // localY is the y offset of this button from its parent, used to align the button vertically
 
 	private MenuButtonWidget(int xOffset, Text message, Supplier<String> cS, MenuButtonWidget... c) {
@@ -41,7 +41,7 @@ public class MenuButtonWidget {
 
 		this.width = MinecraftClient.getInstance().textRenderer.getWidth(message) + 2*padding;
 		this.button =
-			TextIconButtonWidget.builder(message, button -> {
+			IconButtonWidget.builder(message, button -> {
 				String string = this.copySupplier.get();
 				if(!string.isEmpty()) {
 					MinecraftClient.getInstance().keyboard.setClipboard(string);
@@ -78,7 +78,7 @@ public class MenuButtonWidget {
 		button.setWidth(this.width);
 	}
 
-	public MenuButtonWidget setTexture(SkinTextures skinTexture) {
+	public MenuButtonWidget setTexture(Identifier skinTexture) {
 		this.skinTexture = skinTexture;
 		return this;
 	}
@@ -174,14 +174,14 @@ public class MenuButtonWidget {
 		// height: effectively height+1p (with coords, height-1p);
 		button.render(drawContext, mX, mY, delta);
 
-		if(skinTexture != null && skinTexture.texture() != null) {
+		if(skinTexture != null) {
 			// thank you to dzwdz's Chat Heads for most of the code to draw the skin texture!
 
 			// draw base layer, then the hat
 			int x = anchor.x + xOffset + 1;
 			int y = anchor.y + yOffset + 1;
-			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 8, 8, 8, 8, 64, 64);
-			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 40, 8, 8, 8, 64, 64);
+			drawContext.drawTexture(skinTexture, x, y, 16, 16, 8, 8, 8, 8, 64, 64);
+			drawContext.drawTexture(skinTexture, x, y, 16, 16, 40, 8, 8, 8, 64, 64);
 		}
 	}
 }

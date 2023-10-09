@@ -15,18 +15,18 @@ import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.util.ChatMessages;
-import net.minecraft.client.util.SkinTextures;
 import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
+import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.config.ChatSearchSetting;
 import obro1961.chatpatches.config.Config;
@@ -55,13 +55,11 @@ import java.util.stream.Stream;
 import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
 import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.ChatPatches.id;
 import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
 import static obro1961.chatpatches.util.SharedVariables.FABRIC_LOADER;
-import static obro1961.chatpatches.util.StringTextUtils.delAll;
 
 /**
  * An extension of ChatScreen with searching capabilities.
@@ -105,12 +103,13 @@ public abstract class ChatScreenMixin extends Screen {
 	@Unique private static Map<Text, MenuButtonWidget> mainButtons = new LinkedHashMap<>(); // buttons that appear on the initial click
 	@Unique private static Map<Text, MenuButtonWidget> hoverButtons = new LinkedHashMap<>(); // buttons that are revealed on hover
 	@Unique private static List<ChatHudLine.Visible> hoveredVisibles = new ArrayList<>();
-	// drafting (todo: can we remove these and instead use `originalChatText`?)
+	// drafting (todo: can we remove these and instead use `originalChatText` and `lastSearch`?)
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
 
 	@Unique private TextFieldWidget searchField;
 	@Unique private SearchButtonWidget searchButton;
+	@Unique private String lastSearch;
 	@Unique private PatternSyntaxException searchError;
 
 	@Shadow	protected TextFieldWidget chatField;
@@ -159,11 +158,10 @@ public abstract class ChatScreenMixin extends Screen {
 		if(config.searchDrafting)
 			searchField.setText(searchDraft);
 
-		int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
-		ButtonWidget.PressAction updateSearch = button -> onSearchFieldUpdate(searchField.getText());
-		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0, updateSearch);
-		modifiers = new ChatSearchSetting("modifiers", false, yPos, 22, updateSearch);
-		regex = new ChatSearchSetting("regex", false, yPos, 44, updateSearch);
+		final int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
+		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0);
+		modifiers = new ChatSearchSetting("modifiers", false, yPos, 22);
+		regex = new ChatSearchSetting("regex", false, yPos, 44);
 
 		if(!config.hideSearchButton) {
 			addSelectableChild(searchField);
@@ -174,7 +172,7 @@ public abstract class ChatScreenMixin extends Screen {
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
 			// hover menu buttons, column two
-			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> delAll(Formatting.strip( selectedLine.content().getString() ), StringTextUtils.AMPERSAND_REGEX)));
+			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> selectedLine.content().getString()));
 			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> StringTextUtils.reorder( selectedLine.content().asOrderedText(), true )));
 			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serializer.toJson(selectedLine.content())));
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
@@ -263,7 +261,7 @@ public abstract class ChatScreenMixin extends Screen {
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
 			drawContext.drawTexture(
-				id("textures/gui/search_settings_panel.png"),
+				Identifier.of(ChatPatches.MOD_ID, "textures/gui/search_settings_panel.png"),
 				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
 
@@ -276,17 +274,17 @@ public abstract class ChatScreenMixin extends Screen {
 		if( showCopyMenu && !hoveredVisibles.isEmpty() && !isMouseOverSettingsMenu(mX, mY) ) {
 			ChatHud chatHud = client.inGameHud.getChatHud();
 			ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
-			List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
+			List<ChatHudLine.Visible> visibles = chat.chatPatches$getVisibleMessages();
 
 
 			int hoveredParts = hoveredVisibles.size();
 			// ChatHud#render variables, most of which are based on the hovered message
 			final double s = chatHud.getChatScale();
-			final int lH = chat.chatpatches$getLineHeight();
+			final int lH = chat.chatPatches$getLineHeight();
 			final int sW = MathHelper.ceil(chatHud.getWidth() / s); // scaled width
 			final int sH = MathHelper.floor((client.getWindow().getScaledHeight() - 40) / s); // scaled height
 			int shift = MathHelper.floor(config.shiftChat / s);
-			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.chatpatches$getScrolledLines();
+			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.chatPatches$getScrolledLines();
 			int hoveredY = sH - (i * lH) - shift;
 
 			drawContext.getMatrices().push();
@@ -329,8 +327,26 @@ public abstract class ChatScreenMixin extends Screen {
 
 	@Inject(method = "resize", at = @At("TAIL"))
 	public void updateSearchOnResize(MinecraftClient client, int width, int height, CallbackInfo ci) {
+		String text = searchField.getText();
+		searchField.setText(text);
+		onSearchFieldUpdate(text);
+
 		if(showCopyMenu)
 			loadCopyMenu(anchor.x, anchor.y);
+
+		if(!text.isEmpty())
+			searchField.setSuggestion(null);
+	}
+
+	@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;tick()V"))
+	public void tickSearchField(TextFieldWidget chatField, Operation<Void> tick) {
+		if(updateSearchColor)
+			onSearchFieldUpdate(searchField.getText());
+
+		if(searchField.isFocused() && !config.hideSearchButton)
+			searchField.tick();
+		else
+			tick.call(chatField);
 	}
 
 	/**
@@ -352,12 +368,12 @@ public abstract class ChatScreenMixin extends Screen {
 	}
 
 	/** Closes the settings menu if the escape key was pressed and it was already open, otherwise closes the screen. */
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0), cancellable = true )
-	public void allowClosingSettings(CallbackInfoReturnable<Boolean> cir) {
-		if(showSettingsMenu) {
+	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0))
+	public void allowClosingSettings(MinecraftClient client, Screen nullScreen, Operation<Void> setScreen) {
+		if(showSettingsMenu)
 			showSettingsMenu = false;
-			cir.setReturnValue(true);
-		}
+		else
+			setScreen.call(client, null);
 	}
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
@@ -508,9 +524,9 @@ public abstract class ChatScreenMixin extends Screen {
 			return new ArrayList<>(0);
 
 		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-		final List<ChatHudLine.Visible> visibles = chatHud.chatpatches$getVisibleMessages();
+		final List<ChatHudLine.Visible> visibles = chatHud.chatPatches$getVisibleMessages();
 		// using LineIndex instead of Index bc during testing they both returned the same value; LineIndex has less code
-		final int hoveredIndex = chatHud.chatpatches$getMessageLineIndex(chatHud.chatpatches$toChatLineX(mX), chatHud.chatpatches$toChatLineY(mY + config.shiftChat));
+		final int hoveredIndex = chatHud.chatPatches$getMessageLineIndex(chatHud.chatPatches$toChatLineX(mX), chatHud.chatPatches$toChatLineY(mY + config.shiftChat));
 
 		if(hoveredIndex == -1)
 			return new ArrayList<>(0);
@@ -578,7 +594,7 @@ public abstract class ChatScreenMixin extends Screen {
 		// so i switched it to a startsWith() bc the first one never has extra spaces. /!\ can probably still fail /!\
 		// get hovered message index (messages) for all copying data
 		selectedLine =
-			chat.chatpatches$getMessages()
+			chat.chatPatches$getMessages()
 				.stream()
 				.filter( msg -> Formatting.strip( msg.content().getString() ).startsWith(hoveredMessageFirst) )
 				.findFirst()
@@ -614,12 +630,12 @@ public abstract class ChatScreenMixin extends Screen {
 		if( !style.equals(Style.EMPTY) && style.getHoverEvent() != null && style.getHoverEvent().getAction() == HoverEvent.Action.SHOW_ENTITY ) {
 			PlayerListEntry player = client.getNetworkHandler().getPlayerListEntry( UUID.fromString(hoverButtons.get(COPY_UUID).copySupplier.get()) );
 			// gets the skin texture from the player, then the profile, and finally the NIL profile if all else fails
-			SkinTextures skinTexture =
+			Identifier skinTexture =
 				player == null
-					? client.getSkinProvider().getSkinTextures( ChatUtils.NIL_MSG_DATA.sender() )
-					: player.getSkinTextures() != null && player.getSkinTextures().texture() != null
-						? player.getSkinTextures()
-						: client.getSkinProvider().getSkinTextures( player.getProfile() != null ? player.getProfile() : ChatUtils.NIL_MSG_DATA.sender() );
+					? client.getSkinProvider().loadSkin( ChatUtils.NIL_MSG_DATA.sender() )
+					: player.hasSkinTexture()
+						? player.getSkinTexture()
+						: client.getSkinProvider().loadSkin( player.getProfile() != null ? player.getProfile() : ChatUtils.NIL_MSG_DATA.sender() );
 
 			mainButtons.get(COPY_MENU_SENDER).setTexture(skinTexture).readyToRender(true);
 			mainButtons.get(COPY_MENU_REPLY).setTexture(skinTexture).readyToRender(true);
@@ -674,6 +690,10 @@ public abstract class ChatScreenMixin extends Screen {
 	/** Called when the search field is updated; also sets the regex error and the text input color. */
 	@Unique
 	private void onSearchFieldUpdate(String text) {
+		// if text equals last search and shouldn't update the search color OR text is null, cancel
+		if(text.equals( lastSearch != null ? lastSearch : "" ) && !updateSearchColor)
+			return;
+
 		if(!text.isEmpty()) {
 			searchField.setSuggestion(null);
 
@@ -699,8 +719,8 @@ public abstract class ChatScreenMixin extends Screen {
 				// todo: ensure that when this method is run, any successful matches are cached so subsequent searches only look through that list and are faster
 				// might alr be done, idk
 				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-				chatHud.chatpatches$getVisibleMessages().clear();
-				chatHud.chatpatches$getVisibleMessages().addAll(searchResults);
+				chatHud.chatPatches$getVisibleMessages().clear();
+				chatHud.chatPatches$getVisibleMessages().addAll(searchResults);
 			}
 		} else {
 			client.inGameHud.getChatHud().reset();
@@ -710,7 +730,8 @@ public abstract class ChatScreenMixin extends Screen {
 			searchField.setSuggestion(SUGGESTION);
 		}
 
-		searchDraft = text;
+		lastSearch = text;
+		updateSearchColor = false;
 	}
 
 	/**
@@ -725,9 +746,9 @@ public abstract class ChatScreenMixin extends Screen {
 	private List<ChatHudLine.Visible> filterMessages(String target) {
 		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 		if(target == null)
-			return createVisibles( chatHud.chatpatches$getMessages() );
+			return createVisibles( chatHud.chatPatches$getMessages() );
 
-		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.chatpatches$getMessages() );
+		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.chatPatches$getMessages() );
 
 		msgs.removeIf(hudLn -> {
 			String content = StringTextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);

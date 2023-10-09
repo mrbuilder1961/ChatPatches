@@ -10,6 +10,9 @@ import java.util.Objects;
  * don't fit in any other util class well enough.
  */
 public class MiscUtils {
+
+	// whatever category this falls under?
+
 	/**
 	 * Returns the current ClientWorld's name. For singleplayer,
 	 * returns the level name. For multiplayer, returns the
