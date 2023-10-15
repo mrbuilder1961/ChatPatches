@@ -29,9 +29,6 @@
 
   "environment": "client",
   "entrypoints": {
-    "preLaunch": [
-      "com.llamalad7.mixinextras.MixinExtrasBootstrap::init"
-    ],
     "client": [
       "obro1961.chatpatches.ChatPatches"
     ],

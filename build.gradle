@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 plugins {
 	id "fabric-loom" version "1.4-SNAPSHOT"
 	id "maven-publish"
@@ -13,7 +15,7 @@ archivesBaseName = rootProject.archives_base_name
 group = rootProject.group
 version = rootProject.version
 // tokens revert to empty strings when no secrets.json exists
-def tokens = new groovy.json.JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
+def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
 def changelogText = "Changelog could not be found... 😬"
 def noPublish = project.hasProperty("noPublish") ? Boolean.parseBoolean(project.getProperty("noPublish")) : false
 
@@ -21,7 +23,7 @@ repositories {
   	mavenCentral()
 
 	maven { url "https://maven.quiltmc.org/repository/release/" } // Quilt
-	maven { url "https://jitpack.io" } // MixinExtras
+	//maven { url "https://jitpack.io" } // MixinExtras
 	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
 	maven { url "https://maven.isxander.dev/releases" } // YACL
 	maven { url "https://oss.sonatype.org/content/repositories/snapshots/" } // temporary fix for a fix for YACL (twelvemonkeys imageio)
@@ -33,8 +35,8 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:$project.loader"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api"
 
-	// Jar-In-Jar, apply annotation processor, and add MixinExtras
-	include(annotationProcessor( implementation("com.github.LlamaLad7:MixinExtras:$project.mixin_extras") ))
+	// Jar-In-Jar, add MixinExtras, and apply annotation processor
+	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:$project.mixin_extras")))
 
 	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
 	modImplementation "dev.isxander.yacl:yet-another-config-lib-fabric:$project.yacl"
