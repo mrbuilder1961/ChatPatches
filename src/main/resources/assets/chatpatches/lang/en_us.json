@@ -85,11 +85,6 @@
     "text.chatpatches.desc.hideSearchButton": "Should the search button be hidden? Note that this disables all search functionality.",
     "text.chatpatches.desc.vanillaClearing": "Should chat messages clear after leaving a world/server like vanilla? Note this completely erases both the chat and chat log.",
 
-    "text.chatpatches.copyReplyFormat": "Reply text format",
-    "text.chatpatches.copyColor": "Message selection color",
-    "text.chatpatches.desc.copyReplyFormat": "The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the copy menu. '$' is required and will be filled with the message sender's name.",
-    "text.chatpatches.desc.copyColor": "The color of the selection box that's shown after right-clicking on a chat message.",
-
 
     "text.chatpatches.search.suggestion": "Search...",
     "text.chatpatches.search.caseSensitive": "Case sensitive",
@@ -100,6 +95,11 @@
     "text.chatpatches.search.desc.modifiers": "Should the search query allow matching text according to formatting modifiers?\n\n\"abc\" would match \"abc\" and \"§e§labc§r\"; with modifiers it would only match \"abc\" and not \"§e§labc§r\".\nNOTE: Hex colors §ocan§r be matched in the format \"&#§cRR§aGG§9BB§r\", however §nthis is in beta§f.",
     "text.chatpatches.search.desc.regex": "Should the search query be used as a §2reg§rular §2ex§rpression?\n\nTo learn how to use regex, see the help section in the config.\n§l§oNOTE:§r Java regex §nrequires a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end.",
 
+
+    "text.chatpatches.copyReplyFormat": "Reply text format",
+    "text.chatpatches.copyColor": "Message selection color",
+    "text.chatpatches.desc.copyReplyFormat": "The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the copy menu. '$' is required and will be filled with the message sender's name.",
+    "text.chatpatches.desc.copyColor": "The color of the selection box that's shown after right-clicking on a chat message.",
 
     "text.chatpatches.copy.copied": "Copied message component: \"%s\"!",
     "text.chatpatches.copy.copyString": "Copy String >",
@@ -115,5 +115,7 @@
     "text.chatpatches.copy.sender": "Copy Sender >",
     "text.chatpatches.copy.name": "Username",
     "text.chatpatches.copy.uuid": "UUID",
-    "text.chatpatches.copy.reply": "Reply"
+    "text.chatpatches.copy.reply": "Reply",
+
+    "text.chatpatches.restored": "Restored"
 }

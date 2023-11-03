@@ -7,9 +7,9 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Flags;
 import obro1961.chatpatches.util.SharedVariables;
 
@@ -29,6 +29,8 @@ import static obro1961.chatpatches.ChatPatches.config;
  */
 public class ChatLog {
     public static final String CHATLOG_PATH = SharedVariables.FABRIC_LOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
+
     private static final Path file = Path.of(CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serializer.toJsonTree(src))
@@ -67,7 +69,7 @@ public class ChatLog {
      *   <li> If it does exist, it will convert the ChatLog file to UTF-8 if it isn't already and save it to {@code rawData}.
      *   <li> If {@code rawData} contains invalid data, resets {@link #data} to a default, empty {@link Data} object.
      *   <li> Then it uses {@link #json} to convert {@code rawData} into a usable {@link Data} object.
-     *   <li> Runs {@link #enforceSizes()} to ensure that the {@link Data} object doesn't overflow with messages.
+     *   <li> Removes any overflowing messages.
      *   <li> If it successfully resolved, then returns and logs a message.
      */
     public static void deserialize() {
@@ -119,7 +121,11 @@ public class ChatLog {
 
         try {
             data = json.fromJson(rawData, Data.class);
-            enforceSizes();
+
+            if(data.messages.size() > config.chatMaxMessages)
+                data.messages = data.messages.subList(0, config.chatMaxMessages + 1);
+            if(data.history.size() > config.chatMaxMessages)
+                data.history = data.history.subList(0, config.chatMaxMessages + 1);
         } catch (com.google.gson.JsonSyntaxException e) {
             ChatPatches.LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
@@ -145,8 +151,6 @@ public class ChatLog {
             return; // don't overwrite the file with an empty one if there's nothing to save
 
         try {
-            enforceSizes();
-
             final String str = json.toJson(data, Data.class);
             Files.writeString(file, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
@@ -161,49 +165,33 @@ public class ChatLog {
         }
     }
 
-
-    /** Removes all overflowing data from {@code ChatLog.data} with an index greater than {@link Config#chatMaxMessages}. */
-    private static void enforceSizes() {
-        int oldMessageSize = data.messages.size();
-        if(oldMessageSize > config.chatMaxMessages ) {
-            data.messages = data.messages.subList(0, config.chatMaxMessages + 1);
-            ChatPatches.LOGGER.warn("[ChatLog.enforceSizes] ChatLog was full, trimmed to {} messages (removed {})", config.chatMaxMessages, oldMessageSize - config.chatMaxMessages);
-        }
-
-        int oldHistorySize = data.history.size();
-        if(oldHistorySize > config.chatMaxMessages ) {
-            data.history = data.history.subList(0, config.chatMaxMessages + 1);
-            ChatPatches.LOGGER.warn("[ChatLog.enforceSizes] ChatLog was full, trimmed to {} sent messages (removed {})", config.chatMaxMessages, oldHistorySize - config.chatMaxMessages);
-        }
-    }
-
     /** Restores the chat log from {@link #data} into Minecraft. */
     public static void restore(MinecraftClient client) {
         Flags.LOADING_CHATLOG.raise();
 
         if(!data.history.isEmpty())
             data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
+
         if(!data.messages.isEmpty())
-            data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(
-                msg, null, new MessageIndicator(0x382fb5, null, null, "Restored")
-            ));
+            data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
 
         Flags.LOADING_CHATLOG.lower();
+
         ChatPatches.LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(), CHATLOG_PATH);
     }
 
 
     public static void addMessage(Text msg) {
-        if(data.messages.size() < config.chatMaxMessages )
-            data.messages.add(msg);
-        else
-            ChatPatches.LOGGER.warn("[ChatLog.addMessage] ChatLog message capacity has been reached, ignoring message '{}'", msg.getString());
+        if(data.messages.size() > config.chatMaxMessages)
+            data.messages.remove(0);
+
+        data.messages.add(msg);
     }
     public static void addHistory(String msg) {
-        if(data.history.size() < config.chatMaxMessages )
-            data.history.add(msg);
-        else
-            ChatPatches.LOGGER.warn("[ChatLog.addMessage] ChatLog history capacity has been reached, ignoring sent message '{}'", msg);
+        if(data.history.size() > config.chatMaxMessages)
+            data.history.remove(0);
+
+        data.history.add(msg);
     }
     public static void clearMessages() { data.messages.clear(); }
     public static void clearHistory() { data.history.clear(); }

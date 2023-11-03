@@ -1,5 +1,9 @@
 # Changelog
 
+## Chat Patches `202.5.7` for Minecraft 1.20.2 on Fabric, Quilt
+- Cleaned up unnecessary code in `ChatLog`
+- The ChatLog now removes the oldest message and adds the newest one once the max limit is reached ([#126](https://www.github.com/mrbuilder1961/ChatPatches/issues/126))
+
 ## Chat Patches `202.5.6` for Minecraft 1.20.2 on Fabric, Quilt
 - Improve performance when using compact chat ([#118](https://www.github.com/mrbuilder1961/ChatPatches/pull/118) -JustALittleWolf)
 - Fix longer messages sometimes not compacting properly ([#123](https://www.github.com/mrbuilder1961/ChatPatches/pull/123) -JustALittleWolf)
