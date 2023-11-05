@@ -75,8 +75,7 @@ public class ChatLog {
     public static void deserialize() {
         String rawData = Data.EMPTY_DATA;
 
-        if( Files.exists(file) ) {
-
+        if(Files.exists(file)) {
             try {
                 rawData = Files.readString(file);
 
@@ -121,11 +120,7 @@ public class ChatLog {
 
         try {
             data = json.fromJson(rawData, Data.class);
-
-            if(data.messages.size() > config.chatMaxMessages)
-                data.messages = data.messages.subList(0, config.chatMaxMessages + 1);
-            if(data.history.size() > config.chatMaxMessages)
-                data.history = data.history.subList(0, config.chatMaxMessages + 1);
+            removeOverflowData();
         } catch (com.google.gson.JsonSyntaxException e) {
             ChatPatches.LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
@@ -149,6 +144,8 @@ public class ChatLog {
             return;
         if(data.messages.isEmpty() && data.history.isEmpty())
             return; // don't overwrite the file with an empty one if there's nothing to save
+
+        removeOverflowData(); // don't save more than the max amount of messages
 
         try {
             final String str = json.toJson(data, Data.class);
@@ -193,6 +190,20 @@ public class ChatLog {
 
         data.history.add(msg);
     }
-    public static void clearMessages() { data.messages.clear(); }
-    public static void clearHistory() { data.history.clear(); }
+
+    public static void removeOverflowData() {
+        // the sublist indices make sure to only keep the newest data and remove the oldest
+        if(data.messages.size() > config.chatMaxMessages)
+            data.messages = data.messages.subList( data.messages.size() - config.chatMaxMessages, data.messages.size() );
+
+        if(data.history.size() > config.chatMaxMessages)
+            data.history = data.history.subList( data.history.size() - config.chatMaxMessages, data.history.size() );
+    }
+
+    public static void clearMessages() {
+        data.messages.clear();
+    }
+    public static void clearHistory() {
+        data.history.clear();
+    }
 }
