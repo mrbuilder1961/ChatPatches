@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -146,7 +147,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     )
     private Text modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
         if( refreshing || Flags.LOADING_CHATLOG.isRaised() || Flags.ADDING_CONDENSED_MESSAGE.isRaised() )
-            return message; // cancels modifications when loading the chatlog or regenerating visibles
+            return addCounter(message, sig, ticks, indicator, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
 
         final Style style = message.getStyle();
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
@@ -228,6 +229,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         : message
                 );
 
+        modified = addCounter(modified, sig, ticks, indicator, refreshing);
+
 
         ChatLog.addMessage(modified);
         return modified;
@@ -285,12 +288,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * {@link #modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)} in a @{@link ModifyVariable}
      * handler.
      */
-    @Inject(
-        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
-        at = @At("HEAD"),
-        cancellable = true
-    )
-    private void addCounter(Text incoming, MessageSignatureData msd, int ticks, MessageIndicator mi, boolean refreshing, CallbackInfo ci) {
+    @Unique
+    private Text addCounter(Text incoming, MessageSignatureData msd, int ticks, MessageIndicator mi, boolean refreshing) {
         try {
             if( config.counter && !refreshing && !messages.isEmpty() && !Flags.ADDING_CONDENSED_MESSAGE.isRaised() ) {
                 // condenses the incoming message into the last message if it is the same
@@ -315,15 +314,18 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         .findFirst()
                         .ifPresent( hudLine -> ChatUtils.getCondensedMessage(incoming, messages.indexOf(hudLine)) );
                 }
+                return condensedLastMessage;
 
                 // if any message was condensed add it
-                if( !condensedLastMessage.equals(incoming) || (config.counterCompact && condensedLastMessage.equals(incoming)) ) {
+                /*
+                 * This is no longer necessary because the message is being modified when it is
+                 * passed to the ChatUtils#modifyMessage method.
+                 */
+                /*if( !condensedLastMessage.equals(incoming) || (config.counterCompact && condensedLastMessage.equals(incoming)) ) {
                     Flags.ADDING_CONDENSED_MESSAGE.raise();
-                    addMessage( condensedLastMessage, msd, ticks, mi, false );
+                    //addMessage( condensedLastMessage, msd, ticks, mi, false );
                     Flags.ADDING_CONDENSED_MESSAGE.lower();
-
-                    ci.cancel();
-                }
+                }*/
             }
 
         } catch(IndexOutOfBoundsException e) {
@@ -333,5 +335,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         } catch(Exception e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error. Please report this on GitHub or on the Discord! /!\\", e);
         }
+        return incoming;
     }
 }
