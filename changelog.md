@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `202.5.8` for Minecraft 1.20.2 on Fabric, Quilt
+- Add "Only Invasive Drafting" option ( -JustAlittleWolf)
+
 ## Chat Patches `202.5.7` for Minecraft 1.20.2 on Fabric, Quilt
 - The ChatLog now removes the oldest message and adds the newest one once the max limit is reached ([#126](https://www.github.com/mrbuilder1961/ChatPatches/issues/126))
 - Additionally, the ChatLog now only keeps and loads the newest data when loading a chat log file that is over the limit
