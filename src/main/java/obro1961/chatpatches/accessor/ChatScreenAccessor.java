@@ -6,5 +6,6 @@ public interface ChatScreenAccessor {
     static ChatScreenAccessor from(ChatScreen chatScreen) {
         return ((ChatScreenAccessor) chatScreen);
     }
-    default void chatPatches$clearMessageDraft() {}
+
+    void chatpatches$clearMessageDraft();
 }

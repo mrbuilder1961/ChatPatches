@@ -352,15 +352,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		resetCopyMenu();
 	}
 
-	/**
-	 * Resets the message draft, used in {@link ScreenMixin#clearMessageDraft}
-	 * to only do this when the user closes the ChatScreen.
-	 */
-	@Unique
-	public void chatPatches$clearMessageDraft() {
-		chatField.setText("");
-	}
-
 	/** Closes the settings menu if the escape key was pressed and it was already open, otherwise closes the screen. */
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0), cancellable = true )
 	public void allowClosingSettings(CallbackInfoReturnable<Boolean> cir) {
@@ -469,6 +460,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 
 	// New/Unique methods
+
+	/**
+	 * Resets the message draft, used in {@link ScreenMixin#clearMessageDraft}
+	 * to only do this when the user closes the ChatScreen.
+	 */
+	@Unique
+	public void chatpatches$clearMessageDraft() {
+		chatField.setText("");
+	}
 
 	@Unique
 	private boolean isMouseOverSettingsMenu(double mX, double mY) {
