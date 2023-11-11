@@ -103,7 +103,8 @@ public class ChatUtils {
 				visibleMessages.removeIf(hudLine -> calcVisibles.stream().anyMatch(ot -> ot.equalsIgnoreCase( StringTextUtils.reorder(hudLine.content(), false) )));
 			} else {
 				visibleMessages.remove(0);
-				while(!visibleMessages.isEmpty() && !visibleMessages.get(0).endOfEntry()) visibleMessages.remove(0);
+				while( !visibleMessages.isEmpty() && !visibleMessages.get(0).endOfEntry() )
+					visibleMessages.remove(0);
 			}
 
 			// same as {@code incoming} but with the appropriate transformations
