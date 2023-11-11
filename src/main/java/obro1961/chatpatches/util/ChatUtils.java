@@ -99,7 +99,7 @@ public class ChatUtils {
 				.stream()
 				.map( visible -> StringTextUtils.reorder(visible, false) )
 				.toList();
-			if (config.counterCompact) {
+			if(config.counterCompact) {
 				visibleMessages.removeIf(hudLine -> calcVisibles.stream().anyMatch(ot -> ot.equalsIgnoreCase( StringTextUtils.reorder(hudLine.content(), false) )));
 			} else {
 				visibleMessages.remove(0);

@@ -79,7 +79,7 @@ public class ChatLog {
             try {
                 rawData = Files.readString(file);
 
-            } catch (MalformedInputException notUTF8) { // thrown if the file is not encoded with UTF-8
+            } catch(MalformedInputException notUTF8) { // thrown if the file is not encoded with UTF-8
                 ChatPatches.LOGGER.warn("[ChatLog.deserialize] ChatLog file encoding was '{}', not UTF-8. Complex text characters may have been replaced with question marks.", Charset.defaultCharset().name());
 
                 try {
@@ -87,19 +87,19 @@ public class ChatLog {
                     Files.writeString(file, new String(Files.readAllBytes(file)), StandardOpenOption.TRUNCATE_EXISTING);
                     rawData = Files.readString(file);
 
-                } catch (IOException ioexc) {
+                } catch(IOException ioexc) {
                     ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't rewrite the ChatLog at '{}', resetting:", CHATLOG_PATH, ioexc);
 
                     // final attempt to reset the file
                     try {
                         rawData = Data.EMPTY_DATA; // just in case of corruption from previous failures
                         Files.writeString(file, Data.EMPTY_DATA, StandardOpenOption.TRUNCATE_EXISTING);
-                    } catch (IOException ioerr) {
+                    } catch(IOException ioerr) {
                         ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't reset the ChatLog at '{}':", CHATLOG_PATH, ioerr);
                     }
                 }
 
-            } catch (IOException e) {
+            } catch(IOException e) {
                 ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't access the ChatLog at '{}':", CHATLOG_PATH, e);
                 // rawData is EMPTY DATA
             }
@@ -121,7 +121,7 @@ public class ChatLog {
         try {
             data = json.fromJson(rawData, Data.class);
             removeOverflowData();
-        } catch (com.google.gson.JsonSyntaxException e) {
+        } catch(com.google.gson.JsonSyntaxException e) {
             ChatPatches.LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
 
             data = new Data();
@@ -153,7 +153,7 @@ public class ChatLog {
 
             ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
 
-        } catch (IOException e) {
+        } catch(IOException e) {
             ChatPatches.LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
 
         } finally {

@@ -184,7 +184,7 @@ public class YACLConfig extends Config {
                 try {
                     new SimpleDateFormat( inc.toString() );
                     o.set( inc );
-                } catch (IllegalArgumentException e) {
+                } catch(IllegalArgumentException e) {
                     ChatPatches.LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
                 }
             });

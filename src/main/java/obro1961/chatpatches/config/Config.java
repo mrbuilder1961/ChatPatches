@@ -81,7 +81,7 @@ public class Config {
         try {
             return new ConfigOption<>( (T)config.getClass().getField(key).get(config), (T)Config.class.getField(key).get(DEFAULTS), key );
 
-        } catch (IllegalAccessException | NoSuchFieldException e) {
+        } catch(IllegalAccessException | NoSuchFieldException e) {
             LOGGER.error("[Config.getOption({})] An error occurred while trying to get an option value, please report this on GitHub:", key, e);
 
             return new ConfigOption<>( (T)new Object(), (T)new Object(), key );
@@ -199,7 +199,7 @@ public class Config {
             FileOutputStream copy = new FileOutputStream(CONFIG_PATH.replace("chatpatches", "chatpatches_old"))
         ) {
             copy.write( cfg.readAllBytes() );
-        } catch (IOException e) {
+        } catch(IOException e) {
             LOGGER.error("[Config.writeCopy] An error occurred trying to copy the original config file from '{}':", CONFIG_PATH, e);
         }
     }
@@ -248,7 +248,7 @@ public class Config {
 
                     this.val = inc;
                 }
-            } catch (NoSuchFieldException | IllegalAccessException | ClassCastException e) {
+            } catch(NoSuchFieldException | IllegalAccessException | ClassCastException e) {
                 LOGGER.error("[ConfigOption.set({})] An error occurred trying to set a config option:", obj, e);
             }
         }
