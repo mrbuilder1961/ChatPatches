@@ -59,7 +59,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageLineIndex(double x, double y);
-    @Shadow protected abstract void addMessage(Text message, @Nullable MessageSignatureData signature, int ticks, @Nullable MessageIndicator indicator, boolean refresh);
     // ChatHudAccessor methods used outside this mixin
     public List<ChatHudLine> chatpatches$getMessages() { return messages; }
     public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }
@@ -126,18 +125,19 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     /**
      * Modifies the incoming message by adding timestamps, nicer
-     * playernames, hover events, and duplicate counters in conjunction with
-     * {@link #addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
+     * player names, hover events, and duplicate counters in conjunction with
+     * {@link #addCounter(Text, boolean)}
      *
      * @implNote
      * <li>Extra {@link Text} parameter is required to get access to
-     * {@code refreshing}, according to the {@link ModifyVariable} docs.</li>
+     * {@code refreshing}, according to the {@link ModifyVariable} docs.
+     * (NOTE: will be fixed after using MixinExtras' new @Local to get around this!)</li>
      * <li>Doesn't modify when {@code refreshing} is true, as that signifies
      * re-rendering of chat messages on the hud.</li>
      * <li>This method causes all messages passed to it to be formatted in
-     * a new structure for clear data access. This is done by mostly using
+     * a new structure for clear data access. This is mostly done using
      * {@link MutableText#append(Text)}, which deliberately puts message
-     * components at specific indices, all of which should be laid out in
+     * components at specific indices, all of which are laid out in
      * {@link ChatUtils}.</li>
      */
     @ModifyVariable(
@@ -145,9 +145,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         at = @At("HEAD"),
         argsOnly = true
     )
-    private Text modifyMessage(Text message, Text m, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
-        if( refreshing || Flags.LOADING_CHATLOG.isRaised() || Flags.ADDING_CONDENSED_MESSAGE.isRaised() )
-            return addCounter(message, sig, ticks, indicator, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
+    //todo: (Text m, @Local(argsOnly = true) boolean refreshing)
+    private Text modifyMessage(Text m, Text message, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
+        if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
+            return addCounter(m, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
+        //double todo: fix that weird thing with the open-to-lan message not working at all for some reason
 
         final Style style = message.getStyle();
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
@@ -229,9 +231,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         : message
                 );
 
-        modified = addCounter(modified, sig, ticks, indicator, refreshing);
-
-
+        modified = addCounter(modified, false);
         ChatLog.addMessage(modified);
         return modified;
     }
@@ -263,7 +263,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      *
      * @implNote
      * <ol>
-     *     <li>IF {@code COUNTER} is enabled AND message count >0 AND the message isn't a boundary line AND it's not adding an already condensed message, continue.</li>
+     *     <li>IF {@code COUNTER} is enabled AND the message count >0 AND the message isn't a boundary line, continue.</li>
      *     <li>Cache the result of trying to condense the incoming message with the last message received.</li>
      *     <li>IF the counter should use the CompactChat method and the message wasn't already condensed:</li>
      *     <ol>
@@ -272,26 +272,20 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      *         <li>If a message was the same, call {@link ChatUtils#getCondensedMessage(Text, int)},
      *         which ultimately removes that message and its visibles.</li>
      *     </ol>
-     *     <li>IF any messages were condensed:</li>
-     *     <ol>
-     *         <li>Raise {@link Flags#ADDING_CONDENSED_MESSAGE}.</li>
-     *         <li>Call the method this injector is injecting into (without running this method because of the flag).</li>
-     *         <li>Lower {@link Flags#ADDING_CONDENSED_MESSAGE}.</li>
-     *         <li>Cancel to prevent duplicating this message.</li>
-     *     </ol>
-     *     <li>Wraps the entire method in a try-catch to prevent any errors from (effectively) disabling the chat.</li>
+     *     <li>Return the (potentially) condensed message, to later be formatted further in {@link #modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)}</li>
      * </ol>
+     * (Wraps the entire method in a try-catch to prevent any errors accidentally disabling the chat.)
      *
      * @apiNote This injector is pretty ugly and could definitely be cleaner and more concise, but I'm going to deal with it
      * in the future when I API-ify the rest of the mod. When that happens, this flag-add-flag-cancel method will be replaced
      * with a simple (enormous) method call alongside
      * {@link #modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)} in a @{@link ModifyVariable}
-     * handler.
+     * handler. (NOTE: as of v202.6.0, this is partially done already thanks to #132)
      */
     @Unique
-    private Text addCounter(Text incoming, MessageSignatureData msd, int ticks, MessageIndicator mi, boolean refreshing) {
+    private Text addCounter(Text incoming, boolean refreshing) {
         try {
-            if( config.counter && !refreshing && !messages.isEmpty() && !Flags.ADDING_CONDENSED_MESSAGE.isRaised() ) {
+            if( config.counter && !refreshing && !messages.isEmpty() ) {
                 // condenses the incoming message into the last message if it is the same
                 Text condensedLastMessage = ChatUtils.getCondensedMessage(incoming, 0);
 
@@ -314,20 +308,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         .findFirst()
                         .ifPresent( hudLine -> ChatUtils.getCondensedMessage(incoming, messages.indexOf(hudLine)) );
                 }
+
+                // this result is used in #modifyMessage(...)
                 return condensedLastMessage;
-
-                // if any message was condensed add it
-                /*
-                 * This is no longer necessary because the message is being modified when it is
-                 * passed to the ChatUtils#modifyMessage method.
-                 */
-                /*if( !condensedLastMessage.equals(incoming) || (config.counterCompact && condensedLastMessage.equals(incoming)) ) {
-                    Flags.ADDING_CONDENSED_MESSAGE.raise();
-                    //addMessage( condensedLastMessage, msd, ticks, mi, false );
-                    Flags.ADDING_CONDENSED_MESSAGE.lower();
-                }*/
             }
-
         } catch(IndexOutOfBoundsException e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method.");
@@ -335,6 +319,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         } catch(Exception e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error. Please report this on GitHub or on the Discord! /!\\", e);
         }
+
         return incoming;
     }
 }

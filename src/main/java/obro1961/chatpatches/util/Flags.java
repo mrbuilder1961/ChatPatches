@@ -4,8 +4,8 @@ package obro1961.chatpatches.util;
 public enum Flags {
 	INIT(0b0001),
 	LOADING_CHATLOG(0b0010),
-	BOUNDARY_LINE(0b0100),
-	ADDING_CONDENSED_MESSAGE(0b1000);
+	BOUNDARY_LINE(0b0100);
+	//SOME_FLAG_HERE(0b1000);
 
 	Flags(int value) {
 		this.value = value;

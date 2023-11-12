@@ -4,16 +4,13 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.util.ChatMessages;
-import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.time.Instant;
 import java.util.List;
@@ -41,7 +38,7 @@ public class ChatUtils {
 	 * Tries to condense the {@code index} message into the incoming message
 	 * if they're case-insensitively equal. This method is functionally
 	 * similar to the original
-	 * {@link ChatHudMixin#addCounter(Text, MessageSignatureData, int, MessageIndicator, boolean, CallbackInfo)}
+	 * {@link ChatHudMixin#addCounter(Text, boolean)}
 	 * before {@code v194.5.0}.
 	 * <padding><br>The main difference is that this method
 	 * removes the old message and edits the incoming message, rather than
