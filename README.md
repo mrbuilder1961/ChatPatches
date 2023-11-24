@@ -48,8 +48,11 @@ Be on the lookout for new versions, issues, and future features!
 - Do servers need this mod?
   - It is client side, so no.
 - I can't access the config menu in-game!
-  - <u>For 1.19.2+:</u> After ensuring YACL and Mod Menu are installed, if you still cannot access the config, check for an error message and [open an
-    issue on GitHub](https://github.com/mrbuilder1961/ChatPatches/issues/new/choose). If there isn't an error message, [open an issue anyway](https://github.com/mrbuilder1961/ChatPatches/issues/new/choose) and follow the instructions in the issue template.
+  - <u>For 1.19.2+:</u> 
+    - If you do not want to install Mod Menu, you can instead use [Catalogue](https://www.curseforge.com/minecraft/mc-mods/catalogue-fabric)
+      with [Menulogue](https://www.curseforge.com/minecraft/mc-mods/menulogue), which will provide the same functionality!
+    - Otherwise, if you still cannot access the config after ensuring YACL and a menu mod are installed, check for an error message and [open an
+      issue on GitHub](https://github.com/mrbuilder1961/ChatPatches/issues/new/choose). If there isn't an error message, open an issue anyway and follow the instructions in the issue template.
   - <u>For 1.18.x:</u> You need the LATEST versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu](https://modrinth.com/mod/modmenu/versions?l=fabric&c=release) to access it in game.
   - <u>For all versions:</u> You can always edit the config at `(directory)/config/chatpatches.json`.
 - My config is broken/not working!
