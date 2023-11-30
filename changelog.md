@@ -5,7 +5,7 @@
 - Inform users that Catalogue + Menulogue works as a substitution for ModMenu ([#42](https://www.github.com/mrbuilder1961/ChatPatches/issues/42))
 
 ## Chat Patches `202.5.7` for Minecraft 1.20.2 on Fabric, Quilt
-- The ChatLog now removes the oldest message and adds the newest one once the max limit is reached ([#126](https://www.github.com/mrbuilder1961/ChatPatches/issues/126))
+- The ChatLog now removes the oldest message and adds the newest one once the max limit is reached ([#130](https://www.github.com/mrbuilder1961/ChatPatches/issues/130))
 - Additionally, the ChatLog now only keeps and loads the newest data when loading a chat log file that is over the limit
 - Cleaned up other unnecessary code in `ChatLog`
 
