@@ -149,7 +149,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     private Text modifyMessage(Text m, Text message, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
         if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
             return addCounter(m, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
-        //double todo: fix that weird thing with the open-to-lan message not working at all for some reason
 
         final Style style = message.getStyle();
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
@@ -233,6 +232,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
         modified = addCounter(modified, false);
         ChatLog.addMessage(modified);
+        lastMsg = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
         return modified;
     }
 
@@ -245,7 +245,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     /** Disables logging commands to the vanilla command log if the Chat Patches' ChatLog is enabled. */
     @WrapWithCondition(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/CommandHistoryManager;add(Ljava/lang/String;)V"))
     private boolean disableCommandLog(CommandHistoryManager manager, String message) {
-        return !config.chatLog; // if the ChatLog is enabled, don't add to the vanilla command log
+        return !config.chatlog; // if the ChatLog is enabled, don't add to the vanilla command log
     }
 
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)

@@ -1,8 +1,18 @@
 # Changelog
 
 ## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric, Quilt
-- Add "Only Invasive Drafting" option ([#131](https://www.github.com/mrbuilder1961/ChatPatches/issues/131) -JustAlittleWolf)
+- Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!
+- Add "Only Invasive Drafting" option ([#131](https://www.github.com/mrbuilder1961/ChatPatches/pull/131) -JustAlittleWolf)
+- Improve mod compatibility with the dupe counter injector + teeny optimizations
+ ([#132](https://www.github.com/mrbuilder1961/ChatPatches/pull/132) -JustAlittleWolf)
+- Extracted `chatLog` to the new ChatLog tab in the config
+- Added a new config option to the tab: `chatLogSaveInterval`, which configures the timer for saving the chat log to disk
+- Added new executable buttons to the chat log tab to manipulate it in game: Clear all messages, Clear sent messages, Clear regular messages, Load, Save, 
+  and Backup
+- Additionally, the chatlog will now only actually write to disk if it has been modified since the last save ([#134](https://www.github.com/mrbuilder1961/ChatPatches/issues/134))
 - Inform users that Catalogue + Menulogue works as a substitution for ModMenu ([#42](https://www.github.com/mrbuilder1961/ChatPatches/issues/42))
+- Removed an unused variable from `ChatSearchSetting`
+- Fixed some weird messages and game events formatting incorrectly, such as the Open-to-LAN message
 
 ## Chat Patches `202.5.7` for Minecraft 1.20.2 on Fabric, Quilt
 - The ChatLog now removes the oldest message and adds the newest one once the max limit is reached ([#130](https://www.github.com/mrbuilder1961/ChatPatches/issues/130))

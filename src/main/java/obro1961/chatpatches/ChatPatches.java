@@ -2,8 +2,11 @@ package obro1961.chatpatches;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.util.Identifier;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
@@ -19,7 +22,6 @@ public class ChatPatches implements ClientModInitializer {
 
 	private static String lastWorld = "";
 
-
 	/**
 	 * Creates a new Identifier for Chat Patches.
 	 * Throws an error if the path fails to .
@@ -28,20 +30,27 @@ public class ChatPatches implements ClientModInitializer {
 		return new Identifier(MOD_ID, path);
 	}
 
-	/**
-	 * <ol>
-	 * 	<li> Registers a callback on {@link ClientLifecycleEvents#CLIENT_STOPPING} for {@link ChatLog#serialize(boolean)} on a normal game exit
-	 * 	<li> Registers a callback on {@link ClientPlayConnectionEvents#JOIN} for loading the {@link ChatLog} and adding boundary lines
-	 * </ol>
-	 */
+
 	@Override
 	public void onInitializeClient() {
+		/*
+		* ChatLog saving events, run if config.chatlog is true:
+		* 	CLIENT_STOPPING - Always saves
+		* 	SCREEN_AFTER_INIT - Saves if there is no save interval AND if the screen is the OptionsScreen (paused)
+		* 	START_CLIENT_TICK - Ticks the save counter, saves if the counter is 0, resets if <0
+		* 	MinecraftClientMixin#saveChatlogOnCrash - Always saves
+		*/
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ChatLog.serialize(false));
+		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> {
+			// saves the chat log if [the save interval is 0] AND [the pause menu is showing OR the game isn't focused]
+			if( config.chatlogSaveInterval == 0 && (screen instanceof GameMenuScreen || !client.isWindowFocused()) )
+				ChatLog.serialize(false);
+		});
+		ClientTickEvents.START_CLIENT_TICK.register(client -> ChatLog.tickSaveCounter());
+
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
-
-			// Loads the chat log if SAVE_CHAT enabled and the ChatLog hasn't been loaded yet
-			if( config.chatLog && !ChatLog.loaded ) {
+			if(config.chatlog && !ChatLog.loaded) {
 				ChatLog.deserialize();
 				ChatLog.restore(client);
 			}
@@ -50,7 +59,6 @@ public class ChatPatches implements ClientModInitializer {
 			String current = MiscUtils.currentWorldName(client);
 			// continues if the boundary line is enabled, >0 messages sent, and if the last and current worlds were servers, that they aren't the same
 			if( config.boundary && !chatHud.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
-
 				try {
 					String levelName = (lastWorld = current).substring(2); // makes a variable to update lastWorld in a cleaner way
 

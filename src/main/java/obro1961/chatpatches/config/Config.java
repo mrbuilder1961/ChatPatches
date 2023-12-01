@@ -32,13 +32,14 @@ public class Config {
     public static final String CONFIG_PATH = FABRIC_LOADER.getConfigDir().toString() + separator + "chatpatches.json";
     private static final Config DEFAULTS = new Config();
 
-    // categories: time, hover, counter, counter.compact, boundary, chat.hud, chat.screen, copy
+    // categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
     public boolean hover = true; public String hoverDate = "MM/dd/yyyy"; public String hoverFormat = "$"; public int hoverColor = 0xffffff;
     public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = 0xffff55;
     public boolean counterCompact = false; public int counterCompactDistance = 0;
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
-    public boolean chatLog = true, chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>";
+    public boolean chatlog = true; public int chatlogSaveInterval = 0;
+    public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>";
     public int shiftChat = 10; public boolean messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
 
@@ -194,6 +195,7 @@ public class Config {
 
     /** Copies the current Config file data to {@code ./chatpatches_old.json} for copying old configurations over */
     public static void writeCopy() {
+        //todo: see Util#backupAndReplace(...)
         try(
             FileInputStream cfg = new FileInputStream(CONFIG_PATH);
             FileOutputStream copy = new FileOutputStream(CONFIG_PATH.replace("chatpatches", "chatpatches_old"))

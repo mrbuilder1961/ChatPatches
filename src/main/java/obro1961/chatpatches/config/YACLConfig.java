@@ -3,6 +3,7 @@ package obro1961.chatpatches.config;
 import com.google.common.collect.Lists;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
+import dev.isxander.yacl3.gui.YACLScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
@@ -11,13 +12,18 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.Flags;
 import obro1961.chatpatches.util.SharedVariables;
 
 import java.awt.*;
+import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * The YetAnotherConfigLib config class.
@@ -33,6 +39,8 @@ public class YACLConfig extends Config {
         List<Option<?>> counterOpts = Lists.newArrayList();
         List<Option<?>> compactChatOpts = Lists.newArrayList();
         List<Option<?>> boundaryOpts = Lists.newArrayList();
+        List<Option<?>> chatlogOpts = Lists.newArrayList();
+        List<Option<?>> chatlogActions = Lists.newArrayList();
         List<Option<?>> chatHudOpts = Lists.newArrayList();
         List<Option<?>> chatScreenOpts = Lists.newArrayList();
         List<Option<?>> copyMenuOpts = Lists.newArrayList();
@@ -45,7 +53,7 @@ public class YACLConfig extends Config {
             else if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
                 cat = "screen";
 
-            if(key.contains("Color"))
+            if(key.contains("Color")) {
                 opt = new ConfigOption<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), key) {
                     @Override
                     public Color get() {
@@ -54,18 +62,19 @@ public class YACLConfig extends Config {
 
                     @Override
                     public void set(Object value) {
-                        super.set( ((Color)value).getRGB() - 0xff000000);
+                        super.set( ((Color)value).getRGB() - 0xff000000 );
                     }
                 };
+            }
 
             Option<?> yaclOpt =
                 Option.createBuilder()
-                    .name( Text.translatable("text.chatpatches." + key) )
-                    .description( desc(opt) )
-                    .controller( me -> getController(me, key) )
-                    .binding( getBinding(opt) )
+                    .name(Text.translatable("text.chatpatches." + key))
+                    .description(desc(opt))
+                    .controller(me -> getController(me, key))
+                    .binding(getBinding(opt))
                     .flag(
-                        key.matches(".*[Cc]hat.*") // contains "chat" or "Chat" somewhere
+                        key.matches(".*[Cc]hat.*") // contains "chat" somewhere
                             ? new OptionFlag[] { client -> client.inGameHud.getChatHud().reset() }
                             : new OptionFlag[0]
                     )
@@ -78,11 +87,29 @@ public class YACLConfig extends Config {
                 case "counter" -> counterOpts.add(yaclOpt);
                 case "compact" -> compactChatOpts.add(yaclOpt);
                 case "boundary" -> boundaryOpts.add(yaclOpt);
+                case "chatlog" -> chatlogOpts.add(yaclOpt);
                 case "chat" -> chatHudOpts.add(yaclOpt);
                 case "screen" -> chatScreenOpts.add(yaclOpt);
                 case "copy" -> copyMenuOpts.add(yaclOpt);
             }
         });
+
+        /* for action buttons */
+        // idea: filter all translatable strings for action ones (currently: if the key starts with 'chatlog' and isn't an option)
+        // see https://discord.com/channels/507304429255393322/507982478276034570/1175256182525534218
+        List<String> actionKeys = List.of("chatlogClear", "chatlogClearHistory", "chatlogClearMessages", "chatlogLoad", "chatlogSave", "chatlogBackup", "chatlogOpenFolder");
+        final Object blank = new Object();
+        for(String key : actionKeys) {
+            // creates an args array for the translatable string, which is either the message count, history count, or -1
+            Object[] args = { key.equals("chatlogClearMessages") ? ChatLog.messageCount() : key.equals("chatlogClearHistory") ? ChatLog.historyCount() : -1 };
+            chatlogActions.add(
+                ButtonOption.createBuilder()
+                    .name(Text.translatable( "text.chatpatches." + key, (args[0].equals(-1) ? new Object[0] : args) )) // args or nothing
+                    .description(desc( new ConfigOption<>(blank, blank, key) ))
+                    .action(getAction(key))
+                    .build()
+            );
+        }
 
 
         YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder()
@@ -93,6 +120,7 @@ public class YACLConfig extends Config {
                     "counter.compact", compactChatOpts, Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modrinth.com/mod/compact-chat"))
                 )) )
                 .category( category("boundary", boundaryOpts) )
+                .category( category("chatlog", chatlogOpts, group("chatlog.actions", chatlogActions, null)) )
                 .category( category("chat", List.of(), group("chat.hud", chatHudOpts, null), group("chat.screen", chatScreenOpts, null)) )
                 .category( category("copy", copyMenuOpts) )
 
@@ -127,7 +155,7 @@ public class YACLConfig extends Config {
 
                         ButtonOption.createBuilder()
                             .name( Text.literal("Print GitHub Option table") )
-                            .action((yaclScreen, buttonOption) -> {
+                            .action((screen, option) -> {
                                 StringBuilder str = new StringBuilder();
 
                                 Config.getOptions().forEach(opt ->
@@ -174,6 +202,27 @@ public class YACLConfig extends Config {
             return (ControllerBuilder<T>) BooleanControllerBuilder.create( (Option<Boolean>)opt ).coloured(true);
     }
 
+    private static BiConsumer<YACLScreen, ButtonOption> getAction(String key) {
+        return (screen, option) -> {
+            if(key.contains("Clear")) {
+                if(!key.contains("History"))
+                    ChatLog.clearMessages(); // if key is "ClearMessages" or "Clear"
+                if(!key.contains("Messages"))
+                    ChatLog.clearHistory(); // if key is "ClearHistory" or "Clear"
+            } else if(key.equals("chatlogLoad")) {
+                ChatLog.deserialize();
+                ChatLog.restore(MinecraftClient.getInstance());
+            } else if(key.equals("chatlogSave")) {
+                ChatLog.serialize(false);
+            } else if(key.equals("chatlogBackup")) {
+                String filename = "chatlog_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+                ChatLog.serialize(false, ChatLog.CHATLOG_PATH.replace("chatlog", filename));
+            } else if(key.equals("chatlogOpenFolder")) {
+                Util.getOperatingSystem().open( new File(ChatLog.CHATLOG_PATH.replace("chatlog.json", "")));
+            }
+        };
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> Binding<T> getBinding(ConfigOption<?> option) {
         ConfigOption<T> o = (ConfigOption<T>) option;
@@ -208,15 +257,15 @@ public class YACLConfig extends Config {
         if(min) {
             return switch(key) {
                 case "counterCompactDistance" -> -1;
-                default -> 0;
+                default -> 0; // chatWidth, chatMaxMessages, shiftChat, chatlogSaveInterval
             };
         } else {
             return switch(key) {
                 case "counterCompactDistance" -> 1024;
+                case "chatlogSaveInterval" -> 180;
                 case "chatWidth" -> 630;
                 case "chatMaxMessages" -> Short.MAX_VALUE;
-                case "shiftChat" -> 100;
-                default -> 100; // fallback as required by the compiler
+                default -> 100; // shiftChat
             };
         }
     }

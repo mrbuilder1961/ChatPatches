@@ -12,8 +12,6 @@ import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 public class ChatSearchSetting {
 	public static ChatSearchSetting caseSensitive, modifiers, regex;
 
-	public static boolean updateSearchColor = false;
-
 	private static final Text TOGGLE_OFF = Text.of(": §7[§cX§4=§7]"), TOGGLE_ON = Text.of(": §7[§2=§aO§7]");
 
 	public final ButtonWidget button;

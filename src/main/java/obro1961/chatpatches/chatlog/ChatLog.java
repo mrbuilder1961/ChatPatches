@@ -10,6 +10,7 @@ import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Flags;
 import obro1961.chatpatches.util.SharedVariables;
 
@@ -40,8 +41,10 @@ public class ChatLog {
 
     private static boolean savedAfterCrash = false;
     private static ChatLog.Data data = new Data();
+    private static int lastHistoryCount = -1, lastMessageCount = -1;
 
     public static boolean loaded = false;
+    public static int ticksUntilSave = config.chatlogSaveInterval * 60 * 20; // convert minutes to ticks
 
 
     /** Micro class for serializing, used separately from ChatLog for simplification */
@@ -101,7 +104,7 @@ public class ChatLog {
 
             } catch(IOException e) {
                 ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't access the ChatLog at '{}':", CHATLOG_PATH, e);
-                // rawData is EMPTY DATA
+                rawData = Data.EMPTY_DATA; // just in case of corruption from failures
             }
         } else {
             data = new Data();
@@ -137,22 +140,39 @@ public class ChatLog {
 		);
     }
 
-    // todo: make a few YACL opts for viewing and clearing chatlog data: history[# and clear], messages[# and clear], total size, and clear all
-    /** Saves the chat log to {@link #CHATLOG_PATH}. */
+    /**
+     * Saves the chat log to {@link #CHATLOG_PATH}. Only saves if {@link Config#chatlog} is true,
+     * it isn't crashing again, and if there is *new* data to save.
+     *
+     * @param crashing If the game is crashing. If true, it will only save if {@link #savedAfterCrash}
+     * is false AND if {@link Config#chatlogSaveInterval} is 0.
+     */
     public static void serialize(boolean crashing) {
+        //todo: see Util#backupAndReplace(...)
+        serialize(crashing, CHATLOG_PATH);
+    }
+
+    public static void serialize(boolean crashing, String path) {
+        if(!config.chatlog)
+            return;
         if(crashing && savedAfterCrash)
             return;
         if(data.messages.isEmpty() && data.history.isEmpty())
             return; // don't overwrite the file with an empty one if there's nothing to save
 
+        if(data.messages.size() == lastMessageCount && data.history.size() == lastHistoryCount && path.equals(CHATLOG_PATH))
+            return; // don't save if there's no new data AND if the path is the default one (not a backup)
+
         removeOverflowData(); // don't save more than the max amount of messages
 
         try {
             final String str = json.toJson(data, Data.class);
-            Files.writeString(file, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(Path.of(path), str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
+            lastHistoryCount = data.history.size();
+            lastMessageCount = data.messages.size();
 
+            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), path);
         } catch(IOException e) {
             ChatPatches.LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
 
@@ -177,6 +197,27 @@ public class ChatLog {
         ChatPatches.LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(), CHATLOG_PATH);
     }
 
+    /**
+     * Ticks {@link #ticksUntilSave} down by 1.
+     *
+     * @implNote
+     * <ol>
+     *     <li>Saves the chat log if {@link Config#chatlogSaveInterval} is greater than 0
+     *     AND if {@link #ticksUntilSave} is 0.</li>
+     *     <li>Decrements {@link #ticksUntilSave} by 1.</li>
+     *     <li>If {@link #ticksUntilSave} is less than 0, it will reset it to {@link Config#chatlogSaveInterval} * 20
+     *     (converts seconds to ticks).</li>
+     * </ol>
+     */
+    public static void tickSaveCounter() {
+        if(config.chatlogSaveInterval > 0 && ticksUntilSave == 0)
+            serialize(false);
+
+        ticksUntilSave--;
+
+        if(ticksUntilSave < 0)
+            ticksUntilSave = config.chatlogSaveInterval * 60 * 20;
+    }
 
     public static void addMessage(Text msg) {
         if(data.messages.size() > config.chatMaxMessages)
@@ -205,5 +246,12 @@ public class ChatLog {
     }
     public static void clearHistory() {
         data.history.clear();
+    }
+
+    public static int messageCount() {
+        return data.messages.size();
+    }
+    public static int historyCount() {
+        return data.history.size();
     }
 }

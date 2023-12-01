@@ -23,7 +23,6 @@ repositories {
   	mavenCentral()
 
 	maven { url "https://maven.quiltmc.org/repository/release/" } // Quilt
-	//maven { url "https://jitpack.io" } // MixinExtras
 	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
 	maven { url "https://maven.isxander.dev/releases" } // YACL
 	maven { url "https://oss.sonatype.org/content/repositories/snapshots/" } // temporary fix for a fix for YACL (twelvemonkeys imageio)
@@ -34,9 +33,6 @@ dependencies {
 	mappings "net.fabricmc:yarn:$project.minecraft$project.yarn:v2"
 	modImplementation "net.fabricmc:fabric-loader:$project.loader"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api"
-
-	// Jar-In-Jar, add MixinExtras, and apply annotation processor
-	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:$project.mixin_extras")))
 
 	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
 	modImplementation "dev.isxander.yacl:yet-another-config-lib-fabric:$project.yacl"
