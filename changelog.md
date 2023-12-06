@@ -1,10 +1,13 @@
 # Changelog
 
-## Chat Patches `203.6.0` for Minecraft 1.20.3 on Fabric, Quilt
+## Chat Patches `203.6.0` for Minecraft 1.20.3 on Fabric
 - Ported v202.6.0 to 1.20.3
 
-## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric, Quilt
+| **/!\\ WARNING: NOT CURRENTLY SUPPORTED ON QUILT DUE TO FABRIC LOADER `0.15.0` /!\\** |
+
+## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric
 - Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!
+  - **/!\\ WARNING: NOT CURRENTLY SUPPORTED ON QUILT DUE TO THIS! /!\\** 
 - Add "Only Invasive Drafting" option ([#131](https://www.github.com/mrbuilder1961/ChatPatches/pull/131) -JustAlittleWolf)
 - Improve mod compatibility with the dupe counter injector + teeny optimizations
  ([#132](https://www.github.com/mrbuilder1961/ChatPatches/pull/132) -JustAlittleWolf)
