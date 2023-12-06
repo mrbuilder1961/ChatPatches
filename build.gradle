@@ -22,10 +22,8 @@ def noPublish = project.hasProperty("noPublish") ? Boolean.parseBoolean(project.
 repositories {
   	mavenCentral()
 
-	maven { url "https://maven.quiltmc.org/repository/release/" } // Quilt
 	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
 	maven { url "https://maven.isxander.dev/releases" } // YACL
-	maven { url "https://oss.sonatype.org/content/repositories/snapshots/" } // temporary fix for a fix for YACL (twelvemonkeys imageio)
 }
 
 dependencies {
