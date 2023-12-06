@@ -129,9 +129,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * {@link #addCounter(Text, boolean)}
      *
      * @implNote
-     * <li>Extra {@link Text} parameter is required to get access to
-     * {@code refreshing}, according to the {@link ModifyVariable} docs.
-     * (NOTE: will be fixed after using MixinExtras' new @Local to get around this!)</li>
      * <li>Doesn't modify when {@code refreshing} is true, as that signifies
      * re-rendering of chat messages on the hud.</li>
      * <li>This method causes all messages passed to it to be formatted in
@@ -145,12 +142,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         at = @At("HEAD"),
         argsOnly = true
     )
-    //todo: (Text m, @Local(argsOnly = true) boolean refreshing)
-    private Text modifyMessage(Text m, Text message, MessageSignatureData sig, int ticks, MessageIndicator indicator, boolean refreshing) {
+    private Text modifyMessage(Text m, @Local(argsOnly = true) boolean refreshing) {
         if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
             return addCounter(m, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
 
-        final Style style = message.getStyle();
+        final Style style = m.getStyle();
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
         Date now = lastEmpty ? new Date() : Date.from(lastMsg.timestamp());
@@ -170,7 +166,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                             .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
                             .append( // add first part of message (depending on the Style and how it was constructed)
                                 Util.make(() -> {
-                                    if(message.getContent() instanceof TranslatableTextContent ttc) { // most vanilla chat messages
+                                    if(m.getContent() instanceof TranslatableTextContent ttc) { // most vanilla chat messages
 
                                         MutableText text = Text.empty().setStyle(style);
                                         List<Text> messages = Arrays.stream( ttc.getArgs() ).map( arg -> (Text)arg ).toList();
@@ -180,7 +176,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                             text.append( messages.get(i) );
 
                                         return text;
-                                    } else if(message.getContent() instanceof LiteralTextContent ltc) { // default-style message with name
+                                    } else if(m.getContent() instanceof LiteralTextContent ltc) { // default-style message with name
                                         // assuming the vanilla format '<name> message'
                                         String[] splitMessage = ltc.string().split(">"); // for now we will always check for a singular bracket, just in case the space is missing
 
@@ -189,21 +185,21 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                             return Text.literal( splitMessage[1].replaceAll("^\\s+", "") ).setStyle(style);
                                         else
                                             //return Text.empty().setStyle(style); // use this? idk
-                                            return message.copyContentOnly().setStyle(style);
+                                            return m.copyContentOnly().setStyle(style);
                                     } else {
                                         // text w/o siblings
-                                        return message.copyContentOnly().setStyle(style);
+                                        return m.copyContentOnly().setStyle(style);
                                     }
                                 })
                             )
                             .append( // add any siblings (Texts with different styles)
                                 Util.make(() -> {
                                     MutableText msg = Text.empty().setStyle(style);
-                                    List<Text> siblings = message.getSiblings();
+                                    List<Text> siblings = m.getSiblings();
                                     int i = -1; // index of the first '>' in the playername
 
                                     // if the message uses the vanilla style but the main component doesn't have the full playername, then only add (the actual message) after it, (removes duped names)
-                                    if(message.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
+                                    if(m.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
                                         i = siblings.stream().filter(sib -> sib.getString().contains(">")).mapToInt(siblings::indexOf).findFirst().orElse(i);
 
                                     // if the vanilla-style message is formatted weird, then only add the text *after* the first '>' (end of playername)
@@ -227,7 +223,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                     return msg;
                                 })
                             )
-                        : message
+                        : m
                 );
 
         modified = addCounter(modified, false);
