@@ -34,8 +34,8 @@ public class ChatLog {
 
     private static final Path file = Path.of(CHATLOG_PATH);
     private static final Gson json = new com.google.gson.GsonBuilder()
-        .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serializer.toJsonTree(src))
-        .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, type, context) -> Text.Serializer.fromJson(json))
+        .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serialization.toJsonTree(src))
+        .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, type, context) -> Text.Serialization.fromJsonTree(json))
         .registerTypeAdapter(Text.class, (InstanceCreator<Text>) type -> Text.empty())
     .create();
 

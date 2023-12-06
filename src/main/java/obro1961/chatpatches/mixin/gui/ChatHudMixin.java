@@ -176,7 +176,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                             text.append( messages.get(i) );
 
                                         return text;
-                                    } else if(m.getContent() instanceof LiteralTextContent ltc) { // default-style message with name
+                                    } else if(m.getContent() instanceof PlainTextContent ltc) { // default-style message with name
                                         // assuming the vanilla format '<name> message'
                                         String[] splitMessage = ltc.string().split(">"); // for now we will always check for a singular bracket, just in case the space is missing
 
@@ -199,7 +199,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                                     int i = -1; // index of the first '>' in the playername
 
                                     // if the message uses the vanilla style but the main component doesn't have the full playername, then only add (the actual message) after it, (removes duped names)
-                                    if(m.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
+                                    if(m.getContent() instanceof PlainTextContent ltc && !ltc.string().contains(">"))
                                         i = siblings.stream().filter(sib -> sib.getString().contains(">")).mapToInt(siblings::indexOf).findFirst().orElse(i);
 
                                     // if the vanilla-style message is formatted weird, then only add the text *after* the first '>' (end of playername)
