@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `203.6.0` for Minecraft 1.20.3 on Fabric, Quilt
+- Ported v202.6.0 to 1.20.3
+
 ## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric, Quilt
 - Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!
 - Add "Only Invasive Drafting" option ([#131](https://www.github.com/mrbuilder1961/ChatPatches/pull/131) -JustAlittleWolf)
