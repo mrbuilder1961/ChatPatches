@@ -1,7 +1,7 @@
 # Changelog
 
-## Chat Patches `204.6.1` for Minecraft 1.20.3 on Fabric
-- Ported v203.6.0 to 1.20.3
+## Chat Patches `204.6.1` for Minecraft 1.20.4 on Fabric
+- Ported v203.6.0 to 1.20.4
 - Remove Gradle integration system, it was completely unnecessary and unused
 
 | **/!\\ WARNING: NOT CURRENTLY SUPPORTED ON QUILT DUE TO FABRIC LOADER `0.15.0` /!\\** |
