@@ -199,7 +199,7 @@ public class Config {
         try(
             FileInputStream cfg = new FileInputStream(CONFIG_PATH);
             FileOutputStream copy = new FileOutputStream(CONFIG_PATH.replace("chatpatches", "chatpatches_old"))
-        ) {
+        ){
             copy.write( cfg.readAllBytes() );
         } catch(IOException e) {
             LOGGER.error("[Config.writeCopy] An error occurred trying to copy the original config file from '{}':", CONFIG_PATH, e);

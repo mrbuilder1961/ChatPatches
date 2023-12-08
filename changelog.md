@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `202.6.1` for Minecraft 1.20.2 on Fabric
+- Remove Gradle integration system, it was completely unnecessary and unused
+
 ## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric
 - Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!
   - **/!\\ WARNING: NOT CURRENTLY SUPPORTED ON QUILT DUE TO THIS! /!\\**
