@@ -17,7 +17,7 @@ version = rootProject.version
 // tokens revert to empty strings when no secrets.json exists
 def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
 def changelogText = "Changelog could not be found... 😬"
-def noPublish = project.hasProperty("noPublish") ? Boolean.parseBoolean(project.getProperty("noPublish")) : false
+def shouldPublish = project.hasProperty("shouldPublish") ? Boolean.parseBoolean(project.getProperty("shouldPublish")) : false
 
 repositories {
   	mavenCentral()
@@ -34,48 +34,6 @@ dependencies {
 
 	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
 	modImplementation "dev.isxander.yacl:yet-another-config-lib-fabric:$project.yacl"
-
-
-	// integration files, toggleable in /integrations/integrations.properties
-	// put jar files in /integrations/ and see the .properties file for more info
-	File integrationsFile = file("./integrations/integrations.properties")
-	if( integrationsFile.exists() ) {
-		println "Loading dev testing integrations..."
-
-		def integrations = new Properties(); integrationsFile.withInputStream { integrations.load(it) }
-		def loaded = 0
-		def all = 0
-
-		for(integration in integrations) {
-			def name = integration.toString().split("=")[0]
-			def data = integration.toString().split("=")[1].split(",")
-			def src = data[0].endsWith(".jar") ? "./integrations/" + data[0] : data[0]
-			def enabled = data[1].equalsIgnoreCase("true")
-			def func = data.size() > 2 ? data[2] : "modImplementation"
-
-
-			if(enabled) {
-				if( src.endsWith(".jar") && !file(src).exists() ) {
-
-					System.err.println("Integration jar '" + src + "' doesn't exist")
-					enabled = false
-				} else {
-					"${func}" (src.endsWith(".jar") ? files(src) : src)
-					++loaded
-				}
-			}
-
-			println( String.format("\t-> %s integration '%s' with '%s' %s",
-				enabled ? "Loaded" : "Skipped",
-				name,
-				src,
-				(func != "modImplementation" ? "using method '$func'" : "")
-			))
-
-			++all
-		}
-		println "Finished loading $loaded/$all dev testing integrations\n"
-	}
 }
 
 processResources {
@@ -107,12 +65,16 @@ processResources {
 
 		// considers the changelog "malformed" if it doesn't end with word character(s), whitespace, or newline(s)
 		if( !changelogText.matches("(?s).*(\\s+|(\r?\n)+|\\w+)\$") ) {
-			noPublish = true
-			println "/!\\ Warning: /!\\ Changelog seemed malformed, this is probably caused by an invalid version (v$version). Cancelled publishing, just in case."
+			print "/!\\ Warning: /!\\ Changelog seemed malformed, this is probably caused by an invalid version (v$version)."
+			if(shouldPublish) {
+				print " Cancelled publishing, just in case."
+				shouldPublish = false
+			}
+			println()
 		}
 
-		if(noPublish)
-			println "Using changelog text (__=start and end):\n__${changelogText}__"
+		if(!shouldPublish)
+			println "Using changelog text:\n>${changelogText}<"
 	}
 }
 
@@ -182,7 +144,7 @@ curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
 
 		options {
 			forgeGradleIntegration = false
-			debug = noPublish
+			debug = !shouldPublish
 		}
 	}
 }
@@ -197,7 +159,7 @@ modrinth { // https://github.com/modrinth/minotaur#groovy
 	loaders = Arrays.asList( rootProject.loaders.split(",") )
 	changelog = changelogText
 
-	debugMode = noPublish
+	debugMode = !shouldPublish
 
 	dependencies {
 		required.project "fabric-api"

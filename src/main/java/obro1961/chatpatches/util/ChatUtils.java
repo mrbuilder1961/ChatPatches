@@ -76,7 +76,7 @@ public class ChatUtils {
 		// IF the last and incoming message bodies are equal, continue
 		if( incomingParts.get(OG_MSG_INDEX).getString().equalsIgnoreCase(comparingParts.get(OG_MSG_INDEX).getString()) ) {
 
-			// info/warning: according to some limited testing, incoming messages (incomingParts) will never contain a dupe counter, so it's been omitted from this check
+			// info: according to some limited testing, incoming messages (incomingParts) will never contain a dupe counter, so it's been omitted from this check
 			int dupes = (
 				(comparingParts.size() > DUPE_COUNTER_INDEX)
 					? Integer.parseInt(StringTextUtils.delAll(comparingParts.get(DUPE_COUNTER_INDEX).getString(), "(§[0-9a-fk-or])+", "\\D"))

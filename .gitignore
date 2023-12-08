@@ -16,5 +16,4 @@ bin/
 run/
 remappedSrc/
 
-integrations/*.jar
 secrets.json
