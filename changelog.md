@@ -2,6 +2,7 @@
 
 ## Chat Patches `202.6.1` for Minecraft 1.20.2 on Fabric
 - Remove Gradle integration system, it was completely unnecessary and unused
+- Fixed messages starting with a newline not being copyable
 
 ## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric
 - Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!
