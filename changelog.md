@@ -3,6 +3,8 @@
 ## Chat Patches `202.6.1` for Minecraft 1.20.2 on Fabric
 - Remove Gradle integration system, it was completely unnecessary and unused
 - Fixed messages starting with a newline not being copyable
+- Switched `chatWidth`'s YACL max value to the game window's width. Note: this can be incorrect if the game window is resized after the config screen is 
+  opened. To fix this, just open the config screen when the game window is at the desired size.
 
 ## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric
 - Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!
