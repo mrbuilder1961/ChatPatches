@@ -149,7 +149,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         final Style style = m.getStyle();
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
-        Date now = lastEmpty ? new Date() : Date.from(lastMsg.timestamp());
+        Date now = lastEmpty ? new Date() : lastMsg.timestamp();
         String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
 
 
