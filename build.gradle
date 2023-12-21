@@ -17,7 +17,7 @@ version = rootProject.version
 // tokens revert to empty strings when no secrets.json exists
 def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
 def changelogText = "Changelog could not be found... 😬"
-def shouldPublish = project.hasProperty("shouldPublish") ? Boolean.parseBoolean(project.getProperty("shouldPublish")) : true
+def shouldPublish = project.hasProperty("shouldPublish") ? Boolean.parseBoolean(project.getProperty("shouldPublish")) : false
 
 repositories {
   	mavenCentral()
