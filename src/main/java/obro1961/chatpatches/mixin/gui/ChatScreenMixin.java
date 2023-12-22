@@ -188,13 +188,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					return "";
 			}));
 			hoverButtons.put(COPY_NAME, of(1, COPY_NAME, () -> {
-				Text message = selectedLine.content().getSiblings().get(ChatUtils.OG_MSG_INDEX);
+				Text message = selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX);
 				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
 				HoverEvent.EntityContent player = text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY) : null;
 				return player != null ? player.name.getString() : text.getString();
 			}));
 			hoverButtons.put(COPY_UUID, of(1, COPY_UUID, () -> {
-				Text message = selectedLine.content().getSiblings().get(ChatUtils.OG_MSG_INDEX);
+				Text message = selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX);
 				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
 				HoverEvent.EntityContent player = text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY) : null;
 				return player != null ? player.uuid.toString() : text.getString();
@@ -620,7 +620,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		mainButtons.get(COPY_UNIX).readyToRender(true);
 
 		// add player data and reply buttons
-		Text originalMessage = selectedLine.content().getSiblings().size() > ChatUtils.OG_MSG_INDEX ? selectedLine.content().getSiblings().get(ChatUtils.OG_MSG_INDEX) : Text.empty();
+		Text originalMessage = selectedLine.content().getSiblings().size() > ChatUtils.MSG_INDEX ? selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX) : Text.empty();
 		Style style = originalMessage.getSiblings().size() > 0 ? originalMessage.getSiblings().get(ChatUtils.MSG_NAME_INDEX).getStyle() : Style.EMPTY;
 		if( !style.equals(Style.EMPTY) && style.getHoverEvent() != null && style.getHoverEvent().getAction() == HoverEvent.Action.SHOW_ENTITY ) {
 			PlayerListEntry player = client.getNetworkHandler().getPlayerListEntry( UUID.fromString(hoverButtons.get(COPY_UUID).copySupplier.get()) );

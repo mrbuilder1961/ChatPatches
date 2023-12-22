@@ -4,9 +4,7 @@ import com.mojang.authlib.GameProfile;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.network.message.MessageHandler;
-import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
@@ -29,7 +27,7 @@ import java.util.UUID;
 /**
  * A mixin used to cache the metadata of the most recent message
  * received by the client. This is used in
- * {@link ChatHudMixin#modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)}
+ * {@link ChatHudMixin#modifyMessage(Text, boolean)}
  * to provide more accurate timestamp data, the correct player
  * name, and the player's UUID.
  */
