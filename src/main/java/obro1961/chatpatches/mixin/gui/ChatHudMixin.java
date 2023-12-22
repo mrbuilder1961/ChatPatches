@@ -35,7 +35,7 @@ import java.util.Date;
 import java.util.List;
 
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.util.ChatUtils.OG_MSG_INDEX;
+import static obro1961.chatpatches.util.ChatUtils.MSG_INDEX;
 import static obro1961.chatpatches.util.SharedVariables.lastMsg;
 
 /**
@@ -149,7 +149,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         final Style style = m.getStyle();
         boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
-        Date now = lastEmpty ? new Date() : Date.from(lastMsg.timestamp());
+        Date now = lastEmpty ? new Date() : lastMsg.timestamp();
         String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
 
 
@@ -300,7 +300,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                     // exclude the first message, already checked above
                     messages.subList(1, attemptDistance)
                         .stream()
-                        .filter( hudLine -> hudLine.content().getSiblings().get(OG_MSG_INDEX).getString().equalsIgnoreCase( incoming.getSiblings().get(OG_MSG_INDEX).getString() ) )
+                        .filter( hudLine -> hudLine.content().getSiblings().get(MSG_INDEX).getString().equalsIgnoreCase( incoming.getSiblings().get(MSG_INDEX).getString() ) )
                         .findFirst()
                         .ifPresent( hudLine -> ChatUtils.getCondensedMessage(incoming, messages.indexOf(hudLine)) );
                 }

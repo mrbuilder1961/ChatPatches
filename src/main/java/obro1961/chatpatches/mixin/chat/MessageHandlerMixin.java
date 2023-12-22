@@ -4,9 +4,7 @@ import com.mojang.authlib.GameProfile;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.network.message.MessageHandler;
-import net.minecraft.network.message.MessageSignatureData;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
@@ -23,13 +21,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
 /**
  * A mixin used to cache the metadata of the most recent message
  * received by the client. This is used in
- * {@link ChatHudMixin#modifyMessage(Text, Text, MessageSignatureData, int, MessageIndicator, boolean)}
+ * {@link ChatHudMixin#modifyMessage(Text, boolean)}
  * to provide more accurate timestamp data, the correct player
  * name, and the player's UUID.
  */
@@ -48,7 +46,7 @@ public abstract class MessageHandlerMixin {
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         // only logs the metadata if it was a player-sent message (otherwise tries to format some commands like /msg and /me)
         if( params.type().chat().translationKey().equals("chat.type.text") )
-            SharedVariables.lastMsg = new ChatUtils.MessageData(sender, message.getTimestamp(), true);
+            SharedVariables.lastMsg = new ChatUtils.MessageData(sender, Date.from(message.getTimestamp()), true);
         else
             SharedVariables.lastMsg = ChatUtils.NIL_MSG_DATA;
     }
@@ -64,7 +62,7 @@ public abstract class MessageHandlerMixin {
         UUID uuid = name == null ? Util.NIL_UUID : client.getSocialInteractionsManager().getUuid(name);
 
         SharedVariables.lastMsg = !uuid.equals(Util.NIL_UUID)
-            ? new ChatUtils.MessageData(new GameProfile(uuid, name), Instant.now(), true)
+            ? new ChatUtils.MessageData(new GameProfile(uuid, name), new Date(), true)
             : ChatUtils.NIL_MSG_DATA;
     }
 }

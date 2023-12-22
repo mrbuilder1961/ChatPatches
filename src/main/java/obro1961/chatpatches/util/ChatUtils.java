@@ -13,6 +13,7 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -24,9 +25,9 @@ import static obro1961.chatpatches.ChatPatches.config;
  */
 public class ChatUtils {
 	public static final UUID NIL_UUID = new UUID(0, 0);
-	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Instant.EPOCH, false);
-	public static final int TIMESTAMP_INDEX = 0, OG_MSG_INDEX = 1, DUPE_COUNTER_INDEX = 2; // indices of all main (modified message) components
-	public static final int MSG_NAME_INDEX = 0, MSG_MSG_INDEX = 1, MSG_FORMATTED_TEXT_INDEX = 2; // indices of all OG_MSG_INDEX components
+	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
+	public static final int TIMESTAMP_INDEX = 0, MSG_INDEX = 1, DUPE_COUNTER_INDEX = 2; // indices of all main (modified message) components
+	public static final int MSG_NAME_INDEX = 0, MSG_MSG_INDEX = 1, MSG_FORMATTED_TEXT_INDEX = 2; // indices of all MSG_INDEX components
 	/**
 	 * Matches a vanilla message, with captures for the playername and message.
 	 * Considers a message invalid if {@link net.minecraft.SharedConstants#isValidChar(char)}
@@ -74,7 +75,7 @@ public class ChatUtils {
 
 
 		// IF the last and incoming message bodies are equal, continue
-		if( incomingParts.get(OG_MSG_INDEX).getString().equalsIgnoreCase(comparingParts.get(OG_MSG_INDEX).getString()) ) {
+		if( incomingParts.get(MSG_INDEX).getString().equalsIgnoreCase(comparingParts.get(MSG_INDEX).getString()) ) {
 
 			// info: according to some limited testing, incoming messages (incomingParts) will never contain a dupe counter, so it's been omitted from this check
 			int dupes = (
@@ -113,5 +114,5 @@ public class ChatUtils {
 
 
 	/** Represents the metadata of a chat message. */
-	public record MessageData(GameProfile sender, Instant timestamp, boolean vanilla) {}
+	public record MessageData(GameProfile sender, Date timestamp, boolean vanilla) {}
 }
