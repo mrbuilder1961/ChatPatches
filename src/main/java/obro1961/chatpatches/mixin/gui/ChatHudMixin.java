@@ -105,7 +105,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     /**
      * These methods shift the entire chat hud by
      * {@link Config#shiftChat}, including the text, scroll
-     * bar, indicator bar by shifting the y position of the chat.
+     * bar, indicator bar and hover text 
+     * by shifting the y position of the chat.
      */
     @ModifyVariable(method = "render", at = @At(value = "STORE"), ordinal = 7)
     private int moveEntireChat(int y) {
