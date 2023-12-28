@@ -13,6 +13,7 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -71,7 +72,7 @@ public class ChatUtils {
 
 		ChatHudLine comparingLine = messages.get(index); // message being compared
 		List<Text> comparingParts = comparingLine.content().getSiblings();
-		List<Text> incomingParts = incoming.getSiblings();
+		List<Text> incomingParts = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs (1.20.3+ only)
 
 
 		// IF the last and incoming message bodies are equal, continue
