@@ -102,20 +102,16 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         return config.chatWidth > 0 ? config.chatWidth : defaultWidth;
     }
 
+
     /**
-     * These methods shift various parts of the ChatHud by
+     * These methods shift the entire chat hud by
      * {@link Config#shiftChat}, including the text, scroll
-     * bar, indicator bar, and hover text.
-     * They all shift the y value, with the name of the parameter
-     * corresponding to the (yarn mapped) target variable name.
+     * bar, hover text and indicator bar 
+     * by shifting the y position of the chat.
      */
-    @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 31) // STORE ordinal=0 to not target all x stores
-    private int moveChatText(int x) {
-        return x - MathHelper.floor(config.shiftChat / this.getChatScale());
-    }
-    @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 27)
-    private int moveScrollBar(int af) {
-        return af + MathHelper.floor(config.shiftChat / this.getChatScale());
+    @ModifyVariable(method = "render", at = @At(value = "STORE"), ordinal = 7)
+    private int moveEntireChat(int y) {
+        return y - MathHelper.floor(config.shiftChat / this.getChatScale());
     }
     // condensed to one method because the first part of both methods are practically identical
     @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
