@@ -12,6 +12,7 @@
     "gui.ChatHudMixin",
     "gui.ChatScreenMixin",
     "gui.ScreenMixin",
+    "security.ClickEvent$ActionMixin",
     "security.CPNHMixin"
   ],
   "injectors": {
