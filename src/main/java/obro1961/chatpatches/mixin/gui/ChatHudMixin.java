@@ -35,8 +35,8 @@ import java.util.Date;
 import java.util.List;
 
 import static obro1961.chatpatches.ChatPatches.config;
+import static obro1961.chatpatches.ChatPatches.msgData;
 import static obro1961.chatpatches.util.ChatUtils.MSG_INDEX;
-import static obro1961.chatpatches.util.SharedVariables.lastMsg;
 
 /**
  * The main entrypoint mixin for most chat modifications.
@@ -147,9 +147,9 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
             return addCounter(m, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
 
         final Style style = m.getStyle();
-        boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
+        boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
-        Date now = lastEmpty ? new Date() : lastMsg.timestamp();
+        Date now = lastEmpty ? new Date() : msgData.timestamp();
         String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
 
 
@@ -161,9 +161,9 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                         : Text.empty().setStyle( Style.EMPTY.withInsertion(nowTime) )
                 )
                 .append(
-                    !lastEmpty && !boundary && Config.getOption("chatNameFormat").changed() && lastMsg.vanilla()
+                    !lastEmpty && !boundary && Config.getOption("chatNameFormat").changed() && msgData.vanilla()
                         ? Text.empty().setStyle(style)
-                            .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
+                            .append( config.formatPlayername( msgData.sender() ) ) // add formatted name
                             .append( // add first part of message (depending on the Style and how it was constructed)
                                 Util.make(() -> {
                                     if(m.getContent() instanceof TranslatableTextContent ttc) { // most vanilla chat messages
@@ -228,7 +228,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
         modified = addCounter(modified, false);
         ChatLog.addMessage(modified);
-        lastMsg = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
+        msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
         return modified;
     }
 

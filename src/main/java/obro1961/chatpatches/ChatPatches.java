@@ -11,6 +11,7 @@ import net.minecraft.util.Identifier;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.Flags;
 import obro1961.chatpatches.util.MiscUtils;
 
@@ -19,6 +20,8 @@ public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 
 	public static Config config = Config.newConfig(false);
+	/** Contains the sender and timestamp data of the last received chat message. */
+	public static ChatUtils.MessageData msgData = ChatUtils.NIL_MSG_DATA;
 
 	private static String lastWorld = "";
 

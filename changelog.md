@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `202.6.2` for Minecraft 1.20.2 on Fabric
+- Removed `SharedVariables` class and redistributed its one useful variable to `ChatPatches`
+
 ## Chat Patches `202.6.1` for Minecraft 1.20.2 on Fabric
 - Remove Gradle integration system, it was completely unnecessary and unused
 - Fixed messages starting with a newline not being copyable

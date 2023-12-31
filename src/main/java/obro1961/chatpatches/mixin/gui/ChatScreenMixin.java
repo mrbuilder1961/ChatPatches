@@ -6,6 +6,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -61,7 +62,6 @@ import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
-import static obro1961.chatpatches.util.SharedVariables.FABRIC_LOADER;
 import static obro1961.chatpatches.util.StringTextUtils.delAll;
 
 /**
@@ -123,7 +123,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	private void chatScreenInit(String originalChatText, CallbackInfo ci) {
 		if(config.messageDrafting && !messageDraft.isBlank()) {
 			// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
-			if(FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
+			if(FabricLoader.getInstance().isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
 				messageDraft = originalChatText;
 			// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
 			else if(!originalChatText.equals("/"))

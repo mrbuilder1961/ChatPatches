@@ -35,7 +35,7 @@ public enum Flags {
 
 	/** Removes this flag's bits in {@link #flags}. */
 	public void lower() {
-		if( isRaised())
+		if(isRaised())
 			toggle();
 	}
 

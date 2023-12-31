@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.EntityType;
 import net.minecraft.text.*;
@@ -24,12 +25,11 @@ import java.util.Objects;
 import static java.io.File.separator;
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.util.SharedVariables.FABRIC_LOADER;
 import static obro1961.chatpatches.util.StringTextUtils.fillVars;
 import static obro1961.chatpatches.util.StringTextUtils.toText;
 
 public class Config {
-    public static final String CONFIG_PATH = FABRIC_LOADER.getConfigDir().toString() + separator + "chatpatches.json";
+    public static final String CONFIG_PATH = FabricLoader.getInstance().getConfigDir().toString() + separator + "chatpatches.json";
     private static final Config DEFAULTS = new Config();
 
     // categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
@@ -46,9 +46,8 @@ public class Config {
 
     /** Creates a new Config or YACLConfig depending on installed mods. */
     public static Config newConfig(boolean reset) {
-        config = (FABRIC_LOADER.isModLoaded("modmenu") && FABRIC_LOADER.isModLoaded("yet_another_config_lib_v3"))
-            ? new YACLConfig()
-            : new Config();
+        FabricLoader fbr = FabricLoader.getInstance();
+        config = (fbr.isModLoaded("modmenu") && fbr.isModLoaded("yet_another_config_lib_v3")) ? new YACLConfig() : new Config();
 
         if(!reset)
             read();

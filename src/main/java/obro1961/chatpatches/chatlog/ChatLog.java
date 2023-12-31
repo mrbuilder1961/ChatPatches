@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.resource.language.I18n;
@@ -12,7 +13,6 @@ import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Flags;
-import obro1961.chatpatches.util.SharedVariables;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -29,7 +29,7 @@ import static obro1961.chatpatches.ChatPatches.config;
  * Represents the chat log file in the run directory located at {@link ChatLog#CHATLOG_PATH}.
  */
 public class ChatLog {
-    public static final String CHATLOG_PATH = SharedVariables.FABRIC_LOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    public static final String CHATLOG_PATH = FabricLoader.getInstance().getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
 
     private static final Path file = Path.of(CHATLOG_PATH);
