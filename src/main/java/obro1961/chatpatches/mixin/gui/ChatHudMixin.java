@@ -110,7 +110,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * @implNote Target: <br>{@code int m = MathHelper.floor((float)(l - 40) / f);}
      */
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
-    private int moveEntireChat(int m) {
+    private int moveChat(int m) {
         return m - MathHelper.floor(config.shiftChat / this.getChatScale());
     }
 
