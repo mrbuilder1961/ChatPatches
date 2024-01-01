@@ -103,25 +103,29 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     /**
-     * These methods shift various parts of the ChatHud by
-     * {@link Config#shiftChat}, including the text, scroll
-     * bar, indicator bar, and hover text.
-     * They all shift the y value, with the name of the parameter
-     * corresponding to the (yarn mapped) target variable name.
+     * These methods shift most of the chat hud by
+     * {@link Config#shiftChat}, including the text
+     * and scroll bar, by shifting the y position of the chat.
+     *
+     * @implNote Target: <br>{@code int m = MathHelper.floor((float)(l - 40) / f);}
      */
-    @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 31) // STORE ordinal=0 to not target all x stores
-    private int moveChatText(int x) {
-        return x - MathHelper.floor(config.shiftChat / this.getChatScale());
+    @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
+    private int moveChat(int m) {
+        return m - MathHelper.floor(config.shiftChat / this.getChatScale());
     }
-    @ModifyVariable(method = "render", at = @At(value = "STORE", ordinal = 0), index = 27)
-    private int moveScrollBar(int af) {
-        return af + MathHelper.floor(config.shiftChat / this.getChatScale());
-    }
-    // condensed to one method because the first part of both methods are practically identical
+
+    /**
+     * Moves the message indicator and hover tooltip
+     * by {@link Config#shiftChat} to correctly shift
+     * the chat with the other components.
+     * Targets two methods because the first part of both
+     * methods are identical.
+     */
     @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
     private double moveINDHoverText(double e) {
         return e + ( config.shiftChat * this.getChatScale() );
     }
+
 
     /**
      * Modifies the incoming message by adding timestamps, nicer

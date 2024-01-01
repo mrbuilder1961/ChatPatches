@@ -1,15 +1,17 @@
 # Changelog
 
 ## Chat Patches `202.6.2` for Minecraft 1.20.2 on Fabric
-- Removed `SharedVariables` class and redistributed its one useful variable to `ChatPatches`
-
-## Chat Patches `202.6.1` for Minecraft 1.20.2 on Fabric
+### - Skipped version `202.6.1` to re-sync with the 1.20.4 version
 - Remove Gradle integration system, it was completely unnecessary and unused
 - Fixed messages starting with a newline not being copyable
 - Switched `chatWidth`'s YACL max value to the game window's width. Note: this can be incorrect if the game window is resized after the config screen is 
   opened. To fix this, just open the config screen when the game window is at the desired size.
-- Change source Java version to 21 and update Gradle to 8.5
-- Replaced old `Instant` references with `Date` ones for consistency
+- Fixed a couple issues with the [Smooth Scroll](https://modrinth.com/mod/smooth-scroll) mod thanks to [@SmajloSlovakian](https://github.com/SmajloSlovakian)! 
+  ([#139](https://www.github.com/mrbuilder1961/ChatPatches/issues/139), [#141](https://www.github.com/mrbuilder1961/ChatPatches/pull/141))
+- **Dev stuff**:
+  - Change source Java version to 21 and update Gradle to 8.5
+  - Replaced old `Instant` references with `Date` ones for consistency
+  - Removed `SharedVariables` class and redistributed its one useful variable to `ChatPatches`
 
 ## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric
 - Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!

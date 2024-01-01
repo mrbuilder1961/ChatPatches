@@ -707,8 +707,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
 				searchField.setEditableColor(0x55FF55);
 
-				// todo: ensure that when this method is run, any successful matches are cached so subsequent searches only look through that list and are faster
-				// might alr be done, idk
 				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 				chatHud.chatpatches$getVisibleMessages().clear();
 				chatHud.chatpatches$getVisibleMessages().addAll(searchResults);
