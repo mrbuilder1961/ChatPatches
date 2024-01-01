@@ -12,6 +12,7 @@
   - Change source Java version to 21 and update Gradle to 8.5
   - Replaced old `Instant` references with `Date` ones for consistency
   - Removed `SharedVariables` class and redistributed its one useful variable to `ChatPatches`
+  - Replaced weird `ChatLog#serialize(boolean, String)` method with `#backup()`
 
 ## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric
 - Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!

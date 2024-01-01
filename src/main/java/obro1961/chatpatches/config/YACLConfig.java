@@ -21,7 +21,6 @@ import obro1961.chatpatches.util.Flags;
 import java.awt.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -215,8 +214,7 @@ public class YACLConfig extends Config {
             } else if(key.equals("chatlogSave")) {
                 ChatLog.serialize(false);
             } else if(key.equals("chatlogBackup")) {
-                String filename = "chatlog_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
-                ChatLog.serialize(false, ChatLog.CHATLOG_PATH.replace("chatlog", filename));
+                ChatLog.backup();
             } else if(key.equals("chatlogOpenFolder")) {
                 Util.getOperatingSystem().open( new File(ChatLog.CHATLOG_PATH.replace("chatlog.json", "")));
             }

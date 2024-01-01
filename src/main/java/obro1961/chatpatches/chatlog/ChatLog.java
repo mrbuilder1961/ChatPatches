@@ -20,6 +20,8 @@ import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import static java.io.File.separator;
@@ -148,11 +150,6 @@ public class ChatLog {
      * is false AND if {@link Config#chatlogSaveInterval} is 0.
      */
     public static void serialize(boolean crashing) {
-        //todo: see Util#backupAndReplace(...)
-        serialize(crashing, CHATLOG_PATH);
-    }
-
-    public static void serialize(boolean crashing, String path) {
         if(!config.chatlog)
             return;
         if(crashing && savedAfterCrash)
@@ -160,19 +157,19 @@ public class ChatLog {
         if(data.messages.isEmpty() && data.history.isEmpty())
             return; // don't overwrite the file with an empty one if there's nothing to save
 
-        if(data.messages.size() == lastMessageCount && data.history.size() == lastHistoryCount && path.equals(CHATLOG_PATH))
+        if(data.messages.size() == lastMessageCount && data.history.size() == lastHistoryCount)
             return; // don't save if there's no new data AND if the path is the default one (not a backup)
 
         removeOverflowData(); // don't save more than the max amount of messages
 
         try {
             final String str = json.toJson(data, Data.class);
-            Files.writeString(Path.of(path), str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(file, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             lastHistoryCount = data.history.size();
             lastMessageCount = data.messages.size();
 
-            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), path);
+            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
         } catch(IOException e) {
             ChatPatches.LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
 
@@ -181,6 +178,23 @@ public class ChatLog {
                 savedAfterCrash = true;
         }
     }
+
+    /**
+     * Creates a backup of the current chat log file
+     * located at {@link #CHATLOG_PATH} and saves it
+     * to {@link #CHATLOG_PATH} + "_" + current time.
+     * If an error occurs, a warning will be logged.
+     * Doesn't modify the current chat log.
+     */
+    public static void backup() {
+        String filename = "chatlog_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+
+		try {
+			Files.copy(file, Path.of(CHATLOG_PATH.replace("chatlog", filename)));
+		} catch(IOException e) {
+			ChatPatches.LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", CHATLOG_PATH, e);
+		}
+	}
 
     /** Restores the chat log from {@link #data} into Minecraft. */
     public static void restore(MinecraftClient client) {
