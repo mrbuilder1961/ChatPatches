@@ -4,7 +4,7 @@
 - Fixed log spam with `UnsupportedOperationException`s when loading the chat log ([thanks ArkoSammy12!](https://discord.com/channels/1077285607375638529/1077297192659861686/1187217543010717747))
 - Fixed the chat log crashing the game when saving a message that opens a file when clicked ([#138](https://www.github.com/mrbuilder1961/ChatPatches/issues/138))
   - Note: these two only apply to Minecraft versions 1.20.3 and above
-- Merged [#141](https://www.github.com/mrbuilder1961/ChatPatches/pull/141) (thanks [SmajloSlovakian](https://github.com/SmajloSlovakian)!)
+- Fixed a couple issues with the [Smooth Scroll](https://modrinth.com/mod/smooth-scroll) mod thanks to [@SmajloSlovakian](https://github.com/SmajloSlovakian)! ([#139](https://www.github.com/mrbuilder1961/ChatPatches/issues/139), [#141](https://www.github.com/mrbuilder1961/ChatPatches/pull/141))
 
 ## Chat Patches `204.6.1` for Minecraft 1.20.4 on Fabric
 - Ported v203.6.0 to 1.20.4
