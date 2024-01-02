@@ -14,7 +14,12 @@ import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Flags;
 import obro1961.chatpatches.util.MiscUtils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.function.Supplier;
+
 public class ChatPatches implements ClientModInitializer {
+	public static final Supplier<String> TIME_FORMATTER = () -> new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Chat Patches");
 	public static final String MOD_ID = "chatpatches";
 

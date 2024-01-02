@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
@@ -16,12 +17,10 @@ import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.Flags;
-import obro1961.chatpatches.util.SharedVariables;
 
 import java.awt.*;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -142,7 +141,7 @@ public class YACLConfig extends Config {
                 });
 
         // debug options
-        if(SharedVariables.FABRIC_LOADER.isDevelopmentEnvironment()) {
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
             builder.category(
                 category(
                     "debug",
@@ -215,8 +214,7 @@ public class YACLConfig extends Config {
             } else if(key.equals("chatlogSave")) {
                 ChatLog.serialize(false);
             } else if(key.equals("chatlogBackup")) {
-                String filename = "chatlog_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
-                ChatLog.serialize(false, ChatLog.CHATLOG_PATH.replace("chatlog", filename));
+                ChatLog.backup();
             } else if(key.equals("chatlogOpenFolder")) {
                 Util.getOperatingSystem().open( new File(ChatLog.CHATLOG_PATH.replace("chatlog.json", "")));
             }

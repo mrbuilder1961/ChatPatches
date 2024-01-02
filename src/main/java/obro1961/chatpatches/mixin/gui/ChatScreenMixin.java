@@ -582,7 +582,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		ChatHud chatHud = client.inGameHud.getChatHud();
 		ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
-		String hoveredMessageFirst = StringTextUtils.reorder( hoveredVisibles.get(0).content(), false );
+		String hMF = StringTextUtils.reorder( hoveredVisibles.get(0).content(), false );
+		String hoveredMessageFirst = hMF.isEmpty() ? "\n" : hMF; // fixes messages starting with newlines not being detected
 
 		// warning: longer messages sometimes fail because extra spaces appear to be added,
 		// so i switched it to a startsWith() bc the first one never has extra spaces. /!\ can probably still fail /!\

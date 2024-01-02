@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.resource.language.I18n;
@@ -12,7 +13,6 @@ import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Flags;
-import obro1961.chatpatches.util.SharedVariables;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -29,7 +29,7 @@ import static obro1961.chatpatches.ChatPatches.config;
  * Represents the chat log file in the run directory located at {@link ChatLog#CHATLOG_PATH}.
  */
 public class ChatLog {
-    public static final String CHATLOG_PATH = SharedVariables.FABRIC_LOADER.getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    public static final String CHATLOG_PATH = FabricLoader.getInstance().getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
 
     private static final Path file = Path.of(CHATLOG_PATH);
@@ -148,11 +148,6 @@ public class ChatLog {
      * is false AND if {@link Config#chatlogSaveInterval} is 0.
      */
     public static void serialize(boolean crashing) {
-        //todo: see Util#backupAndReplace(...)
-        serialize(crashing, CHATLOG_PATH);
-    }
-
-    public static void serialize(boolean crashing, String path) {
         if(!config.chatlog)
             return;
         if(crashing && savedAfterCrash)
@@ -160,25 +155,41 @@ public class ChatLog {
         if(data.messages.isEmpty() && data.history.isEmpty())
             return; // don't overwrite the file with an empty one if there's nothing to save
 
-        if(data.messages.size() == lastMessageCount && data.history.size() == lastHistoryCount && path.equals(CHATLOG_PATH))
+        if(data.messages.size() == lastMessageCount && data.history.size() == lastHistoryCount)
             return; // don't save if there's no new data AND if the path is the default one (not a backup)
 
         removeOverflowData(); // don't save more than the max amount of messages
 
         try {
             final String str = json.toJson(data, Data.class);
-            Files.writeString(Path.of(path), str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(file, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             lastHistoryCount = data.history.size();
             lastMessageCount = data.messages.size();
 
-            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), path);
+            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
         } catch(IOException e) {
             ChatPatches.LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
 
         } finally {
             if(crashing)
                 savedAfterCrash = true;
+        }
+    }
+
+    /**
+     * Creates a backup of the current chat log file
+     * located at {@link #CHATLOG_PATH} and saves it
+     * as "chatlog_" + current time + ".json" in the
+     * same directory as the original file.
+     * If an error occurs, a warning will be logged.
+     * Doesn't modify the current chat log.
+     */
+    public static void backup() {
+        try {
+            Files.copy(file, file.resolveSibling( "chatlog_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+        } catch(IOException e) {
+            ChatPatches.LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", CHATLOG_PATH, e);
         }
     }
 

@@ -8,7 +8,7 @@ plugins {
 	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
+sourceCompatibility = JavaVersion.VERSION_21
 targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = rootProject.archives_base_name

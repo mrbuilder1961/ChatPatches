@@ -8,6 +8,11 @@
 - Fixed a couple issues with the [Smooth Scroll](https://modrinth.com/mod/smooth-scroll) mod thanks to [@SmajloSlovakian](https://github.com/SmajloSlovakian)! ([#139](https://www.github.com/mrbuilder1961/ChatPatches/issues/139), [#141](https://www.github.com/mrbuilder1961/ChatPatches/pull/141))
 - Switched `chatWidth`'s YACL max value to the game window's width. Note: this can be incorrect if the game window is resized after the config screen is
   opened. To fix this, just open the config screen when the game window is at the desired size.
+- Fixed messages starting with a newline not being copyable
+- **Dev stuff**:
+  - Change source Java version to 21 and update Gradle to 8.5
+  - Replaced weird `ChatLog#serialize(boolean, String)` method with `#backup()`
+  - Updated `Config#writeCopy()` to use the same thought process as `ChatLog#backup()`
 
 ***Dev note: many little changes have not been synced to this branch yet, as 1.20.2 is still the active-development version.***
 
