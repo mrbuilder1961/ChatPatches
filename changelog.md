@@ -1,7 +1,7 @@
 # Changelog
 
 ## Chat Patches `204.6.2` for Minecraft 1.20.4 on Fabric
-### - Effectively synced with v202.6.2
+### - Effectively synced with the 1.20.2 version
 - Fixed log spam with `UnsupportedOperationException`s when loading the chat log ([thanks ArkoSammy12!](https://discord.com/channels/1077285607375638529/1077297192659861686/1187217543010717747))
 - Fixed the chat log crashing the game when saving a message that opens a file when clicked ([#138](https://www.github.com/mrbuilder1961/ChatPatches/issues/138))
   - Note: these two only apply to Minecraft versions 1.20.3 and above
