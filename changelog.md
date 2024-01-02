@@ -1,10 +1,15 @@
 # Changelog
 
 ## Chat Patches `204.6.2` for Minecraft 1.20.4 on Fabric
+### - Effectively synced with v202.6.2
 - Fixed log spam with `UnsupportedOperationException`s when loading the chat log ([thanks ArkoSammy12!](https://discord.com/channels/1077285607375638529/1077297192659861686/1187217543010717747))
 - Fixed the chat log crashing the game when saving a message that opens a file when clicked ([#138](https://www.github.com/mrbuilder1961/ChatPatches/issues/138))
   - Note: these two only apply to Minecraft versions 1.20.3 and above
 - Fixed a couple issues with the [Smooth Scroll](https://modrinth.com/mod/smooth-scroll) mod thanks to [@SmajloSlovakian](https://github.com/SmajloSlovakian)! ([#139](https://www.github.com/mrbuilder1961/ChatPatches/issues/139), [#141](https://www.github.com/mrbuilder1961/ChatPatches/pull/141))
+- Switched `chatWidth`'s YACL max value to the game window's width. Note: this can be incorrect if the game window is resized after the config screen is
+  opened. To fix this, just open the config screen when the game window is at the desired size.
+
+***Dev note: many little changes have not been synced to this branch yet, as 1.20.2 is still the active-development version.***
 
 ## Chat Patches `204.6.1` for Minecraft 1.20.4 on Fabric
 - Ported v203.6.0 to 1.20.4
@@ -19,13 +24,13 @@
 
 ## Chat Patches `202.6.0` for Minecraft 1.20.2 on Fabric
 - Removed MixinExtras from dependencies because it's automatically bundled with the Fabric Loader since `0.15.0`!
-  - **/!\\ WARNING: NOT CURRENTLY SUPPORTED ON QUILT DUE TO THIS! /!\\** 
+  - **/!\\ WARNING: NOT CURRENTLY SUPPORTED ON QUILT DUE TO THIS! /!\\**
 - Add "Only Invasive Drafting" option ([#131](https://www.github.com/mrbuilder1961/ChatPatches/pull/131) -JustAlittleWolf)
 - Improve mod compatibility with the dupe counter injector + teeny optimizations
  ([#132](https://www.github.com/mrbuilder1961/ChatPatches/pull/132) -JustAlittleWolf)
 - Extracted `chatLog` to the new ChatLog tab in the config
 - Added a new config option to the tab: `chatLogSaveInterval`, which configures the timer for saving the chat log to disk
-- Added new executable buttons to the chat log tab to manipulate it in game: Clear all messages, Clear sent messages, Clear regular messages, Load, Save, 
+- Added new executable buttons to the chat log tab to manipulate it in game: Clear all messages, Clear sent messages, Clear regular messages, Load, Save,
   and Backup
 - Additionally, the chatlog will now only actually write to disk if it has been modified since the last save ([#134](https://www.github.com/mrbuilder1961/ChatPatches/issues/134))
 - Inform users that Catalogue + Menulogue works as a substitution for ModMenu ([#42](https://www.github.com/mrbuilder1961/ChatPatches/issues/42))
