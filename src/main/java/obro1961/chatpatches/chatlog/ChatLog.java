@@ -20,8 +20,6 @@ import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import static java.io.File.separator;
@@ -182,15 +180,14 @@ public class ChatLog {
     /**
      * Creates a backup of the current chat log file
      * located at {@link #CHATLOG_PATH} and saves it
-     * to {@link #CHATLOG_PATH} + "_" + current time.
+     * as "chatlog_" + current time + ".json" in the
+     * same directory as the original file.
      * If an error occurs, a warning will be logged.
      * Doesn't modify the current chat log.
      */
     public static void backup() {
-        String filename = "chatlog_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
-
 		try {
-			Files.copy(file, Path.of(CHATLOG_PATH.replace("chatlog", filename)));
+            Files.copy(file, file.resolveSibling( "chatlog_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
 		} catch(IOException e) {
 			ChatPatches.LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", CHATLOG_PATH, e);
 		}

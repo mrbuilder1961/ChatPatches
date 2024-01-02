@@ -11,7 +11,9 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.text.*;
 import obro1961.chatpatches.ChatPatches;
 
-import java.io.*;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
@@ -160,11 +162,9 @@ public class Config {
 
                 LOGGER.info("[Config.read] Loaded config info from '{}'!", CONFIG_PATH);
             } catch(JsonIOException | JsonSyntaxException e) {
-
                 LOGGER.info("[Config.read] The config couldn't be loaded; copying old data and resetting...");
                 writeCopy();
                 reset();
-
             } catch(IOException e) {
                 reset();
                 LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", CONFIG_PATH, e);
@@ -192,18 +192,22 @@ public class Config {
         config = Config.newConfig(true);
     }
 
-    /** Copies the current Config file data to {@code ./chatpatches_old.json} for copying old configurations over */
+    /**
+     * Creates a backup of the current config file
+     * located at {@link #CONFIG_PATH} and saves it
+     * as "config_" + current time + ".json" in the
+     * same directory as the original file.
+     * If an error occurs, a warning will be logged.
+     * Doesn't modify the current config.
+     */
     public static void writeCopy() {
-        //todo: see Util#backupAndReplace(...)
-        try(
-            FileInputStream cfg = new FileInputStream(CONFIG_PATH);
-            FileOutputStream copy = new FileOutputStream(CONFIG_PATH.replace("chatpatches", "chatpatches_old"))
-        ){
-            copy.write( cfg.readAllBytes() );
-        } catch(IOException e) {
-            LOGGER.error("[Config.writeCopy] An error occurred trying to copy the original config file from '{}':", CONFIG_PATH, e);
-        }
-    }
+        Path file = Path.of(CONFIG_PATH);
+		try {
+			Files.copy(file, file.resolveSibling( "chatpatches_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+		} catch(IOException e) {
+            LOGGER.warn("[Config.writeCopy] An error occurred trying to write a copy of the original config file:", e);
+		}
+	}
 
     /**
      * A simple Option class that wraps the internally-used
