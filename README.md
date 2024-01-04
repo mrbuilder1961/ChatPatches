@@ -59,6 +59,11 @@ Be on the lookout for new versions, issues, and future features!
   - When you load one of the more recent mod versions, it makes a creates a new file with your old settings and resets the main file. You can access this
     copy at `(directory)/config/chatpatches_old.json`. By then opening both the new and old configs at the same time, you can copy and paste over the values.
     Make sure the settings have correct inputs (ex. `time` should be `true`/`false` not `123` or `"true"`). If you still are having problems, open a new issue on GitHub.
+- Can I use this in a modpack?
+  - Yes, as long as you credit me and/or link back to one of the official pages (here, [CurseForge](https://www.curseforge.com/minecraft/mc-mods/chatpatches), and [Modrinth](https://modrinth.com/mod/chatpatches/versions)).
+- Can I re-upload this mod elsewhere?
+  - No, unless you have explicit permission from OBro1961, modify the mod in a significant way, or any download links used direct to one of the official 
+    pages (see above). If you're unsure, DM me (@obro1961) on Discord about it.
 
 ## Localization and Translation
 
