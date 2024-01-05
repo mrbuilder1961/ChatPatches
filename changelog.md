@@ -1,5 +1,9 @@
 # Changelog
 
+## Chat Patches `202.6.3` for Minecraft 1.20.2 on Fabric, Quilt
+- Should be compatible with Quilt again! (requires Loader 0.23.0+)
+  - **Note that Chat Patches still isn't developed directly for Quilt, issues may still arise**
+
 ## Chat Patches `202.6.2` for Minecraft 1.20.2 on Fabric
 ### - Skipped version `202.6.1` to re-sync with the 1.20.4 version
 - Remove Gradle integration system, it was completely unnecessary and unused
