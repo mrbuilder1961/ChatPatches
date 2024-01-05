@@ -1,5 +1,9 @@
 # Changelog
 
+## Chat Patches `204.6.3` for Minecraft 1.20.4 on Fabric, Quilt
+- Should be compatible with Quilt again! (requires Loader 0.23.0+)
+  - **Note that Chat Patches still isn't developed directly for Quilt, issues may still arise**
+
 ## Chat Patches `204.6.2` for Minecraft 1.20.4 on Fabric
 ### - Effectively synced with the 1.20.2 version
 - Fixed log spam with `UnsupportedOperationException`s when loading the chat log ([thanks ArkoSammy12!](https://discord.com/channels/1077285607375638529/1077297192659861686/1187217543010717747))
