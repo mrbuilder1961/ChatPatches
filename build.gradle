@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper
 
 plugins {
-	id "fabric-loom" version "1.4-SNAPSHOT"
+	id "fabric-loom" version "1.5-SNAPSHOT"
 	id "maven-publish"
 	// todo: use https://github.com/modmuss50/mod-publish-plugin when more fleshed out
 	id "com.modrinth.minotaur" version "2.+"
