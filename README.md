@@ -122,7 +122,6 @@ Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so
 ## Incompatibilities
 
 - Meteor Client's BetterChat features
-- MoreChatHistory
 
 ## Changelog
 

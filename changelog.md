@@ -5,6 +5,7 @@
   - **Note that Chat Patches still isn't developed directly for Quilt, issues may still arise**
 - Added the `counterCheckStyle` option, which controls checking style data when condensing duplicate messages ([#144](https://www.github.com/mrbuilder1961/ChatPatches/issues/144))
 - Added the `chatNameColor` option, which overrides the color of playernames in vanilla chat messages. ([#133](https://www.github.com/mrbuilder1961/ChatPatches/issues/145))
+- Removed MoreChatHistory as incompatible, due to MixinExtra's compatibility injectors! (it's actually been compatible for a while, but I forgot to remove it)
 - **Dev info:**
   - Overhauled the publishing system for CurseForge and Modrinth, revived the GitHub Releases channel, and added a webhook to the Discord server to
     automatically post new releases! Now only uses [modmuss50-publish-plugin](https://github.com/modmuss50/mod-publish-plugin), which is much cleaner and easier to use
