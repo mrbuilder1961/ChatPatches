@@ -1,10 +1,7 @@
 package obro1961.chatpatches.util;
 
 import com.google.common.collect.Lists;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 
 import java.util.List;
@@ -49,6 +46,27 @@ public class StringTextUtils {
 			urls.add(matcher.group());
 
 		return urls;
+	}
+
+	/**
+	 * Creates a new MutableText object with explicit
+	 * sibling and style data specified. Behaves
+	 * effectively the same as the private constructor
+	 * {@link MutableText#MutableText(TextContent, List, Style)}.
+	 */
+	public static MutableText newText(TextContent content, List<Text> siblings, Style style) {
+		MutableText text = MutableText.of(content).setStyle(style);
+		siblings.forEach(text::append);
+		return text;
+	}
+
+	/**
+	 * Returns a copy of {@code text} with an empty content.
+	 * Useful for comparing {@link Text} objects'
+	 * metadata (style and siblings) only.
+	 * */
+	public static MutableText copyWithoutContent(Text text) {
+		return newText(TextContent.EMPTY, text.getSiblings(), text.getStyle());
 	}
 
 	/**

@@ -37,7 +37,7 @@ public class Config {
     // categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
     public boolean hover = true; public String hoverDate = "MM/dd/yyyy"; public String hoverFormat = "$"; public int hoverColor = 0xffffff;
-    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = 0xffff55;
+    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = 0xffff55; public boolean counterCheckStyle = false;
     public boolean counterCompact = false; public int counterCompactDistance = 0;
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
@@ -137,9 +137,11 @@ public class Config {
     }
 
     public MutableText makeDupeCounter(int dupes) {
+        // note: soon to be replaced w a larger-scope constant
+        Style EMPTY = Style.EMPTY.withBold(false).withItalic(false).withUnderline(false).withObfuscated(false).withStrikethrough(false);
         return
             toText(" " + fillVars(counterFormat, Integer.toString(dupes)))
-                .fillStyle( Style.EMPTY.withColor(counterColor) );
+                .fillStyle( EMPTY.withColor(counterColor) );
     }
 
     public Text makeBoundaryLine(String levelName) {

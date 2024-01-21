@@ -290,7 +290,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                 Text condensedLastMessage = ChatUtils.getCondensedMessage(incoming, 0);
 
                 // if the counterCompact option is true but the last message received was not condensed, look for
-                // any dupes in the last counterCompactDistance +1 messages and if any are found condense them
+                // any dupes in the last counterCompactDistance messages and if any are found condense them
                 if( config.counterCompact && condensedLastMessage.equals(incoming) ) {
                     // ensures {0 <= attemptDistance <= messages.size()} is true
                     int attemptDistance = MathHelper.clamp((

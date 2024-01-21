@@ -52,11 +52,13 @@
     "text.chatpatches.counter": "Message counter toggle",
     "text.chatpatches.counterFormat": "Message counter text",
     "text.chatpatches.counterColor": "Message counter color",
+    "text.chatpatches.counterCheckStyle": "Check formatting modifiers",
     "text.chatpatches.counterCompact": "CompactChat method toggle",
     "text.chatpatches.counterCompactDistance": "Message check distance",
     "text.chatpatches.desc.counter": "Should a message counter show after messages to indicate multiple duplicates were sent? Note: this is required to be enabled for the CompactChat options to work.",
     "text.chatpatches.desc.counterFormat": "The text that's added to the end of a message to indicate multiple duplicates were sent. Requires a '$' for the number of duplicates, also supports '&' + formatting code modifiers. Still applies to the CompactChat method, if enabled.",
     "text.chatpatches.desc.counterColor": "The color that's filled in where it would otherwise be blank white in the resulting duplicate counter. To use this with other formatting modifiers, use '&r' in the decoration text option. Still applies to the CompactChat method, if enabled.",
+    "text.chatpatches.desc.counterCheckStyle": "Should the message counter check formatting modifiers when checking for duplicates? For example, \"§e§labc§r\" and \"abc\" would NOT be considered duplicates if true. Still applies to the CompactChat method, if enabled.",
     "text.chatpatches.desc.counterCompact": "Should the message counter behave like the one from the CompactChat mod?",
     "text.chatpatches.desc.counterCompactDistance": "The distance (inclusive) up to which messages will be tried for compacting. Setting this to '-1' will try the entire message list, and '0' will try using the maximum amount of messages you can see at once, based on the chat and gui scales. For example, setting this to '7' will try to compact the next message received into one of the last 7 messages already present.",
 
