@@ -1,23 +1,25 @@
 import groovy.json.JsonSlurper
+import me.modmuss50.mpp.ReleaseType
+
+import java.util.function.BiFunction
+import java.util.function.Function
 
 plugins {
 	id "fabric-loom" version "1.5-SNAPSHOT"
 	id "maven-publish"
-	// todo: use https://github.com/modmuss50/mod-publish-plugin when more fleshed out
-	id "com.modrinth.minotaur" version "2.+"
-	id "com.matthewprenger.cursegradle" version "1.4.0"
+	id "me.modmuss50.mod-publish-plugin" version "0.4.5"
 }
 
-sourceCompatibility = JavaVersion.VERSION_21
+sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = rootProject.archives_base_name
 group = rootProject.group
 version = rootProject.version
-// tokens revert to empty strings when no secrets.json exists
-def tokens = new JsonSlurper().parseText( file("secrets.json").exists() ? file("secrets.json").text : "{\"modrinth\": \"\", \"curseforge\": \"\"}" )
-def changelogText = "Changelog could not be found... 😬"
-def shouldPublish = project.hasProperty("shouldPublish") ? Boolean.parseBoolean(project.getProperty("shouldPublish")) : false
+
+// global publishing variables - shouldPublish defaults to true, but can be set to false by using `-PshouldPublish=false`
+boolean shouldPublish = Boolean.parseBoolean( providers.gradleProperty("shouldPublish").getOrElse("true") )
+String changelogText = "Changelog could not be found... 😬"
 
 repositories {
   	mavenCentral()
@@ -49,13 +51,8 @@ processResources {
 
 	File changelog = file("changelog.md")
 	if( changelog.exists() ) {
-		// replaces github issue numbers with links and fills out some variables
-		file("changelog.md").text = changelog.text
-			.replaceAll("##(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/\$1)")
-			.replaceAll("\\\$\\{version}", version.toString())
-			.replaceAll("\\\$\\{targets}", targets.replaceAll(",", ", "))
-			.replaceAll("\\\$\\{loaders}", loaders.split(",").collect { it.capitalize() }.join(", "))
-
+		// replaces github issue numbers with links
+		file("changelog.md").text = changelog.text.replaceAll("##(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/\$1)")
 
 		// hackily gets the first changelog entry
 		String newEntryTitle = "## Chat Patches `" + version + "`"
@@ -63,19 +60,20 @@ processResources {
 
 		changelogText = file("changelog.md").text.substring(0, prevEntryIndex).replaceFirst("# Changelog\\s+", "")
 
-		// considers the changelog "malformed" if it doesn't end with word character(s), whitespace, or newline(s)
+		// considered "malformed" if it doesn't end with any word characters, whitespace, or newlines
 		if( !changelogText.matches("(?s).*(\\s+|(\r?\n)+|\\w+)\$") ) {
-			print "/!\\ Warning: /!\\ Changelog seemed malformed, this is probably caused by an invalid version (v$version)."
+			print "/!\\ Warning: /!\\ Changelog seemed malformed, this is probably caused by an invalid version ($version)."
 			if(shouldPublish) {
-				print " Cancelled publishing, just in case."
 				shouldPublish = false
+				print " Cancelled publishing, just in case."
 			}
 			println()
 		}
 
-		if(!shouldPublish)
-			println "Using changelog text:\n>${changelogText}<"
 	}
+
+	if(!shouldPublish)
+		println "Using changelog text:\n>${changelogText}<"
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -108,66 +106,84 @@ publishing {
 	repositories {}
 }
 
+publishMods {
+	// todo: dependsOn tasks.processResources
 
-publish {
-	dependsOn tasks.processResources, tasks.curseforge, tasks.modrinth
-}
+	// constants
+	def v = rootProject.version
+	File secrets = file("secrets.json") // tokens revert to '-' when no secrets.json exists OR the token is not found
+	Function<String, List<String>> propListGetter = (String propertyName) -> rootProject[propertyName] != null ? Arrays.asList( rootProject[propertyName].toString().split(",") ) : new ArrayList<>()
+	BiFunction<String, Boolean, String> tokenGetter = (String tokenName, boolean valid) -> valid && secrets.exists() ? Objects.requireNonNullElse(new JsonSlurper().parse (secrets)[tokenName], "-") : "-"
+	// gradle.properties vars
+	ReleaseType phase = ReleaseType.valueOf( rootProject.phase.toString().toUpperCase() )
+	List<String> loaders = propListGetter.apply("loaders") // Arrays.asList( rootProject.loaders.toString().split(",") )
+	List<String> targets = propListGetter.apply("targets") // Arrays.asList( rootProject.targets.toString().split(",") )
+	String[] required = propListGetter.apply("required").toArray()
+	String[] optionals = propListGetter.apply("optionals").toArray()
+	String[] incompatibles = propListGetter.apply("incompatibles").toArray()
+	String[] embedded = propListGetter.apply("embedded").toArray()
+	String branch = targets.get(targets.size() - 1) // last target is the branch
+	// tokens - token name and if it should return the token or "-"
+	String cfToken = tokenGetter.apply("curseforge", shouldPublish)
+	String mrToken = tokenGetter.apply("modrinth", shouldPublish)
+	String ghToken = tokenGetter.apply("github", shouldPublish)
+	String dcToken = tokenGetter.apply("discord", shouldPublish)
+	String dcDebugToken = tokenGetter.apply("discord_debug", !shouldPublish) // always publishes to debug webhook
 
-curseforge { // https://github.com/matthewprenger/CurseGradle/wiki/
-	apiKey = tokens.curseforge
-	project {
-		id = "560042"
-		releaseType = "release"
-		changelogType = "markdown"
-		changelog = changelogText
 
-		// adds Java versions, modloaders, and mc versions
-		addGameVersion "Java 17"
-		addGameVersion "Java 18"
-		for(String target : rootProject.targets.split(","))
-			addGameVersion target
-		for(String loader : rootProject.loaders.split(","))
-			addGameVersion loader.capitalize()
-
-		mainArtifact remapJar
-
-		relations {
-			requiredDependency "fabric-api"
-			requiredDependency "yacl"
-
-			optionalDependency "modmenu"
-
-			tool "no-chat-reports"
-
-			incompatible "more-chat-history"
-		}
-
-		options {
-			forgeGradleIntegration = false
-			debug = !shouldPublish
-		}
-	}
-}
-
-modrinth { // https://github.com/modrinth/minotaur#groovy
-	token = tokens.modrinth
-	projectId = "MOqt4Z5n"
-	versionNumber = version // Will fail if Modrinth has this version already
-	versionType = "release"
-	uploadFile = remapJar
-	gameVersions = Arrays.asList( rootProject.targets.split(",") ) // Must be an array
-	loaders = Arrays.asList( rootProject.loaders.split(",") )
+	file = remapJar.archiveFile // Forge would use jar (NeoForge? i think so..)
 	changelog = changelogText
+	type = phase
+	modLoaders = loaders
+	dryRun = !shouldPublish
 
-	debugMode = !shouldPublish
+	if(shouldPublish) {
+		println "Publishing v$v to $loaders on $targets!"
+	} else {
+		println "Not publishing v$v because shouldPublish was false! Maybe check if the changelog was malformed?"
+		println "Using:\n\ttype: $phase\n\tbranch: $branch\n\tloaders: $loaders\n\ttargets: $targets"
+		println "\trequired: $required\n\toptionals: $optionals\n\tincompatibles: $incompatibles\n\tembedded: $embedded"
+	}
 
-	dependencies {
-		required.project "fabric-api"
-		required.project "yacl"
+	curseforge {
+		accessToken = cfToken
+		projectId = rootProject.cfId
+		projectSlug = archives_base_name
 
-		optional.project "modmenu"
-		optional.project "no-chat-reports"
+		minecraftVersions.addAll(targets)
 
-		incompatible.project "morechathistory"
+		requires(required)
+		optional(optionals)
+		incompatible(incompatibles)
+		embeds(embedded)
+	}
+
+	modrinth {
+		accessToken = mrToken
+		projectId = rootProject.mrId
+
+		minecraftVersions.addAll(targets)
+
+		// specify id OR slug NOT both, +OPTIONAL specific version
+		requires(required)
+		optional(optionals)
+		incompatible(incompatibles)
+		embeds(embedded)
+	}
+
+	github {
+		accessToken = ghToken
+		repository = "mrbuilder1961/ChatPatches"
+		commitish = branch // publishes to the latest supported (targeted) version
+		tagName = "$branch-$v" // branch-version
+
+		additionalFiles.from(remapSourcesJar.archiveFile, jar.archiveFile)
+	}
+
+	discord {
+		webhookUrl = dcToken // official
+		dryRunWebhookUrl = dcDebugToken // debug testing
+		username = "Publisher Bot"
+		avatarUrl = "https://cdn.modrinth.com/data/MOqt4Z5n/56c954dea290ef4dd1b0d6ea92a811acac62ca85.png"
 	}
 }

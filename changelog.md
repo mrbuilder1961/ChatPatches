@@ -3,6 +3,14 @@
 ## Chat Patches `202.6.3` for Minecraft 1.20.2 on Fabric, Quilt
 - Should be compatible with Quilt again! (requires Loader 0.23.0+)
   - **Note that Chat Patches still isn't developed directly for Quilt, issues may still arise**
+- Added the `counterCheckStyle` option, which controls checking style data when condensing duplicate messages ([#144](https://www.github.com/mrbuilder1961/ChatPatches/issues/144))
+- **Dev info:**
+  - Overhauled the publishing system for CurseForge and Modrinth, revived the GitHub Releases channel, and added a webhook to the Discord server to
+    automatically post new releases! Now only uses [modmuss50-publish-plugin](https://github.com/modmuss50/mod-publish-plugin), which is much cleaner and easier to use
+  - Moved most volatile Gradle variables to `gradle.properties` to make it easier to change them
+  - Added two specific methods to `StringTextUtils` for use with dupe counter methods, to work with the new `counterCheckStyle` option
+  - Removed the weird returning message reconstruction segment from `ChatUtils#getCondensedMessage(Text, int)` because it was actually unnecessary!
+  - Added some uncertain notes about certain aspects of the dupe counter process
 
 ## Chat Patches `202.6.2` for Minecraft 1.20.2 on Fabric
 ### - Skipped version `202.6.1` to re-sync with the 1.20.4 version
