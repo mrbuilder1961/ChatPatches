@@ -3,6 +3,7 @@ import me.modmuss50.mpp.ReleaseType
 
 import java.util.function.BiFunction
 import java.util.function.Function
+import java.util.stream.Stream
 
 plugins {
 	id "fabric-loom" version "1.5-SNAPSHOT"
@@ -110,8 +111,10 @@ publishMods {
 	// constants
 	def v = rootProject.version
 	File secrets = file("secrets.json") // tokens revert to '-' when no secrets.json exists OR the token is not found
-	Function<String, List<String>> propListGetter = (String propertyName) -> rootProject[propertyName] != null ? Arrays.asList( rootProject[propertyName].toString().split(",") ) : new ArrayList<>()
-	BiFunction<String, Boolean, String> tokenGetter = (String tokenName, boolean valid) -> valid && secrets.exists() ? Objects.requireNonNullElse(new JsonSlurper().parse (secrets)[tokenName], "-") : "-"
+	Function<String, List<String>> propListGetter = (String propertyName) ->
+			rootProject[propertyName] != null ? Stream.of( rootProject[propertyName].toString().split(",") ).filter{!it.isBlank()}.toList() : new ArrayList<>()
+	BiFunction<String, Boolean, String> tokenGetter = (String tokenName, boolean valid) ->
+			valid && secrets.exists() ? Objects.requireNonNullElse(new JsonSlurper().parse (secrets)[tokenName], "-") : "-"
 	// gradle.properties vars
 	ReleaseType phase = ReleaseType.valueOf( rootProject.phase.toString().toUpperCase() )
 	List<String> loaders = propListGetter.apply("loaders") // Arrays.asList( rootProject.loaders.toString().split(",") )
