@@ -6,8 +6,10 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.*;
 import obro1961.chatpatches.ChatPatches;
 
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.io.File.separator;
+import static net.minecraft.text.Style.EMPTY;
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.StringTextUtils.fillVars;
@@ -41,7 +44,7 @@ public class Config {
     public boolean counterCompact = false; public int counterCompactDistance = 0;
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
-    public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>";
+    public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>"; public int chatNameColor = 0xffffff;
     public int shiftChat = 10; public boolean messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
 
@@ -100,7 +103,7 @@ public class Config {
     public MutableText makeTimestamp(Date when) {
         return (
             toText( fillVars(timeFormat, new SimpleDateFormat(timeDate).format(when)) + " " )
-                .fillStyle( Style.EMPTY.withColor(timeColor) )
+                .fillStyle( EMPTY.withColor(timeColor) )
         );
     }
 
@@ -123,9 +126,12 @@ public class Config {
     }
 
     public MutableText formatPlayername(GameProfile player) {
+        // todo: account better for team names and prefixes/suffixes (note: getDisplayName() adds team name and click/hover events)
         String name = player.getName();
+        PlayerEntity playerEntity = MinecraftClient.getInstance().world.getPlayerByUuid(player.getId());
+
         return toText( fillVars(chatNameFormat, name) + " " )
-            .setStyle( Style.EMPTY
+            .setStyle( EMPTY
                 .withHoverEvent(
                     new HoverEvent(
                         HoverEvent.Action.SHOW_ENTITY,
@@ -133,6 +139,7 @@ public class Config {
                     )
                 )
                 .withClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tell " + name + " ") )
+                .withColor( playerEntity != null && playerEntity.getTeamColorValue() != 0xffffff ? playerEntity.getTeamColorValue() : chatNameColor )
             );
     }
 
@@ -147,7 +154,7 @@ public class Config {
     public Text makeBoundaryLine(String levelName) {
         // constructs w empty texts to not throw errors when comparing for the dupe counter
         return Text.empty()
-            .append(toText( fillVars(boundaryFormat, levelName) ).fillStyle( Style.EMPTY.withColor(boundaryColor) ))
+            .append(toText( fillVars(boundaryFormat, levelName) ).fillStyle( EMPTY.withColor(boundaryColor) ))
             .append(Text.empty());
     }
 

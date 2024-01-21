@@ -102,6 +102,7 @@ public class ChatUtils {
 				.stream()
 				.map( visible -> reorder(visible, config.counterCheckStyle) ) // note: config opt may not be necessary/have any effect here
 				.toList();
+
 			if(config.counterCompact) {
 				// note: could be unnecessarily slow? should only be checking config.counterCompactDistance ahead, but this always checks everything
 				// same here w/ config.counterCheckStyle as previous note

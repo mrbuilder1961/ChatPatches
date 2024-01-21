@@ -40,6 +40,7 @@ public class YACLConfig extends Config {
         List<Option<?>> boundaryOpts = Lists.newArrayList();
         List<Option<?>> chatlogOpts = Lists.newArrayList();
         List<Option<?>> chatlogActions = Lists.newArrayList();
+        List<Option<?>> chatNameOpts = Lists.newArrayList();
         List<Option<?>> chatHudOpts = Lists.newArrayList();
         List<Option<?>> chatScreenOpts = Lists.newArrayList();
         List<Option<?>> copyMenuOpts = Lists.newArrayList();
@@ -51,6 +52,8 @@ public class YACLConfig extends Config {
                 cat = "compact";
             else if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
                 cat = "screen";
+            else if( key.contains("Name") )
+                cat = "name";
 
             if(key.contains("Color")) {
                 opt = new ConfigOption<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), key) {
@@ -87,6 +90,7 @@ public class YACLConfig extends Config {
                 case "compact" -> compactChatOpts.add(yaclOpt);
                 case "boundary" -> boundaryOpts.add(yaclOpt);
                 case "chatlog" -> chatlogOpts.add(yaclOpt);
+                case "name" -> chatNameOpts.add(yaclOpt);
                 case "chat" -> chatHudOpts.add(yaclOpt);
                 case "screen" -> chatScreenOpts.add(yaclOpt);
                 case "copy" -> copyMenuOpts.add(yaclOpt);
@@ -120,7 +124,8 @@ public class YACLConfig extends Config {
                 )) )
                 .category( category("boundary", boundaryOpts) )
                 .category( category("chatlog", chatlogOpts, group("chatlog.actions", chatlogActions, null)) )
-                .category( category("chat", List.of(), group("chat.hud", chatHudOpts, null), group("chat.screen", chatScreenOpts, null)) )
+                .category( category("chat", List.of(),
+                    group("chat.name", chatNameOpts, null), group("chat.hud", chatHudOpts, null), group("chat.screen", chatScreenOpts, null)) )
                 .category( category("copy", copyMenuOpts) )
 
                 .category(
