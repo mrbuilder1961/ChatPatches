@@ -132,6 +132,7 @@ publishMods {
 	String dcDebugToken = tokenGetter.apply("discord_debug", !shouldPublish) // always publishes to debug webhook
 
 
+	displayName = v.toString()
 	file = remapJar.archiveFile // Forge would use jar (NeoForge? i think so..)
 	changelog = changelogText
 	type = phase
