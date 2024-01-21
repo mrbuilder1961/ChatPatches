@@ -10,12 +10,12 @@ plugins {
 	id "me.modmuss50.mod-publish-plugin" version "0.4.5"
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+group = project.group
+version = project.version
 
-archivesBaseName = rootProject.archives_base_name
-group = rootProject.group
-version = rootProject.version
+base {
+	archivesName = project.archives_base_name
+}
 
 // global publishing variables - shouldPublish defaults to true, but can be set to false by using `-PshouldPublish=false`
 boolean shouldPublish = Boolean.parseBoolean( providers.gradleProperty("shouldPublish").getOrElse("true") )
@@ -82,18 +82,16 @@ tasks.withType(JavaCompile).configureEach {
 
 java {
 	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
 }
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${project.archives_base_name}"}
+		rename { "${it}_${project.base.archivesName.get()}"}
 	}
 }
-
-build {
-	dependsOn tasks.processResources
-}
-
 
 publishing {
 	publications {

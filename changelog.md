@@ -8,6 +8,7 @@
   - Overhauled the publishing system for CurseForge and Modrinth, revived the GitHub Releases channel, and added a webhook to the Discord server to
     automatically post new releases! Now only uses [modmuss50-publish-plugin](https://github.com/modmuss50/mod-publish-plugin), which is much cleaner and easier to use
   - Moved most volatile Gradle variables to `gradle.properties` to make it easier to change them
+  - "Synced" some parts of the `build.gradle` file with the fabric-example-mod template to fix old warnings and keep it up to date
   - Added two specific methods to `StringTextUtils` for use with dupe counter methods, to work with the new `counterCheckStyle` option
   - Removed the weird returning message reconstruction segment from `ChatUtils#getCondensedMessage(Text, int)` because it was actually unnecessary!
   - Added some uncertain notes about certain aspects of the dupe counter process
