@@ -22,14 +22,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import static java.io.File.separator;
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
  * Represents the chat log file in the run directory located at {@link ChatLog#CHATLOG_PATH}.
  */
 public class ChatLog {
-    public static final String CHATLOG_PATH = FabricLoader.getInstance().getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    public static final String CHATLOG_PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json").toString();
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
 
     private static final Path file = Path.of(CHATLOG_PATH);

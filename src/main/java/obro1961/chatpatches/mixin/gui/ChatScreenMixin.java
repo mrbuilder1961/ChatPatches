@@ -162,9 +162,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
 		ButtonWidget.PressAction updateSearch = button -> onSearchFieldUpdate(searchField.getText());
-		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0, updateSearch);
-		modifiers = new ChatSearchSetting("modifiers", false, yPos, 22, updateSearch);
-		regex = new ChatSearchSetting("regex", false, yPos, 44, updateSearch);
+		caseSensitive.update(yPos, updateSearch);
+		modifiers.update(yPos + 22, updateSearch);
+		regex.update(yPos + 44, updateSearch);
 
 		if(!config.hideSearchButton) {
 			addSelectableChild(searchField);
@@ -734,7 +734,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	private List<ChatHudLine.Visible> filterMessages(String target) {
 		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 		if(target == null)
-			return createVisibles( chatHud.chatpatches$getMessages() );
+			return List.of(); //createVisibles( chatHud.chatpatches$getMessages() );
 
 		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.chatpatches$getMessages() );
 

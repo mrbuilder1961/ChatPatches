@@ -26,7 +26,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import static java.io.File.separator;
 import static net.minecraft.text.Style.EMPTY;
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
@@ -34,7 +33,7 @@ import static obro1961.chatpatches.util.StringTextUtils.fillVars;
 import static obro1961.chatpatches.util.StringTextUtils.toText;
 
 public class Config {
-    public static final String CONFIG_PATH = FabricLoader.getInstance().getConfigDir().toString() + separator + "chatpatches.json";
+    public static final String CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json").toString();
     private static final Config DEFAULTS = new Config();
 
     // categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
