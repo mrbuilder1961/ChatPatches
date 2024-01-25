@@ -106,8 +106,6 @@ publishing {
 }
 
 publishMods {
-	// todo: dependsOn tasks.processResources
-
 	// constants
 	def v = rootProject.version
 	File secrets = file("secrets.json") // tokens revert to '-' when no secrets.json exists OR the token is not found
