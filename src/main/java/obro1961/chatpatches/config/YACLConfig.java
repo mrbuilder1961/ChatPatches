@@ -19,7 +19,6 @@ import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.Flags;
 
 import java.awt.*;
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -142,7 +141,7 @@ public class YACLConfig extends Config {
                 )
                 .save(() -> {
                     write();
-                    ChatPatches.LOGGER.info("[YACLConfig.save] Updated the config file at '{}'!", CONFIG_PATH);
+                    ChatPatches.LOGGER.info("[YACLConfig.save] Updated the config file at '{}'!", PATH);
                 });
 
         // debug options
@@ -221,7 +220,7 @@ public class YACLConfig extends Config {
             } else if(key.equals("chatlogBackup")) {
                 ChatLog.backup();
             } else if(key.equals("chatlogOpenFolder")) {
-                Util.getOperatingSystem().open( new File(ChatLog.CHATLOG_PATH.replace("chatlog.json", "")));
+                Util.getOperatingSystem().open(ChatLog.PATH.getParent().toFile());
             }
         };
     }

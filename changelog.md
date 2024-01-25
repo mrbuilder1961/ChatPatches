@@ -5,6 +5,7 @@
 - Made ChatSearchSettings save when the chat screen is closed then reopened; resets on game restart
 - **Dev notes:**
   - Changed the `CONFIG_PATH` and `CHATLOG_PATH` variables to use the `Path#resolve(String)` method instead of concatenating strings
+  - Removed some now redundant file constants and references
 
 ## Chat Patches `202.6.3` for Minecraft 1.20.2 on Fabric, Quilt
 - Should be compatible with Quilt again! (requires Loader 0.23.0+)

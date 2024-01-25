@@ -33,7 +33,7 @@ import static obro1961.chatpatches.util.StringTextUtils.fillVars;
 import static obro1961.chatpatches.util.StringTextUtils.toText;
 
 public class Config {
-    public static final String CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json").toString();
+    public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
     private static final Config DEFAULTS = new Config();
 
     // categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
@@ -158,30 +158,30 @@ public class Config {
     }
 
 
-    /** Loads the config settings saved at {@link Config#CONFIG_PATH} into this Config instance */
+    /** Loads the config settings saved at {@link Config#PATH} into this Config instance */
     public static void read() {
 
-        if( !Files.exists(Path.of(CONFIG_PATH)) )
+        if( !Files.exists(PATH) )
             config = newConfig(true);
 
         else
-            try(FileReader fr = new FileReader(CONFIG_PATH)) {
+            try(FileReader fr = new FileReader(PATH.toFile())) {
                 config = new Gson().fromJson(fr, config.getClass());
 
-                LOGGER.info("[Config.read] Loaded config info from '{}'!", CONFIG_PATH);
+                LOGGER.info("[Config.read] Loaded config info from '{}'!", PATH);
             } catch(JsonIOException | JsonSyntaxException e) {
                 LOGGER.info("[Config.read] The config couldn't be loaded; copying old data and resetting...");
                 writeCopy();
                 reset();
             } catch(IOException e) {
                 reset();
-                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", CONFIG_PATH, e);
+                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", PATH, e);
             }
     }
 
-    /** Saves the {@code ChatPatches.config} instance to {@link Config#CONFIG_PATH} */
+    /** Saves the {@code ChatPatches.config} instance to {@link Config#PATH} */
     public static void write() {
-        try(FileWriter fw = new FileWriter(CONFIG_PATH)) {
+        try(FileWriter fw = new FileWriter(PATH.toFile())) {
 
             new GsonBuilder()
                 .excludeFieldsWithModifiers(Modifier.STATIC)
@@ -189,9 +189,9 @@ public class Config {
             .create()
                 .toJson(config, config.getClass(), fw);
 
-            LOGGER.info("[Config.write] Saved config info to '{}'!", CONFIG_PATH);
+            LOGGER.info("[Config.write] Saved config info to '{}'!", PATH);
         } catch(Exception e) {
-            LOGGER.error("[Config.write] An error occurred while trying to save config data to '{}':", CONFIG_PATH, e);
+            LOGGER.error("[Config.write] An error occurred while trying to save config data to '{}':", PATH, e);
         }
     }
 
@@ -202,16 +202,15 @@ public class Config {
 
     /**
      * Creates a backup of the current config file
-     * located at {@link #CONFIG_PATH} and saves it
+     * located at {@link #PATH} and saves it
      * as "config_" + current time + ".json" in the
      * same directory as the original file.
      * If an error occurs, a warning will be logged.
      * Doesn't modify the current config.
      */
     public static void writeCopy() {
-        Path file = Path.of(CONFIG_PATH);
 		try {
-			Files.copy(file, file.resolveSibling( "chatpatches_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+			Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
 		} catch(IOException e) {
             LOGGER.warn("[Config.writeCopy] An error occurred trying to write a copy of the original config file:", e);
 		}
