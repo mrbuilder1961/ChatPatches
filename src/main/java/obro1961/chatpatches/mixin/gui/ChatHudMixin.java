@@ -157,6 +157,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
 
 
+//todo: next commit reorganize this into part of the overhaul restructuring (aka modular message construction)
         Text modified =
             Text.empty().setStyle(style)
                 .append(

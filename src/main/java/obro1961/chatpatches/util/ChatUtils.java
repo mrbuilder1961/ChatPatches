@@ -84,8 +84,11 @@ public class ChatUtils {
 
 			// info: according to some limited testing, incoming messages (incomingParts) will never contain a dupe counter, so it's been omitted from this check
 			int dupes = (
-				(comparingParts.size() > DUPE_COUNTER_INDEX)
-					? Integer.parseInt(StringTextUtils.delAll(comparingParts.get(DUPE_COUNTER_INDEX).getString(), "(§[0-9a-fk-or])+", "\\D"))
+				comparingParts.size() > DUPE_COUNTER_INDEX
+					? Integer.parseInt( comparingParts.get(DUPE_COUNTER_INDEX).getString()
+						.replaceAll("(§[0-9a-fk-or])+", "")
+						.replaceAll("\\D", "")
+					)
 					: 1
 			) + 1;
 

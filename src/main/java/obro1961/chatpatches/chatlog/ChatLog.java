@@ -31,7 +31,7 @@ public class ChatLog {
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
 
-    private static final Gson json = new com.google.gson.GsonBuilder()
+    private static final Gson GSON = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serializer.toJsonTree(src))
         .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, type, context) -> Text.Serializer.fromJson(json))
         .registerTypeAdapter(Text.class, (InstanceCreator<Text>) type -> Text.empty())
@@ -69,7 +69,7 @@ public class ChatLog {
      *   <li> If it doesn't exist, {@code rawData} just uses {@link Data#EMPTY_DATA}.
      *   <li> If it does exist, it will convert the ChatLog file to UTF-8 if it isn't already and save it to {@code rawData}.
      *   <li> If {@code rawData} contains invalid data, resets {@link #data} to a default, empty {@link Data} object.
-     *   <li> Then it uses {@link #json} to convert {@code rawData} into a usable {@link Data} object.
+     *   <li> Then it uses {@link #GSON} to convert {@code rawData} into a usable {@link Data} object.
      *   <li> Removes any overflowing messages.
      *   <li> If it successfully resolved, then returns and logs a message.
      */
@@ -120,7 +120,7 @@ public class ChatLog {
         }
 
         try {
-            data = json.fromJson(rawData, Data.class);
+            data = GSON.fromJson(rawData, Data.class);
             removeOverflowData();
         } catch(com.google.gson.JsonSyntaxException e) {
             ChatPatches.LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
@@ -159,7 +159,7 @@ public class ChatLog {
         removeOverflowData(); // don't save more than the max amount of messages
 
         try {
-            final String str = json.toJson(data, Data.class);
+            final String str = GSON.toJson(data, Data.class);
             Files.writeString(PATH, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             lastHistoryCount = data.history.size();

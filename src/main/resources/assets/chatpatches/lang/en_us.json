@@ -3,12 +3,6 @@
 
     "text.chatpatches.title": "Chat Patches Configuration",
 
-    "text.chatpatches.help.dateFormat": "For date and time formatting information, click me!",
-    "text.chatpatches.help.formatCodes": "For formatting code characters and which ones do what, click me!",
-    "text.chatpatches.help.faq": "For Frequently Asked Questions (FAQ), click me!",
-    "text.chatpatches.help.regex": "For regular expression information, click me!",
-    "text.chatpatches.help.regexTester": "For testing regular expressions, click me!",
-
     "text.chatpatches.category.time": "Timestamp",
     "text.chatpatches.category.hover": "Timestamp Hover Info",
     "text.chatpatches.category.counter": "Duplicate counter",
@@ -29,7 +23,7 @@
     "text.chatpatches.category.desc.chat.hud": "Options about the widget that appears even when the chat screen isn't open. This can also include settings relating to the chat as whole.",
     "text.chatpatches.category.desc.chat.screen": "Screen-specific options.",
     "text.chatpatches.category.desc.copy": "Options about the selection box and copy menu that appear when right-clicking on chat messages.",
-    "text.chatpatches.category.desc.help": "Websites that explain how to use certain aspects of the mod!",
+    "text.chatpatches.category.desc.help": "Executables and websites that explain how to use parts of the mod!",
     "text.chatpatches.category.desc.debug": "Random stuff for developing?",
 
     "text.chatpatches.time": "Timestamp toggle",
@@ -111,6 +105,14 @@
     "text.chatpatches.desc.searchDrafting": "Should any text in the search field persist after closing and reopening the chat?",
     "text.chatpatches.desc.hideSearchButton": "Should the search button be hidden? Note that this disables all search functionality.",
     "text.chatpatches.desc.vanillaClearing": "Should chat messages clear after leaving a world/server like vanilla? Note this completely erases both the chat and chat log.",
+
+    "text.chatpatches.help.dateFormat": "For date and time formatting information, click me!",
+    "text.chatpatches.help.formatCodes": "For formatting code characters and which ones do what, click me!",
+    "text.chatpatches.help.faq": "For Frequently Asked Questions (FAQ), click me!",
+    "text.chatpatches.help.regex": "For regular expression information, click me!",
+    "text.chatpatches.help.regexTester": "For testing regular expressions, click me!",
+    "text.chatpatches.help.reloadConfig": "Reload Config",
+    "text.chatpatches.desc.help.reloadConfig": "Press to read the config file and load any changes. §c§lThis will override any unsaved changes made here!§r§f You need to exit and re-open this screen to see the changes take effect.",
 
 
     "text.chatpatches.search.suggestion": "Search...",

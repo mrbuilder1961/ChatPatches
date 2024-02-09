@@ -26,7 +26,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Chat Patches");
 	public static final String MOD_ID = "chatpatches";
 
-	public static Config config = Config.newConfig(false);
+	public static Config config = Config.create();
 	/** Contains the sender and timestamp data of the last received chat message. */
 	public static ChatUtils.MessageData msgData = ChatUtils.NIL_MSG_DATA;
 

@@ -10,19 +10,11 @@ import java.util.regex.Pattern;
 
 /**
  * A class containing various string and {@link Text} related utilities.
- */
+ */ // todo StringTextUtils => TextUtils
 public class StringTextUtils {
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
 
-
-	/** Goes through each regex of {@code regexes} and removes <b>all</b> matches from {@code str}. */
-	public static String delAll(String str, String... regexes) {
-		for(String regex : regexes)
-			str = str.replaceAll(regex, "");
-
-		return str;
-	}
 
 	/**
 	 * Replaces all {@code $} characters in {@code str} with {@code variable}.
@@ -74,7 +66,7 @@ public class StringTextUtils {
 	 * Uses the same base algorithm as {@link Text#of(String)}.
 	 * Doesn't support hex colors.
 	 */
-	public static MutableText toText(String unformatted) {
+	public static MutableText text(String unformatted) {
 		return Text.literal(
 			unformatted
 				.replaceAll(NO_BACKSLASH_AMPERSAND_REGEX, "§$1")
@@ -109,7 +101,7 @@ public class StringTextUtils {
 		});
 
 		// trusting this for now...
-		return delAll( reordered.toString(), "^(&r)+", "(&r)+$" ); // strips any redundant reset codes
+		return reordered.toString().replaceAll("^(&r)+|(&r)+$", ""); // strips any redundant reset codes
 	}
 
 	/**

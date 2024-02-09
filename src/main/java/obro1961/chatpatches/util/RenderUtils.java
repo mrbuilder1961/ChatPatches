@@ -1,10 +1,12 @@
 package obro1961.chatpatches.util;
 
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 public class RenderUtils {
 	public static final ChatHudLine NIL_HUD_LINE = new ChatHudLine(0, Text.empty(), null, null);
+	public static final Style BLANK_STYLE = Style.EMPTY.withBold(false).withItalic(false).withStrikethrough(false).withUnderline(false).withObfuscated(false);
 
 
 	public static class MousePos {
