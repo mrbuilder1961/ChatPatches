@@ -18,8 +18,8 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.util.StringTextUtils.copyWithoutContent;
-import static obro1961.chatpatches.util.StringTextUtils.reorder;
+import static obro1961.chatpatches.util.TextUtils.copyWithoutContent;
+import static obro1961.chatpatches.util.TextUtils.reorder;
 
 /**
  * Utility methods relating directly to the chat.
@@ -60,7 +60,7 @@ public class ChatUtils {
 	 *     <li>Cache the number of duped messages, either from the message being compared or from inference plus (this) one.</li>
 	 *     <li>Add the dupe counter to the incoming message.</li>
 	 *     <li>Remove the message being compared.</li>
-	 *     <li>Calculate and then remove all visible messages from the last message, compared as {@link String}s from {@link StringTextUtils#reorder(OrderedText, boolean)}.</li>
+	 *     <li>Calculate and then remove all visible messages from the last message, compared as {@link String}s from {@link TextUtils#reorder(OrderedText, boolean)}.</li>
 	 *     <li>Return the incoming message, regardless of if it was modified or not.</li>
 	 * </ol>
 	 */
@@ -118,7 +118,7 @@ public class ChatUtils {
 
 			// according to some testing, modifying incomingParts DOES modify incoming.getSiblings(), so all changes are taken care of!
 			// if this breaks, uncomment the following line:
-			//return StringTextUtils.newText(incoming.getContent(), incomingParts, incoming.getStyle());
+			//return TextUtils.newText(incoming.getContent(), incomingParts, incoming.getStyle());
 		}
 
 		return incoming.copy(); // fixes IntelliJ flagging the return value as always being equal to incoming (not true!)

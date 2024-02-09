@@ -12,6 +12,7 @@
   - `formatPlayername(GameProfile)` now accounts for team metadata as mentioned in the #115 fix
   - Capitalized some static final variables
   - Changed some stuff about how the config is initialized, read, and written to disk
+  - Refactor StringTextUtils to TextUtils
 
 ## Chat Patches `202.6.3` for Minecraft 1.20.2 on Fabric, Quilt
 - Should be compatible with Quilt again! (requires Loader 0.23.0+)

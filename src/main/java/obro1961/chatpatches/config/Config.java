@@ -26,8 +26,8 @@ import java.util.Objects;
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.RenderUtils.BLANK_STYLE;
-import static obro1961.chatpatches.util.StringTextUtils.fillVars;
-import static obro1961.chatpatches.util.StringTextUtils.text;
+import static obro1961.chatpatches.util.TextUtils.fillVars;
+import static obro1961.chatpatches.util.TextUtils.text;
 
 public class Config {
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");

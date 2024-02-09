@@ -10,8 +10,8 @@ import java.util.regex.Pattern;
 
 /**
  * A class containing various string and {@link Text} related utilities.
- */ // todo StringTextUtils => TextUtils
-public class StringTextUtils {
+ */
+public class TextUtils {
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
 

@@ -36,7 +36,7 @@ import obro1961.chatpatches.gui.MenuButtonWidget;
 import obro1961.chatpatches.gui.SearchButtonWidget;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.RenderUtils;
-import obro1961.chatpatches.util.StringTextUtils;
+import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -174,8 +174,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
 			// hover menu buttons, column two
-			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> Formatting.strip( selectedLine.content().getString() ).replaceAll(StringTextUtils.AMPERSAND_REGEX, "")));
-			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> StringTextUtils.reorder( selectedLine.content().asOrderedText(), true )));
+			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> Formatting.strip( selectedLine.content().getString() ).replaceAll(TextUtils.AMPERSAND_REGEX, "")));
+			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> TextUtils.reorder( selectedLine.content().asOrderedText(), true )));
 			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serializer.toJson(selectedLine.content())));
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
 			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString()));
@@ -210,7 +210,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			}));
 			mainButtons.put(COPY_MENU_SENDER, of(0, COPY_MENU_SENDER, hoverButtons.get(COPY_NAME), hoverButtons.get(COPY_UUID)));
 			mainButtons.put(COPY_MENU_REPLY, of(0, COPY_MENU_REPLY, () -> "").setOtherPressAction(menuButton ->
-				chatField.setText( StringTextUtils.fillVars(config.copyReplyFormat, hoverButtons.get(COPY_NAME).copySupplier.get())
+				chatField.setText( TextUtils.fillVars(config.copyReplyFormat, hoverButtons.get(COPY_NAME).copySupplier.get())
 			)));
 
 			// these two get extra width for the player head icon that renders, so it has enough space
@@ -581,7 +581,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		ChatHud chatHud = client.inGameHud.getChatHud();
 		ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
-		String hMF = StringTextUtils.reorder( hoveredVisibles.get(0).content(), false );
+		String hMF = TextUtils.reorder( hoveredVisibles.get(0).content(), false );
 		String hoveredMessageFirst = hMF.isEmpty() ? "\n" : hMF; // fixes messages starting with newlines not being detected
 
 		/* warning: longer messages sometimes fail because extra spaces appear to be added,
@@ -602,7 +602,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		mainButtons.get(COPY_MENU_STRING).button.visible = true;
 
 		// add link button
-		List<String> links = StringTextUtils.getLinks( selectedLine.content().getString() );
+		List<String> links = TextUtils.getLinks( selectedLine.content().getString() );
 		if( !links.isEmpty() ) {
 			for(String link : links) {
 				MenuButtonWidget linkButton = of(1, COPY_LINK_N.apply( links.indexOf(link) + 1 ), () -> link);
@@ -738,7 +738,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.chatpatches$getMessages() );
 
 		msgs.removeIf(hudLn -> {
-			String content = StringTextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
+			String content = TextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
 
 			// note that this NOTs the whole expression to simplify the complex nesting
 			// *removes* the message if it *doesn't* match
