@@ -3,7 +3,7 @@
 ## Chat Patches `202.6.4` for Minecraft 1.20.2 on Fabric, Quilt
 - Fixed errors with regex input on the search screen not updating the text color
 - Made ChatSearchSettings save when the chat screen is closed then reopened; resets on game restart
-- Fixed team name colors, prefixes, and suffixes being ignored when `chatNameFormat` is customized (##115)
+- Fixed team name colors, prefixes, and suffixes being ignored when `chatNameFormat` is customized ([#115](https://www.github.com/mrbuilder1961/ChatPatches/issues/115))
 - Added a new runnable config option to reload the config from disk
 - **Dev notes:**
   - Changed the `CONFIG_PATH` and `CHATLOG_PATH` variables to use the `Path#resolve(String)` method instead of concatenating strings
