@@ -134,4 +134,4 @@ This mod is available under the GNU LGPLv3 license. Check out [this](https://cho
 ## Sponsor me!
 - Ko-Fi: https://ko-fi.com/obro1961
 
-[![15% off your first month with code OBRO15!](https://cdn.discordapp.com/attachments/1080662346898346066/1087033610479095829/obro15.png)](https://billing.kinetichosting.net/aff.php?aff=234)
+[![15% off your first month with code OBRO15!](https://i.imgur.com/9mjs77B.png)](https://billing.kinetichosting.net/aff.php?aff=234)
