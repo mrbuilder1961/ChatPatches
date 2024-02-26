@@ -2,7 +2,7 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -11,7 +11,10 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.util.CommandHistoryManager;
-import net.minecraft.text.*;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
@@ -30,13 +33,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.msgData;
-import static obro1961.chatpatches.util.ChatUtils.MSG_INDEX;
+import static obro1961.chatpatches.util.ChatUtils.MESSAGE_INDEX;
+import static obro1961.chatpatches.util.ChatUtils.getPart;
 
 /**
  * The main entrypoint mixin for most chat modifications.
@@ -150,88 +154,80 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
             return addCounter(m, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
 
-        final Style style = m.getStyle();
+        Style style = m.getStyle();
         boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
         boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
         Date now = lastEmpty ? new Date() : msgData.timestamp();
-        String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
+        String nowStr = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
 
+//ChatPatches.LOGGER.warn("received {} message: '{}'", m.getContent().getClass().getSimpleName(), m.getString());
 
-//todo: next commit reorganize this into part of the overhaul restructuring (aka modular message construction)
-        Text modified =
-            Text.empty().setStyle(style)
-                .append(
-                    config.time && !boundary
-                        ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now).withInsertion(nowTime) )
-                        : Text.empty().setStyle( Style.EMPTY.withInsertion(nowTime) )
-                )
-                .append(
-                    !lastEmpty && !boundary && Config.getOption("chatNameFormat").changed() && msgData.vanilla()
-                        ? Text.empty().setStyle(style)
-                            .append( config.formatPlayername( msgData.sender() ) ) // add formatted name
-                            .append( // add first part of message (depending on the Style and how it was constructed)
-                                Util.make(() -> {
-                                    if(m.getContent() instanceof TranslatableTextContent ttc) { // most vanilla chat messages
+        MutableText timestamp = (config.time && !boundary) ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
+        MutableText content = Text.empty().setStyle(style);
 
-                                        MutableText text = Text.empty().setStyle(style);
-                                        List<Text> messages = Arrays.stream( ttc.getArgs() ).map( arg -> (Text)arg ).toList();
+        // reconstruct the player message if it's in the vanilla format and it should be reformatted
+        if(!lastEmpty && !boundary && msgData.vanilla()) {
+            // if the message is translatable, then we know exactly where everything is
+            if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches("chat.type.(text|team.(text|sent))")) {
+                String key = ttc.getKey();
 
-                                        // i think the arg at i=0 is the player name in vanilla messages
-                                        for(int i = 1; i < messages.size(); ++i)
-                                            text.append( messages.get(i) );
+                // adds the team name for team messages
+                if(key.startsWith("chat.type.team.")) {
+                    MutableText teamPart = Text.empty();
+                    // adds the preceding arrow for sent team messages
+                    if(key.endsWith("sent"))
+                        teamPart.append(Text.literal("-> ").setStyle(style));
 
-                                        return text;
-                                    } else if(m.getContent() instanceof LiteralTextContent ltc) { // default-style message with name
-                                        // assuming the vanilla format '<name> message'
-                                        String[] splitMessage = ltc.string().split(">"); // for now we will always check for a singular bracket, just in case the space is missing
+                    // adds the team name for team messages
+                    teamPart.append( ((MutableText)ttc.getArg(0)).append(" ") );
 
-                                        if(splitMessage.length > 1)
-                                            // removes any preceding whitespace
-                                            return Text.literal( splitMessage[1].replaceAll("^\\s+", "") ).setStyle(style);
-                                        else
-                                            //return Text.empty().setStyle(style); // use this? idk
-                                            return m.copyContentOnly().setStyle(style);
-                                    } else {
-                                        // text w/o siblings
-                                        return m.copyContentOnly().setStyle(style);
-                                    }
-                                })
-                            )
-                            .append( // add any siblings (Texts with different styles)
-                                Util.make(() -> {
-                                    MutableText msg = Text.empty().setStyle(style);
-                                    List<Text> siblings = m.getSiblings();
-                                    int i = -1; // index of the first '>' in the playername
+                    content.append(teamPart);
+                } else {
+                    content.append(""); // if there isn't a team message, add an empty string to keep the index constant
+                }
 
-                                    // if the message uses the vanilla style but the main component doesn't have the full playername, then only add (the actual message) after it, (removes duped names)
-                                    if(m.getContent() instanceof LiteralTextContent ltc && !ltc.string().contains(">"))
-                                        i = siblings.stream().filter(sib -> sib.getString().contains(">")).mapToInt(siblings::indexOf).findFirst().orElse(i);
+                // adds the formatted playername and content for all message types
+                content.append(config.formatPlayername(msgData.sender())); // sender data is already known
+                content.append((Text) ttc.getArg(ttc.getArgs().length - 1)); // always at the end
+            } else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
+                // collect all message parts into one list, including the root TextContent
+                // (assuming this accounts for all parts, TextContents, and siblings)
+                List<Text> parts = Util.make(new ArrayList<>(m.getSiblings().size() + 1), a -> {
+                    if(!m.equals(Text.EMPTY))
+                        a.add( m.copyContentOnly().setStyle(style) );
 
-                                    // if the vanilla-style message is formatted weird, then only add the text *after* the first '>' (end of playername)
-                                    if(i > -1) {
-                                        Text rightTri = siblings.get(i);
-                                        String rightTriStr = rightTri.getString();
-                                        String restOfStr = rightTriStr.substring( rightTriStr.indexOf(">") + 1 ).replaceAll("^\\s+", "");
-                                        // updates the sibling text and decrements the index, so it doesn't get skipped
-                                        if(!restOfStr.isEmpty()) {
-                                            siblings.set(i, Text.literal(restOfStr).setStyle(rightTri.getStyle()));
-                                            --i;
-                                        }
-                                    }
+                    a.addAll( m.getSiblings() );
+                });
 
-                                    // if there was a split playername, add everything after the '>' (end of playername)
-                                    // (if there wasn't a split playername, add everything [-1 + 1 = 0])
-                                    // (if there was, only add after that part [i + 1 = after name component])
-                                    for(int j = i + 1; j < siblings.size(); ++j)
-                                        msg.append( siblings.get(j) );
+                MutableText realContent = Text.empty();
+				// find the index of the end of a '<%s> %s' message
+				Text firstPart = parts.stream().filter(p -> p.getString().contains(">")).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "' !"));
+                String afterEndBracket = firstPart.getString().split(">")[1]; // just get the part after the closing bracket, we know the start
 
-                                    return msg;
-                                })
-                            )
-                        : m
-                );
+                // adds the part after the closing bracket but before any remaining siblings, if it exists
+                if(!afterEndBracket.isEmpty())
+                    realContent.append( Text.literal(afterEndBracket).setStyle(firstPart.getStyle()) );
 
-        modified = addCounter(modified, false);
+                // we know everything remaining is message content parts, so add everything
+                for(int i = parts.indexOf(firstPart) + 1; i < parts.size(); i++)
+                    realContent.append(parts.get(i));
+
+                content.append(config.formatPlayername(msgData.sender())); // sender data is already known
+                content.append(realContent); // adds the reconstructed message content
+            }
+//ChatPatches.LOGGER.warn("DID!!! reformat, content: '{}' aka '{}'+{}", content.getString(), content.copyContentOnly().getString(), content.getSiblings());//delete:-
+        } else {
+            // don't reformat if it isn't vanilla or needed
+            content = m.copy();
+//ChatPatches.LOGGER.warn("didn't reformat, content: '{}' aka '{}'+{}", content.getString(), content.copyContentOnly().getString(), content.getSiblings());//delete:-
+        }
+
+        // assembles constructed message and adds a duplicate counter according to the #addCounter method
+        Text modified = addCounter( ChatUtils.buildMessage(style, timestamp, content, null), false );
+/*ChatPatches.LOGGER.info("------ parts of message ------\n\ttimestamp: '{}'\n\tmessage: ('{}')\n\t\tteam: '{}'\n\t\tsender: '{}'\n\t\tcontent: '{}'\n\tdupe: '{}'\n------",
+ChatUtils.getPart(modified, 0), ChatUtils.getPart(modified, 1), ChatUtils.getMsgPart(modified, 0), ChatUtils.getMsgPart(modified, 1), ChatUtils.getMsgPart(modified, 2), ChatUtils.getPart(modified, 2)
+);*/ //delete:-
         ChatLog.addMessage(modified);
         msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
         return modified;
@@ -305,7 +301,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                     // exclude the first message, already checked above
                     messages.subList(1, attemptDistance)
                         .stream()
-                        .filter( hudLine -> hudLine.content().getSiblings().get(MSG_INDEX).getString().equalsIgnoreCase( incoming.getSiblings().get(MSG_INDEX).getString() ) )
+                        .filter( hudLine -> getPart(hudLine.content(), MESSAGE_INDEX).getString().equalsIgnoreCase( getPart(incoming, MESSAGE_INDEX).getString() ) )
                         .findFirst()
                         .ifPresent( hudLine -> ChatUtils.getCondensedMessage(incoming, messages.indexOf(hudLine)) );
                 }

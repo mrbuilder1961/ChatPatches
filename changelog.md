@@ -5,6 +5,9 @@
 - Made ChatSearchSettings save when the chat screen is closed then reopened; resets on game restart
 - Fixed team name colors, prefixes, and suffixes being ignored when `chatNameFormat` is customized ([#115](https://www.github.com/mrbuilder1961/ChatPatches/issues/115))
 - Added a new runnable config option to reload the config from disk
+- Added a minor optimization to the way messages are modified to largely simplify the process in a few scenarios [prepub impl]
+- Switched the text in the search settings screen to use pre-bundled translations (ON/OFF instead of a visual switch)
+- Fixed the Copy String > Copy Raw String button in the copy menu removing &<code> formattings
 - **Dev notes:**
   - Changed the `CONFIG_PATH` and `CHATLOG_PATH` variables to use the `Path#resolve(String)` method instead of concatenating strings
   - Removed some (now) redundant file constants and references (in `StringTextUtils` and `Config`)
@@ -13,6 +16,10 @@
   - Capitalized some static final variables
   - Changed some stuff about how the config is initialized, read, and written to disk
   - Refactor StringTextUtils to TextUtils
+  - Restructured the powerhouse `ChatHudMixin#modifyMessage(Text, boolean)` method to be more modular with message reconstruction
+  - Moved the bulk of the `modifyMessage` method to ChatUtils to help development and greatly ease future troubleshooting
+  - Tweaked the `MessageHandlerMixin#cacheGameData` method to use built-in methods instead of rewriting the same thing
+  - Removed the `VANILLA_MESSAGE` matcher in `ChatUtils` because it was redundant
 
 ## Chat Patches `202.6.3` for Minecraft 1.20.2 on Fabric, Quilt
 - Should be compatible with Quilt again! (requires Loader 0.23.0+)

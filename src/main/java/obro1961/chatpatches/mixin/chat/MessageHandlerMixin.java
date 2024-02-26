@@ -3,7 +3,6 @@ package obro1961.chatpatches.mixin.chat;
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.message.MessageHandler;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SignedMessage;
@@ -14,7 +13,6 @@ import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import obro1961.chatpatches.util.ChatUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,8 +32,7 @@ import java.util.UUID;
 @Environment(EnvType.CLIENT)
 @Mixin(MessageHandler.class)
 public abstract class MessageHandlerMixin {
-    @Shadow @Final private MinecraftClient client;
-
+	@Shadow protected abstract UUID extractSender(Text text);
 
     /**
      * Caches the metadata of the last *player* message received by the client.
@@ -57,12 +54,11 @@ public abstract class MessageHandlerMixin {
      */
     @Inject(method = "onGameMessage", at = @At("HEAD"))
     private void cacheGameData(Text message, boolean overlay, CallbackInfo ci) {
-        String string = TextVisitFactory.removeFormattingCodes(message);
-        String name = ChatUtils.VANILLA_MESSAGE.matcher(string).matches() ? StringUtils.substringBetween(string, "<", ">") : null;
-        UUID uuid = name == null ? Util.NIL_UUID : client.getSocialInteractionsManager().getUuid(name);
+        String name = StringUtils.substringBetween(TextVisitFactory.removeFormattingCodes(message), "<", ">");
+        UUID id = extractSender(message);
 
-        ChatPatches.msgData = !uuid.equals(Util.NIL_UUID)
-            ? new ChatUtils.MessageData(new GameProfile(uuid, name), new Date(), true)
+        ChatPatches.msgData = !id.equals(Util.NIL_UUID)
+            ? new ChatUtils.MessageData(new GameProfile(id, name), new Date(), true)
             : ChatUtils.NIL_MSG_DATA;
     }
 }

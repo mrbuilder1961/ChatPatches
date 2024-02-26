@@ -1,5 +1,7 @@
 package obro1961.chatpatches.config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
@@ -10,6 +12,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.text.*;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.ChatUtils;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -31,9 +34,9 @@ import static obro1961.chatpatches.util.TextUtils.text;
 
 public class Config {
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
+    public static final Config DEFAULTS = new Config();
 
-    private static final com.google.gson.Gson GSON = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-    private static final Config DEFAULTS = new Config();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
 	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
@@ -117,10 +120,10 @@ public class Config {
      * player entity and have both a valid name and UUID.
      */
     public MutableText formatPlayername(GameProfile player) {
+        // todo add some error handling here
         PlayerEntity entity = MinecraftClient.getInstance().world.getPlayerByUuid(player.getId());
         Team team = entity.getScoreboard().getPlayerTeam(player.getName());
         Style style = entity.getDisplayName().getStyle().withColor( entity.getTeamColorValue() != 0xffffff ? entity.getTeamColorValue() : chatNameColor );
-
 
         if(team != null) {
             // note: doesn't set the style on every append, as it's already set in the parent text. might cause issues?
@@ -146,7 +149,8 @@ public class Config {
 
     public Text makeBoundaryLine(String levelName) {
         // constructs w empty texts to not throw errors when comparing for the dupe counter
-        return Text.empty().append( makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor)) ).append(Text.empty());
+        MutableText boundary = makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor));
+        return ChatUtils.buildMessage(null, null, boundary, null);
     }
 
 
@@ -157,11 +161,8 @@ public class Config {
             LOGGER.info("[Config.read] No config file found; using default values.");
         } else {
             try {
-                // sets each config option to the loaded value
                 String rawData = Files.readString(PATH);
                 config = GSON.fromJson(rawData, config.getClass());
-                //Config loaded = GSON.fromJson(rawData, config.getClass());
-                //getOptions().forEach(opt -> config.getOption(opt.key).set( loaded.getOption(opt.key).val ));
                 LOGGER.info("[Config.read] Loaded config info from '{}'!", PATH);
             } catch(JsonIOException | JsonSyntaxException e) {
                 writeCopy();
@@ -190,7 +191,7 @@ public class Config {
      * log any changes nor does it write to disk.
      */
     public static void reset() {
-        getOptions().forEach(opt -> config.getOption(opt.key).set(opt.def));
+        getOptions().forEach(opt -> getOption(opt.key).set(opt.def));
     }
 
     /**

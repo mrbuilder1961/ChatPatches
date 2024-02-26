@@ -61,6 +61,7 @@ import static obro1961.chatpatches.ChatPatches.id;
 import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
+import static obro1961.chatpatches.util.ChatUtils.*;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
 
 /**
@@ -174,29 +175,24 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
 			// hover menu buttons, column two
-			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> Formatting.strip( selectedLine.content().getString() ).replaceAll(TextUtils.AMPERSAND_REGEX, "")));
+			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> Formatting.strip( selectedLine.content().getString() )));
 			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> TextUtils.reorder( selectedLine.content().asOrderedText(), true )));
 			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serializer.toJson(selectedLine.content())));
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
-			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString()));
+			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> getPart(selectedLine.content(), TIMESTAMP_INDEX).getString()));
 			hoverButtons.put(COPY_TIMESTAMP_HOVER_TEXT, of(1, COPY_TIMESTAMP_HOVER_TEXT, () -> {
-				HoverEvent hoverEvent = selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getStyle().getHoverEvent();
-				if(hoverEvent != null)
-					return hoverEvent.getValue(SHOW_TEXT).getString();
-				else
-					return "";
+				HoverEvent hoverEvent = getPart(selectedLine.content(), TIMESTAMP_INDEX).getStyle().getHoverEvent();
+				return hoverEvent != null ? hoverEvent.getValue(SHOW_TEXT).getString() : "";
 			}));
 			hoverButtons.put(COPY_NAME, of(1, COPY_NAME, () -> {
-				Text message = selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX);
-				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
-				HoverEvent.EntityContent player = text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY) : null;
-				return player != null ? player.name.getString() : text.getString();
+				HoverEvent senderHoverEvent = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle().getHoverEvent();
+				HoverEvent.EntityContent player = senderHoverEvent != null ? senderHoverEvent.getValue(SHOW_ENTITY) : null;
+				return player != null ? player.name.getString() : getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getString();
 			}));
 			hoverButtons.put(COPY_UUID, of(1, COPY_UUID, () -> {
-				Text message = selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX);
-				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
-				HoverEvent.EntityContent player = text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY) : null;
-				return player != null ? player.uuid.toString() : text.getString();
+				HoverEvent senderHoverEvent = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle().getHoverEvent();
+				HoverEvent.EntityContent player = senderHoverEvent != null ? senderHoverEvent.getValue(SHOW_ENTITY) : null;
+				return player != null ? player.uuid.toString() : getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getString();
 			}));
 
 			// main menu buttons, column one
@@ -204,8 +200,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			mainButtons.put(COPY_MENU_LINKS, of(0, COPY_MENU_LINKS, hoverButtons.get(COPY_LINK_N.apply(0))));
 			mainButtons.put(COPY_MENU_TIMESTAMP, of(0, COPY_MENU_TIMESTAMP, hoverButtons.get(COPY_TIMESTAMP_TEXT), hoverButtons.get(COPY_TIMESTAMP_HOVER_TEXT)));
 			mainButtons.put(COPY_UNIX, of(0, COPY_UNIX, () -> {
-				List<Text> siblings = selectedLine.content().getSiblings();
-				String time = siblings.size() > ChatUtils.TIMESTAMP_INDEX ? siblings.get(ChatUtils.TIMESTAMP_INDEX).getStyle().getInsertion() : null;
+				String time = getPart(selectedLine.content(), TIMESTAMP_INDEX).getStyle().getInsertion();
 				return time != null && !time.isEmpty() ? time : "?";
 			}));
 			mainButtons.put(COPY_MENU_SENDER, of(0, COPY_MENU_SENDER, hoverButtons.get(COPY_NAME), hoverButtons.get(COPY_UUID)));
@@ -614,13 +609,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		}
 
 		// add timestamp button
-		if( !selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString().isBlank() )
+		if( !getPart(selectedLine.content(), TIMESTAMP_INDEX).getString().isBlank() )
 			mainButtons.get(COPY_MENU_TIMESTAMP).readyToRender(true);
 		mainButtons.get(COPY_UNIX).readyToRender(true);
 
 		// add player data and reply buttons
-		Text originalMessage = selectedLine.content().getSiblings().size() > ChatUtils.MSG_INDEX ? selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX) : Text.empty();
-		Style style = originalMessage.getSiblings().size() > 0 ? originalMessage.getSiblings().get(ChatUtils.MSG_NAME_INDEX).getStyle() : Style.EMPTY;
+		Style style = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		if( !style.equals(Style.EMPTY) && style.getHoverEvent() != null && style.getHoverEvent().getAction() == HoverEvent.Action.SHOW_ENTITY ) {
 			PlayerListEntry player = client.getNetworkHandler().getPlayerListEntry( UUID.fromString(hoverButtons.get(COPY_UUID).copySupplier.get()) );
 			// gets the skin texture from the player, then the profile, and finally the NIL profile if all else fails

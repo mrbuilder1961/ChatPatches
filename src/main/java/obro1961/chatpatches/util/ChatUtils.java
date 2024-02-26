@@ -5,7 +5,9 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.ChatMessages;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -14,8 +16,8 @@ import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.TextUtils.copyWithoutContent;
@@ -27,14 +29,76 @@ import static obro1961.chatpatches.util.TextUtils.reorder;
 public class ChatUtils {
 	public static final UUID NIL_UUID = new UUID(0, 0);
 	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
-	public static final int TIMESTAMP_INDEX = 0, MSG_INDEX = 1, DUPE_COUNTER_INDEX = 2; // indices of all main (modified message) components
-	public static final int MSG_NAME_INDEX = 0, MSG_MSG_INDEX = 1, MSG_FORMATTED_TEXT_INDEX = 2; // indices of all MSG_INDEX components
+	public static final int TIMESTAMP_INDEX = 0, MESSAGE_INDEX = 1, DUPE_INDEX = 2; // indices of all main (modified message) components
+	public static final int MSG_TEAM_INDEX = 0, MSG_SENDER_INDEX = 1, MSG_CONTENT_INDEX = 2; // indices of all MESSAGE_INDEX components
+
 	/**
-	 * Matches a vanilla message, with captures for the playername and message.
-	 * Considers a message invalid if {@link net.minecraft.SharedConstants#isValidChar(char)}
-	 * would return false.
+	 * Returns the message component at the given index;
+	 * returns an empty Text if it doesn't exist. This
+	 * prevents {@code IndexOutOfBoundsException} and
+	 * {@code NullPointerException} errors.
+	 *
+	 * @apiNote Intended to be used with the MAIN
+	 * indices specified in this class.
 	 */
-	public static final Pattern VANILLA_MESSAGE = Pattern.compile("^<(?<name>[a-zA-Z0-9_]{3,16})> (?<message>[^\\u0000-\\u001f\\u007f§]+)$");
+	public static Text getPart(Text message, int index) {
+		return message.getSiblings().size() > index ? message.getSiblings().get(index) : Text.empty();
+	}
+
+	/**
+	 * Returns the message component at the given index of the
+	 * given message; returns an empty Text if it doesn't exist.
+	 *
+	 * @apiNote Intended to be used with the {@code MSG}
+	 * indices specified in this class.
+	 */
+	public static Text getMsgPart(Text message, int index) {
+		return getPart(getPart(message, MESSAGE_INDEX), index);
+	}
+
+	/**
+	 * Builds a chat message from the given components.
+	 * If anything is {@code null}, it is replaced with
+	 * an empty Text, aside from {@code rootStyle} which
+	 * is replaced with {@link Style#EMPTY}.
+	 *
+	 * @param rootStyle The style of the root Text component
+	 * @param first   The first component of the message,
+	 *                  either the timestamp or team name
+	 * @param second   The second component of the message,
+	 *                  either the message or the sender
+	 * @param third The third component of the message,
+	 *                  either the dupe counter or the message
+	 *                  content
+	 */
+	public static MutableText buildMessage(Style rootStyle, Text first, Text second, Text third) {
+		MutableText root = Text.empty();
+
+		if(rootStyle != null && !rootStyle.equals(Style.EMPTY))
+			root.setStyle(rootStyle);
+
+		first = Objects.requireNonNullElse(first, Text.empty());
+		second = Objects.requireNonNullElse(second, Text.empty());
+		third = Objects.requireNonNullElse(third, Text.empty());
+
+		return root.append(first).append(second).append(third);
+	}
+
+	/**
+	 * todo doc AFTER todo moving impl here
+	 */
+	public static Text modifyMessage(Text message, boolean vanilla) {
+		// early if-return checks
+
+		// assign variables
+
+		// declare message parts
+		// if TranslatableTextContent and known keys, store pre-formatted parts instantly
+		// else do typical formatting stuff (except optimize it to make it actually work and not ugly)
+
+		// final cleanup and logging
+		return message;
+	}
 
 	/**
 	 * Tries to condense the {@code index} message into the incoming message
@@ -78,26 +142,27 @@ public class ChatUtils {
 
 		// IF the comparing and incoming message bodies are case-insensitively equal,
 		// AND (if we need to check the style) if the messages' metadata are equal, continue
-		Text incMsg = incomingParts.get(MSG_INDEX), compMsg = comparingParts.get(MSG_INDEX);
+		Text incMsg = incomingParts.get(MESSAGE_INDEX), compMsg = comparingParts.get(MESSAGE_INDEX);
 		boolean equalIgnoreCase = incMsg.getString().equalsIgnoreCase( compMsg.getString() );
 		if( equalIgnoreCase && (!config.counterCheckStyle || copyWithoutContent(incMsg).equals(copyWithoutContent(compMsg))) ) {
 
 			// info: according to some limited testing, incoming messages (incomingParts) will never contain a dupe counter, so it's been omitted from this check
 			int dupes = (
-				comparingParts.size() > DUPE_COUNTER_INDEX
-					? Integer.parseInt( comparingParts.get(DUPE_COUNTER_INDEX).getString()
+				comparingParts.size() > DUPE_INDEX
+					? Integer.parseInt( comparingParts.get(DUPE_INDEX).getString()
 						.replaceAll("(§[0-9a-fk-or])+", "")
 						.replaceAll("\\D", "")
+						.replaceAll("^$", "1") // if the string is empty, replace it with 1 (to prevent NumberFormatException)
 					)
 					: 1
 			) + 1;
 
 
 			// i think when old messages are re-added into the chat, it keeps the dupe counter so we have to use set() instead of add() sometimes
-			if(incomingParts.size() > DUPE_COUNTER_INDEX)
-				incomingParts.set(DUPE_COUNTER_INDEX, config.makeDupeCounter(dupes));
+			if(incomingParts.size() > DUPE_INDEX)
+				incomingParts.set(DUPE_INDEX, config.makeDupeCounter(dupes));
 			else
-				incomingParts.add(DUPE_COUNTER_INDEX, config.makeDupeCounter(dupes));
+				incomingParts.add(DUPE_INDEX, config.makeDupeCounter(dupes));
 
 			messages.remove(index);
 
