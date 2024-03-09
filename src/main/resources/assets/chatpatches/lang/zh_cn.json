@@ -72,6 +72,7 @@
     "text.chatpatches.hideSearchButton": "隐藏搜索按钮",
     "text.chatpatches.vanillaClearing": "原版聊天清除",
     "text.chatpatches.searchPrefix": "搜索前缀",
+    "text.chatpatches.completionDelay": "输入补全延迟",
     "text.chatpatches.desc.chatLog": "是否保存聊天记录，以便在另一个游戏会话中重新添加到聊天中？",
     "text.chatpatches.desc.chatWidth": "聊天框的宽度。这将覆盖原版的默认设置，允许更大的宽度。设置为0以使用原版设置而不进行覆盖。",
     "text.chatpatches.desc.chatMaxMessages": "允许保存的最大聊天消息数量。原版限制为100，这个模组可以增加到32767。请记住，更高的最大值意味着更高的内存使用。",
@@ -82,6 +83,7 @@
     "text.chatpatches.desc.hideSearchButton": "是否隐藏搜索按钮？注意，这将禁用所有搜索功能。",
     "text.chatpatches.desc.vanillaClearing": "是否像原版那样在离开一个世界/服务器后清除聊天消息？注意，这将完全清除聊天和聊天记录。",
     "text.chatpatches.desc.searchPrefix": "是否在按了上或下按键后，将聊天框内文字设为前缀和光标前的字符相同的聊天记录？原版会设为相邻的消息。",
+    "text.chatpatches.desc.completionDelay": "输入时显示自动补全的延迟毫秒数。设置为0以使用原版行为。",
 
     "text.chatpatches.copyReplyFormat": "回复文本格式",
     "text.chatpatches.copyColor": "消息选择颜色",
