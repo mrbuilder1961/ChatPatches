@@ -490,10 +490,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		setChatFromHistory.call(chatScreen, newOffset);
 
-		this.chatField.setCursor(cursor, false);
-
-		this.chatInputSuggestor.setWindowActive(false);
-		this.chatInputSuggestor.refresh();
+		this.chatField.setSelectionStart(cursor);
+		this.chatField.setSelectionEnd(cursor);
 	}
 
 
