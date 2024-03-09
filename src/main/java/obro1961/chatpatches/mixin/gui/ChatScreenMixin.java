@@ -119,7 +119,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Shadow private String originalChatText;
 
 	@Shadow private int messageHistorySize;
-	@Shadow ChatInputSuggestor chatInputSuggestor;
 
 	protected ChatScreenMixin(Text title) { super(title); }
 
