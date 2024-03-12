@@ -18,6 +18,7 @@
   - Refactor StringTextUtils to TextUtils
   - Restructured the powerhouse `ChatHudMixin#modifyMessage(Text, boolean)` method to be more modular with message reconstruction
   - Moved the bulk of the `modifyMessage` method to ChatUtils to help development and greatly ease future troubleshooting
+  - Created a new `ChatUtils#getArg(..)` method to avoid the elusive `ClassCastException`s that kept getting thrown
   - Tweaked the `MessageHandlerMixin#cacheGameData` method to use built-in methods instead of rewriting the same thing
   - Removed the `VANILLA_MESSAGE` matcher in `ChatUtils` because it was redundant
 

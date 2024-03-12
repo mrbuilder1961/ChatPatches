@@ -119,28 +119,38 @@ public class Config {
      * @implNote {@code player} must reference a valid, existing
      * player entity and have both a valid name and UUID.
      */
-    public MutableText formatPlayername(GameProfile player) {
-        // todo add some error handling here
-        PlayerEntity entity = MinecraftClient.getInstance().world.getPlayerByUuid(player.getId());
-        Team team = entity.getScoreboard().getPlayerTeam(player.getName());
-        Style style = entity.getDisplayName().getStyle().withColor( entity.getTeamColorValue() != 0xffffff ? entity.getTeamColorValue() : chatNameColor );
+    public MutableText formatPlayername(GameProfile profile) {
+        Style style = BLANK_STYLE.withColor(chatNameColor);
+        try {
+            PlayerEntity entity = MinecraftClient.getInstance().world.getPlayerByUuid(profile.getId());
+            Team team = null;
 
-        if(team != null) {
-            // note: doesn't set the style on every append, as it's already set in the parent text. might cause issues?
-            // if the player is on a team, add the prefix and suffixes from the config AND team (if they exist) to the formatted name
-            MutableText playername = text(player.getName());
-            Text configPrefix = text(chatNameFormat.split("\\$")[0]);
-            Text configSuffix = text(chatNameFormat.split("\\$")[1] + " ");
+            if(entity != null) {
+                team = entity.getScoreboard().getPlayerTeam(profile.getName());
+                style = entity.getDisplayName().getStyle().withColor( entity.getTeamColorValue() != 0xffffff ? entity.getTeamColorValue() : chatNameColor );
+            }
 
-            return Text.empty().setStyle(style)
-                .append(configPrefix)
-                .append(team.getPrefix())
-                .append(playername)
-                .append(team.getSuffix())
-                .append(configSuffix);
-        } else {
-            return makeObject(chatNameFormat, player.getName(), "", " ", style);
+            if(team != null) {
+                // note: doesn't set the style on every append, as it's already set in the parent text. might cause issues?
+                // if the player is on a team, add the prefix and suffixes from the config AND team (if they exist) to the formatted name
+                MutableText playername = text(profile.getName());
+                String[] configFormat = chatNameFormat.split("\\$");
+                Text configPrefix = text(configFormat[0]);
+                Text configSuffix = text(configFormat[1] + " ");
+
+                return Text.empty().setStyle(style)
+                    .append(configPrefix)
+                    .append(team.getPrefix())
+                    .append(playername)
+                    .append(team.getSuffix())
+                    .append(configSuffix);
+            }
+        } catch(Exception e) {
+            LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
+            ChatPatches.logInfoReportMessage(e);
         }
+
+        return makeObject(chatNameFormat, profile.getName(), "", " ", style);
     }
 
     public MutableText makeDupeCounter(int dupes) {
@@ -236,7 +246,9 @@ public class Config {
         try {
             return new ConfigOption<>( (T)config.getClass().getField(key).get(config), (T)config.getClass().getField(key).get(DEFAULTS), key );
         } catch(IllegalAccessException | NoSuchFieldException e) {
-            LOGGER.error("[Config.getOption({})] An error occurred while trying to get an option value, please report this on GitHub:", key, e);
+            LOGGER.error("[Config.getOption({})] An error occurred while trying to get an option value!", key);
+            ChatPatches.logInfoReportMessage(e);
+
             return new ConfigOption<>( (T)new Object(), (T)new Object(), key );
         }
     }

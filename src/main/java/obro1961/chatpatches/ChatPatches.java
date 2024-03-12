@@ -84,6 +84,25 @@ public class ChatPatches implements ClientModInitializer {
 
 
 	/**
+	 * Logs an error-level message telling the user to report
+	 * the given error. The class and method of the caller is
+	 * provided from a {@link StackWalker}.
+	 * <br><br>
+	 * Outputs the following message:
+	 * <pre>
+	 * [$class.$method] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
+	 * (error)
+	 * </pre>
+	 */
+	public static void logInfoReportMessage(Throwable error) {
+		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+		String clazz = walker.getCallerClass().getSimpleName();
+		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
+		method = method.isBlank() ? error.getStackTrace()[0].getMethodName() : method;
+		LOGGER.error("[%s.%s] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\".formatted(clazz, method), error);
+	}
+
+	/**
 	 * Creates a new Identifier using the ChatPatches mod ID.
 	 */
 	public static Identifier id(String path) {

@@ -11,11 +11,7 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.util.CommandHistoryManager;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableTextContent;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -33,12 +29,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.ChatPatches.msgData;
 import static obro1961.chatpatches.util.ChatUtils.MESSAGE_INDEX;
 import static obro1961.chatpatches.util.ChatUtils.getPart;
 
@@ -134,16 +127,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     /**
      * Modifies the incoming message by adding timestamps, nicer
      * player names, hover events, and duplicate counters in conjunction with
-     * {@link #addCounter(Text, boolean)}
-     *
-     * @implNote
-     * <li>Doesn't modify when {@code refreshing} is true, as that signifies
-     * re-rendering of chat messages on the hud.</li>
-     * <li>This method causes all messages passed to it to be formatted in
-     * a new structure for clear data access. This is mostly done using
-     * {@link MutableText#append(Text)}, which deliberately puts message
-     * components at specific indices, all of which are laid out in
-     * {@link ChatUtils}.</li>
+     * {@link #addCounter(Text, boolean)}.
+     * <br>
+     * See {@link ChatUtils#modifyMessage(Text, boolean)} for detailed
+     * implementation specifications.
      */
     @ModifyVariable(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
@@ -151,86 +138,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         argsOnly = true
     )
     private Text modifyMessage(Text m, @Local(argsOnly = true) boolean refreshing) {
-        if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
-            return addCounter(m, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
-
-        Style style = m.getStyle();
-        boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
-        boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
-        Date now = lastEmpty ? new Date() : msgData.timestamp();
-        String nowStr = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
-
-//ChatPatches.LOGGER.warn("received {} message: '{}'", m.getContent().getClass().getSimpleName(), m.getString());
-
-        MutableText timestamp = (config.time && !boundary) ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
-        MutableText content = Text.empty().setStyle(style);
-
-        // reconstruct the player message if it's in the vanilla format and it should be reformatted
-        if(!lastEmpty && !boundary && msgData.vanilla()) {
-            // if the message is translatable, then we know exactly where everything is
-            if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches("chat.type.(text|team.(text|sent))")) {
-                String key = ttc.getKey();
-
-                // adds the team name for team messages
-                if(key.startsWith("chat.type.team.")) {
-                    MutableText teamPart = Text.empty();
-                    // adds the preceding arrow for sent team messages
-                    if(key.endsWith("sent"))
-                        teamPart.append(Text.literal("-> ").setStyle(style));
-
-                    // adds the team name for team messages
-                    teamPart.append( ((MutableText)ttc.getArg(0)).append(" ") );
-
-                    content.append(teamPart);
-                } else {
-                    content.append(""); // if there isn't a team message, add an empty string to keep the index constant
-                }
-
-                // adds the formatted playername and content for all message types
-                content.append(config.formatPlayername(msgData.sender())); // sender data is already known
-                content.append((Text) ttc.getArg(ttc.getArgs().length - 1)); // always at the end
-            } else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
-                // collect all message parts into one list, including the root TextContent
-                // (assuming this accounts for all parts, TextContents, and siblings)
-                List<Text> parts = Util.make(new ArrayList<>(m.getSiblings().size() + 1), a -> {
-                    if(!m.equals(Text.EMPTY))
-                        a.add( m.copyContentOnly().setStyle(style) );
-
-                    a.addAll( m.getSiblings() );
-                });
-
-                MutableText realContent = Text.empty();
-				// find the index of the end of a '<%s> %s' message
-				Text firstPart = parts.stream().filter(p -> p.getString().contains(">")).findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "' !"));
-                String afterEndBracket = firstPart.getString().split(">")[1]; // just get the part after the closing bracket, we know the start
-
-                // adds the part after the closing bracket but before any remaining siblings, if it exists
-                if(!afterEndBracket.isEmpty())
-                    realContent.append( Text.literal(afterEndBracket).setStyle(firstPart.getStyle()) );
-
-                // we know everything remaining is message content parts, so add everything
-                for(int i = parts.indexOf(firstPart) + 1; i < parts.size(); i++)
-                    realContent.append(parts.get(i));
-
-                content.append(config.formatPlayername(msgData.sender())); // sender data is already known
-                content.append(realContent); // adds the reconstructed message content
-            }
-//ChatPatches.LOGGER.warn("DID!!! reformat, content: '{}' aka '{}'+{}", content.getString(), content.copyContentOnly().getString(), content.getSiblings());//delete:-
-        } else {
-            // don't reformat if it isn't vanilla or needed
-            content = m.copy();
-//ChatPatches.LOGGER.warn("didn't reformat, content: '{}' aka '{}'+{}", content.getString(), content.copyContentOnly().getString(), content.getSiblings());//delete:-
-        }
-
-        // assembles constructed message and adds a duplicate counter according to the #addCounter method
-        Text modified = addCounter( ChatUtils.buildMessage(style, timestamp, content, null), false );
-/*ChatPatches.LOGGER.info("------ parts of message ------\n\ttimestamp: '{}'\n\tmessage: ('{}')\n\t\tteam: '{}'\n\t\tsender: '{}'\n\t\tcontent: '{}'\n\tdupe: '{}'\n------",
-ChatUtils.getPart(modified, 0), ChatUtils.getPart(modified, 1), ChatUtils.getMsgPart(modified, 0), ChatUtils.getMsgPart(modified, 1), ChatUtils.getMsgPart(modified, 2), ChatUtils.getPart(modified, 2)
-);*/ //delete:-
-        ChatLog.addMessage(modified);
-        msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
-        return modified;
+        return addCounter(ChatUtils.modifyMessage(m, refreshing), refreshing);
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/ArrayListDeque;size()I"))
@@ -311,10 +219,11 @@ ChatUtils.getPart(modified, 0), ChatUtils.getPart(modified, 1), ChatUtils.getMsg
             }
         } catch(IndexOutOfBoundsException e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method.");
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Either way, this was caused by a bug or mod incompatibility. Please report this on GitHub or on the Discord!", e);
+            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method. Either way,");
+            ChatPatches.logInfoReportMessage(e);
         } catch(Exception e) {
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error. Please report this on GitHub or on the Discord! /!\\", e);
+            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error! /!\\");
+            ChatPatches.logInfoReportMessage(e);
         }
 
         return incoming;
