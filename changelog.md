@@ -1,8 +1,42 @@
 # Changelog
 
-## Chat Patches `204.6.3` for Minecraft 1.20.4 on Fabric, Quilt
+## Chat Patches `204.6.4` for Minecraft 1.20.2 on Fabric, Quilt
+### 204.6.4 part (Bumped to 204.6.4 to match the 1.20.2 version)
+- Fixed errors with regex input on the search screen not updating the text color
+- Made ChatSearchSettings save when the chat screen is closed then reopened; resets on game restart
+- Fixed team name colors, prefixes, and suffixes being ignored when `chatNameFormat` is customized ([#115](https://www.github.com/mrbuilder1961/ChatPatches/issues/115))
+- Added a new runnable config option to reload the config from disk
+- Added a minor optimization to the way messages are modified to largely simplify the process in a few scenarios [prepub impl]
+- Switched the text in the search settings screen to use pre-bundled translations (ON/OFF instead of a visual switch)
+- Fixed the Copy String > Copy Raw String button in the copy menu removing &<code> formattings
+- **Dev notes:**
+  - Changed the `CONFIG_PATH` and `CHATLOG_PATH` variables to use the `Path#resolve(String)` method instead of concatenating strings
+  - Removed some (now) redundant file constants and references (in `StringTextUtils` and `Config`)
+  - Condensed most `make`... methods in `Config` to be less repetitive
+  - `formatPlayername(GameProfile)` now accounts for team metadata as mentioned in the #115 fix
+  - Capitalized some static final variables
+  - Changed some stuff about how the config is initialized, read, and written to disk
+  - Refactor StringTextUtils to TextUtils
+  - Restructured the powerhouse `ChatHudMixin#modifyMessage(Text, boolean)` method to be more modular with message reconstruction
+  - Moved the bulk of the `modifyMessage` method to ChatUtils to help development and greatly ease future troubleshooting
+  - Created a new `ChatUtils#getArg(..)` method to avoid the elusive `ClassCastException`s that kept getting thrown
+  - Tweaked the `MessageHandlerMixin#cacheGameData` method to use built-in methods instead of rewriting the same thing
+  - Removed the `VANILLA_MESSAGE` matcher in `ChatUtils` because it was redundant
+
+## Chat Patches `204.6.3` for Minecraft 1.20.2 on Fabric, Quilt (not actually published, see above)
 - Should be compatible with Quilt again! (requires Loader 0.23.0+)
   - **Note that Chat Patches still isn't developed directly for Quilt, issues may still arise**
+- Added the `counterCheckStyle` option, which controls checking style data when condensing duplicate messages ([#144](https://www.github.com/mrbuilder1961/ChatPatches/issues/144))
+- Added the `chatNameColor` option, which overrides the color of playernames in vanilla chat messages. ([#133](https://www.github.com/mrbuilder1961/ChatPatches/issues/145))
+- Removed MoreChatHistory as incompatible, due to MixinExtra's compatibility injectors! (it's actually been compatible for a while, but I forgot to remove it)
+- **Dev info:**
+  - Overhauled the publishing system for CurseForge and Modrinth, revived the GitHub Releases channel, and added a webhook to the Discord server to
+    automatically post new releases! Now only uses [modmuss50-publish-plugin](https://github.com/modmuss50/mod-publish-plugin), which is much cleaner and easier to use
+  - Moved most volatile Gradle variables to `gradle.properties` to make it easier to change them
+  - "Synced" some parts of the `build.gradle` file with the fabric-example-mod template to fix old warnings and keep it up to date
+  - Added two specific methods to `StringTextUtils` for use with dupe counter methods, to work with the new `counterCheckStyle` option
+  - Removed the weird returning message reconstruction segment from `ChatUtils#getCondensedMessage(Text, int)` because it was actually unnecessary!
+  - Added some uncertain notes about certain aspects of the dupe counter process
 
 ## Chat Patches `204.6.2` for Minecraft 1.20.4 on Fabric
 ### - Effectively synced with the 1.20.2 version

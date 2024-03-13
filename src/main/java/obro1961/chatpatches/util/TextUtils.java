@@ -1,10 +1,7 @@
 package obro1961.chatpatches.util;
 
 import com.google.common.collect.Lists;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 
 import java.util.List;
@@ -14,18 +11,10 @@ import java.util.regex.Pattern;
 /**
  * A class containing various string and {@link Text} related utilities.
  */
-public class StringTextUtils {
+public class TextUtils {
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
 
-
-	/** Goes through each regex of {@code regexes} and removes <b>all</b> matches from {@code str}. */
-	public static String delAll(String str, String... regexes) {
-		for(String regex : regexes)
-			str = str.replaceAll(regex, "");
-
-		return str;
-	}
 
 	/**
 	 * Replaces all {@code $} characters in {@code str} with {@code variable}.
@@ -52,11 +41,32 @@ public class StringTextUtils {
 	}
 
 	/**
+	 * Creates a new MutableText object with explicit
+	 * sibling and style data specified. Behaves
+	 * effectively the same as the private constructor
+	 * {@link MutableText#MutableText(TextContent, List, Style)}.
+	 */
+	public static MutableText newText(TextContent content, List<Text> siblings, Style style) {
+		MutableText text = MutableText.of(content).setStyle(style);
+		siblings.forEach(text::append);
+		return text;
+	}
+
+	/**
+	 * Returns a copy of {@code text} with an empty content.
+	 * Useful for comparing {@link Text} objects'
+	 * metadata (style and siblings) only.
+	 * */
+	public static MutableText copyWithoutContent(Text text) {
+		return newText(PlainTextContent.EMPTY, text.getSiblings(), text.getStyle());
+	}
+
+	/**
 	 * Formats a String with {@code &} formatting codes into a {@link Text}.
 	 * Uses the same base algorithm as {@link Text#of(String)}.
 	 * Doesn't support hex colors.
 	 */
-	public static MutableText toText(String unformatted) {
+	public static MutableText text(String unformatted) {
 		return Text.literal(
 			unformatted
 				.replaceAll(NO_BACKSLASH_AMPERSAND_REGEX, "§$1")
@@ -91,7 +101,7 @@ public class StringTextUtils {
 		});
 
 		// trusting this for now...
-		return delAll( reordered.toString(), "^(&r)+", "(&r)+$" ); // strips any redundant reset codes
+		return reordered.toString().replaceAll("^(&r)+|(&r)+$", ""); // strips any redundant reset codes
 	}
 
 	/**

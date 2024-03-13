@@ -22,18 +22,16 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-import static java.io.File.separator;
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
- * Represents the chat log file in the run directory located at {@link ChatLog#CHATLOG_PATH}.
+ * Represents the chat log file in the run directory located at {@link ChatLog#PATH}.
  */
 public class ChatLog {
-    public static final String CHATLOG_PATH = FabricLoader.getInstance().getGameDir().toString() + separator + "logs" + separator + "chatlog.json";
+    public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
 
-    private static final Path file = Path.of(CHATLOG_PATH);
-    private static final Gson json = new com.google.gson.GsonBuilder()
+    private static final Gson GSON = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Text.class, (JsonSerializer<Text>) (src, type, context) -> Text.Serialization.toJsonTree(src))
         .registerTypeAdapter(Text.class, (JsonDeserializer<Text>) (json, type, context) -> Text.Serialization.fromJsonTree(json))
         .registerTypeAdapter(Text.class, (InstanceCreator<Text>) type -> Text.empty())
@@ -63,47 +61,47 @@ public class ChatLog {
 
 
     /**
-     * Deserializes the chat log from {@link #CHATLOG_PATH} and resolves message data from it.
+     * Deserializes the chat log from {@link #PATH} and resolves message data from it.
      *
      * @implNote
      * <ol>
-     *   <li> Checks if the file at {@link #CHATLOG_PATH} exists.
+     *   <li> Checks if the file at {@link #PATH} exists.
      *   <li> If it doesn't exist, {@code rawData} just uses {@link Data#EMPTY_DATA}.
      *   <li> If it does exist, it will convert the ChatLog file to UTF-8 if it isn't already and save it to {@code rawData}.
      *   <li> If {@code rawData} contains invalid data, resets {@link #data} to a default, empty {@link Data} object.
-     *   <li> Then it uses {@link #json} to convert {@code rawData} into a usable {@link Data} object.
+     *   <li> Then it uses {@link #GSON} to convert {@code rawData} into a usable {@link Data} object.
      *   <li> Removes any overflowing messages.
      *   <li> If it successfully resolved, then returns and logs a message.
      */
     public static void deserialize() {
         String rawData = Data.EMPTY_DATA;
 
-        if(Files.exists(file)) {
+        if(Files.exists(PATH)) {
             try {
-                rawData = Files.readString(file);
+                rawData = Files.readString(PATH);
 
             } catch(MalformedInputException notUTF8) { // thrown if the file is not encoded with UTF-8
                 ChatPatches.LOGGER.warn("[ChatLog.deserialize] ChatLog file encoding was '{}', not UTF-8. Complex text characters may have been replaced with question marks.", Charset.defaultCharset().name());
 
                 try {
                     // force-writes the string as UTF-8
-                    Files.writeString(file, new String(Files.readAllBytes(file)), StandardOpenOption.TRUNCATE_EXISTING);
-                    rawData = Files.readString(file);
+                    Files.writeString(PATH, new String(Files.readAllBytes(PATH)), StandardOpenOption.TRUNCATE_EXISTING);
+                    rawData = Files.readString(PATH);
 
                 } catch(IOException ioexc) {
-                    ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't rewrite the ChatLog at '{}', resetting:", CHATLOG_PATH, ioexc);
+                    ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't rewrite the ChatLog at '{}', resetting:", PATH, ioexc);
 
                     // final attempt to reset the file
                     try {
                         rawData = Data.EMPTY_DATA; // just in case of corruption from previous failures
-                        Files.writeString(file, Data.EMPTY_DATA, StandardOpenOption.TRUNCATE_EXISTING);
+                        Files.writeString(PATH, Data.EMPTY_DATA, StandardOpenOption.TRUNCATE_EXISTING);
                     } catch(IOException ioerr) {
-                        ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't reset the ChatLog at '{}':", CHATLOG_PATH, ioerr);
+                        ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't reset the ChatLog at '{}':", PATH, ioerr);
                     }
                 }
 
             } catch(IOException e) {
-                ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't access the ChatLog at '{}':", CHATLOG_PATH, e);
+                ChatPatches.LOGGER.error("[ChatLog.deserialize] Couldn't access the ChatLog at '{}':", PATH, e);
                 rawData = Data.EMPTY_DATA; // just in case of corruption from failures
             }
         } else {
@@ -122,7 +120,7 @@ public class ChatLog {
         }
 
         try {
-            data = json.fromJson(rawData, Data.class);
+            data = GSON.fromJson(rawData, Data.class);
             removeOverflowData();
         } catch(com.google.gson.JsonSyntaxException e) {
             ChatPatches.LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
@@ -136,12 +134,12 @@ public class ChatLog {
 
         ChatPatches.LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}'",
 			data.messages.size(), data.history.size(),
-            CHATLOG_PATH
+            PATH
 		);
     }
 
     /**
-     * Saves the chat log to {@link #CHATLOG_PATH}. Only saves if {@link Config#chatlog} is true,
+     * Saves the chat log to {@link #PATH}. Only saves if {@link Config#chatlog} is true,
      * it isn't crashing again, and if there is *new* data to save.
      *
      * @param crashing If the game is crashing. If true, it will only save if {@link #savedAfterCrash}
@@ -161,13 +159,13 @@ public class ChatLog {
         removeOverflowData(); // don't save more than the max amount of messages
 
         try {
-            final String str = json.toJson(data, Data.class);
-            Files.writeString(file, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            final String str = GSON.toJson(data, Data.class);
+            Files.writeString(PATH, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             lastHistoryCount = data.history.size();
             lastMessageCount = data.messages.size();
 
-            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), CHATLOG_PATH);
+            ChatPatches.LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", data.messages.size(), data.history.size(), PATH);
         } catch(IOException e) {
             ChatPatches.LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
 
@@ -179,19 +177,19 @@ public class ChatLog {
 
     /**
      * Creates a backup of the current chat log file
-     * located at {@link #CHATLOG_PATH} and saves it
+     * located at {@link #PATH} and saves it
      * as "chatlog_" + current time + ".json" in the
      * same directory as the original file.
      * If an error occurs, a warning will be logged.
      * Doesn't modify the current chat log.
      */
     public static void backup() {
-        try {
-            Files.copy(file, file.resolveSibling( "chatlog_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
-        } catch(IOException e) {
-            ChatPatches.LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", CHATLOG_PATH, e);
-        }
-    }
+		try {
+            Files.copy(PATH, PATH.resolveSibling( "chatlog_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+		} catch(IOException e) {
+			ChatPatches.LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", PATH, e);
+		}
+	}
 
     /** Restores the chat log from {@link #data} into Minecraft. */
     public static void restore(MinecraftClient client) {
@@ -205,7 +203,7 @@ public class ChatLog {
 
         Flags.LOADING_CHATLOG.lower();
 
-        ChatPatches.LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(), CHATLOG_PATH);
+        ChatPatches.LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", data.messages.size(), data.history.size(), PATH);
     }
 
     /**

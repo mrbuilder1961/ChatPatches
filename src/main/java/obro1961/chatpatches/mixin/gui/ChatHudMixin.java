@@ -2,7 +2,7 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -11,8 +11,7 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.util.CommandHistoryManager;
-import net.minecraft.text.*;
-import net.minecraft.util.Util;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -30,13 +29,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.util.ChatUtils.MSG_INDEX;
-import static obro1961.chatpatches.util.SharedVariables.lastMsg;
+import static obro1961.chatpatches.util.ChatUtils.MESSAGE_INDEX;
+import static obro1961.chatpatches.util.ChatUtils.getPart;
 
 /**
  * The main entrypoint mixin for most chat modifications.
@@ -130,16 +127,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     /**
      * Modifies the incoming message by adding timestamps, nicer
      * player names, hover events, and duplicate counters in conjunction with
-     * {@link #addCounter(Text, boolean)}
-     *
-     * @implNote
-     * <li>Doesn't modify when {@code refreshing} is true, as that signifies
-     * re-rendering of chat messages on the hud.</li>
-     * <li>This method causes all messages passed to it to be formatted in
-     * a new structure for clear data access. This is mostly done using
-     * {@link MutableText#append(Text)}, which deliberately puts message
-     * components at specific indices, all of which are laid out in
-     * {@link ChatUtils}.</li>
+     * {@link #addCounter(Text, boolean)}.
+     * <br>
+     * See {@link ChatUtils#modifyMessage(Text, boolean)} for detailed
+     * implementation specifications.
      */
     @ModifyVariable(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
@@ -147,93 +138,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         argsOnly = true
     )
     private Text modifyMessage(Text m, @Local(argsOnly = true) boolean refreshing) {
-        if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
-            return addCounter(m, refreshing); // cancels modifications when loading the chatlog or regenerating visibles
-
-        final Style style = m.getStyle();
-        boolean lastEmpty = lastMsg.equals(ChatUtils.NIL_MSG_DATA);
-        boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
-        Date now = lastEmpty ? new Date() : lastMsg.timestamp();
-        String nowTime = String.valueOf( now.getTime() ); // for copy menu and storing timestamp data! only affects the timestamp
-
-
-        Text modified =
-            Text.empty().setStyle(style)
-                .append(
-                    config.time && !boundary
-                        ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now).withInsertion(nowTime) )
-                        : Text.empty().setStyle( Style.EMPTY.withInsertion(nowTime) )
-                )
-                .append(
-                    !lastEmpty && !boundary && Config.getOption("chatNameFormat").changed() && lastMsg.vanilla()
-                        ? Text.empty().setStyle(style)
-                            .append( config.formatPlayername( lastMsg.sender() ) ) // add formatted name
-                            .append( // add first part of message (depending on the Style and how it was constructed)
-                                Util.make(() -> {
-                                    if(m.getContent() instanceof TranslatableTextContent ttc) { // most vanilla chat messages
-
-                                        MutableText text = Text.empty().setStyle(style);
-                                        List<Text> messages = Arrays.stream( ttc.getArgs() ).map( arg -> (Text)arg ).toList();
-
-                                        // i think the arg at i=0 is the player name in vanilla messages
-                                        for(int i = 1; i < messages.size(); ++i)
-                                            text.append( messages.get(i) );
-
-                                        return text;
-                                    } else if(m.getContent() instanceof PlainTextContent ltc) { // default-style message with name
-                                        // assuming the vanilla format '<name> message'
-                                        String[] splitMessage = ltc.string().split(">"); // for now we will always check for a singular bracket, just in case the space is missing
-
-                                        if(splitMessage.length > 1)
-                                            // removes any preceding whitespace
-                                            return Text.literal( splitMessage[1].replaceAll("^\\s+", "") ).setStyle(style);
-                                        else
-                                            //return Text.empty().setStyle(style); // use this? idk
-                                            return m.copyContentOnly().setStyle(style);
-                                    } else {
-                                        // text w/o siblings
-                                        return m.copyContentOnly().setStyle(style);
-                                    }
-                                })
-                            )
-                            .append( // add any siblings (Texts with different styles)
-                                Util.make(() -> {
-                                    MutableText msg = Text.empty().setStyle(style);
-                                    List<Text> siblings = m.getSiblings();
-                                    int i = -1; // index of the first '>' in the playername
-
-                                    // if the message uses the vanilla style but the main component doesn't have the full playername, then only add (the actual message) after it, (removes duped names)
-                                    if(m.getContent() instanceof PlainTextContent ltc && !ltc.string().contains(">"))
-                                        i = siblings.stream().filter(sib -> sib.getString().contains(">")).mapToInt(siblings::indexOf).findFirst().orElse(i);
-
-                                    // if the vanilla-style message is formatted weird, then only add the text *after* the first '>' (end of playername)
-                                    if(i > -1) {
-                                        Text rightTri = siblings.get(i);
-                                        String rightTriStr = rightTri.getString();
-                                        String restOfStr = rightTriStr.substring( rightTriStr.indexOf(">") + 1 ).replaceAll("^\\s+", "");
-                                        // updates the sibling text and decrements the index, so it doesn't get skipped
-                                        if(!restOfStr.isEmpty()) {
-                                            siblings.set(i, Text.literal(restOfStr).setStyle(rightTri.getStyle()));
-                                            --i;
-                                        }
-                                    }
-
-                                    // if there was a split playername, add everything after the '>' (end of playername)
-                                    // (if there wasn't a split playername, add everything [-1 + 1 = 0])
-                                    // (if there was, only add after that part [i + 1 = after name component])
-                                    for(int j = i + 1; j < siblings.size(); ++j)
-                                        msg.append( siblings.get(j) );
-
-                                    return msg;
-                                })
-                            )
-                        : m
-                );
-
-        modified = addCounter(modified, false);
-        ChatLog.addMessage(modified);
-        lastMsg = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
-        return modified;
+        return addCounter(ChatUtils.modifyMessage(m, refreshing), refreshing);
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/ArrayListDeque;size()I"))
@@ -290,7 +195,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                 Text condensedLastMessage = ChatUtils.getCondensedMessage(incoming, 0);
 
                 // if the counterCompact option is true but the last message received was not condensed, look for
-                // any dupes in the last counterCompactDistance +1 messages and if any are found condense them
+                // any dupes in the last counterCompactDistance messages and if any are found condense them
                 if( config.counterCompact && condensedLastMessage.equals(incoming) ) {
                     // ensures {0 <= attemptDistance <= messages.size()} is true
                     int attemptDistance = MathHelper.clamp((
@@ -304,7 +209,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                     // exclude the first message, already checked above
                     messages.subList(1, attemptDistance)
                         .stream()
-                        .filter( hudLine -> hudLine.content().getSiblings().get(MSG_INDEX).getString().equalsIgnoreCase( incoming.getSiblings().get(MSG_INDEX).getString() ) )
+                        .filter( hudLine -> getPart(hudLine.content(), MESSAGE_INDEX).getString().equalsIgnoreCase( getPart(incoming, MESSAGE_INDEX).getString() ) )
                         .findFirst()
                         .ifPresent( hudLine -> ChatUtils.getCondensedMessage(incoming, messages.indexOf(hudLine)) );
                 }
@@ -314,10 +219,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
             }
         } catch(IndexOutOfBoundsException e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method.");
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Either way, this was caused by a bug or mod incompatibility. Please report this on GitHub or on the Discord!", e);
+            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method. Either way,");
+            ChatPatches.logInfoReportMessage(e);
         } catch(Exception e) {
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error. Please report this on GitHub or on the Discord! /!\\", e);
+            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error! /!\\");
+            ChatPatches.logInfoReportMessage(e);
         }
 
         return incoming;

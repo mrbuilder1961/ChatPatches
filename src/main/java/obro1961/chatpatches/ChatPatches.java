@@ -5,17 +5,20 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.util.Identifier;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.Flags;
-import obro1961.chatpatches.util.MiscUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class ChatPatches implements ClientModInitializer {
@@ -23,18 +26,11 @@ public class ChatPatches implements ClientModInitializer {
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Chat Patches");
 	public static final String MOD_ID = "chatpatches";
 
-	public static Config config = Config.newConfig(false);
+	public static Config config = Config.create();
+	/** Contains the sender and timestamp data of the last received chat message. */
+	public static ChatUtils.MessageData msgData = ChatUtils.NIL_MSG_DATA;
 
 	private static String lastWorld = "";
-
-	/**
-	 * Creates a new Identifier for Chat Patches.
-	 * Throws an error if the path fails to .
-	 */
-	public static Identifier id(String path) {
-		return new Identifier(MOD_ID, path);
-	}
-
 
 	@Override
 	public void onInitializeClient() {
@@ -61,7 +57,7 @@ public class ChatPatches implements ClientModInitializer {
 			}
 
 			ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-			String current = MiscUtils.currentWorldName(client);
+			String current = currentWorldName(client);
 			// continues if the boundary line is enabled, >0 messages sent, and if the last and current worlds were servers, that they aren't the same
 			if( config.boundary && !chatHud.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
 				try {
@@ -84,5 +80,53 @@ public class ChatPatches implements ClientModInitializer {
 		});
 
 		LOGGER.info("[ChatPatches()] Finished setting up!");
+	}
+
+
+	/**
+	 * Logs an error-level message telling the user to report
+	 * the given error. The class and method of the caller is
+	 * provided from a {@link StackWalker}.
+	 * <br><br>
+	 * Outputs the following message:
+	 * <pre>
+	 * [$class.$method] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
+	 * (error)
+	 * </pre>
+	 */
+	public static void logInfoReportMessage(Throwable error) {
+		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+		String clazz = walker.getCallerClass().getSimpleName();
+		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
+		method = method.isBlank() ? error.getStackTrace()[0].getMethodName() : method;
+		LOGGER.error("[%s.%s] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\".formatted(clazz, method), error);
+	}
+
+	/**
+	 * Creates a new Identifier using the ChatPatches mod ID.
+	 */
+	public static Identifier id(String path) {
+		return new Identifier(MOD_ID, path);
+	}
+
+	/**
+	 * Returns the current ClientWorld's name. For singleplayer,
+	 * returns the level name. For multiplayer, returns the
+	 * server entry name. Falls back on the IP if it was
+	 * direct-connect. Leads with "C_" or "S_" depending
+	 * on the source of the ClientWorld.
+	 * @param client A non-null MinecraftClient that must be in-game.
+	 * @return (C or S) + "_" + (current world name)
+	 */
+	@SuppressWarnings("DataFlowIssue") // getServer and getCurrentServerEntry are not null if isIntegratedServerRunning is true
+	public static String currentWorldName(@NotNull MinecraftClient client) {
+		Objects.requireNonNull(client, "MinecraftClient must exist to access client data:");
+		String entryName;
+
+		return client.isIntegratedServerRunning()
+			? "C_" + client.getServer().getSaveProperties().getLevelName()
+			: (entryName = client.getCurrentServerEntry().name) == null || entryName.isBlank() // check if null/empty then use IP
+				? "S_" + client.getCurrentServerEntry().address
+				: "S_" + client.getCurrentServerEntry().name;
 	}
 }

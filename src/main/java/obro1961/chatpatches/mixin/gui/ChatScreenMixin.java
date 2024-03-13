@@ -1,11 +1,12 @@
 package obro1961.chatpatches.mixin.gui;
 
 import com.google.common.collect.Lists;
-import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -35,7 +36,7 @@ import obro1961.chatpatches.gui.MenuButtonWidget;
 import obro1961.chatpatches.gui.SearchButtonWidget;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.RenderUtils;
-import obro1961.chatpatches.util.StringTextUtils;
+import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -60,9 +61,8 @@ import static obro1961.chatpatches.ChatPatches.id;
 import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
+import static obro1961.chatpatches.util.ChatUtils.*;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
-import static obro1961.chatpatches.util.SharedVariables.FABRIC_LOADER;
-import static obro1961.chatpatches.util.StringTextUtils.delAll;
 
 /**
  * An extension of ChatScreen with searching capabilities.
@@ -123,7 +123,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	private void chatScreenInit(String originalChatText, CallbackInfo ci) {
 		if(config.messageDrafting && !messageDraft.isBlank()) {
 			// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
-			if(FABRIC_LOADER.isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
+			if(FabricLoader.getInstance().isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
 				messageDraft = originalChatText;
 			// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
 			else if(!originalChatText.equals("/"))
@@ -162,9 +162,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
 		ButtonWidget.PressAction updateSearch = button -> onSearchFieldUpdate(searchField.getText());
-		caseSensitive = new ChatSearchSetting("caseSensitive", true, yPos, 0, updateSearch);
-		modifiers = new ChatSearchSetting("modifiers", false, yPos, 22, updateSearch);
-		regex = new ChatSearchSetting("regex", false, yPos, 44, updateSearch);
+		caseSensitive.update(yPos, updateSearch);
+		modifiers.update(yPos + 22, updateSearch);
+		regex.update(yPos + 44, updateSearch);
 
 		if(!config.hideSearchButton) {
 			addSelectableChild(searchField);
@@ -175,29 +175,24 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		// only render all this menu stuff if it hasn't already been initialized
 		if(!showCopyMenu) {
 			// hover menu buttons, column two
-			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> delAll(Formatting.strip( selectedLine.content().getString() ), StringTextUtils.AMPERSAND_REGEX)));
-			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> StringTextUtils.reorder( selectedLine.content().asOrderedText(), true )));
+			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> Formatting.strip( selectedLine.content().getString() )));
+			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> TextUtils.reorder( selectedLine.content().asOrderedText(), true )));
 			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serialization.toJsonString(selectedLine.content())));
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
-			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString()));
+			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> getPart(selectedLine.content(), TIMESTAMP_INDEX).getString()));
 			hoverButtons.put(COPY_TIMESTAMP_HOVER_TEXT, of(1, COPY_TIMESTAMP_HOVER_TEXT, () -> {
-				HoverEvent hoverEvent = selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getStyle().getHoverEvent();
-				if(hoverEvent != null)
-					return hoverEvent.getValue(SHOW_TEXT).getString();
-				else
-					return "";
+				HoverEvent hoverEvent = getPart(selectedLine.content(), TIMESTAMP_INDEX).getStyle().getHoverEvent();
+				return hoverEvent != null ? hoverEvent.getValue(SHOW_TEXT).getString() : "";
 			}));
 			hoverButtons.put(COPY_NAME, of(1, COPY_NAME, () -> {
-				Text message = selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX);
-				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
-				HoverEvent.EntityContent player = text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY) : null;
-				return player != null && player.name.isPresent() ? player.name.get().getString() : text.getString();
+				HoverEvent senderHoverEvent = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle().getHoverEvent();
+				HoverEvent.EntityContent player = senderHoverEvent != null ? senderHoverEvent.getValue(SHOW_ENTITY) : null;
+				return player != null && player.name.isPresent() ? player.name.get().getString() : getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getString();
 			}));
 			hoverButtons.put(COPY_UUID, of(1, COPY_UUID, () -> {
-				Text message = selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX);
-				Text text = message.getSiblings().size() > ChatUtils.MSG_NAME_INDEX ? message.getSiblings().get(ChatUtils.MSG_NAME_INDEX) : Text.empty();
-				HoverEvent.EntityContent player = text.getStyle().getHoverEvent() != null ? text.getStyle().getHoverEvent().getValue(SHOW_ENTITY) : null;
-				return player != null ? player.uuid.toString() : text.getString();
+				HoverEvent senderHoverEvent = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle().getHoverEvent();
+				HoverEvent.EntityContent player = senderHoverEvent != null ? senderHoverEvent.getValue(SHOW_ENTITY) : null;
+				return player != null ? player.uuid.toString() : getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getString();
 			}));
 
 			// main menu buttons, column one
@@ -205,13 +200,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			mainButtons.put(COPY_MENU_LINKS, of(0, COPY_MENU_LINKS, hoverButtons.get(COPY_LINK_N.apply(0))));
 			mainButtons.put(COPY_MENU_TIMESTAMP, of(0, COPY_MENU_TIMESTAMP, hoverButtons.get(COPY_TIMESTAMP_TEXT), hoverButtons.get(COPY_TIMESTAMP_HOVER_TEXT)));
 			mainButtons.put(COPY_UNIX, of(0, COPY_UNIX, () -> {
-				List<Text> siblings = selectedLine.content().getSiblings();
-				String time = siblings.size() > ChatUtils.TIMESTAMP_INDEX ? siblings.get(ChatUtils.TIMESTAMP_INDEX).getStyle().getInsertion() : null;
+				String time = getPart(selectedLine.content(), TIMESTAMP_INDEX).getStyle().getInsertion();
 				return time != null && !time.isEmpty() ? time : "?";
 			}));
 			mainButtons.put(COPY_MENU_SENDER, of(0, COPY_MENU_SENDER, hoverButtons.get(COPY_NAME), hoverButtons.get(COPY_UUID)));
 			mainButtons.put(COPY_MENU_REPLY, of(0, COPY_MENU_REPLY, () -> "").setOtherPressAction(menuButton ->
-				chatField.setText( StringTextUtils.fillVars(config.copyReplyFormat, hoverButtons.get(COPY_NAME).copySupplier.get())
+				chatField.setText( TextUtils.fillVars(config.copyReplyFormat, hoverButtons.get(COPY_NAME).copySupplier.get())
 			)));
 
 			// these two get extra width for the player head icon that renders, so it has enough space
@@ -582,11 +576,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		ChatHud chatHud = client.inGameHud.getChatHud();
 		ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
-		String hMF = StringTextUtils.reorder( hoveredVisibles.get(0).content(), false );
+		String hMF = TextUtils.reorder( hoveredVisibles.get(0).content(), false );
 		String hoveredMessageFirst = hMF.isEmpty() ? "\n" : hMF; // fixes messages starting with newlines not being detected
 
-		// warning: longer messages sometimes fail because extra spaces appear to be added,
-		// so i switched it to a startsWith() bc the first one never has extra spaces. /!\ can probably still fail /!\
+		/* warning: longer messages sometimes fail because extra spaces appear to be added,
+		   so i switched it to a startsWith() bc the first one never has extra spaces. /!\ can probably still fail /!\ */
 		// get hovered message index (messages) for all copying data
 		selectedLine =
 			chat.chatpatches$getMessages()
@@ -603,7 +597,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		mainButtons.get(COPY_MENU_STRING).button.visible = true;
 
 		// add link button
-		List<String> links = StringTextUtils.getLinks( selectedLine.content().getString() );
+		List<String> links = TextUtils.getLinks( selectedLine.content().getString() );
 		if( !links.isEmpty() ) {
 			for(String link : links) {
 				MenuButtonWidget linkButton = of(1, COPY_LINK_N.apply( links.indexOf(link) + 1 ), () -> link);
@@ -615,13 +609,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		}
 
 		// add timestamp button
-		if( !selectedLine.content().getSiblings().get(ChatUtils.TIMESTAMP_INDEX).getString().isBlank() )
+		if( !getPart(selectedLine.content(), TIMESTAMP_INDEX).getString().isBlank() )
 			mainButtons.get(COPY_MENU_TIMESTAMP).readyToRender(true);
 		mainButtons.get(COPY_UNIX).readyToRender(true);
 
 		// add player data and reply buttons
-		Text originalMessage = selectedLine.content().getSiblings().size() > ChatUtils.MSG_INDEX ? selectedLine.content().getSiblings().get(ChatUtils.MSG_INDEX) : Text.empty();
-		Style style = originalMessage.getSiblings().size() > 0 ? originalMessage.getSiblings().get(ChatUtils.MSG_NAME_INDEX).getStyle() : Style.EMPTY;
+		Style style = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		if( !style.equals(Style.EMPTY) && style.getHoverEvent() != null && style.getHoverEvent().getAction() == HoverEvent.Action.SHOW_ENTITY ) {
 			PlayerListEntry player = client.getNetworkHandler().getPlayerListEntry( UUID.fromString(hoverButtons.get(COPY_UUID).copySupplier.get()) );
 			// gets the skin texture from the player, then the profile, and finally the NIL profile if all else fails
@@ -707,8 +700,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
 				searchField.setEditableColor(0x55FF55);
 
-				// todo: ensure that when this method is run, any successful matches are cached so subsequent searches only look through that list and are faster
-				// might alr be done, idk
 				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 				chatHud.chatpatches$getVisibleMessages().clear();
 				chatHud.chatpatches$getVisibleMessages().addAll(searchResults);
@@ -736,12 +727,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	private List<ChatHudLine.Visible> filterMessages(String target) {
 		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 		if(target == null)
-			return createVisibles( chatHud.chatpatches$getMessages() );
+			return List.of(); //createVisibles( chatHud.chatpatches$getMessages() );
 
 		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.chatpatches$getMessages() );
 
 		msgs.removeIf(hudLn -> {
-			String content = StringTextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
+			String content = TextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
 
 			// note that this NOTs the whole expression to simplify the complex nesting
 			// *removes* the message if it *doesn't* match
