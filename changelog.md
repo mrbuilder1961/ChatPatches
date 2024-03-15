@@ -1,14 +1,13 @@
 # Changelog
 
 ## Chat Patches `204.6.4` for Minecraft 1.20.2 on Fabric, Quilt
-### 204.6.4 part (Bumped to 204.6.4 to match the 1.20.2 version)
 - Fixed errors with regex input on the search screen not updating the text color
 - Made ChatSearchSettings save when the chat screen is closed then reopened; resets on game restart
 - Fixed team name colors, prefixes, and suffixes being ignored when `chatNameFormat` is customized ([#115](https://www.github.com/mrbuilder1961/ChatPatches/issues/115))
 - Added a new runnable config option to reload the config from disk
 - Added a minor optimization to the way messages are modified to largely simplify the process in a few scenarios [prepub impl]
 - Switched the text in the search settings screen to use pre-bundled translations (ON/OFF instead of a visual switch)
-- Fixed the Copy String > Copy Raw String button in the copy menu removing &<code> formattings
+- Fixed the Copy String \> Copy Raw String button in the copy menu removing &\<code\> formattings
 - **Dev notes:**
   - Changed the `CONFIG_PATH` and `CHATLOG_PATH` variables to use the `Path#resolve(String)` method instead of concatenating strings
   - Removed some (now) redundant file constants and references (in `StringTextUtils` and `Config`)
