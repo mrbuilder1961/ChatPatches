@@ -7,7 +7,7 @@
 - Added a new runnable config option to reload the config from disk
 - Added a minor optimization to the way messages are modified to largely simplify the process in a few scenarios [prepub impl]
 - Switched the text in the search settings screen to use pre-bundled translations (ON/OFF instead of a visual switch)
-- Fixed the Copy String > Copy Raw String button in the copy menu removing &<code> formattings
+- Fixed the Copy String \> Copy Raw String button in the copy menu removing &\<code\> formattings
 - **Dev notes:**
   - Changed the `CONFIG_PATH` and `CHATLOG_PATH` variables to use the `Path#resolve(String)` method instead of concatenating strings
   - Removed some (now) redundant file constants and references (in `StringTextUtils` and `Config`)
