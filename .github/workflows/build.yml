@@ -21,8 +21,8 @@ jobs:
     strategy:
       matrix:
         java: [
-          17, # Current Java LTS & minimum supported by Minecraft
-          21 # Latest Java LTS
+          17 # Current Java LTS & minimum supported by Minecraft
+          #,21 # Latest Java LTS
         ]
         # and run on the latest dists of Linux, MacOs, and Windows
         os: [ubuntu-latest, windows-latest, macos-latest]
