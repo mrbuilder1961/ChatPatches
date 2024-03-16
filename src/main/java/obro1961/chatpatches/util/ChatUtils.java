@@ -222,7 +222,8 @@ public class ChatUtils {
 					// find the first index of a '>' in the message, is formatted like '<%s> %s'
 					Text firstPart = parts.stream().filter(p -> p.getString().contains(">")).findFirst()
 						.orElseThrow(() -> new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "' !"));
-					String afterEndBracket = firstPart.getString().split(">")[1]; // just get the part after the closing bracket, we know the start
+					String[] endBracketSplit = firstPart.getString().split(">"); // part of #156 AIOOBE i=1 fix
+					String afterEndBracket = endBracketSplit.length > 1 ? endBracketSplit[1] : ""; // just get the part after the closing bracket, we know the start
 
 					// ignore everything before the '>' because it's the playername, which we already know
 					// adds the part after the closing bracket but before any remaining siblings, if it exists

@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `204.6.5` for Minecraft 1.20.2 on Fabric, Quilt
+- Fixed certain messages from showing up blank and logging `ArrayIndexOutOfBoundsException`s ([#156](https://www.github.com/mrbuilder1961/ChatPatches/issues/146))
+
 ## Chat Patches `204.6.4` for Minecraft 1.20.2 on Fabric, Quilt
 - Fixed errors with regex input on the search screen not updating the text color
 - Made ChatSearchSettings save when the chat screen is closed then reopened; resets on game restart
