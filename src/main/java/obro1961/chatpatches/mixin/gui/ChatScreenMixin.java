@@ -50,6 +50,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -115,10 +118,16 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private SearchButtonWidget searchButton;
 	@Unique private PatternSyntaxException searchError;
 
+	@Unique private Thread suggestorNotifier = null;
+	@Unique private volatile long suggestorRefreshTime = -1;
+	@Unique private final Lock lock = new ReentrantLock();
+	@Unique private final Condition needRefresh = lock.newCondition();
+
 	@Shadow	protected TextFieldWidget chatField;
 	@Shadow private String originalChatText;
 
 	@Shadow private int messageHistorySize;
+	@Shadow private ChatInputSuggestor chatInputSuggestor;
 
 	protected ChatScreenMixin(Text title) { super(title); }
 
@@ -131,6 +140,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
 			else if(!originalChatText.equals("/"))
 				this.originalChatText = messageDraft;
+		}
+
+		if (config.completionDelay > 0) {
+			this.suggestorRefreshTime = System.currentTimeMillis();
+			this.suggestorNotifier = new Thread(this::notifySuggestor, "NotifySuggestor");
+			suggestorNotifier.setDaemon(true);
+			suggestorNotifier.start();
 		}
 	}
 
@@ -346,6 +362,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else if(!searchField.getText().isEmpty()) // reset the hud if it had anything in the field (helps fix #102)
 			client.inGameHud.getChatHud().reset();
 
+		if (this.suggestorNotifier != null)
+			this.suggestorNotifier.interrupt();
+
 		resetCopyMenu();
 	}
 
@@ -491,10 +510,71 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		this.chatField.setSelectionStart(cursor);
 		this.chatField.setSelectionEnd(cursor);
+    }
+
+    /**
+	 * When the suggestion window (autocomplete) is not shown but is going to be activated,
+	 * perform {@link ChatInputSuggestor#refresh} with the window inactive instead,
+	 * and notify the thread {@link ChatScreenMixin#suggestorNotifier} to perform show the window
+	 * with another refresh after some time.
+	 * <p/>
+	 * We cannot directly skip refresh because it also provides syntax highlighting.
+	 */
+	@WrapOperation(method = {"onChatFieldUpdate"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatInputSuggestor;refresh()V"))
+	private void delayRefreshSuggestor(ChatInputSuggestor chatInputSuggestor, Operation<Void> refresh) {
+		boolean activateWindow = !this.chatField.getText().equals(this.originalChatText);
+		if (config.completionDelay > 0 && !this.chatInputSuggestor.isOpen() && activateWindow) {
+			this.chatInputSuggestor.setWindowActive(false);
+			refresh.call(chatInputSuggestor);
+			this.chatInputSuggestor.setWindowActive(activateWindow);
+
+			this.suggestorRefreshTime = System.currentTimeMillis();
+			lock.lock();
+			try {
+				needRefresh.signal();
+			} finally {
+				lock.unlock();
+			}
+		} else {
+			refresh.call(chatInputSuggestor);
+		}
 	}
 
 
 	// New/Unique methods
+
+	/**
+	 * Blocks until it is signaled, wait the configured number of milliseconds,
+	 * and then refreshes the suggestor
+	 */
+	@Unique
+	private void notifySuggestor() {
+		while (!Thread.interrupted()) {
+			lock.lock();
+			try {
+				needRefresh.await();
+			} catch (InterruptedException ignored) {
+				return;
+			} finally {
+				lock.unlock();
+			}
+
+			long timeRemain = config.completionDelay + suggestorRefreshTime - System.currentTimeMillis();
+			while (timeRemain > 0) {
+				try {
+					Thread.sleep(timeRemain);
+				} catch (InterruptedException ignored) {
+					return;
+				}
+				timeRemain = config.completionDelay + suggestorRefreshTime - System.currentTimeMillis();
+			}
+
+			this.client.executeSync(() -> {
+				this.chatInputSuggestor.refresh();
+			});
+		}
+	}
+
 
 	/**
 	 * Resets the message draft, used in {@link ScreenMixin#clearMessageDraft}
