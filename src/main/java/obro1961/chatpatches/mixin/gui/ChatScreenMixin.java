@@ -13,6 +13,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -116,6 +117,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 	@Shadow	protected TextFieldWidget chatField;
 	@Shadow private String originalChatText;
+
+	@Shadow private int messageHistorySize;
 
 	protected ChatScreenMixin(Text title) { super(title); }
 
@@ -450,6 +453,44 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// as of right now, all hover menu buttons have copy actions and don't utilize #onMouseMoved
 			//hoverButtons.values().forEach(menuButton -> menuButton.mouseMoved(mX, mY));
 		}
+	}
+
+	/**
+	 * Searches the history with the same prefix before cursor when pressing arrow keys,
+	 * instead of scrolling to the immediate previous/next sent history.
+	 * <p/>
+	 * This mimics the Bash feature of <i>history-search-backward</i> and <i>history-search-forward</i>.
+	 * <p/>
+	 * Implementation details:
+	 * <ul>
+	 *     <li>To support consecutive keys, the cursor should not move (but the text selection may cancel)</li>
+	 *     <li>{@link ChatScreen#chatInputSuggestor} should not be activated, as it interrupts consecutive keys</li>
+	 * </ul>
+	 */
+	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;setChatFromHistory(I)V"))
+	private void searchHistory(ChatScreen chatScreen, int offset, Operation<Void> setChatFromHistory) {
+		if (!config.searchPrefix) {
+			setChatFromHistory.call(chatScreen, offset);
+			return;
+		}
+
+		final int cursor = this.chatField.getCursor();
+		final String prefix = this.chatField.getText().substring(0, cursor);
+		List<String> history = this.client.inGameHud.getChatHud().getMessageHistory();
+		var newHistoryIndex = this.messageHistorySize + offset;
+		var newOffset = 0;
+		while (0 <= newHistoryIndex && newHistoryIndex < history.size()) {
+			if (history.get(newHistoryIndex).startsWith(prefix)) {
+				newOffset = newHistoryIndex - this.messageHistorySize;
+				break;
+			}
+			newHistoryIndex += offset;
+		}
+
+		setChatFromHistory.call(chatScreen, newOffset);
+
+		this.chatField.setSelectionStart(cursor);
+		this.chatField.setSelectionEnd(cursor);
 	}
 
 
