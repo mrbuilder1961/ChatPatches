@@ -13,7 +13,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -456,12 +455,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	/**
-	 * Searches the history with the same prefix before cursor when pressing arrow keys,
-	 * instead of scrolling to the immediate previous/next sent history.
-	 * <p/>
-	 * This mimics the Bash feature of <i>history-search-backward</i> and <i>history-search-forward</i>.
-	 * <p/>
-	 * Implementation details:
+	 * Searches chat history for a message with the same prefix before the cursor when pressing
+	 * arrow keys, instead of scrolling to the immediate previous/next sent message.
+	 * <br><br>
+	 * Mimics the Bash <i>history-search-backward</i> and <i>history-search-forward</i> features.
+	 *
+	 * @implSpec
 	 * <ul>
 	 *     <li>To support consecutive keys, the cursor should not move (but the text selection may cancel)</li>
 	 *     <li>{@link ChatScreen#chatInputSuggestor} should not be activated, as it interrupts consecutive keys</li>
@@ -469,19 +468,20 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;setChatFromHistory(I)V"))
 	private void searchHistory(ChatScreen chatScreen, int offset, Operation<Void> setChatFromHistory) {
-		if (!config.searchPrefix) {
+		if(!config.searchPrefix) {
 			setChatFromHistory.call(chatScreen, offset);
 			return;
 		}
 
-		final int cursor = this.chatField.getCursor();
-		final String prefix = this.chatField.getText().substring(0, cursor);
-		List<String> history = this.client.inGameHud.getChatHud().getMessageHistory();
-		var newHistoryIndex = this.messageHistorySize + offset;
-		var newOffset = 0;
-		while (0 <= newHistoryIndex && newHistoryIndex < history.size()) {
-			if (history.get(newHistoryIndex).startsWith(prefix)) {
-				newOffset = newHistoryIndex - this.messageHistorySize;
+		int cursor = chatField.getCursor();
+		String prefix = chatField.getText().substring(0, cursor);
+		List<String> history = client.inGameHud.getChatHud().getMessageHistory();
+
+		int newHistoryIndex = messageHistorySize + offset;
+		int newOffset = 0;
+		while(0 <= newHistoryIndex && newHistoryIndex < history.size()) {
+			if(history.get(newHistoryIndex).startsWith(prefix)) {
+				newOffset = newHistoryIndex - messageHistorySize;
 				break;
 			}
 			newHistoryIndex += offset;
@@ -489,8 +489,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		setChatFromHistory.call(chatScreen, newOffset);
 
-		this.chatField.setSelectionStart(cursor);
-		this.chatField.setSelectionEnd(cursor);
+		chatField.setSelectionStart(cursor);
+		chatField.setSelectionEnd(cursor);
 	}
 
 
