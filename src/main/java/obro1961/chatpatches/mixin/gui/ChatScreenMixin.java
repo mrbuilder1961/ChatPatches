@@ -50,9 +50,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -118,12 +115,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private SearchButtonWidget searchButton;
 	@Unique private PatternSyntaxException searchError;
 
-	// Thread stuff for the Config#completionDelay option
-	@Unique private Thread suggesterNotifier = null;
-	@Unique private volatile long suggesterRefreshTime = -1;
-	@Unique private final Lock lock = new ReentrantLock();
-	@Unique private final Condition needRefresh = lock.newCondition();
-
 	@Shadow	protected TextFieldWidget chatField;
 	@Shadow private String originalChatText;
 	@Shadow private int messageHistorySize;
@@ -140,14 +131,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
 			else if(!originalChatText.equals("/"))
 				this.originalChatText = messageDraft;
-		}
-
-		// initializes the suggester notifier thread if the completion delay is enabled
-		if(config.completionDelay > 0) {
-			this.suggesterRefreshTime = System.currentTimeMillis();
-			this.suggesterNotifier = new Thread(this::notifySuggester, "NotifySuggestor");
-			suggesterNotifier.setDaemon(true);
-			suggesterNotifier.start();
 		}
 	}
 
@@ -363,9 +346,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else if(!searchField.getText().isEmpty()) // reset the hud if it had anything in the field (helps fix #102)
 			client.inGameHud.getChatHud().reset();
 
-		if(suggesterNotifier != null)
-			suggesterNotifier.interrupt();
-
 		resetCopyMenu();
 	}
 
@@ -513,34 +493,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		chatField.setSelectionStart(cursor);
 		chatField.setSelectionEnd(cursor);
 	}
-
-	/**
-	 * When the suggestion window (autocomplete) is not shown but is going to be activated,
-	 * perform {@link ChatInputSuggestor#refresh} with the window inactive instead,
-	 * and notify the {@link #suggesterNotifier} thread to show the window
-	 * with another refresh after some time.
-	 * <br><br>
-	 * We cannot directly skip calling {@code refresh} because it also provides syntax highlighting.
-	 */
-	@WrapOperation(method = "onChatFieldUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatInputSuggestor;refresh()V"))
-	private void delayRefreshSuggester(ChatInputSuggestor chatInputSuggestor, Operation<Void> refresh) {
-		boolean activateWindow = !this.chatField.getText().equals(this.originalChatText);
-		if(config.completionDelay > 0 && !this.chatInputSuggestor.isOpen() && activateWindow) {
-			this.chatInputSuggestor.setWindowActive(false);
-			refresh.call(chatInputSuggestor);
-			this.chatInputSuggestor.setWindowActive(true);
-
-			this.suggesterRefreshTime = System.currentTimeMillis();
-			lock.lock();
-			try {
-				needRefresh.signal();
-			} finally {
-				lock.unlock();
-			}
-		} else {
-			refresh.call(chatInputSuggestor);
-		}
-	} // todo fix the completion delay not delaying completions...
 
 
 	// New/Unique methods
@@ -861,36 +813,5 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		});
 
 		return generated;
-	}
-
-
-	/**
-	 * Blocks until signaled, waits the configured number
-	 * of milliseconds, and then refreshes the suggester.
-	 */
-	@Unique
-	private void notifySuggester() {
-		while( !Thread.interrupted() ) {
-			lock.lock();
-			try {
-				needRefresh.await();
-			} catch(InterruptedException ignored) {
-				return;
-			} finally {
-				lock.unlock();
-			}
-
-			long timeRemaining = config.completionDelay + suggesterRefreshTime - System.currentTimeMillis();
-			while(timeRemaining > 0) {
-				try {
-					Thread.sleep(timeRemaining);
-				} catch(InterruptedException ignored) {
-					return;
-				}
-				timeRemaining = config.completionDelay + suggesterRefreshTime - System.currentTimeMillis();
-			}
-
-			client.executeSync(() -> this.chatInputSuggestor.refresh());
-		}
 	}
 }

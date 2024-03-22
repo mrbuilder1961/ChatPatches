@@ -253,7 +253,7 @@ public class YACLConfig extends Config {
         if(min) {
             return switch(key) {
                 case "counterCompactDistance" -> -1;
-                default -> 0; // chatWidth, chatMaxMessages, shiftChat, chatlogSaveInterval, completionDelay
+                default -> 0; // chatWidth, chatMaxMessages, shiftChat, chatlogSaveInterval
             };
         } else {
             return switch(key) {
@@ -263,7 +263,6 @@ public class YACLConfig extends Config {
                 // only issue w ^^^ is if the window is resized while the config screen is open the max value will be incorrect
                 // other issue could be with the future config redo, as annotation constraints must be *constant*
                 case "chatMaxMessages" -> Short.MAX_VALUE;
-                case "completionDelay" -> 5000;
                 default -> 100; // shiftChat
             };
         }

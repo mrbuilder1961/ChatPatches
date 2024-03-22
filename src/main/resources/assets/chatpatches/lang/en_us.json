@@ -96,7 +96,6 @@
     "text.chatpatches.hideSearchButton": "Hide search button",
     "text.chatpatches.vanillaClearing": "Vanilla chat clearing",
     "text.chatpatches.searchPrefix": "Use prefix history search",
-    "text.chatpatches.completionDelay": "Typing completion delay",
     "text.chatpatches.desc.chatHidePacket": "Should hide message packets that delete chat messages be ignored?",
     "text.chatpatches.desc.chatWidth": "The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.",
     "text.chatpatches.desc.chatMaxMessages": "The max amount of chat messages allowed to save. Vanilla caps it at 100, this mod can increase it up to 32,767. Keep in mind a higher max equals higher memory usage.",
@@ -109,7 +108,6 @@
     "text.chatpatches.desc.hideSearchButton": "Should the search button be hidden? Note that this disables all search functionality.",
     "text.chatpatches.desc.vanillaClearing": "Should chat messages clear after leaving a world/server like vanilla? Note this completely erases both the chat and chat log.",
     "text.chatpatches.desc.searchPrefix": "Should searching through sent history filter messages with the same prefix behind the cursor? This allows for quicker autocompletion of previous history messages that start with the same string. Vanilla disables this, instead using immediate history only.",
-    "text.chatpatches.desc.completionDelay": "The delay length in milliseconds before showing completions while typing. Vanilla is 0ms.",
 
     "text.chatpatches.help.dateFormat": "For date and time formatting information, click me!",
     "text.chatpatches.help.formatCodes": "For formatting code characters and which ones do what, click me!",
