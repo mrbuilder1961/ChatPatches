@@ -13,7 +13,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -107,8 +106,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private static Map<Text, MenuButtonWidget> mainButtons = new LinkedHashMap<>(); // buttons that appear on the initial click
 	@Unique private static Map<Text, MenuButtonWidget> hoverButtons = new LinkedHashMap<>(); // buttons that are revealed on hover
 	@Unique private static List<ChatHudLine.Visible> hoveredVisibles = new ArrayList<>();
-	// drafting (todo: can we remove these and instead use `originalChatText`?)
 	@Unique private static String searchDraft = "";
+	// drafting (todo: can we remove these and instead use `originalChatText`?)
 	@Unique private static String messageDraft = "";
 
 	@Unique private TextFieldWidget searchField;
@@ -118,7 +117,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Shadow	protected TextFieldWidget chatField;
 	@Shadow private String originalChatText;
 	@Shadow private int messageHistorySize;
-	@Shadow ChatInputSuggestor chatInputSuggestor;
 
 	protected ChatScreenMixin(Text title) { super(title); }
 
