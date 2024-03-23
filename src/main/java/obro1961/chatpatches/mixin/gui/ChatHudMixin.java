@@ -30,6 +30,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.ChatUtils.MESSAGE_INDEX;
@@ -163,7 +164,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * Adds a counter to the chat message, indicating how many times the same
      * message has been sent. Can check only the last message, or
      * {@link Config#counterCompactDistance} times back. Slightly more
-     * efficient than the previous method, outlined here: [{@link ChatUtils#getCondensedMessage(Text, int)}]
+     * efficient than the previous method, outlined here: [{@link ChatUtils#tryCondenseMessage(Text, int)}]
      * but it still is quite slow.
      *
      * @implNote
@@ -174,7 +175,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      *     <ol>
      *         <li>Calculate the adjusted distance to attempt comparing, depending on the amount of messages already in the chat.</li>
      *         <li>Filter all the messages within the target range that are case-insensitively equal to the incoming message.</li>
-     *         <li>If a message was the same, call {@link ChatUtils#getCondensedMessage(Text, int)},
+     *         <li>If a message was the same, call {@link ChatUtils#tryCondenseMessage(Text, int)},
      *         which ultimately removes that message and its visibles.</li>
      *     </ol>
      *     <li>Return the (potentially) condensed message, to later be formatted further in {@link #modifyMessage(Text, boolean)}</li>
@@ -192,11 +193,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         try {
             if( config.counter && !refreshing && !messages.isEmpty() ) {
                 // condenses the incoming message into the last message if it is the same
-                Text condensedLastMessage = ChatUtils.getCondensedMessage(incoming, 0);
+                AtomicReference<Text> condensedLastMessage = new AtomicReference<>( ChatUtils.tryCondenseMessage(incoming, 0) );
 
                 // if the counterCompact option is true but the last message received was not condensed, look for
                 // any dupes in the last counterCompactDistance messages and if any are found condense them
-                if( config.counterCompact && condensedLastMessage.equals(incoming) ) {
+                if( config.counterCompact && condensedLastMessage.get().equals(incoming) ) {
                     // ensures {0 <= attemptDistance <= messages.size()} is true
                     int attemptDistance = MathHelper.clamp((
                         (config.counterCompactDistance == -1)
@@ -209,13 +210,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
                     // exclude the first message, already checked above
                     messages.subList(1, attemptDistance)
                         .stream()
-                        .filter( hudLine -> getPart(hudLine.content(), MESSAGE_INDEX).getString().equalsIgnoreCase( getPart(incoming, MESSAGE_INDEX).getString() ) )
+                        .filter(hudLine -> getPart(hudLine.content(), MESSAGE_INDEX).getString().equalsIgnoreCase( getPart(incoming, MESSAGE_INDEX).getString() ))
                         .findFirst()
-                        .ifPresent( hudLine -> ChatUtils.getCondensedMessage(incoming, messages.indexOf(hudLine)) );
+                        .ifPresent(hudLine -> condensedLastMessage.set( ChatUtils.tryCondenseMessage(incoming, messages.indexOf(hudLine)) ));
                 }
 
                 // this result is used in #modifyMessage(...)
-                return condensedLastMessage;
+                return condensedLastMessage.get();
             }
         } catch(IndexOutOfBoundsException e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());

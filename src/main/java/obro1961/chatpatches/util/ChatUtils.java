@@ -285,7 +285,7 @@ public class ChatUtils {
 	 *     <li>Return the incoming message, regardless of if it was modified or not.</li>
 	 * </ol>
 	 */
-	public static Text getCondensedMessage(Text incoming, int index) {
+	public static Text tryCondenseMessage(Text incoming, int index) {
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final ChatHud chatHud = client.inGameHud.getChatHud();
 		final ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
@@ -306,16 +306,17 @@ public class ChatUtils {
 			// info: according to some limited testing, incoming messages (incomingParts) will never contain a dupe counter, so it's been omitted from this check
 			int dupes = (
 				comparingParts.size() > DUPE_INDEX
-					? Integer.parseInt( comparingParts.get(DUPE_INDEX).getString()
-						.replaceAll("(§[0-9a-fk-or])+", "")
-						.replaceAll("\\D", "")
-						.replaceAll("^$", "1") // if the string is empty, replace it with 1 (to prevent NumberFormatException)
+					? Integer.parseInt(
+						comparingParts.get(DUPE_INDEX).getString()
+							.replaceAll("(§[0-9a-fk-or])+", "")
+							.replaceAll("\\D", "")
+							.replaceAll("^$", "1") // if the string is empty, replace it with 1 (to prevent NumberFormatException)
 					)
 					: 1
 			) + 1;
 
 
-			// i think when old messages are re-added into the chat, it keeps the dupe counter so we have to use set() instead of add() sometimes
+			// i think when old messages are re-added into the chat, it keeps the dupe counter, so we have to use set instead of add sometimes
 			if(incomingParts.size() > DUPE_INDEX)
 				incomingParts.set(DUPE_INDEX, config.makeDupeCounter(dupes));
 			else
@@ -337,10 +338,10 @@ public class ChatUtils {
 				while( !visibleMessages.isEmpty() && !visibleMessages.get(0).endOfEntry() )
 					visibleMessages.remove(0);
 			}
-
+ChatPatches.LOGGER.warn("new counter: '{}' index: {}", incomingParts.get(DUPE_INDEX).getString(), index);
 			// according to some testing, modifying incomingParts DOES modify incoming.getSiblings(), so all changes are taken care of!
-			// if this breaks, uncomment the following line:
-			//return TextUtils.newText(incoming.getContent(), incomingParts, incoming.getStyle());
+			// ^ IGNORE ABOVE COMMENT ^ we have since wrapped incomingParts in a new ArrayList to prevent UOEs, so this is no longer true
+			return TextUtils.newText(incoming.getContent(), incomingParts, incoming.getStyle());
 		}
 
 		return incoming.copy(); // fixes IntelliJ flagging the return value as always being equal to incoming (not true!)
