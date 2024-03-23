@@ -107,13 +107,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private static Map<Text, MenuButtonWidget> hoverButtons = new LinkedHashMap<>(); // buttons that are revealed on hover
 	@Unique private static List<ChatHudLine.Visible> hoveredVisibles = new ArrayList<>();
 	@Unique private static String searchDraft = "";
-	// drafting (todo: can we remove these and instead use `originalChatText`?)
+	// drafting (todo: can we remove this and instead use `originalChatText`?)
 	@Unique private static String messageDraft = "";
 
 	@Unique private TextFieldWidget searchField;
 	@Unique private SearchButtonWidget searchButton;
 	@Unique private PatternSyntaxException searchError;
 
+	@SuppressWarnings("MissingUnique") //@Shadow
+	@NotNull protected MinecraftClient client = MinecraftClient.getInstance(); // removes false NPE warnings
 	@Shadow	protected TextFieldWidget chatField;
 	@Shadow private String originalChatText;
 	@Shadow private int messageHistorySize;
