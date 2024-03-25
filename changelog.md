@@ -4,7 +4,7 @@
 - Fixed certain messages from showing up blank and logging `ArrayIndexOutOfBoundsException`s ([#156](https://www.github.com/mrbuilder1961/ChatPatches/issues/146))
 - Fixed normal duplicate messages not having a counter (1.20.4 only, [#157](https://www.github.com/mrbuilder1961/ChatPatches/issues/157))
 - Fixed CompactChat duplicate messages not having a counter (1.20.2-4)
-- Added a help document for issues and suggestions in the source code (`help.md`)
+- Added a help section to the README, which currently explains how to upload log files and access beta versions fresh from Actions
 
 ## Chat Patches `204.6.4` for Minecraft 1.20.2 on Fabric, Quilt
 - Fixed errors with regex input on the search screen not updating the text color

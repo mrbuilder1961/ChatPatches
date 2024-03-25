@@ -48,7 +48,7 @@ Be on the lookout for new versions, issues, and future features!
 - Do servers need this mod?
   - It is client side, so no.
 - I can't access the config menu in-game!
-  - <u>For 1.19.2+:</u> 
+  - <u>For 1.19.2+:</u>
     - If you do not want to install Mod Menu, you can instead use [Catalogue](https://www.curseforge.com/minecraft/mc-mods/catalogue-fabric)
       with [Menulogue](https://www.curseforge.com/minecraft/mc-mods/menulogue), which will provide the same functionality!
     - Otherwise, if you still cannot access the config after ensuring YACL and a menu mod are installed, check for an error message and [open an
@@ -62,8 +62,10 @@ Be on the lookout for new versions, issues, and future features!
 - Can I use this in a modpack?
   - Yes, as long as you credit me and/or link back to one of the official pages (here, [CurseForge](https://www.curseforge.com/minecraft/mc-mods/chatpatches), and [Modrinth](https://modrinth.com/mod/chatpatches/versions)).
 - Can I re-upload this mod elsewhere?
-  - No, unless you have explicit permission from OBro1961, modify the mod in a significant way, or any download links used direct to one of the official 
+  - No, unless you have explicit permission from OBro1961, modify the mod in an undisputable way, or any download links used direct to one of the official
     pages (see above). If you're unsure, DM me (@obro1961) on Discord about it.
+- How do I do X?
+  - If the answer you're looking for isn't anywhere here or in the config, check the #Help section located below. If you still can't find it, ask in the Discord.
 
 ## Localization and Translation
 
@@ -87,11 +89,11 @@ Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so
 | Name                          | Default Value    | Description                                                                                                                                                                                                                                                                                                                                                                     | Lang Key                                  |
 |-------------------------------|------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
 | Timestamp toggle              | `true`           | Should a timestamp in front of all messages show?                                                                                                                                                                                                                                                                                                                               | `text.chatpatches.time`                   |
-| Timestamp text                | `"HH:mm:ss"`     | The text that is formatted into a timestamp.                                                                                                                                                                                                                                                                                                                                    | `text.chatpatches.timeDate`               |
+| Timestamp text                | `"HH:mm:ss"`     | The text that is formatted into a timestamp. See the Help > Date & Time Formatting section for more information.                                                                                                                                                                                                                                                                | `text.chatpatches.timeDate`               |
 | Timestamp decoration text     | `"[$]"`          | The string of '&' + formatting code modifiers and decoration text that create the timestamp. The '$' is a placeholder for the formatted timestamp option above this one.                                                                                                                                                                                                        | `text.chatpatches.timeFormat`             |
 | Timestamp color               | `0xff55ff`       | The color that's filled in where it would otherwise be blank in the resulting timestamp. To use this with other formatting modifiers, use '&r' in the decoration text option.                                                                                                                                                                                                   | `text.chatpatches.timeColor`              |
 | Hover toggle                  | `true`           | Should text appear stating a more detailed time description when you hover over the timestamp text in chat?                                                                                                                                                                                                                                                                     | `text.chatpatches.hover`                  |
-| Hover text                    | `"MM/dd/yyyy"`   | The text that is formatted into a longer date/time string.                                                                                                                                                                                                                                                                                                                      | `text.chatpatches.hoverDate`              |
+| Hover text                    | `"MM/dd/yyyy"`   | The text that is formatted into a longer date/time string. See the Help > Date & Time Formatting section for more information.                                                                                                                                                                                                                                                  | `text.chatpatches.hoverDate`              |
 | Hover decoration text         | `"$"`            | The string of '&' + formatting code modifiers and decoration text that create the detailed hover description. Requires a '$' as a placeholder for the formatted timestamp option above this one.                                                                                                                                                                                | `text.chatpatches.hoverFormat`            |
 | Hover text color              | `0xffffff`       | The color that's filled in where it would otherwise be blank white in the resulting hover text. To use this with other formatting modifiers, use '&r' in the decoration text option.                                                                                                                                                                                            | `text.chatpatches.hoverColor`             |
 | Message counter toggle        | `true`           | Should a message counter show after messages to indicate multiple duplicates were sent? Note: this is required to be enabled for the CompactChat options to work.                                                                                                                                                                                                               | `text.chatpatches.counter`                |
@@ -116,6 +118,7 @@ Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so
 | Search drafting toggle        | `true`           | Should any text in the search field persist after closing and reopening the chat?                                                                                                                                                                                                                                                                                               | `text.chatpatches.searchDrafting`         |
 | Hide search button            | `false`          | Should the search button be hidden? Note that this disables all search functionality.                                                                                                                                                                                                                                                                                           | `text.chatpatches.hideSearchButton`       |
 | Vanilla chat clearing         | `false`          | Should chat messages clear after leaving a world/server like vanilla? Note this completely erases both the chat and chat log.                                                                                                                                                                                                                                                   | `text.chatpatches.vanillaClearing`        |
+| Use prefix history search     | `false`          | Should searching through sent history filter messages with the same prefix behind the cursor? This allows for quicker autocompletion of previous history messages that start with the same string. Vanilla disables this, instead using immediate history only.                                                                                                                 | `text.chatpatches.searchPrefix`           |
 | Message selection color       | `0x55ffff`       | The color of the selection box that's shown after right-clicking on a chat message.                                                                                                                                                                                                                                                                                             | `text.chatpatches.copyColor`              |
 | Reply text format             | `"/msg $ "`      | The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the copy menu. '$' is required and will be filled with the message sender's name.                                                                                                                                                                        | `text.chatpatches.copyReplyFormat`        |
 
@@ -130,6 +133,60 @@ For individual releases prior to `194.4.0`, check the `latest_changelog.md` file
 
 ## License
 This mod is available under the GNU LGPLv3 license. Check out [this](https://choosealicense.com/licenses/lgpl-3.0/) page for information.
+
+## Help
+
+### How to upload log files
+There are multiple different types of log file that can be uploaded, although they are all very similar. In order of most useful to least, these are the three
+main types:
+1. `debug.log` - Generated when the game is configured to output on the `DEBUG` level. It isn't always present, but when it is, it almost always has a ton of
+   extra information that can be critical to solving issues. This is a more detailed subset of the `latest.log`.
+2. `crash-report-<date>-<time>.txt` - Generated when the game crashes; contains a lot of extra information not provided in the other two logs, however it is
+   most useful when coupled with one of the other two logs.
+3. `latest.log` - The main log file that is generated every time the game is run. It constantly updates, and contains plenty of useful information on what
+   the game is doing.
+
+Generally, you should upload one `.log` file and one `crash-report-<date>-<time>.txt` file if you have them. Otherwise, just upload whatever you have that
+is listed above. The only thing you shouldn't upload is both `debug.log` and `latest.log`, as the `debug.log` has everything the `latest.log` has and more.
+*TL;DR upload as much as you can, but don't upload both the `debug.log` and `latest.log` files.*
+
+Now that you have the files, simply submitting them to https://mclo.gs/ will give you a link that you can share with me and others to help diagnose your issue.
+It is really the only site I use, because it provides a lot of useful tools both for me and for you. One of those being that it censors many instances of
+potentially identifiable information, such as your computer's username and IP address.
+
+#### To upload the log(s) without Prism Launcher:
+1. Go to https://mclo.gs/
+2. Click the "Select a file" button, and select a file. **OR** Paste the contents of the log file into the text box.
+3. Click the "Save" button.
+4. Wait for a moment, and it will redirect you to your uploaded log file. Copy the URL from the address bar and paste it wherever you were asked or need to
+   share it.
+
+#### With Prism Launcher:
+1. Open Prism Launcher.
+2. Click on your instance that contains the log you want to upload.
+3. Navigate to the "Minecraft Log" tab (or "Other logs" tab if it's not there)
+4. Click the "Upload" button when the log you want to upload is shown.
+5. Click the "Yes" button in response to the security prompt. If you're worried about the security of the log, you can always censor it yourself before
+   uploading it.
+6. The log should now be uploaded, and you can click the blue underlined text to view it in your browser. The URL is automatically copied to your clipboard,
+   so you can now share it wherever you were asked or need to.
+
+### How to access beta releases
+To access beta releases, you'll need a link that looks like this:
+
+https://github.com/mrbuilder1961/ChatPatches/actions/runs/8310511511/ or
+
+https://github.com/mrbuilder1961/ChatPatches/actions/runs/8310511511/artifacts/1332245802
+
+#### Now, follow these steps:
+1. Click on the link. If it doesn't instantly download, scroll down, and under the "Artifacts" section, click on "jars" and the download should start.
+2. Once the download is complete, open or extract the .zip file.
+3. You should see two folders, `libs` and `devlibs`. Open the `libs` folder.
+4. Inside the `libs` folder, you should see a .jar file, and another file with the same name but instead ends with `-sources.jar`. The .jar file is the mod itself, and the `-sources.jar` file is the source code.
+5. Move the .jar file, NOT the `-sources` file, to your mods folder.
+6. If you have another version of Chat Patches already installed there, you can move it, rename the file extension to anything but `.jar`, or delete it.
+7. Now you should be good to go! Launching the game should now load the beta version. If you experience any issues, make sure to report them as soon as
+   possible wherever you were given the link (here on GitHub or [the Discord](https://discord.gg/3MqBvNEyMz)).
 
 ## Sponsor me!
 - Ko-Fi: https://ko-fi.com/obro1961
