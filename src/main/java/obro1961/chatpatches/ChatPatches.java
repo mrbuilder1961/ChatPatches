@@ -91,7 +91,7 @@ public class ChatPatches implements ClientModInitializer {
 	 * Outputs the following message:
 	 * <pre>
 	 * [$class.$method] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
-	 * (error)
+	 * $error
 	 * </pre>
 	 */
 	public static void logInfoReportMessage(Throwable error) {
