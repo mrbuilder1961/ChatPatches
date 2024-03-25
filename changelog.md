@@ -3,6 +3,7 @@
 ## Chat Patches `202.6.5` for Minecraft 1.20.2 on Fabric, Quilt
 - Added the `searchPrefix` config option, which controls whether to filter previously sent messages based on the text behind the cursor, to speed up 
   accessing specific history messages. Thanks [LucunJi](https://github.com/LucunJi) for the code implementing this! ([#152](https://www.github.com/mrbuilder1961/ChatPatches/issues/152), [#154](https://www.github.com/mrbuilder1961/ChatPatches/pull/153))
+- Added a help document for issues and suggestions in the source code (`help.md`)
 - **Dev notes:**
   - Redeclared the `MinecraftClient` field in `ChatScreenMixin` to remove false `NullPointerException` warnings
 
