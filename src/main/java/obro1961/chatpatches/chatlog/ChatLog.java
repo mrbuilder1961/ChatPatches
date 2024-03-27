@@ -123,10 +123,10 @@ public class ChatLog {
             data = GSON.fromJson(rawData, Data.class);
             removeOverflowData();
         } catch(com.google.gson.JsonSyntaxException e) {
-            ChatPatches.LOGGER.error("[ChatLog.deserialize] Tried to read the ChatLog and found an error, loading an empty one: ", e);
-
+            ChatPatches.LOGGER.error("[ChatLog.deserialize] Tried to read the chat log and found an error, backing it up and loading an empty one:", e);
             data = new Data();
             loaded = true;
+            backup();
             return;
         }
 

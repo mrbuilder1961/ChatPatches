@@ -1,9 +1,10 @@
 # Changelog
 
 ## Chat Patches `202.6.5` for Minecraft 1.20.2 on Fabric, Quilt
-- Added the `searchPrefix` config option, which controls whether to filter previously sent messages based on the text behind the cursor, to speed up 
+- Added the `searchPrefix` config option, which controls whether to filter previously sent messages based on the text behind the cursor, to speed up
   accessing specific history messages. Thanks [LucunJi](https://github.com/LucunJi) for the code implementing this! ([#152](https://www.github.com/mrbuilder1961/ChatPatches/issues/152), [#154](https://www.github.com/mrbuilder1961/ChatPatches/pull/153))
 - Added a help section to the README, which currently explains how to upload log files and access beta versions fresh from Actions
+- The chat log will now back up a copy of itself if, upon loading, an error occurs
 - **Dev notes:**
   - Redeclared the `MinecraftClient` field in `ChatScreenMixin` to remove false `NullPointerException` warnings
 
@@ -48,9 +49,9 @@
 ### - Skipped version `202.6.1` to re-sync with the 1.20.4 version
 - Remove Gradle integration system, it was completely unnecessary and unused
 - Fixed messages starting with a newline not being copyable
-- Switched `chatWidth`'s YACL max value to the game window's width. Note: this can be incorrect if the game window is resized after the config screen is 
+- Switched `chatWidth`'s YACL max value to the game window's width. Note: this can be incorrect if the game window is resized after the config screen is
   opened. To fix this, just open the config screen when the game window is at the desired size.
-- Fixed a couple issues with the [Smooth Scroll](https://modrinth.com/mod/smooth-scroll) mod thanks to [@SmajloSlovakian](https://github.com/SmajloSlovakian)! 
+- Fixed a couple issues with the [Smooth Scroll](https://modrinth.com/mod/smooth-scroll) mod thanks to [@SmajloSlovakian](https://github.com/SmajloSlovakian)!
   ([#139](https://www.github.com/mrbuilder1961/ChatPatches/issues/139), [#141](https://www.github.com/mrbuilder1961/ChatPatches/pull/141))
 - **Dev stuff**:
   - Change source Java version to 21 and update Gradle to 8.5
@@ -68,7 +69,7 @@
  ([#132](https://www.github.com/mrbuilder1961/ChatPatches/pull/132) -JustAlittleWolf)
 - Extracted `chatLog` to the new ChatLog tab in the config
 - Added a new config option to the tab: `chatLogSaveInterval`, which configures the timer for saving the chat log to disk
-- Added new executable buttons to the chat log tab to manipulate it in game: Clear all messages, Clear sent messages, Clear regular messages, Load, Save, 
+- Added new executable buttons to the chat log tab to manipulate it in game: Clear all messages, Clear sent messages, Clear regular messages, Load, Save,
   and Backup
 - Additionally, the chatlog will now only actually write to disk if it has been modified since the last save ([#134](https://www.github.com/mrbuilder1961/ChatPatches/issues/134))
 - Inform users that Catalogue + Menulogue works as a substitution for ModMenu ([#42](https://www.github.com/mrbuilder1961/ChatPatches/issues/42))
