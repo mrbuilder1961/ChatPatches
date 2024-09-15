@@ -16,7 +16,6 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
-import net.minecraft.util.Uuids;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Flags;
@@ -28,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.function.Function;
 
@@ -150,9 +148,7 @@ public class ChatLog {
         }
 
         try {
-            // transformUUIDArrays: (temporary?) method to fix old chat logs
-            JsonObject jsonData = JsonHelper.deserialize( transformUUIDArrays(rawData) );
-
+            JsonObject jsonData = JsonHelper.deserialize(rawData);
             data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData).resultOrPartial(e -> {
                 throw new JsonSyntaxException(e);
             }).orElseThrow();
@@ -234,6 +230,7 @@ public class ChatLog {
         }
     }
 
+
     /**
      * Creates a backup of the current chat log file
      * located at {@link #PATH} and saves it as
@@ -287,7 +284,6 @@ public class ChatLog {
             ticksUntilSave = config.chatlogSaveInterval * 60 * 20;
     }
 
-
     /**
      * Dumps chat log data into the debug log. Note:
      * Assumes the Text codec is unusable, so instead
@@ -296,32 +292,6 @@ public class ChatLog {
     @SuppressWarnings("StringConcatenationArgumentToLogCall")
     public static void dumpData() {
         LOGGER.debug("[ChatLog.dumpData] " + Data.EMPTY_DATA.replaceAll("\\[]", "{}"), data.history, data.messages.stream().map(Text::getString).toList());
-    }
-
-    /**
-     * DFU-type method to update old chat logs and
-     * allow them to be deserialized in this post-Codec
-     * world. This method may be deleted at any time.
-     *
-     * @implNote Currently transforms old UUID arrays into
-     * stringified ones.
-     */
-    private static String transformUUIDArrays(String oldRawData) {
-        // all the "\\s*" substrings allow matching prettified chat logs
-        // without whitespace matches: `"id":[(-?\\d+),(-?\\d+),(-?\\d+),(-?\\d+)]`
-        String uuidArrayRegex = "\"id\"\\s*:\\s*\\[\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*]";
-
-        String fixedData = oldRawData;
-        while( fixedData.matches(".*"+uuidArrayRegex+".*") ) {
-            // find the first instance and map the stringified array to a real int array
-            int[] bits = Arrays.stream(fixedData.replaceFirst(".*"+uuidArrayRegex+".*", "$1,$2,$3,$4").split(","))
-                .mapToInt(Integer::parseInt)
-                .toArray();
-            // actually replace the stringified array with the dashed uuid
-            fixedData = fixedData.replaceFirst( uuidArrayRegex, "\"id\":\"" + Uuids.toUuid(bits) + "\"" );
-        }
-
-        return fixedData;
     }
 
 

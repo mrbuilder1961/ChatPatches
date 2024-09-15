@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `211.6.8` for Minecraft 1.21, 1.21.1 on Fabric, Quilt
+- Fixed the chat log taking insane amounts of time to read ([#191](https://www.github.com/mrbuilder1961/ChatPatches/issues/191))
+
 ## Chat Patches `211.6.7` for Minecraft 1.21, 1.21.1 on Fabric, Quilt
 - Gradle 8.10
 - Fixed the chat log enchantment registry crash, thanks [ArkoSammy12](https://github.com/ArkoSammy12)! (1.20.5+, [#180](https://www.github.com/mrbuilder1961/ChatPatches/issues/180))
