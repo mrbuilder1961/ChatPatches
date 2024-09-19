@@ -398,6 +398,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else
 			return getTextStyleAt.call(screen, mX, mY);
 	}
+
+	@Inject(method = {"mouseClicked", "keyPressed"}, at = @At("RETURN"))
+	private void closeMenuOnInput(CallbackInfoReturnable<Boolean> cir) {
+		// hide copy menu if any other element was clicked first
+		// specifically,
+		if(cir.getReturnValue() && showCopyMenu)
+			showCopyMenu = false;
+	}
+
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
@@ -417,8 +426,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
 	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		if(cir.getReturnValue())
+		if(cir.getReturnValue()) {
+			if(showCopyMenu) // hide copy menu if any other element was clicked first
+				showCopyMenu = false;
+
 			return;
+		}
 
 		if(searchField.mouseClicked(mX, mY, button))
 			cir.setReturnValue(true);
