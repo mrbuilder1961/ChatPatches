@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `213.6.9` for Minecraft 1.21, 1.21.1 on Fabric, Quilt
+- Updated to 1.21.2-3
+
 ## Chat Patches `211.6.9` for Minecraft 1.21, 1.21.1 on Fabric, Quilt
 - Fixed blank messages being sent instead of Xaero's Minimap waypoints ([#158](https://www.github.com/mrbuilder1961/ChatPatches/issues/158))
   - Should also fix any issues in the special case where a message is modified in between receiving and storing it

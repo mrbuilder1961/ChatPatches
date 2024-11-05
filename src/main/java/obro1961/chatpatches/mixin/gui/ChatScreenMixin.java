@@ -20,6 +20,7 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.ChatMessages;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.network.message.MessageSignatureData;
@@ -273,6 +274,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
 			context.drawTexture(
+				RenderLayer::getGuiTextured,
 				id("textures/gui/search_settings_panel.png"),
 				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
