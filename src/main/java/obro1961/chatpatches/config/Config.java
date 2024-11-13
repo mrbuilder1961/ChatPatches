@@ -85,7 +85,12 @@ public class Config {
         String link = "https://modrinth.com/mod/" + (suggestYACL ? "yacl" : "cloth-config");
 
         return new ConfirmScreen(
-            clicked -> {if(clicked) ConfirmLinkScreen.open(parent, link); else mc.setScreen(parent);},
+            clicked -> {
+                if(clicked)
+                    ConfirmLinkScreen.open(parent, link);
+                else
+                    mc.setScreen(parent);
+            },
             Text.translatable("text.chatpatches.help.missing"),
             Text.translatable("text.chatpatches.desc.help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
             ScreenTexts.CONTINUE,

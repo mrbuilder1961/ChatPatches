@@ -45,7 +45,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static Identifier id(String path) {
 		// unfortunately this method in 1.20.6 is method_43902
 		// but in 1.21 it's method_60655, making it incompatible
-		// this is grinding my gears bc the code is identicalS
+		// this is grinding my gears bc the code is identical ToT
 		return Identifier.of(MOD_ID, path);
 	}
 
