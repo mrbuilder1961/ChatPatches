@@ -40,7 +40,8 @@ public class ChatPatches implements ClientModInitializer {
 	private static String lastWorld = "";
 
 	/**
-	 * Creates a new Identifier using the ChatPatches mod ID.
+	 * Returns a {@code chatpatches:${path}}
+	 * {@link Identifier}.
 	 */
 	public static Identifier id(String path) {
 		// unfortunately this method in 1.20.6 is method_43902
