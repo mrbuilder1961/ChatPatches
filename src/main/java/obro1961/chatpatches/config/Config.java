@@ -15,6 +15,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.ChatUtils;
 
@@ -235,7 +236,7 @@ public class Config {
      */
     public static void writeCopy() {
 		try {
-			Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+			Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + Util.getFormattedCurrentTime() + ".json" ));
 		} catch(IOException e) {
             LOGGER.warn("[Config.writeCopy] An error occurred trying to write a copy of the original config file:", e);
 		}

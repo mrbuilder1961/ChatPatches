@@ -241,7 +241,7 @@ public class ChatLog {
      */
     public static void backup() {
         try {
-            Files.copy(PATH, PATH.resolveSibling( "chatlog_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+            Files.copy(PATH, PATH.resolveSibling( "chatlog_" + Util.getFormattedCurrentTime() + ".json" ));
         } catch(IOException e) {
             LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", PATH, e);
         }

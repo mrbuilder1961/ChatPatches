@@ -81,7 +81,7 @@
     "text.chatpatches.desc.chatlogClearMessages": "Press to clear only the chat log's regular messages. Note that this does not clear the chat itself, only the log. §c§lThis cannot be undone!§r",
     "text.chatpatches.desc.chatlogLoad": "Press to load the chat log into the chat. (§6Warning: this does NOT clear the chat beforehand, all messages will be appended to the end!§r§f) §3You must be in-game to execute this action.§r",
     "text.chatpatches.desc.chatlogSave": "Press to save the chat log to disk. §c§lThis will overwrite any data currently stored in the file. §r§3You must be in-game to execute this action.§r",
-    "text.chatpatches.desc.chatlogBackup": "Press to backup the chat log to disk. This will create a new file with 'backup_' plus the current date formatted in the 'yyyy-MM-dd_HH-mm-ss' pattern as the name; located in the same directory as the regular chat log.",
+    "text.chatpatches.desc.chatlogBackup": "Press to backup the chat log to disk. This will create a new file with 'backup_' plus the current date formatted in the 'yyyy-MM-dd_HH.mm.ss' pattern as the name; located in the same directory as the regular chat log.",
     "text.chatpatches.desc.chatlogOpenFolder": "Press to open §9<minecraft directory>/logs/§f§r§f, the folder where the chat log and any backups of it are stored.",
 
     "text.chatpatches.chatHidePacket": "Ignore hide message packet",

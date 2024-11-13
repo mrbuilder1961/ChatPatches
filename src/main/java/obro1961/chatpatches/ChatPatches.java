@@ -32,7 +32,6 @@ import java.util.function.Supplier;
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-	public static final Supplier<String> TIME_FORMATTER = () -> new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
 
 	public static Config config = Config.create();
 	/** Contains the sender and timestamp data of the last received chat message. */
