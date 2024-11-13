@@ -1,9 +1,11 @@
 package obro1961.chatpatches.util;
 
-import com.google.common.collect.Lists;
+import com.mojang.serialization.Codec;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.dynamic.Codecs;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,10 +17,19 @@ public class TextUtils {
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
 
+	/**
+	 * Returns a {@link Codec} for {@link Text} objects.
+	 * Used for the omnivers system so different
+	 * versions can all access the correct codec.
+	 */
+	public static Codec<Text> textCodec() {
+		return Codecs.TEXT;
+	}
+
 
 	/**
 	 * Replaces all {@code $} characters in {@code str} with {@code variable}.
-	 * Also replaces intended newline characters with {@code \n} to fix #36.
+	 * Also replaces intended newline characters with {@code \n} to fix (#36).
 	 */
 	public static String fillVars(String str, String variable) {
 		return str.replaceAll("\\$", variable).replaceAll("\\\\n", "\n");
@@ -32,7 +43,7 @@ public class TextUtils {
 		// slightly modified from https://stackoverflow.com/a/163398 to not include file links
 		final String urlRegex = "\\bhttps?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 		final Matcher matcher = Pattern.compile(urlRegex).matcher(str);
-		List<String> urls = Lists.newArrayList();
+		List<String> urls = new ArrayList<>();
 
 		while(matcher.find())
 			urls.add(matcher.group());

@@ -4,6 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.RemoveMessageS2CPacket;
+import obro1961.chatpatches.config.Config;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,13 +16,24 @@ import static obro1961.chatpatches.ChatPatches.config;
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class CPNHMixin {
     /**
-     * Prevents messages from being hidden.
+     * Prevents messages from being deleted.
      * Extremely unclear implementation on Mojang's part,
      * but based on how chat reports work, this is likely
-     * unwanted. Configurable using {@link obro1961.chatpatches.config.Config#chatHidePacket}.
+     * unwanted. Configurable using
+     * {@link Config#chatHidePacket}.
+     *
+     * @implNote Could take the {@link RemoveMessageS2CPacket}
+     * as a parameter, however this is omitted to save
+     * one headache for the 1.19.3 change from
+     * {@code HideMessageS2CPacket}.
      */
-    @Inject(method = "onRemoveMessage", at = @At("HEAD"), cancellable = true, require = 0)
-    private void cancelDelMessage(RemoveMessageS2CPacket packet, CallbackInfo ci) {
+    @Inject(
+        //method = "onHideMessage", // stonecutter: -1.19.2
+        method = "onRemoveMessage", // stonecutter: 1.19.3+
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void keepMessage(CallbackInfo ci) {
         if(config.chatHidePacket)
             ci.cancel();
     }

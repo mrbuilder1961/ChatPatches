@@ -6,11 +6,16 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ConfirmLinkScreen;
+import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.ChatUtils;
 
@@ -46,7 +51,8 @@ public class Config {
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
     public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>"; public int chatNameColor = 0xffffff;
-    public int shiftChat = 10; public boolean messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false, searchPrefix = false;
+    public int shiftChat = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix =
+        false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
 
     /**
@@ -65,10 +71,23 @@ public class Config {
     }
 
 
-    public /*static*/ Screen getConfigScreen(Screen parent) {
-        // idea: make this return a new YACL screen here if bool in #create() is true
-        // instead of making a new config object
-        return null;
+    public Screen getConfigScreen(Screen parent) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        boolean suggestYACL = SharedConstants.getProtocolVersion() >= 759; // 1.19 or higher
+        String link = "https://modrinth.com/mod/" + (suggestYACL ? "yacl" : "cloth-config");
+
+        return new ConfirmScreen(
+            clicked -> {
+                if(clicked)
+                    ConfirmLinkScreen.open(link, parent, true);
+                else
+                    mc.setScreen(parent);
+            },
+            Text.translatable("text.chatpatches.help.missing"),
+            Text.translatable("text.chatpatches.desc.help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
+            ScreenTexts.CONTINUE,
+            ScreenTexts.BACK
+        );
     }
 
 
@@ -214,7 +233,7 @@ public class Config {
      */
     public static void writeCopy() {
 		try {
-			Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+			Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + Util.getFormattedCurrentTime() + ".json" ));
 		} catch(IOException e) {
             LOGGER.warn("[Config.writeCopy] An error occurred trying to write a copy of the original config file:", e);
 		}

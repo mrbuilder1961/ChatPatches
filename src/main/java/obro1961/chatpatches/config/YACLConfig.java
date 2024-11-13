@@ -1,6 +1,5 @@
 package obro1961.chatpatches.config;
 
-import com.google.common.collect.Lists;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
@@ -20,6 +19,7 @@ import obro1961.chatpatches.util.Flags;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -32,17 +32,17 @@ public class YACLConfig extends Config {
 
     @Override
     public Screen getConfigScreen(Screen parent) {
-        List<Option<?>> timeOpts = Lists.newArrayList();
-        List<Option<?>> hoverOpts = Lists.newArrayList();
-        List<Option<?>> counterOpts = Lists.newArrayList();
-        List<Option<?>> compactChatOpts = Lists.newArrayList();
-        List<Option<?>> boundaryOpts = Lists.newArrayList();
-        List<Option<?>> chatlogOpts = Lists.newArrayList();
-        List<Option<?>> chatlogActions = Lists.newArrayList();
-        List<Option<?>> chatNameOpts = Lists.newArrayList();
-        List<Option<?>> chatHudOpts = Lists.newArrayList();
-        List<Option<?>> chatScreenOpts = Lists.newArrayList();
-        List<Option<?>> copyMenuOpts = Lists.newArrayList();
+        List<Option<?>> timeOpts = new ArrayList<>();
+        List<Option<?>> hoverOpts = new ArrayList<>();
+        List<Option<?>> counterOpts = new ArrayList<>();
+        List<Option<?>> compactChatOpts = new ArrayList<>();
+        List<Option<?>> boundaryOpts = new ArrayList<>();
+        List<Option<?>> chatlogOpts = new ArrayList<>();
+        List<Option<?>> chatlogActions = new ArrayList<>();
+        List<Option<?>> chatNameOpts = new ArrayList<>();
+        List<Option<?>> chatHudOpts = new ArrayList<>();
+        List<Option<?>> chatScreenOpts = new ArrayList<>();
+        List<Option<?>> copyMenuOpts = new ArrayList<>();
 
         Config.getOptions().forEach(opt -> {
             String key = opt.key; // to fix "local variable opt.key must be final or effectively final"

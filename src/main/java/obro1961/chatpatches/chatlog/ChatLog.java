@@ -1,6 +1,5 @@
 package obro1961.chatpatches.chatlog;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.serialization.Codec;
@@ -14,8 +13,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
 import net.minecraft.util.Uuids;
-import net.minecraft.util.dynamic.Codecs;
-import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.Flags;
 
@@ -31,6 +28,7 @@ import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
+import static obro1961.chatpatches.util.TextUtils.textCodec;
 
 /**
  * Represents the chat log file in the run directory located at {@link ChatLog#PATH}.
@@ -60,7 +58,7 @@ public class ChatLog {
          * lists mutable.
          */
         public static final Codec<Data> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-            Codec.list(Codecs.TEXT).xmap(ArrayList::new, Function.identity()).fieldOf("messages").forGetter(data -> data.messages),
+            Codec.list(textCodec()).xmap(ArrayList::new, Function.identity()).fieldOf("messages").forGetter(data -> data.messages),
             Codec.list(Codec.STRING).xmap(ArrayList::new, Function.identity()).fieldOf("history").forGetter(data -> data.history)
         ).apply(inst, (messages, history) -> Util.make(new Data(), data -> {
             data.messages = messages;
@@ -71,8 +69,8 @@ public class ChatLog {
         public ArrayList<String> history;
 
         private Data() {
-            messages = Lists.newArrayListWithExpectedSize(DEFAULT_SIZE);
-            history = Lists.newArrayListWithExpectedSize(DEFAULT_SIZE);
+            messages = new ArrayList<>(DEFAULT_SIZE);
+            history = new ArrayList<>(DEFAULT_SIZE);
         }
 
         private Data(boolean done) {
@@ -217,7 +215,7 @@ public class ChatLog {
      */
     public static void backup() {
 		try {
-            Files.copy(PATH, PATH.resolveSibling( "chatlog_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+            Files.copy(PATH, PATH.resolveSibling( "chatlog_" + Util.getFormattedCurrentTime() + ".json" ));
 		} catch(IOException e) {
 			LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", PATH, e);
 		}

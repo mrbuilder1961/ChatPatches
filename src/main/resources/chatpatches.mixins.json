@@ -8,6 +8,7 @@
   "mixins": [],
   "client": [
     "MinecraftClientMixin",
+    "accessor.GridWidgetAccessor",
     "chat.MessageHandlerMixin",
     "gui.ChatHudMixin",
     "gui.ChatScreenMixin",

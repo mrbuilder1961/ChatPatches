@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
+// will be delete:d! but not until ContextMenu is fully functioning to get the MAX benefit >:)
 public class MenuButtonWidget {
 	/** The mouse position to anchor all menu buttons to, used here rather than {@link ChatScreenMixin} because of mixin accessing limitations. */
 	public static RenderUtils.MousePos anchor = RenderUtils.MousePos.of(-1, -1); // the "origin" of all menu buttons
@@ -27,15 +27,17 @@ public class MenuButtonWidget {
 
 	public final ButtonWidget button;
 	public final BiConsumer<MenuButtonWidget, Boolean> onMouseMoved; // called when the mouse hovers over this button; used to decide when to render the hover menu buttons
-	public final Supplier<String> copySupplier; // for supplying the string to be copied when clicked; mostly uses ChatScreenMixin#selectedLine
+	public final Supplier<String> copySupplier; // for supplying the string to be copied when clicked; passed ChatScreenMixin#selectedLine
+	/*new*/public final boolean permanent; // if true, the button will always be rendered, regardless of the hover state
 	public Consumer<MenuButtonWidget> otherPressAction = menuButton -> {}; // currently only for the reply button
 	public List<MenuButtonWidget> children; // the buttons that are rendered when this button is hovered over
 	public SkinTextures skinTexture; // the texture to render over this button, currently only used for the reply button
 	public int xOffset, yOffset, localY = 0, width; // localY is the y offset of this button from its parent, used to align the button vertically
 
-	private MenuButtonWidget(int xOffset, Text message, Supplier<String> cS, MenuButtonWidget... c) {
+	private MenuButtonWidget(int xOffset, Text message, Supplier<String> cS, boolean p, MenuButtonWidget... c) {
 		this.children = new ArrayList<>( List.of(c) );
 		this.xOffset = xOffset;
+		this.permanent = p;
 		this.copySupplier = cS != null ? cS : () -> "";
 		this.onMouseMoved = (me, isMouseOver) -> children.forEach(hoverButton -> hoverButton.button.visible = isMouseOver);
 
@@ -53,20 +55,19 @@ public class MenuButtonWidget {
 				}
 				otherPressAction.accept(this);
 			})
-			.position(anchor.x + this.xOffset, anchor.y + yOffset)
+			.position((int) (anchor.x + this.xOffset), (int) (anchor.y + yOffset))
 			.size(width, height)
 			.build();
 	}
 
 	/** Creates a MenuButtonWidget with no mouse hover action, used for buttons with copy actions (mostly hover buttons). */
 	public static MenuButtonWidget of(int xOffset, Text text, Supplier<String> componentSupplier) {
-		return new MenuButtonWidget(xOffset, text, componentSupplier);
+		return new MenuButtonWidget(xOffset, text, componentSupplier, false);
 	}
 	/** Creates a MenuButtonWidget with no component supplier, used for buttons that reveal more (main buttons). */
 	public static MenuButtonWidget of(int xOffset, Text text, MenuButtonWidget... children) {
-		return new MenuButtonWidget(xOffset, text, null, children);
+		return new MenuButtonWidget(xOffset, text, null, true, children);
 	}
-
 
 	public void updateTooltip() {
 		button.setTooltip(Tooltip.of(Text.of( copySupplier.get().replaceAll("§", "&") )));
@@ -92,7 +93,7 @@ public class MenuButtonWidget {
 	/** Shifts the button's position by the given amount of button heights to stack the menu buttons. */
 	public MenuButtonWidget offsetY(int places) {
 		yOffset += (height * places);
-		button.setY(anchor.y + yOffset);
+		button.setY((int) (anchor.y + yOffset));
 		return this;
 	}
 
@@ -102,14 +103,14 @@ public class MenuButtonWidget {
 			yOffset += (height * ++mainOffsets);
 		else
 			yOffset += (height * ++hoverOffsets);
-		button.setY(anchor.y + yOffset);
+		button.setY((int) (anchor.y + yOffset));
 		updateTooltip();
 		button.visible = true;
 	}
 
 	public void cancelRender() {
 		yOffset = localY;
-		button.setY(anchor.y + yOffset);
+		button.setY((int) (anchor.y + yOffset));
 		button.setTooltip(null);
 		button.visible = false;
 	}
@@ -127,14 +128,14 @@ public class MenuButtonWidget {
 
 	/** Returns and updates the x coordinate where the button should render, using {@link #anchor} and {@link #xOffset}. */
 	private int x() {
-		button.setX(anchor.x + xOffset);
-		return anchor.x + xOffset;
+		button.setX((int) (anchor.x + xOffset));
+		return (int) (anchor.x + xOffset);
 	}
 
 	/** Returns and updates the y coordinate where the button should render, using {@link #anchor} and {@link #yOffset}. */
 	private int y() {
-		button.setY(anchor.y + yOffset);
-		return anchor.y + yOffset;
+		button.setY((int) (anchor.y + yOffset));
+		return (int) (anchor.y + yOffset);
 	}
 
 
@@ -163,6 +164,7 @@ public class MenuButtonWidget {
 	}
 
 	public void render(DrawContext drawContext, int mX, int mY, float delta) {
+		//todo when i move this over, add credit to dzwdz's Chat Heads for the skin texture code
 		if(!button.visible || x() < 0 || y() < 0)
 			return;
 
@@ -178,8 +180,8 @@ public class MenuButtonWidget {
 			// thank you to dzwdz's Chat Heads for most of the code to draw the skin texture!
 
 			// draw base layer, then the hat
-			int x = anchor.x + xOffset + 1;
-			int y = anchor.y + yOffset + 1;
+			int x = (int) (anchor.x + xOffset + 1);
+			int y = (int) (anchor.y + yOffset + 1);
 			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 8, 8, 8, 8, 64, 64);
 			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 40, 8, 8, 8, 64, 64);
 		}

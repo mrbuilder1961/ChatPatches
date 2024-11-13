@@ -26,13 +26,15 @@ repositories {
   	mavenCentral()
 	maven { url "https://maven.terraformersmc.com/releases/" } // Mod Menu
 	maven { url "https://maven.isxander.dev/releases" } // YACL
+	//todo NEW MAVEN FOR ARCH... later
 }
 
 dependencies {
 	minecraft "com.mojang:minecraft:$project.minecraft"
 	mappings "net.fabricmc:yarn:$project.minecraft$project.yarn:v2"
 	modImplementation "net.fabricmc:fabric-loader:$project.loader"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:$project.api"//comment out
+	//modApi "dev.architectury:architectury-fabric:${project.arch_api}"
 
 	modImplementation "com.terraformersmc:modmenu:$project.modmenu"
 	modImplementation "dev.isxander.yacl:yet-another-config-lib-fabric:$project.yacl"

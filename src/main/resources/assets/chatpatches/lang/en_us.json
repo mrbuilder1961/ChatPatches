@@ -81,7 +81,7 @@
     "text.chatpatches.desc.chatlogClearMessages": "Press to clear only the chat log's regular messages. Note that this does not clear the chat itself, only the log. §c§lThis cannot be undone!§r",
     "text.chatpatches.desc.chatlogLoad": "Press to load the chat log into the chat. (§6Warning: this does NOT clear the chat beforehand, all messages will be appended to the end!§r)",
     "text.chatpatches.desc.chatlogSave": "Press to save the chat log to disk. §c§lThis will overwrite any data currently stored in the file.§r",
-    "text.chatpatches.desc.chatlogBackup": "Press to backup the chat log to disk. This will create a new file with 'backup_' plus the current date formatted in the 'yyyy-MM-dd_HH-mm-ss' pattern as the name; located in the same directory as the regular chat log.",
+    "text.chatpatches.desc.chatlogBackup": "Press to backup the chat log to disk. This will create a new file with 'backup_' plus the current date formatted in the 'yyyy-MM-dd_HH.mm.ss' pattern as the name; located in the same directory as the regular chat log.",
     "text.chatpatches.desc.chatlogOpenFolder": "Press to open §9<minecraft directory>/logs/§f§r§f, the folder where the chat log and any backups of it are stored.",
 
     "text.chatpatches.chatHidePacket": "Ignore hide message packet",
@@ -115,8 +115,9 @@
     "text.chatpatches.help.regex": "For regular expression information, click me!",
     "text.chatpatches.help.regexTester": "For testing regular expressions, click me!",
     "text.chatpatches.help.reloadConfig": "Reload Config",
+    "text.chatpatches.help.missing": "§cCannot open config screen",
     "text.chatpatches.desc.help.reloadConfig": "Press to read the config file and load any changes. §c§lThis will override any unsaved changes made here!§r§f You need to exit and re-open this screen to see the changes take effect.",
-
+    "text.chatpatches.desc.help.missing": "§7Please install %s §7to access the config in-game!",
 
     "text.chatpatches.search.suggestion": "Search...",
     "text.chatpatches.search.caseSensitive": "Case sensitive",
@@ -133,7 +134,7 @@
     "text.chatpatches.desc.copyReplyFormat": "The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the copy menu. '$' is required and will be filled with the message sender's name.",
     "text.chatpatches.desc.copyColor": "The color of the selection box that's shown after right-clicking on a chat message.",
 
-    "text.chatpatches.copy.copied": "Copied message: \"%s\"!",
+    "text.chatpatches.copy.copied": "§aSuccessfully copied to clipboard!",
     "text.chatpatches.copy.copyString": "Copy String >",
     "text.chatpatches.copy.rawString": "Raw",
     "text.chatpatches.copy.formattedString": "Formatted",
@@ -148,6 +149,7 @@
     "text.chatpatches.copy.name": "Username",
     "text.chatpatches.copy.uuid": "UUID",
     "text.chatpatches.copy.reply": "Reply",
+    "text.chatpatches.copy.unknownData": "§c§l/§e!§c\\ §r§7Unknown data for '§9%s§7', please report this issue!",
 
     "text.chatpatches.restored": "Restored"
 }

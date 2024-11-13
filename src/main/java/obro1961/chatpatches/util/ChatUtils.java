@@ -10,8 +10,8 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
-import obro1961.chatpatches.api.ChatHudPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
+import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,18 +76,12 @@ public class ChatUtils {
 		if(index < 0)
 			index = content.getArgs().length + index;
 
-		Object /* StringVisitable */ arg = content.getArg(index);
-
-		if(arg == null)
-			return Text.empty();
-		else if(arg instanceof Text t)
-			return (MutableText) t;
-		else if(arg instanceof StringVisitable sv)
-			return Text.literal(sv.getString());
-		else if(arg instanceof String s)
-			return Text.literal(s);
-		else
-			return Text.empty();
+		return switch( content.getArgs()[index] ) {
+			case Text t -> (MutableText) t;
+			case StringVisitable sv -> Text.literal(sv.getString());
+			case String s -> Text.literal(s);
+			default -> Text.empty();
+		};
 	}
 
 	/**
@@ -162,10 +156,10 @@ public class ChatUtils {
 	 *   <li>If the message shouldn't be formatted (doesn't satisfy all
 	 *   prerequisites), then don't change {@code m} and store it.</li>
 	 * 	 <li>Assemble the constructed message and add a duplicate counter
-	 * 	 according to the {@link ChatHudPatches#addCounter(Text)} method.</li>
+	 * 	 according to the {@link ChatUtils#addCounter(Text)} method.</li>
 	 * 	 <li>Log the modified message in the {@code ChatLog}.</li>
 	 * 	 <li>Reset the {@link ChatPatches#msgData} to prevent an uncommon bug.</li>
-	 * 	 <li>Return the modified message, regardless of if it was</li>
+	 * 	 <li>Return the message, regardless of if it was actually modified or not.</li>
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
@@ -175,7 +169,7 @@ public class ChatUtils {
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
 		boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
 		Date now = lastEmpty ? new Date() : msgData.timestamp();
-		String nowStr = String.valueOf(now.getTime()); // for copy menu and storing timestamp data! only affects the timestamp
+		String nowStr = String.valueOf(now.getTime()); // for context menu and storing timestamp data! only affects the timestamp
 		Style style = m.getStyle();
 
 		MutableText timestamp = null;
@@ -251,17 +245,84 @@ public class ChatUtils {
 		}
 
 		// assembles constructed message and adds a duplicate counter according to the #addCounter method
-		Text modified = ChatUtils.buildMessage(style, timestamp, content, null);
+		Text modified = addCounter( ChatUtils.buildMessage(style, timestamp, content, null) );
 		ChatLog.addMessage(modified);
 		msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
 	}
 
 	/**
+	 * Adds a duplicate counter to the chat message, indicating how many times
+	 * the same message has been sent. Can check only the last message, or
+	 * {@link Config#counterCompactDistance} times back. Slightly more
+	 * efficient than the older method, although it's still quite slow.
+	 *
+	 * @implNote
+	 * <ol>
+	 *     <li>IF {@code COUNTER} is enabled AND the message count >0 AND the message isn't a boundary line, continue.</li>
+	 *     <li>Cache the result of trying to condense the incoming message with the last message received.</li>
+	 *     <li>IF the counter should use the CompactChat method and the message wasn't already condensed:</li>
+	 *     <ol>
+	 *         <li>Calculate the adjusted distance to attempt comparing, depending on the amount of messages already in the chat.</li>
+	 *         <li>Filter all the messages within the target range that are case-insensitively equal to the incoming message.</li>
+	 *         <li>If a message was the same, call {@link ChatUtils#getCondensedMessage(Text, int)},
+	 *         which ultimately removes that message and its visibles.</li>
+	 *     </ol>
+	 *     <li>Return the (potentially) condensed message, to then be used further in {@link #modifyMessage(Text)}.</li>
+	 * </ol>
+	 * (Wraps the entire method in a try-catch to prevent any errors accidentally disabling the chat.)
+	 *
+	 * @see ChatUtils#getCondensedMessage(Text, int)
+	 */
+	public static Text addCounter(Text incoming) {
+		ChatHud hud = MinecraftClient.getInstance().inGameHud.getChatHud();
+		List<ChatHudLine> messages = ((ChatHudAccessor) hud).chatpatches$getMessages();
+
+		try {
+			if( config.counter && !messages.isEmpty() ) {
+				// condenses the incoming message into the last message if it is the same
+				Text condensedLastMessage = getCondensedMessage(incoming, 0);
+
+				// if the counterCompact option is true but the last message received was not condensed, look for
+				// any dupes in the last counterCompactDistance messages and if any are found condense them
+				if( config.counterCompact && condensedLastMessage.equals(incoming) ) {
+					// ensures {0 <= attemptDistance <= messages.size()} is true
+					int attemptDistance = MathHelper.clamp((
+						(config.counterCompactDistance == -1)
+							? messages.size()
+							: (config.counterCompactDistance == 0)
+								? hud.getVisibleLineCount()
+								: config.counterCompactDistance
+					), 0, messages.size());
+
+					// exclude the first message, already checked above
+					messages.subList(1, attemptDistance)
+						.stream()
+						.filter( hudLine -> getPart(hudLine.content(), MESSAGE_INDEX).getString().equalsIgnoreCase( getPart(incoming, MESSAGE_INDEX).getString() ) )
+						.findFirst()
+						.ifPresent( hudLine -> getCondensedMessage(incoming, messages.indexOf(hudLine)) );
+				}
+
+				// this result is used in #modifyMessage(...)
+				return condensedLastMessage;
+			}
+		} catch(IndexOutOfBoundsException e) {
+			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
+			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method. Either way,");
+			ChatPatches.logInfoReportMessage(e);
+		} catch(Exception e) {
+			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error! /!\\");
+			ChatPatches.logInfoReportMessage(e);
+		}
+
+		return incoming;
+	}
+
+	/**
 	 * Tries to condense the {@code index} message into the incoming message
 	 * if they're case-insensitively equal. This method is functionally
 	 * similar to the original
-	 * {@link ChatHudMixin#addCounter(Text, boolean)}
+	 * {@code ChatHudMixin#addCounter(Text, boolean)}
 	 * before {@code v194.5.0}.
 	 * <padding><br>The main difference is that this method
 	 * removes the old message and edits the incoming message, rather than
@@ -288,9 +349,9 @@ public class ChatUtils {
 	public static Text getCondensedMessage(Text incoming, int index) {
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final ChatHud chatHud = client.inGameHud.getChatHud();
-		final ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
-		final List<ChatHudLine> messages = chat.getMessages();
-		final List<ChatHudLine.Visible> visibleMessages = chat.getVisibleMessages();
+		final ChatHudAccessor chat = (ChatHudAccessor) chatHud;
+		final List<ChatHudLine> messages = chat.chatpatches$getMessages();
+		final List<ChatHudLine.Visible> visibleMessages = chat.chatpatches$getVisibleMessages();
 
 		ChatHudLine comparingLine = messages.get(index); // message being compared
 		List<Text> comparingParts = comparingLine.content().getSiblings();
@@ -333,9 +394,8 @@ public class ChatUtils {
 				// same here w/ config.counterCheckStyle as previous note
 				visibleMessages.removeIf(hudLine -> calcVisibles.stream().anyMatch(ot -> ot.equalsIgnoreCase( reorder(hudLine.content(), config.counterCheckStyle) )));
 			} else {
-				visibleMessages.remove(0);
-				while( !visibleMessages.isEmpty() && !visibleMessages.get(0).endOfEntry() )
-					visibleMessages.remove(0);
+				do visibleMessages.removeFirst();
+				while(!visibleMessages.isEmpty() && !visibleMessages.getFirst().endOfEntry());
 			}
 
 			// according to some testing, modifying incomingParts DOES modify incoming.getSiblings(), so all changes are taken care of!
@@ -345,7 +405,6 @@ public class ChatUtils {
 
 		return incoming.copy(); // fixes IntelliJ flagging the return value as always being equal to incoming (not true!)
 	}
-
 
 	/** Represents the metadata of a chat message. */
 	public record MessageData(GameProfile sender, Date timestamp, boolean vanilla) {}
