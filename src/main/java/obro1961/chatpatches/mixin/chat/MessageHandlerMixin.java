@@ -15,6 +15,7 @@ import obro1961.chatpatches.util.ChatUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -42,10 +43,9 @@ public abstract class MessageHandlerMixin {
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         // only logs the metadata if it was a player-sent message (otherwise tries to format some commands like /msg and /me)
-        if( params.type().chat().translationKey().equals("chat.type.text") )
-            ChatPatches.msgData = new ChatUtils.MessageData(sender, Date.from(message.getTimestamp()), true);
-        else
-            ChatPatches.msgData = ChatUtils.NIL_MSG_DATA;
+        ChatPatches.msgData = params.type().chat().translationKey().equals("chat.type.text")
+            ? new ChatUtils.MessageData(sender, Date.from(message.getTimestamp()), isVanilla(params.applyChatDecoration(message.getContent())))
+            : ChatUtils.NIL_MSG_DATA;
     }
 
     /**
@@ -58,7 +58,26 @@ public abstract class MessageHandlerMixin {
         UUID id = extractSender(message);
 
         ChatPatches.msgData = !id.equals(Util.NIL_UUID)
-            ? new ChatUtils.MessageData(new GameProfile(id, name), new Date(), true)
+            ? new ChatUtils.MessageData(new GameProfile(id, name), new Date(), isVanilla(message))
             : ChatUtils.NIL_MSG_DATA;
+    }
+
+
+    /**
+     * Returns true if the given Text is in the vanilla message
+     * format of "{@code <username> message}" (as specified in
+     * {@link ChatUtils#VANILLA_FORMAT}). This should be
+     * true for every message sent by a player, which are the
+     * only messages that need to be heavily modified. In
+     * {@link ChatUtils#modifyMessage(Text)}.
+     *
+     * @apiNote When called in the chat message handler, the
+     * message passed should be
+     * {@code params.applyChatDecoration(message.getContent())}
+     * to properly include the playername.
+     */
+    @Unique
+    private boolean isVanilla(Text message) {
+        return message.getString().matches(ChatUtils.VANILLA_FORMAT);
     }
 }

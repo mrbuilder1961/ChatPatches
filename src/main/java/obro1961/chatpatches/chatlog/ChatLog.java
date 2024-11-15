@@ -12,9 +12,7 @@ import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
-import net.minecraft.util.Uuids;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.Flags;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -23,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -44,6 +41,7 @@ public class ChatLog {
 
     private static ChatLog.Data data = new Data();
     private static boolean savedAfterCrash = false;
+    private static boolean restoring = false;
     private static int lastHistoryCount = -1, lastMessageCount = -1;
 
 
@@ -223,7 +221,7 @@ public class ChatLog {
 
     /** Restores the chat log from {@link #data} into Minecraft. */
     public static void restore(MinecraftClient client) {
-        Flags.LOADING_CHATLOG.raise();
+        restoring = true;
 
         if(!data.history.isEmpty())
             data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
@@ -231,7 +229,7 @@ public class ChatLog {
         if(!data.messages.isEmpty())
             data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
 
-        Flags.LOADING_CHATLOG.lower();
+        restoring = false;
 
         LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", messageCount(), historyCount(), PATH);
     }
@@ -258,44 +256,31 @@ public class ChatLog {
             ticksUntilSave = config.chatlogSaveInterval * 60 * 20;
     }
 
-    /**
-     * DFU-type method to update old chat logs and
-     * allow them to be deserialized in this post-Codec
-     * world. This method may be deleted at any time.
-     *
-     * @implNote Currently transforms old UUID arrays into
-     * stringified ones.
-     */
-    private static String transformUUIDArrays(String oldRawData) {
-        // all the "\\s*" substrings allow matching prettified chat logs
-        // without whitespace matches: `"id":[(-?\\d+),(-?\\d+),(-?\\d+),(-?\\d+)]`
-        String uuidArrayRegex = "\"id\"\\s*:\\s*\\[\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*]";
-
-        String fixedData = oldRawData;
-        while( fixedData.matches(".*"+uuidArrayRegex+".*") ) {
-            // find the first instance and map the stringified array to a real int array
-            int[] bits = Arrays.stream(fixedData.replaceFirst(".*"+uuidArrayRegex+".*", "$1,$2,$3,$4").split(","))
-                .mapToInt(Integer::parseInt)
-                .toArray();
-            // actually replace the stringified array with the dashed uuid
-            fixedData = fixedData.replaceFirst( uuidArrayRegex, "\"id\":\"" + Uuids.toUuid(bits) + "\"" );
-        }
-
-        return fixedData;
-    }
 
     public static void addMessage(Text msg) {
+        if(restoring)
+            return;
         if(messageCount() > config.chatMaxMessages)
             data.messages.removeFirst();
 
         data.messages.add(msg);
     }
     public static void addHistory(String msg) {
+        if(restoring)
+            return;
         if(historyCount() > config.chatMaxMessages)
             data.history.removeFirst();
 
         data.history.add(msg);
     }
+
+    /**
+     * Returns if the chat log is currently
+     * being restored into the chat. Used
+     * to prevent logging and modifying
+     * restored messages.
+     */
+    public static boolean isRestoring() { return restoring; }
 
     public static void clearMessages() {
         data.messages.clear();

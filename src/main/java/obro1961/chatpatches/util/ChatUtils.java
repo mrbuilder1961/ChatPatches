@@ -31,6 +31,8 @@ public class ChatUtils {
 	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 	public static final int TIMESTAMP_INDEX = 0, MESSAGE_INDEX = 1, DUPE_INDEX = 2; // indices of all main (modified message) components
 	public static final int MSG_TEAM_INDEX = 0, MSG_SENDER_INDEX = 1, MSG_CONTENT_INDEX = 2; // indices of all MESSAGE_INDEX components
+	/** Matches only an entire vanilla player message. */
+	public static final String VANILLA_FORMAT = "(?i)^<[a-z0-9_]{3,16}>\\s.+$";
 
 	/**
 	 * Returns the message component at the given index;
@@ -163,11 +165,10 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
-		if( Flags.LOADING_CHATLOG.isRaised() )
+		if(ChatLog.isRestoring())
 			return m; // cancels modifications when loading the chatlog or regenerating visibles
 
-		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
-		boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
+		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);ChatPatches.LOGGER.warn("msgData: {}", msgData);
 		Date now = lastEmpty ? new Date() : msgData.timestamp();
 		String nowStr = String.valueOf(now.getTime()); // for context menu and storing timestamp data! only affects the timestamp
 		Style style = m.getStyle();
@@ -176,11 +177,11 @@ public class ChatUtils {
 		MutableText content = m.copy();
 
 		try {
-			timestamp = (config.time && !boundary) ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
+			timestamp = config.time ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
 			content = Text.empty().setStyle(style);
 
 			// reconstruct the player message if it's in the vanilla format and it should be reformatted
-			if(!lastEmpty && !boundary && msgData.vanilla()) {
+			if(!lastEmpty && msgData.vanilla()) {
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches("chat.type.(text|team.(text|sent))")) {
 					String key = ttc.getKey();

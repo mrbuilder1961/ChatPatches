@@ -17,7 +17,6 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
-import obro1961.chatpatches.util.Flags;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Intrinsic;
@@ -155,14 +154,13 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         argsOnly = true
     )
     private Text modifyMessage(Text m, @Local(argsOnly = true) boolean refreshing) {
-        //PREPUB: fix all this ugly modifymessage/addcounter stuff in 1.21.1 and then copy it over
+        //PREPUB: fix all this ugly modifymessage/addcounter stuff in 1.21.3 and then copy it over
         return refreshing ? m : ChatUtils.modifyMessage(m);
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/ArrayListDeque;size()I"))
     private void addHistory(String message, CallbackInfo ci) {
-        if(!Flags.LOADING_CHATLOG.isRaised())
-            ChatLog.addHistory(message);
+        ChatLog.addHistory(message);
     }
 
     /**
@@ -182,7 +180,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      */
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
     private void ignoreRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
-        if(Flags.LOADING_CHATLOG.isRaised() && indicator != null)
+        if(ChatLog.isRestoring() && indicator != null)
             ci.cancel();
     }
 }
