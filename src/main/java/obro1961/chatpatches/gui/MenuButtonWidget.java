@@ -164,7 +164,6 @@ public class MenuButtonWidget {
 	}
 
 	public void render(DrawContext drawContext, int mX, int mY, float delta) {
-		//todo when i move this over, add credit to dzwdz's Chat Heads for the skin texture code
 		if(!button.visible || x() < 0 || y() < 0)
 			return;
 
@@ -184,6 +183,8 @@ public class MenuButtonWidget {
 			int y = (int) (anchor.y + yOffset + 1);
 			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 8, 8, 8, 8, 64, 64);
 			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 40, 8, 8, 8, 64, 64);
+
+			// fuck this, there's a reason PlayerSkinDrawer exists! sorry dzwdz :P
 		}
 	}
 }

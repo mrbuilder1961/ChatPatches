@@ -55,7 +55,7 @@ public class ContextMenu {
 
 	// normal variables
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
-	private static final int buttonPadding = 4; // todo keep? idk
+	private static final int buttonPadding = 4;
 	// text
 	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable("text.chatpatches.copy.unknownData", id); // todo make sure this looks okay in practice
 	static final Text MENU_STRING = Text.translatable("text.chatpatches.copy.copyString");
