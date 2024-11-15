@@ -4,7 +4,6 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -48,21 +47,25 @@ public class ChatPatches implements ClientModInitializer {
 	public void onInitializeClient() {
 		//todo: put all these callbacks somewhere else so i can split them by loader w arch api later
 		/*
-		* ChatLog saving events, run if config.chatlog is true:
-		* 	CLIENT_STOPPING - Always saves
-		* 	SCREEN_AFTER_INIT - Saves if there is no save interval AND if the screen is the OptionsScreen (paused)
-		* 	START_CLIENT_TICK - Ticks the save counter, saves if the counter is 0, resets if <0
-		* 	MinecraftClientMixin#saveChatlogOnCrash - Always saves
-		*/
-		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ChatLog.serialize(false));
-		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> {
-			// saves the chat log if [the save interval is 0] AND [the pause menu is showing OR the game isn't focused]
-			if( config.chatlogSaveInterval == 0 && (screen instanceof GameMenuScreen || !client.isWindowFocused()) )
-				ChatLog.serialize(false);
-		});
-		ClientTickEvents.START_CLIENT_TICK.register(client -> ChatLog.tickSaveCounter());
+		 * ChatLog saving events, run if config.chatlog is true:
+		 * 	DISCONNECT - Always saves EXCEPT on (most?) server crashes
+		 * 	SCREEN_AFTER_INIT - Saves if the save interval is enabled AND if the screen is paused (GameMenuScreen)
+		 * 	END_WORLD_TICK - Ticks the save counter and saves if it's enabled and the internal counter equals zero
+		 */
 
-		// registers the cached message file importer and boundary sender
+
+		// according to my testing, this event works as needed when the game disconnects and on crashes if the game is functional at that point
+		// testing details (server=hypixel): normal disconnects work on both world and server, manual F3+C crash works on world but NOT server
+		// honestly I don't care if it fails on crashes, its fixable A) through the save interval or B) by fixing the crash's source
+		ClientPlayConnectionEvents.DISCONNECT.register((network, client) -> ChatLog.serialize());
+		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> {
+			// saves the chat log if [the save interval is disabled] AND [the pause menu is showing OR the game isn't focused]
+			if( config.chatlogSaveInterval == 0 && (screen instanceof GameMenuScreen || !client.isWindowFocused()) )
+				ChatLog.serialize();
+		});
+		ClientTickEvents.END_WORLD_TICK.register(world -> ChatLog.tickSaveCounter());
+
+		// registers the chat log loader and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
 			if(!ChatLog.loaded && config.chatlog) {
 				ChatLog.deserialize();
@@ -122,19 +125,31 @@ public class ChatPatches implements ClientModInitializer {
 	 * Logs an error-level message telling the user to report
 	 * the given error. The class and method of the caller is
 	 * provided from a {@link StackWalker}.
-	 * <br><br>
-	 * Outputs the following message:
+	 *
+	 * <p>Outputs the following message:
 	 * <pre>
-	 * [${class}.${method}] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
-	 * ${error}
+	 * [$class.$method] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
+	 * (error)
 	 * </pre>
 	 */
-	public static void logInfoReportMessage(Throwable error) {
+	public static <X extends Throwable> void logReportMsg(@NotNull X error) {
 		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 		String clazz = walker.getCallerClass().getSimpleName();
 		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
-		method = method.isBlank() ? error.getStackTrace()[0].getMethodName() : method;
+
+		if(method.isBlank())
+			method = error.getStackTrace()[0].getMethodName();
+
 		LOGGER.error("[%s.%s] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\".formatted(clazz, method), error);
+	}
+
+	/**
+	 * Executes {@link #logReportMsg(Throwable)}
+	 * and throws the passed error.
+	 */
+	public static <X extends Throwable> X logAndThrowReportMsg(@NotNull X error) throws X {
+		logReportMsg(error);
+		throw error;
 	}
 
 	// 1.20.5+ needs the RegistryOps instance

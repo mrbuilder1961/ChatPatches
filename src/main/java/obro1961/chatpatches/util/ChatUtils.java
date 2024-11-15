@@ -216,9 +216,15 @@ public class ChatUtils {
 
 					MutableText realContent = Text.empty();
 					// find the first index of a '>' in the message, is formatted like '<%s> %s'
-					Text firstPart = parts.stream().filter(p -> p.getString().contains(">")).findFirst()
-						.orElseThrow(() -> new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "' !"));
-					String afterEndBracket = firstPart.getString().split(">")[1]; // just get the part after the closing bracket, we know the start
+					Text firstPart = parts.stream()
+						.filter(p -> p.getString().contains(">"))
+						.findFirst()
+						.orElseThrow(() -> ChatPatches.logAndThrowReportMsg(
+							new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "'!")
+						));
+
+					String[] endBracketSplit = firstPart.getString().split(">"); // part of #156 AIOOBE i=1 fix
+					String afterEndBracket = endBracketSplit.length > 1 ? endBracketSplit[1] : ""; // just get the part after the closing bracket, we know the start
 
 					// ignore everything before the '>' because it's the playername, which we already know
 					// adds the part after the closing bracket but before any remaining siblings, if it exists
@@ -242,7 +248,7 @@ public class ChatUtils {
 			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \tModified message structure:");
 			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
 			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
-			ChatPatches.logInfoReportMessage(e);
+			ChatPatches.logReportMsg(e);
 		}
 
 		// assembles constructed message and adds a duplicate counter according to the #addCounter method
@@ -310,10 +316,10 @@ public class ChatUtils {
 		} catch(IndexOutOfBoundsException e) {
 			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
 			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method. Either way,");
-			ChatPatches.logInfoReportMessage(e);
+			ChatPatches.logReportMsg(e);
 		} catch(Exception e) {
 			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error! /!\\");
-			ChatPatches.logInfoReportMessage(e);
+			ChatPatches.logReportMsg(e);
 		}
 
 		return incoming;

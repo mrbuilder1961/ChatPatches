@@ -7,7 +7,6 @@
   "mixinPriority": 2000,
   "mixins": [],
   "client": [
-    "MinecraftClientMixin",
     "accessor.GridWidgetAccessor",
     "chat.MessageHandlerMixin",
     "gui.ChatHudMixin",

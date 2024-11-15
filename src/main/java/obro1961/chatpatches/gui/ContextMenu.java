@@ -322,7 +322,7 @@ public class ContextMenu {
 			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(selectedLine.content().asOrderedText(), true)), 1, 1);
 			registerCopyOnlyButton(JSON_STR,
 				textCodec().encodeStart(ChatPatches.jsonOps(), selectedLine.content())
-					.resultOrPartial(e -> ChatPatches.logInfoReportMessage(new JsonParseException(e)))
+					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
 					.map(JsonHelper::toSortedString)
 					.map(Text::of)
 					.orElse(UNKNOWN.apply(JSON_STR)),

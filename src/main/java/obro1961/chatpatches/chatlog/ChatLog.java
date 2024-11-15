@@ -1,9 +1,10 @@
 package obro1961.chatpatches.chatlog;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -12,7 +13,9 @@ import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
+import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.util.TextUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -25,13 +28,12 @@ import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.util.TextUtils.textCodec;
 
 /**
  * Represents the chat log file in the run directory located at {@link ChatLog#PATH}.
  * Contains methods for serializing, deserializing, accessing, modifying, and
  * backing up the data.
- */
+ */ //prepub: equalize the use of chat log or ChatLog in all comments; leaning towards chat log
 public class ChatLog {
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
@@ -40,7 +42,6 @@ public class ChatLog {
     public static int ticksUntilSave = config.chatlogSaveInterval * 60 * 20; // convert minutes to ticks
 
     private static ChatLog.Data data = new Data();
-    private static boolean savedAfterCrash = false;
     private static boolean restoring = false;
     private static int lastHistoryCount = -1, lastMessageCount = -1;
 
@@ -56,7 +57,7 @@ public class ChatLog {
          * lists mutable.
          */
         public static final Codec<Data> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-            Codec.list(textCodec()).xmap(ArrayList::new, Function.identity()).fieldOf("messages").forGetter(data -> data.messages),
+            Codec.list(TextUtils.textCodec()).xmap(ArrayList::new, Function.identity()).fieldOf("messages").forGetter(data -> data.messages),
             Codec.list(Codec.STRING).xmap(ArrayList::new, Function.identity()).fieldOf("history").forGetter(data -> data.history)
         ).apply(inst, (messages, history) -> Util.make(new Data(), data -> {
             data.messages = messages;
@@ -97,6 +98,9 @@ public class ChatLog {
     public static void deserialize() {
         String rawData = Data.EMPTY_DATA;
 
+        long start = System.currentTimeMillis();
+        LOGGER.info("[ChatLog.deserialize] Reading...");
+
         if(Files.exists(PATH)) {
             try {
                 rawData = Files.readString(PATH);
@@ -125,22 +129,24 @@ public class ChatLog {
                 rawData = Data.EMPTY_DATA; // just in case of corruption from failures
             }
         } else {
-            data = new Data(true);
-            return;
+            // intentionally creates invalid data to prompt the next if block to
+            // generate a blank one and log it, instead of it happening twice
+            rawData = "";
         }
 
 
         // ignore invalid files
         if( rawData.length() < 2 || !rawData.startsWith("{") ) {
             data = new Data(true);
+            LOGGER.info("[ChatLog.deserialize] No chat log found at '{}', generated a blank one for {} initial messages in {} seconds",
+                PATH, Data.DEFAULT_SIZE, (System.currentTimeMillis() - start) / 1000.0
+            );
             return;
         }
 
         try {
-            // transformUUIDArrays: (temporary?) method to fix old chat logs
-            JsonObject jsonData = JsonHelper.deserialize( transformUUIDArrays(rawData) );
-
-            data = Data.CODEC.parse(JsonOps.INSTANCE, jsonData).resultOrPartial(e -> {
+            JsonObject jsonData = JsonHelper.deserialize(rawData);
+            data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData).resultOrPartial(e -> {
                 throw new JsonSyntaxException(e);
             }).orElseThrow();
 
@@ -161,63 +167,67 @@ public class ChatLog {
             return;
         }
 
-        LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}'",
-			messageCount(), historyCount(),
-            PATH
-		);
+        LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}' in {} seconds",
+            messageCount(), historyCount(), PATH, (System.currentTimeMillis() - start) / 1000.0
+        );
     }
 
     /**
-     * Saves the chat log to {@link #PATH}. Only saves if {@link Config#chatlog} is true,
-     * it isn't crashing again, and if there is *new* data to save.
-     *
-     * @param crashing If the game is crashing. If true, it will only save if {@link #savedAfterCrash}
-     * is false AND if {@link Config#chatlogSaveInterval} is 0.
+     * Saves the chat log to {@link #PATH}. Only saves if {@link Config#chatlog} is true
+     * and if there is *new* data to save. <i>As of 1.20.5, also requires the player to
+     * be in-game during the saving process, so the registry-synced TextCodec can be
+     * used (#180).</i>
      */
-    public static void serialize(boolean crashing) {
-        if(!config.chatlog || (crashing && savedAfterCrash))
+    public static void serialize() {
+        if(!config.chatlog)
             return;
         if(data.messages.isEmpty() && data.history.isEmpty())
             return; // don't overwrite the file with an empty one if there's nothing to save
         if(messageCount() == lastMessageCount && historyCount() == lastHistoryCount)
-            return; // don't save if there's no new data AND if the path is the default one (not a backup)
+            return; // don't save if there's no new data
+
+        long start = System.currentTimeMillis();
+        LOGGER.info("[ChatLog.serialize] Saving...");
+
 
         try {
-            String str = JsonHelper.toSortedString(
-                Data.CODEC.encodeStart(JsonOps.INSTANCE, data).resultOrPartial(e -> {
-                    throw new JsonSyntaxException(e);
-                }).orElseThrow()
-            );
+            JsonElement json = Data.CODEC.encodeStart(ChatPatches.jsonOps(), data)
+                .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+                .orElseThrow();
 
-            Files.writeString(PATH, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             lastHistoryCount = historyCount();
             lastMessageCount = messageCount();
-            LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", messageCount(), historyCount(), PATH);
-        } catch(IOException e) {
-            LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
-            LOGGER.debug("[ChatLog.serialize] Dumped data:\n{\"history\":{},\"messages\":{}}", data.history, data.messages);
-        } finally {
-            if(crashing)
-                savedAfterCrash = true;
+            LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}' in {} seconds",
+                messageCount(), historyCount(), PATH, (System.currentTimeMillis() - start) / 1000.0
+            );
+
+            // temporarily removed the ugly ConcurrentModificationException catch block bc it's ugly and not a real solution:
+            // fixme!
+
+        } catch(IOException | RuntimeException e) {
+            LOGGER.error("[ChatLog.serialize] An I/O or unexpected runtime error occurred while trying to save the chat log:", e);
+            dumpData();
         }
     }
+
 
     /**
      * Creates a backup of the current chat log file
      * located at {@link #PATH} and saves it as
-	 * {@code chatlog_${current_time}.json} in the
+     * {@code chatlog_${current_time}.json} in the
      * same directory as the original file. If an
-	 * error occurs, a warning will be logged.
+     * error occurs, a warning will be logged.
      * Doesn't modify the current chat log.
      */
     public static void backup() {
-		try {
+        try {
             Files.copy(PATH, PATH.resolveSibling( "chatlog_" + Util.getFormattedCurrentTime() + ".json" ));
-		} catch(IOException e) {
-			LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", PATH, e);
-		}
-	}
+        } catch(IOException e) {
+            LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", PATH, e);
+        }
+    }
 
     /** Restores the chat log from {@link #data} into Minecraft. */
     public static void restore(MinecraftClient client) {
@@ -248,12 +258,22 @@ public class ChatLog {
      */
     public static void tickSaveCounter() {
         if(config.chatlogSaveInterval > 0 && ticksUntilSave == 0)
-            serialize(false);
+            serialize();
 
         ticksUntilSave--;
 
         if(ticksUntilSave < 0)
             ticksUntilSave = config.chatlogSaveInterval * 60 * 20;
+    }
+
+    /**
+     * Dumps chat log data into the debug log. Note:
+     * Assumes the Text codec is unusable, so instead
+     * maps each message using {@link Text#getString()}.
+     */
+    @SuppressWarnings("StringConcatenationArgumentToLogCall")
+    public static void dumpData() {
+        LOGGER.debug("[ChatLog.dumpData] " + Data.EMPTY_DATA.replaceAll("\\[]", "{}"), data.history, data.messages.stream().map(Text::getString).toList());
     }
 
 
