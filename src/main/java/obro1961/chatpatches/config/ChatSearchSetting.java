@@ -9,6 +9,8 @@ import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 
+//todo redo this stuff as well... own class? is that too much..?
+//also prepub: move the gui stuff somewhere and then put the act. config data in the config class to fix (#149)
 /** Represents a search setting pertaining to the {@link ChatScreenMixin} screen. */
 public class ChatSearchSetting {
 	public static ChatSearchSetting caseSensitive = new ChatSearchSetting("caseSensitive", true),

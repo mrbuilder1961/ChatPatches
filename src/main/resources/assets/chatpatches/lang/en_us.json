@@ -75,7 +75,7 @@
     "text.chatpatches.chatlogBackup": "Backup",
     "text.chatpatches.chatlogOpenFolder": "Open folder",
     "text.chatpatches.desc.chatlog": "Should the chat be saved into a log so it can be re-added back into the chat in later game sessions?",
-    "text.chatpatches.desc.chatlogSaveInterval": "How long should the Chat Log wait before saving to disk? This is in minutes, the minimum is 1. Set to 0 to only save when paused (warning: setting to <5 will lag a lot). All values try to save on exit.",
+    "text.chatpatches.desc.chatlogSaveInterval": "How long should the chat log wait before saving to disk? This is in minutes, the minimum is 1. Set to 0 to only save when paused (warning: setting to <5 will lag a lot). Always saves on exit.",
     "text.chatpatches.desc.chatlogClear": "Press to clear the chat log. Note that this does not clear the chat itself, only the log. §c§lThis cannot be undone!§r",
     "text.chatpatches.desc.chatlogClearHistory": "Press to clear only the chat log's sent messages. Note that this does not clear the chat itself, only the log. §c§lThis cannot be undone!§r",
     "text.chatpatches.desc.chatlogClearMessages": "Press to clear only the chat log's regular messages. Note that this does not clear the chat itself, only the log. §c§lThis cannot be undone!§r",

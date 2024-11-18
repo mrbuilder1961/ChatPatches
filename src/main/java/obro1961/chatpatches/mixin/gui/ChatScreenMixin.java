@@ -28,7 +28,7 @@ import obro1961.chatpatches.accessor.ChatScreenAccessor;
 import obro1961.chatpatches.config.ChatSearchSetting;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
-import obro1961.chatpatches.gui.SearchButtonWidget;
+import obro1961.chatpatches.gui.SearchButton;
 import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -79,7 +79,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private boolean showSearch = true;
 	@Unique private boolean showSettingsMenu = false;
 	@Unique private TextFieldWidget searchField;
-	@Unique private SearchButtonWidget searchButton;
+	@Unique private SearchButton searchButton;
 	@Unique private PatternSyntaxException searchError;
 
 	// ChatScreen fields
@@ -125,7 +125,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
 	protected void initSearchStuff(CallbackInfo ci) {
-		searchButton = new SearchButtonWidget(2, height - 35, me -> showSearch = !showSearch, me -> showSettingsMenu = !showSettingsMenu);
+		searchButton = new SearchButton(2, height - 35, me -> showSearch = !showSearch, me -> showSettingsMenu = !showSettingsMenu);
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));

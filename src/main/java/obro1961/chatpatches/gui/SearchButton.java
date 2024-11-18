@@ -7,13 +7,13 @@ import org.lwjgl.glfw.GLFW;
 
 import static obro1961.chatpatches.ChatPatches.id;
 
-public class SearchButtonWidget extends TexturedButtonWidget {
+public class SearchButton extends TexturedButtonWidget {
     public static final ButtonTextures TEXTURES = new ButtonTextures(id("search_button_unfocused"), id("search_button_focused"));
 
     private final PressAction onLeftClick;
     private final PressAction onRightClick;
 
-    public SearchButtonWidget(int x, int y, PressAction leftAction, PressAction rightAction) {
+    public SearchButton(int x, int y, PressAction leftAction, PressAction rightAction) {
         super(x, y, 16, 16, TEXTURES, button -> {});
 
         this.onLeftClick = leftAction;
