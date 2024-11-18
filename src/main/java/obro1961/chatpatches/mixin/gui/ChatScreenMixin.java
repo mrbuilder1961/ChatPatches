@@ -152,9 +152,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * Renders everything needed for the revamped ChatScreen,
 	 * including the search bar, button, error, settings
 	 * menu, and the context menu.
-	 * */ //prepub! (#186) is broken again and idk why! ms.universe help me! before super.render() and suggestor.render() both dont work???
+	 * */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;render(Lnet/minecraft/client/gui/DrawContext;IIF)V"))
 	private void renderSearchAndContextMenuStuff(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
+		context.getMatrices().push();
+		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 		searchButton.render(context, mX, mY, delta);
 		if(showSearch && !config.hideSearchButton) {
 			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
@@ -184,6 +186,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(!isMouseOverSettingsMenu(mX, mY)) {
 			contextMenu.render(context, mX, mY, delta);
 		}
+		context.getMatrices().pop();
 	}
 
 	/**
