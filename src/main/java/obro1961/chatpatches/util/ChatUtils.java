@@ -168,7 +168,7 @@ public class ChatUtils {
 		if(ChatLog.isRestoring())
 			return m; // cancels modifications when loading the chatlog or regenerating visibles
 
-		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);ChatPatches.LOGGER.warn("msgData: {}", msgData);
+		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
 		Date now = lastEmpty ? new Date() : msgData.timestamp();
 		String nowStr = String.valueOf(now.getTime()); // for context menu and storing timestamp data! only affects the timestamp
 		Style style = m.getStyle();
