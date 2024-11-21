@@ -144,11 +144,9 @@ public class ContextMenu {
 		this.widgets = ((GridWidgetAccessor) buttonGrid).getChildren();
 
 		Style s = getMsgPart(hudLine.content(), MSG_SENDER_INDEX).getStyle();
-		if(!s.isEmpty() && s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityContent ec) {
-			this.messageSender = new GameProfile(ec.uuid, ec.name.getString());
-		} else {
-			this.messageSender = NIL_MSG_DATA.sender();
-		}
+		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityContent ec
+			? new GameProfile(ec.uuid, ec.name.getString())
+			: NIL_MSG_DATA.sender();
 	}
 
 	/**
@@ -254,22 +252,15 @@ public class ContextMenu {
 				public void onPress() {
 					effectivelyFinalButton.onPress();
 				}
-
-				@Override
-				protected MutableText getNarrationMessage() {
-					return narrationSupplier.createNarrationMessage(super::getNarrationMessage);
-				}
-
-				@Override
-				public void appendClickableNarrations(NarrationMessageBuilder builder) {
-					appendDefaultNarrations(builder);
-				}
-
 				@Override
 				protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
 					super.renderButton(context, mouseX, mouseY, delta);
 					renderCallback.render(this, context, mouseX, mouseY, delta);
 				}
+
+				// pulled from ButtonWidget
+				@Override protected MutableText getNarrationMessage() { return narrationSupplier.createNarrationMessage(super::getNarrationMessage); }
+				@Override public void appendClickableNarrations(NarrationMessageBuilder builder) { appendDefaultNarrations(builder); }
 			};
 		}
 
