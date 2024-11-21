@@ -6,6 +6,7 @@
   - Removed the now redundant `Flags` class, which helped some random parts of the message modification process that didn't actually need to be out of scope
   - Removed the casting methods in the two `Accessor` interfaces: we don't need an extra method call just for a cast
     - Also renamed all variable references of `ChatHudAccessor` strictly to `chat` for consistency
+  - Cleanup and consistent formatting
 
 ## Chat Patches `213.6.9` for Minecraft 1.21.2, 1.21.3 on Fabric, Quilt
 - Updated to 1.21.2-3
