@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `213.6.10` for Minecraft 1.21.2, 1.21.3 on Fabric, Quilt
+- Updated `pt_br` translations thanks to [demorogabrtz](https://github.com/demorogabrtz)! ([#209](https://www.github.com/mrbuilder1961/ChatPatches/issues/209))
+
 ## Chat Patches `213.6.9` for Minecraft 1.21.2, 1.21.3 on Fabric, Quilt
 - Updated to 1.21.2-3
 
