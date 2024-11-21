@@ -19,7 +19,7 @@ public interface ChatHudAccessor {
     int chatpatches$getScrolledLines();
 
 
-    // renamed methods to access-widen them from ChatHud
+    // proxy methods for accessing the originals in ChatHud
     /** {@link ChatHud#getMessageLineIndex(double, double)} */
     int chatpatches$getMessageLineIndex(double x, double y);
 
