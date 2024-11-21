@@ -287,7 +287,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		// renders the copy menu's selection box and menu buttons
 		if( showCopyMenu && !hoveredVisibles.isEmpty() && !isMouseOverSettingsMenu(mX, mY) ) {
 			ChatHud chatHud = client.inGameHud.getChatHud();
-			ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
+			ChatHudAccessor chat = (ChatHudAccessor) chatHud;
 			List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
 
 
@@ -540,10 +540,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(mX < 0 || mY < 0)
 			return new ArrayList<>(0);
 
-		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-		final List<ChatHudLine.Visible> visibles = chatHud.chatpatches$getVisibleMessages();
+		final ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
+		final List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
 		// using LineIndex instead of Index bc during testing they both returned the same value; LineIndex has less code
-		final int hoveredIndex = chatHud.chatpatches$getMessageLineIndex(chatHud.chatpatches$toChatLineX(mX), chatHud.chatpatches$toChatLineY(mY));
+		final int hoveredIndex = chat.chatpatches$getMessageLineIndex(chat.chatpatches$toChatLineX(mX), chat.chatpatches$toChatLineY(mY));
 
 		if(hoveredIndex == -1)
 			return new ArrayList<>(0);
@@ -604,7 +604,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 
 		ChatHud chatHud = client.inGameHud.getChatHud();
-		ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
+		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
 		String hMF = TextUtils.reorder( hoveredVisibles.get(0).content(), false );
 		String hoveredMessageFirst = hMF.isEmpty() ? "\n" : hMF; // fixes messages starting with newlines not being detected
 
@@ -729,9 +729,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
 				searchField.setEditableColor(0x55FF55);
 
-				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-				chatHud.chatpatches$getVisibleMessages().clear();
-				chatHud.chatpatches$getVisibleMessages().addAll(searchResults);
+				ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
+				chat.chatpatches$getVisibleMessages().clear();
+				chat.chatpatches$getVisibleMessages().addAll(searchResults);
 			}
 		} else {
 			client.inGameHud.getChatHud().reset();
@@ -754,11 +754,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Unique
 	private List<ChatHudLine.Visible> filterMessages(String target) {
-		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
+		final ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
 		if(target == null)
-			return List.of(); //createVisibles( chatHud.chatpatches$getMessages() );
+			return List.of(); //createVisibles( chat.chatpatches$getMessages() );
 
-		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.chatpatches$getMessages() );
+		List<ChatHudLine> msgs = Lists.newArrayList( chat.chatpatches$getMessages() );
 
 		msgs.removeIf(hudLn -> {
 			String content = TextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);

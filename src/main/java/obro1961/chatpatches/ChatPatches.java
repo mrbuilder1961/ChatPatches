@@ -75,7 +75,7 @@ public class ChatPatches implements ClientModInitializer {
 			}
 
 			//prepub move all this to Config or sm? feels out of place...
-			ChatHudAccessor chat = ChatHudAccessor.from(client);
+			ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
 			String current = currentWorldName(client);
 			// continues if the boundary line is enabled, >0 messages sent, and if the last and current worlds were servers, that they aren't the same
 			if( config.boundary && !config.vanillaClearing && !chat.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {

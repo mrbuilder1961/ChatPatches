@@ -304,7 +304,7 @@ public class ChatUtils {
 	public static Text tryCondenseMessage(Text incoming, int index) {
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final ChatHud chatHud = client.inGameHud.getChatHud();
-		final ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
+		final ChatHudAccessor chat = (ChatHudAccessor) chatHud;
 		final List<ChatHudLine> messages = chat.chatpatches$getMessages();
 		final List<ChatHudLine.Visible> visibleMessages = chat.chatpatches$getVisibleMessages();
 

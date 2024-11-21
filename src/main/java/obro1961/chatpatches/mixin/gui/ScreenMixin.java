@@ -28,6 +28,6 @@ public abstract class ScreenMixin {
             return;
 
         if(((Screen)(Object)this) instanceof ChatScreen chatScreen)
-            ChatScreenAccessor.from(chatScreen).chatpatches$clearMessageDraft();
+            ((ChatScreenAccessor)chatScreen).chatpatches$clearMessageDraft();
     }
 }
