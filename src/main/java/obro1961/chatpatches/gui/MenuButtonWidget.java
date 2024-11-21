@@ -2,6 +2,7 @@ package obro1961.chatpatches.gui;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.PlayerSkinDrawer;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextIconButtonWidget;
@@ -174,14 +175,7 @@ public class MenuButtonWidget {
 		// height: effectively height+1p (with coords, height-1p);
 		button.render(drawContext, mX, mY, delta);
 
-		if(skinTexture != null && skinTexture.texture() != null) {
-			// thank you to dzwdz's Chat Heads for most of the code to draw the skin texture!
-
-			// draw base layer, then the hat
-			int x = anchor.x + xOffset + 1;
-			int y = anchor.y + yOffset + 1;
-			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 8, 8, 8, 8, 64, 64);
-			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 40, 8, 8, 8, 64, 64);
-		}
+		if(skinTexture != null && skinTexture.texture() != null)
+			PlayerSkinDrawer.draw(drawContext, skinTexture, anchor.x + xOffset + 1, anchor.y + yOffset + 1, 16);
 	}
 }

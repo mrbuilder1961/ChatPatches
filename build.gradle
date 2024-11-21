@@ -1,14 +1,13 @@
 import groovy.json.JsonSlurper
-import me.modmuss50.mpp.ReleaseType
 
 import java.util.function.BiFunction
 import java.util.function.Function
 import java.util.stream.Stream
 
 plugins {
-	id "fabric-loom" version "1.6-SNAPSHOT"
+	id "fabric-loom" version "1.7-SNAPSHOT"
 	id "maven-publish"
-	id "me.modmuss50.mod-publish-plugin" version "0.5.1"
+	id "me.modmuss50.mod-publish-plugin" version "0.7.4"
 }
 
 group = project.group
@@ -19,8 +18,8 @@ base {
 }
 
 // global publishing variables - shouldPublish defaults to true, but can be set to false by using `-PshouldPublish=false`
-boolean shouldPublish = Boolean.parseBoolean( providers.gradleProperty("shouldPublish").getOrElse("true") )
-String changelogText = "Changelog could not be found... 😬"
+def shouldPublish = Boolean.parseBoolean( providers.gradleProperty("shouldPublish").getOrElse("true") )
+def changelogText = "Changelog could not be found... 😬"
 
 repositories {
   	mavenCentral()
@@ -50,14 +49,14 @@ processResources {
 		} */
 	}
 
-	File changelog = file("changelog.md")
+	def changelog = file("changelog.md")
 	if( changelog.exists() ) {
 		// replaces github issue numbers with links
 		file("changelog.md").text = changelog.text.replaceAll("##(\\d+)", "[#\$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/\$1)")
 
 		// hackily gets the first changelog entry
-		String newEntryTitle = "## Chat Patches `" + version + "`"
-		int prevEntryIndex = file("changelog.md").text.replaceFirst(newEntryTitle, "").indexOf("## Chat Patches `") + newEntryTitle.length() - 2
+		def newEntryTitle = "## Chat Patches `" + version + "`"
+		def prevEntryIndex = file("changelog.md").text.replaceFirst(newEntryTitle, "").indexOf("## Chat Patches `") + newEntryTitle.length() - 2
 
 		changelogText = file("changelog.md").text.substring(0, prevEntryIndex).replaceFirst("# Changelog\\s+", "")
 
@@ -70,22 +69,28 @@ processResources {
 			}
 			println()
 		}
+	}
 
+	if(changelogText.length() > 2000) {
+		def more = "..\n***.. and more! Check out the full release notes on GitHub!***"
+		changelogText = changelogText.substring(0, 2000 - more.length()).stripTrailing() + more
+
+		println "Trimmed changelog, was over 2000 characters"
 	}
 
 	if(!shouldPublish)
-		println "Using changelog text:\n>${changelogText}<"
+		println "Using changelog text:\n>$changelogText<"
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
+	it.options.release = 21
 }
 
 java {
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
@@ -96,7 +101,8 @@ jar {
 
 publishing {
 	publications {
-		mavenJava(MavenPublication) {
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
 			from components.java
 		}
 	}
@@ -112,16 +118,17 @@ publishMods {
 	Function<String, List<String>> propListGetter = (String propertyName) ->
 			rootProject[propertyName] != null ? Stream.of( rootProject[propertyName].toString().split(",") ).filter{!it.isBlank()}.toList() : new ArrayList<>()
 	BiFunction<String, Boolean, String> tokenGetter = (String tokenName, boolean valid) ->
-			valid && secrets.exists() ? Objects.requireNonNullElse(new JsonSlurper().parse (secrets)[tokenName], "-") : "-"
+			valid && secrets.exists() ? Objects.requireNonNullElse(new JsonSlurper().parse(secrets)[tokenName], "-") : "-"
+
 	// gradle.properties vars
-	ReleaseType phase = ReleaseType.valueOf( rootProject.phase.toString().toUpperCase() )
+	String phase = rootProject.phase.toString().toLowerCase()
 	List<String> loaders = propListGetter.apply("loaders") // Arrays.asList( rootProject.loaders.toString().split(",") )
 	List<String> targets = propListGetter.apply("targets") // Arrays.asList( rootProject.targets.toString().split(",") )
 	String[] required = propListGetter.apply("required").toArray()
 	String[] optionals = propListGetter.apply("optionals").toArray()
 	String[] incompatibles = propListGetter.apply("incompatibles").toArray()
 	String[] embedded = propListGetter.apply("embedded").toArray()
-	String branch = targets.get(targets.size() - 1) // last target is the branch
+	String branch = rootProject.branch.toString()
 	// tokens - token name and if it should return the token or "-"
 	String cfToken = tokenGetter.apply("curseforge", shouldPublish)
 	String mrToken = tokenGetter.apply("modrinth", shouldPublish)
@@ -133,7 +140,7 @@ publishMods {
 	displayName = v.toString()
 	file = remapJar.archiveFile // Forge would use jar (NeoForge? i think so..)
 	changelog = changelogText
-	type = phase
+	type = (phase.matches("release|stable") ? STABLE : phase.matches("beta") ? BETA : ALPHA)
 	modLoaders = loaders
 	dryRun = !shouldPublish
 
@@ -151,6 +158,7 @@ publishMods {
 		projectSlug = archives_base_name
 
 		minecraftVersions.addAll(targets)
+		clientRequired = true
 
 		requires(required)
 		optional(optionals)

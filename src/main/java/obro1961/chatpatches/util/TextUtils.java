@@ -5,6 +5,7 @@ import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -117,7 +118,7 @@ public class TextUtils {
 			style.getColor() != null
 				? (color = Formatting.byName(style.getColor().getName())) != null
 					? "&" + color.getCode()
-					: "&" + style.getColor().getHexCode()
+					: String.format(Locale.ROOT, "&#%06X", style.getColor().getRgb()) // as of 1.21.1, #getHexColor is private. WHAT THE FUCK
 				: "&r"
 		);
 		codes.append( style.isBold() ? "&l" : "" );

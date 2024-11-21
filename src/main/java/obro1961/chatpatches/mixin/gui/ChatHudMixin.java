@@ -3,7 +3,6 @@ package obro1961.chatpatches.mixin.gui;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-import com.llamalad7.mixinextras.sugar.Local;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -18,8 +17,6 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
-import obro1961.chatpatches.util.Flags;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -100,12 +97,18 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         return config.chatWidth > 0 ? config.chatWidth : defaultWidth;
     }
 
+    /** allows for a chat height larger than the default */
+    @ModifyReturnValue(method = "getHeight()I", at = @At("RETURN"))
+    private int moreHeight(int defaultHeight) {
+        return config.chatHeight > 0 ? config.chatHeight : defaultHeight;
+    }
+
     /**
      * These methods shift most of the chat hud by
      * {@link Config#shiftChat}, including the text
      * and scroll bar, by shifting the y position of the chat.
      *
-     * @implNote Target: <br>{@code int m = MathHelper.floor((float)(l - 40) / f);}
+     * <p>Target: {@code int m = MathHelper.floor((float)(l - 40) / f);}
      */
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
     private int moveChat(int m) {
@@ -113,15 +116,17 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     /**
-     * Moves the message indicator and hover tooltip
-     * by {@link Config#shiftChat} to correctly shift
-     * the chat with the other components.
-     * Targets two methods because the first part of both
-     * methods are identical.
+     * Moves the chat line by {@link Config#shiftChat} to
+     * correctly shift the chat with the other components.
+     * Used by the {@link ChatHud} to correctly render
+     * message indicators and chat hover tooltips when
+     * needed in the shifted position.
+     *
+     * <p>Target: {@code double d = this.client.getWindow().getScaledHeight() - y - 40.0;}
      */
-    @ModifyVariable(method = {"getIndicatorAt", "getTextStyleAt"}, argsOnly = true, at = @At("HEAD"), ordinal = 1)
-    private double moveINDHoverText(double e) {
-        return e + ( config.shiftChat * this.getChatScale() );
+    @ModifyVariable(method = "toChatLineY", at = @At("HEAD"), argsOnly = true)
+    private double moveChatLineY(double y) {
+        return y + config.shiftChat;
     }
 
 
@@ -134,18 +139,17 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * implementation specifications.
      */
     @ModifyVariable(
-        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
+        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
         at = @At("HEAD"),
         argsOnly = true
     )
-    private Text modifyMessage(Text m, @Local(argsOnly = true) boolean refreshing) {
-        return addCounter(ChatUtils.modifyMessage(m, refreshing), refreshing);
+    private Text modifyMessage(Text m) {
+        return addCounter(ChatUtils.modifyMessage(m, false), false);
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/ArrayListDeque;size()I"))
     private void addHistory(String message, CallbackInfo ci) {
-        if( !Flags.LOADING_CHATLOG.isRaised() )
-            ChatLog.addHistory(message);
+        ChatLog.addHistory(message);
     }
 
     /** Disables logging commands to the vanilla command log if the Chat Patches' ChatLog is enabled. */
@@ -155,8 +159,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
-    private void ignoreRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
-        if( Flags.LOADING_CHATLOG.isRaised() && indicator != null )
+    private void ignoreRestoredMessages(Text message, MessageIndicator indicator, CallbackInfo ci) {
+        if(ChatLog.isRestoring() && indicator != null)
             ci.cancel();
     }
 
@@ -178,14 +182,14 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      *         <li>If a message was the same, call {@link ChatUtils#tryCondenseMessage(Text, int)},
      *         which ultimately removes that message and its visibles.</li>
      *     </ol>
-     *     <li>Return the (potentially) condensed message, to later be formatted further in {@link #modifyMessage(Text, boolean)}</li>
+     *     <li>Return the (potentially) condensed message, to later be formatted further in {@link #modifyMessage(Text)}</li>
      * </ol>
      * (Wraps the entire method in a try-catch to prevent any errors accidentally disabling the chat.)
      *
      * @apiNote This injector is pretty ugly and could definitely be cleaner and more concise, but I'm going to deal with it
      * in the future when I API-ify the rest of the mod. When that happens, this flag-add-flag-cancel method will be replaced
      * with a simple (enormous) method call alongside
-     * {@link #modifyMessage(Text, boolean)} in a @{@link ModifyVariable}
+     * {@link #modifyMessage(Text)} in a @{@link ModifyVariable}
      * handler. (NOTE: as of v202.6.0, this is partially done already thanks to #132)
      */
     @Unique
@@ -221,10 +225,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         } catch(IndexOutOfBoundsException e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method. Either way,");
-            ChatPatches.logInfoReportMessage(e);
+            ChatPatches.logReportMsg(e);
         } catch(Exception e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error! /!\\");
-            ChatPatches.logInfoReportMessage(e);
+            ChatPatches.logReportMsg(e);
         }
 
         return incoming;

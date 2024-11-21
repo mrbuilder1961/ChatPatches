@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `204.6.10` for Minecraft 1.20.4 on Fabric, Quilt
+- Synced `213.6.0` to 1.20.4
+
 ## Chat Patches `204.6.5` for Minecraft 1.20.4 on Fabric, Quilt
 - Fixed certain messages from showing up blank and logging `ArrayIndexOutOfBoundsException`s ([#156](https://www.github.com/mrbuilder1961/ChatPatches/issues/146))
 - Fixed normal duplicate messages not having a counter (1.20.4 only, [#157](https://www.github.com/mrbuilder1961/ChatPatches/issues/157))

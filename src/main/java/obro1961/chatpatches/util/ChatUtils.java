@@ -17,8 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.util.*;
 
-import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.ChatPatches.msgData;
+import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.TextUtils.copyWithoutContent;
 import static obro1961.chatpatches.util.TextUtils.reorder;
 
@@ -30,6 +29,8 @@ public class ChatUtils {
 	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 	public static final int TIMESTAMP_INDEX = 0, MESSAGE_INDEX = 1, DUPE_INDEX = 2; // indices of all main (modified message) components
 	public static final int MSG_TEAM_INDEX = 0, MSG_SENDER_INDEX = 1, MSG_CONTENT_INDEX = 2; // indices of all MESSAGE_INDEX components
+	/** Matches only an entire vanilla player message. */
+	public static final String VANILLA_FORMAT = "(?i)^<[a-z0-9_]{3,16}>\\s.+$";
 
 	/**
 	 * Returns the message component at the given index;
@@ -56,7 +57,7 @@ public class ChatUtils {
 	}
 
 	/**
-	 * Returns a MutableText object representing the argument
+	 * Returns a MutableText object of the argument
 	 * located at the given index of the given
 	 * {@link TranslatableTextContent}. Needed because of a weird
 	 * phenomenon where the {@link TranslatableTextContent#getArg(int)}
@@ -67,7 +68,7 @@ public class ChatUtils {
 	 * and nulls in {@link Text#empty()}.
 	 *
 	 * @implNote
-	 * If {@code index} is negative, adds it to the args array
+	 * If {@code index} is negative, it's added to the args array
 	 * length. In other words, passing index {@code -n} will
 	 * get the {@code content.getArgs().length-n}th argument.
 	 */
@@ -75,18 +76,12 @@ public class ChatUtils {
 		if(index < 0)
 			index = content.getArgs().length + index;
 
-		Object /* StringVisitable */ arg = content.getArg(index);
-
-		if(arg == null)
-			return Text.empty();
-		else if(arg instanceof Text t)
-			return (MutableText) t;
-		else if(arg instanceof StringVisitable sv)
-			return Text.literal(sv.getString());
-		else if(arg instanceof String s)
-			return Text.literal(s);
-		else
-			return Text.empty();
+		return switch( content.getArgs()[index] ) {
+			case Text t -> (MutableText) t;
+			case StringVisitable sv -> Text.literal(sv.getString());
+			case String s -> Text.literal(s);
+			default -> Text.empty();
+		};
 	}
 
 	/**
@@ -120,13 +115,14 @@ public class ChatUtils {
 	/**
 	 * Reformats the incoming message {@code m} according to configured
 	 * settings, message data, and at indices specified in this class.
-	 * This method is used in the {@link ChatHudMixin#modifyMessage(Text, boolean)}
+	 * This method is used in the {@link ChatHudMixin#modifyMessage(Text)}
 	 * mixin for functionality.
 	 *
 	 * @implNote
 	 * <ol>
 	 *   <li>Don't modify when {@code refreshing} is true, as that signifies
-	 * 	 re-rendering chat messages, so simply return {@code m}.</li>
+	 * 	 re-rendering chat messages; nor when the chat log is restoring,
+	 * 	 so simply return {@code m}.</li>
 	 * 	 <li>Declare relevant variables, most notably the {@code timestamp}
 	 * 	 and {@code content} components.</li>
 	 * 	 <li>Reconstruct the player message if it should be reformatted
@@ -168,11 +164,11 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m, boolean refreshing) {
-		if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
+		if( refreshing || ChatLog.isRestoring() )
 			return m; // cancels modifications when loading the chatlog or regenerating visibles
 
+		boolean errorThrown = false;
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
-		boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
 		Date now = lastEmpty ? new Date() : msgData.timestamp();
 		String nowStr = String.valueOf(now.getTime()); // for copy menu and storing timestamp data! only affects the timestamp
 		Style style = m.getStyle();
@@ -181,11 +177,13 @@ public class ChatUtils {
 		MutableText content = m.copy();
 
 		try {
-			timestamp = (config.time && !boundary) ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
+			timestamp = config.time ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
 			content = Text.empty().setStyle(style);
 
-			// reconstruct the player message if it's in the vanilla format and it should be reformatted
-			if(!lastEmpty && !boundary && msgData.vanilla()) {
+			// reconstruct the player message if it's in the vanilla format and should be reformatted
+			// the msgData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
+			// see Xaero's Minimap waypoint sharing for more information (#158)
+			if(!lastEmpty && msgData.vanilla() && m.getString().matches(VANILLA_FORMAT)) {
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches("chat.type.(text|team.(text|sent))")) {
 					String key = ttc.getKey();
@@ -198,7 +196,7 @@ public class ChatUtils {
 							teamPart.append(Text.literal("-> ").setStyle(style));
 
 						// adds the team name for team messages
-						teamPart.append(getArg(ttc, 0).append(" "));
+						teamPart.append(getArg(ttc, MSG_TEAM_INDEX).copy().append(" ")); // copy() fixes (#199)
 
 						content.append(teamPart);
 					} else {
@@ -207,8 +205,8 @@ public class ChatUtils {
 
 					// adds the formatted playername and content for all message types
 					content.append(config.formatPlayername(msgData.sender())); // sender data is already known
-					content.append(getArg(ttc, -1)); // always at the end
-				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
+					content.append(getArg(ttc, -1)); // always at the end, sometimes but not necessarily always at MSG_CONTENT_INDEX
+				} else { // reconstructs the message if it matches the vanilla format but isn't translatable
 					// collect all message parts into one list, including the root TextContent
 					// (assuming this accounts for all parts, TextContents, and siblings)
 					List<Text> parts = Util.make(new ArrayList<>(m.getSiblings().size() + 1), a -> {
@@ -220,8 +218,13 @@ public class ChatUtils {
 
 					MutableText realContent = Text.empty();
 					// find the first index of a '>' in the message, is formatted like '<%s> %s'
-					Text firstPart = parts.stream().filter(p -> p.getString().contains(">")).findFirst()
-						.orElseThrow(() -> new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "' !"));
+					Text firstPart = parts.stream()
+						.filter(p -> p.getString().contains(">"))
+						.findFirst()
+						.orElseThrow(() -> ChatPatches.logAndThrowReportMsg(
+							new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "'!")
+						));
+
 					String[] endBracketSplit = firstPart.getString().split(">"); // part of #156 AIOOBE i=1 fix
 					String afterEndBracket = endBracketSplit.length > 1 ? endBracketSplit[1] : ""; // just get the part after the closing bracket, we know the start
 
@@ -241,20 +244,33 @@ public class ChatUtils {
 				// don't reformat if it isn't vanilla or needed
 				content = m.copy();
 			}
-		} catch(Throwable e) {
-			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}', returning original:", m.getString());
-			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \tOriginal message structure: {}", m);
-			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \tModified message structure:");
-			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
-			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
-			ChatPatches.logInfoReportMessage(e);
+		} catch(Exception e) {
+			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}', returning original:", m.getString());
+			LOGGER.debug("[ChatUtils.modifyMessage] \tOriginal message structure: {}", m);
+			LOGGER.debug("[ChatUtils.modifyMessage] \tModified message structure:");
+			LOGGER.debug("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
+			LOGGER.debug("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
+			ChatPatches.logReportMsg(e);
+
+			errorThrown = true;
 		}
 
-		// assembles constructed message and adds a duplicate counter according to the #addCounter method
-		Text modified = ChatUtils.buildMessage(style, timestamp, content, null);
-		ChatLog.addMessage(modified);
-		msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
-		return modified;
+		try {
+			// assembles constructed message
+			Text modified = ChatUtils.buildMessage(style, timestamp, content, null);
+			ChatLog.addMessage(modified);
+
+			msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
+			return modified;
+		} catch(RuntimeException e) {
+			if(errorThrown)
+				ChatLog.addMessage(m); // in this case we already knew about the error, so do what we haven't yet: log the original message!
+			else
+				ChatPatches.logReportMsg(e); // here we never had an error, so something went wrong: log the error!
+
+			msgData = ChatUtils.NIL_MSG_DATA;
+			return m; // return original bc we don't want to brick the chat due to pesky exceptions!
+		}
 	}
 
 	/**
@@ -288,13 +304,18 @@ public class ChatUtils {
 	public static Text tryCondenseMessage(Text incoming, int index) {
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final ChatHud chatHud = client.inGameHud.getChatHud();
-		final ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
+		final ChatHudAccessor chat = (ChatHudAccessor) chatHud;
 		final List<ChatHudLine> messages = chat.chatpatches$getMessages();
 		final List<ChatHudLine.Visible> visibleMessages = chat.chatpatches$getVisibleMessages();
 
+		// just in case the incoming message is a literal string text w no sibs,
+		// we can reformat it as to not throw any annoying errors down the line
+		if(incoming.getContent() instanceof PlainTextContent && incoming.getSiblings().isEmpty())
+			incoming = buildMessage(null, null, incoming, null);
+
 		ChatHudLine comparingLine = messages.get(index); // message being compared
 		List<Text> comparingParts = comparingLine.content().getSiblings();
-		List<Text> incomingParts = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs (1.20.3+ only)
+		List<Text> incomingParts = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs for 1.20.3+
 
 
 		// IF the comparing and incoming message bodies are case-insensitively equal,
@@ -338,7 +359,7 @@ public class ChatUtils {
 				while( !visibleMessages.isEmpty() && !visibleMessages.get(0).endOfEntry() )
 					visibleMessages.remove(0);
 			}
-ChatPatches.LOGGER.warn("new counter: '{}' index: {}", incomingParts.get(DUPE_INDEX).getString(), index);
+
 			// according to some testing, modifying incomingParts DOES modify incoming.getSiblings(), so all changes are taken care of!
 			// ^ IGNORE ABOVE COMMENT ^ we have since wrapped incomingParts in a new ArrayList to prevent UOEs, so this is no longer true
 			return TextUtils.newText(incoming.getContent(), incomingParts, incoming.getStyle());

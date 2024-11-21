@@ -1,6 +1,7 @@
 package obro1961.chatpatches.mixin.gui;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonParseException;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -22,12 +23,11 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.util.ChatMessages;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.network.message.MessageSignatureData;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.JsonHelper;
 import net.minecraft.util.math.MathHelper;
+import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.accessor.ChatScreenAccessor;
 import obro1961.chatpatches.config.ChatSearchSetting;
@@ -100,20 +100,21 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	// search stuff
 	@Unique private static boolean showSearch = true;
 	@Unique private static boolean showSettingsMenu = false; // note: doesn't really need to be static
+	@Unique private static String searchDraft = "";
 	// copy menu stuff
 	@Unique private static boolean showCopyMenu = false; // true when a message was right-clicked on
 	@Unique private static ChatHudLine selectedLine = NIL_HUD_LINE;
 	@Unique private static Map<Text, MenuButtonWidget> mainButtons = new LinkedHashMap<>(); // buttons that appear on the initial click
 	@Unique private static Map<Text, MenuButtonWidget> hoverButtons = new LinkedHashMap<>(); // buttons that are revealed on hover
 	@Unique private static List<ChatHudLine.Visible> hoveredVisibles = new ArrayList<>();
-	// drafting (todo: can we remove these and instead use `originalChatText`?)
-	@Unique private static String searchDraft = "";
-	@Unique private static String messageDraft = "";
-
+	@Unique private static String messageDraft = ""; // needed instead of originalChatText to be accessible in all ChatScreen instances
+	// more search stuff
 	@Unique private TextFieldWidget searchField;
 	@Unique private SearchButtonWidget searchButton;
 	@Unique private PatternSyntaxException searchError;
 
+	@SuppressWarnings("MissingUnique") //@Shadow
+	@NotNull protected MinecraftClient client = MinecraftClient.getInstance(); // removes false NPE warnings
 	@Shadow	protected TextFieldWidget chatField;
 	@Shadow private String originalChatText;
 
@@ -177,7 +178,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// hover menu buttons, column two
 			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> Formatting.strip( selectedLine.content().getString() )));
 			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> TextUtils.reorder( selectedLine.content().asOrderedText(), true )));
-			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING, () -> Text.Serialization.toJsonString(selectedLine.content())));
+			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING,
+				() -> TextCodecs.CODEC.encodeStart(ChatPatches.jsonOps(), selectedLine.content())
+					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+					.map(JsonHelper::toSortedString)
+					.orElse("/!\\ An error occurred! Please open an issue on the Chat Patches GitHub and attach your log file /!\\")
+				)
+			);
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
 			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> getPart(selectedLine.content(), TIMESTAMP_INDEX).getString()));
 			hoverButtons.put(COPY_TIMESTAMP_HOVER_TEXT, of(1, COPY_TIMESTAMP_HOVER_TEXT, () -> {
@@ -223,6 +230,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/**
 	 * @implNote Rendering order:
 	 * <ol>
+	 *     <li>(Shifts everything backwards into the Z axis to
+	 *     not render over the ChatInputSuggestor and suggestion
+	 *     text)</li>
 	 *     <li>The {@link #searchButton}</li>
 	 *     <li>If the search bar should show:</li>
 	 *     <ol>
@@ -230,7 +240,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *     		<li>The {@link #searchField} itself</li>
 	 *     		<li>If it isn't null, the {@link #searchError}</li>
 	 *     </ol>
-	 *     <li>If the settings menu should show:</li>
+	 *	   <li>If the settings menu should show:</li>
 	 *     <ol>
 	 *     		<li>The settings menu background</li>
 	 *     		<li>The setting buttons themselves</li>
@@ -242,35 +252,38 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *     </ol>
 	 * </ol>
 	 */
-	@Inject(method = "render", at = @At("HEAD"))
-	public void renderSearchStuff(DrawContext drawContext, int mX, int mY, float delta, CallbackInfo ci) {
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;render(Lnet/minecraft/client/gui/DrawContext;IIF)V"))
+	private void renderSearchAndContextMenuStuff(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
+		context.getMatrices().push();
+		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
+
 		if(showSearch && !config.hideSearchButton) {
-			drawContext.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
-			searchField.render(drawContext, mX, mY, delta);
+			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
+			searchField.render(context, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				drawContext.drawTextWithShadow(textRenderer, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
+				context.drawTextWithShadow(textRenderer, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
 			}
 		}
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
-			drawContext.drawTexture(
+			context.drawTexture(
 				id("textures/gui/search_settings_panel.png"),
 				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
 
-			caseSensitive.button.render(drawContext, mX, mY, delta);
-			modifiers.button.render(drawContext, mX, mY, delta);
-			regex.button.render(drawContext, mX, mY, delta);
+			caseSensitive.button.render(context, mX, mY, delta);
+			modifiers.button.render(context, mX, mY, delta);
+			regex.button.render(context, mX, mY, delta);
 		}
 
 		// renders the copy menu's selection box and menu buttons
 		if( showCopyMenu && !hoveredVisibles.isEmpty() && !isMouseOverSettingsMenu(mX, mY) ) {
 			ChatHud chatHud = client.inGameHud.getChatHud();
-			ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
+			ChatHudAccessor chat = (ChatHudAccessor) chatHud;
 			List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
 
 
@@ -284,8 +297,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.chatpatches$getScrolledLines();
 			int hoveredY = sH - (i * lH) - shift;
 
-			drawContext.getMatrices().push();
-			drawContext.getMatrices().scale((float) s, (float) s, 1.0f);
+			context.getMatrices().push();
+			context.getMatrices().scale((float) s, (float) s, 1.0f);
 
 			int borderW = sW + 8;
 			int scissorY1 = MathHelper.floor((sH - (chatHud.getVisibleLineCount() * lH) - shift - 1) * s);
@@ -294,21 +307,23 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			int selectionH = (lH * hoveredParts) + 1;
 
 			// cuts off any of the selection rect that goes past the chat hud
-			drawContext.enableScissor(0, scissorY1, borderW, scissorY2);
-			drawContext.drawBorder(0, selectionY1, borderW, selectionH, config.copyColor + 0xff000000);
-			drawContext.disableScissor();
+			context.enableScissor(0, scissorY1, borderW, scissorY2);
+			context.drawBorder(0, selectionY1, borderW, selectionH, config.copyColor + 0xff000000);
+			context.disableScissor();
 
-			drawContext.getMatrices().pop();
+			context.getMatrices().pop();
 
 
-			mainButtons.values().forEach(menuButton -> menuButton.render(drawContext, mX, mY, delta));
+			mainButtons.values().forEach(menuButton -> menuButton.render(context, mX, mY, delta));
 			hoverButtons.values().forEach(menuButton -> {
 				if(menuButton.is( COPY_LINK_N.apply(0) ))
-					mainButtons.get(COPY_MENU_LINKS).children.forEach(linkButton -> linkButton.render(drawContext, mX, mY, delta));
+					mainButtons.get(COPY_MENU_LINKS).children.forEach(linkButton -> linkButton.render(context, mX, mY, delta));
 				else
-					menuButton.render(drawContext, mX, mY, delta);
+					menuButton.render(context, mX, mY, delta);
 			});
 		}
+
+		context.getMatrices().pop();
 	}
 
 	/**
@@ -382,6 +397,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else
 			return getTextStyleAt.call(screen, mX, mY);
 	}
+
+	@Inject(method = {"mouseClicked", "keyPressed"}, at = @At("RETURN"))
+	private void closeMenuOnInput(CallbackInfoReturnable<Boolean> cir) {
+		// hide copy menu if any other element was clicked first
+		if(cir.getReturnValue() && showCopyMenu)
+			showCopyMenu = false;
+	}
+
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
@@ -401,8 +424,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
 	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		if(cir.getReturnValue())
+		if(cir.getReturnValue()) {
+			if(showCopyMenu) // hide copy menu if any other element was clicked first
+				showCopyMenu = false;
+
 			return;
+		}
 
 		if(searchField.mouseClicked(mX, mY, button))
 			cir.setReturnValue(true);
@@ -511,10 +538,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(mX < 0 || mY < 0)
 			return new ArrayList<>(0);
 
-		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-		final List<ChatHudLine.Visible> visibles = chatHud.chatpatches$getVisibleMessages();
+		final ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
+		final List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
 		// using LineIndex instead of Index bc during testing they both returned the same value; LineIndex has less code
-		final int hoveredIndex = chatHud.chatpatches$getMessageLineIndex(chatHud.chatpatches$toChatLineX(mX), chatHud.chatpatches$toChatLineY(mY + config.shiftChat));
+		final int hoveredIndex = chat.chatpatches$getMessageLineIndex(chat.chatpatches$toChatLineX(mX), chat.chatpatches$toChatLineY(mY));
 
 		if(hoveredIndex == -1)
 			return new ArrayList<>(0);
@@ -575,11 +602,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 
 		ChatHud chatHud = client.inGameHud.getChatHud();
-		ChatHudAccessor chat = ChatHudAccessor.from(chatHud);
+		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
 		String hMF = TextUtils.reorder( hoveredVisibles.get(0).content(), false );
 		String hoveredMessageFirst = hMF.isEmpty() ? "\n" : hMF; // fixes messages starting with newlines not being detected
 
-		/* warning: longer messages sometimes fail because extra spaces appear to be added,
+		/* note: longer messages sometimes fail because extra spaces appear to be added,
 		   so i switched it to a startsWith() bc the first one never has extra spaces. /!\ can probably still fail /!\ */
 		// get hovered message index (messages) for all copying data
 		selectedLine =
@@ -700,9 +727,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
 				searchField.setEditableColor(0x55FF55);
 
-				ChatHudAccessor chatHud = ChatHudAccessor.from(client);
-				chatHud.chatpatches$getVisibleMessages().clear();
-				chatHud.chatpatches$getVisibleMessages().addAll(searchResults);
+				ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
+				chat.chatpatches$getVisibleMessages().clear();
+				chat.chatpatches$getVisibleMessages().addAll(searchResults);
 			}
 		} else {
 			client.inGameHud.getChatHud().reset();
@@ -725,11 +752,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Unique
 	private List<ChatHudLine.Visible> filterMessages(String target) {
-		final ChatHudAccessor chatHud = ChatHudAccessor.from(client);
+		final ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
 		if(target == null)
-			return List.of(); //createVisibles( chatHud.chatpatches$getMessages() );
+			return List.of(); //createVisibles( chat.chatpatches$getMessages() );
 
-		List<ChatHudLine> msgs = Lists.newArrayList( chatHud.chatpatches$getMessages() );
+		List<ChatHudLine> msgs = Lists.newArrayList( chat.chatpatches$getMessages() );
 
 		msgs.removeIf(hudLn -> {
 			String content = TextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
@@ -753,7 +780,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/**
 	 * Creates a new list of to-be-rendered chat messages from the given list
 	 * of chat messages. The steps to achieving this are largely based on
-	 * the first half of the {@link ChatHud#addMessage(Text, MessageSignatureData, int, MessageIndicator, boolean)}
+	 * the first half of the {@link ChatHud#addMessage(Text, MessageSignatureData, MessageIndicator)}
 	 * method, specifically everything before the {@code while} loop.
 	 */
 	@Unique

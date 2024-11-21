@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Chat Patches",
-  "description": "A versatile client-side chat mod that makes the chat more useful and customizable! Check out the config and the GitHub page for more info!\nJoin the Discord at https://discord.gg/3MqBvNEyMz!",
+  "description": "A versatile client-side chat mod that makes the chat more useful and customizable! Check out the config and the GitHub page for more info! Join the Discord at https://discord.gg/3MqBvNEyMz!",
   "authors": [
     "OBro1961"
   ],
@@ -17,7 +17,11 @@
     "Fiz-Victor (bugfixes)",
     "co-91 (ja_jp)",
     "JustALittleWolf (#118, #123, #131, #132)",
-    "SmajloSlovakian (#139-141)"
+    "SmajloSlovakian (#139-141)",
+    "DylanKeir (#190)",
+    "Nooiee (ko_kr/#193)",
+    "suoyukii (zh_cn/#203)",
+    "demorogabrtz (pt_br/#204)"
   ],
   "contact": {
     "homepage": "https://modrinth.com/mod/MOqt4Z5n",
@@ -42,16 +46,14 @@
   ],
 
   "depends": {
-    "java": ">=17",
-    "minecraft": [ "1.20.3", "1.20.4" ],
-    "fabricloader": ">=0.15.0",
+    "java": ">=21",
+    "minecraft": [ "1.20.4" ],
+    "fabricloader": ">=0.16.9",
     "fabric-api": "*",
     "yet_another_config_lib_v3": "*"
   },
   "recommends": {
-    "modmenu": "*",
-    "catalogue": "*",
-    "menulogue": "*"
+    "modmenu": "*"
   },
   "suggests": {
     "nochatreports": "*"

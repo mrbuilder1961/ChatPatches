@@ -1,6 +1,5 @@
 package obro1961.chatpatches.config;
 
-import com.google.common.collect.Lists;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
@@ -16,10 +15,10 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
-import obro1961.chatpatches.util.Flags;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -32,20 +31,20 @@ public class YACLConfig extends Config {
 
     @Override
     public Screen getConfigScreen(Screen parent) {
-        List<Option<?>> timeOpts = Lists.newArrayList();
-        List<Option<?>> hoverOpts = Lists.newArrayList();
-        List<Option<?>> counterOpts = Lists.newArrayList();
-        List<Option<?>> compactChatOpts = Lists.newArrayList();
-        List<Option<?>> boundaryOpts = Lists.newArrayList();
-        List<Option<?>> chatlogOpts = Lists.newArrayList();
-        List<Option<?>> chatlogActions = Lists.newArrayList();
-        List<Option<?>> chatNameOpts = Lists.newArrayList();
-        List<Option<?>> chatHudOpts = Lists.newArrayList();
-        List<Option<?>> chatScreenOpts = Lists.newArrayList();
-        List<Option<?>> copyMenuOpts = Lists.newArrayList();
+        List<Option<?>> timeOpts = new ArrayList<>(),
+                        hoverOpts = new ArrayList<>(),
+                        counterOpts = new ArrayList<>(),
+                        compactChatOpts = new ArrayList<>(),
+                        boundaryOpts = new ArrayList<>(),
+                        chatlogOpts = new ArrayList<>(),
+                        chatlogActions = new ArrayList<>(),
+                        chatNameOpts = new ArrayList<>(),
+                        chatHudOpts = new ArrayList<>(),
+                        chatScreenOpts = new ArrayList<>(),
+                        copyMenuOpts = new ArrayList<>();
 
         Config.getOptions().forEach(opt -> {
-            String key = opt.key; // to fix "local variable opt.key must be final or effectively final"
+            String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
             if( key.contains("counterCompact") )
                 cat = "compact";
@@ -117,7 +116,10 @@ public class YACLConfig extends Config {
                 .category( category("boundary", boundaryOpts) )
                 .category( category("chatlog", chatlogOpts, group("chatlog.actions", chatlogActions, null)) )
                 .category( category("chat", List.of(),
-                    group("chat.name", chatNameOpts, null), group("chat.hud", chatHudOpts, null), group("chat.screen", chatScreenOpts, null)) )
+                    group("chat.name", chatNameOpts, null),
+                    group("chat.hud", chatHudOpts, null),
+                    group("chat.screen", chatScreenOpts, null)
+                ))
                 .category( category("copy", copyMenuOpts) )
 
                 .category(
@@ -141,12 +143,6 @@ public class YACLConfig extends Config {
                 category(
                     "debug",
                     List.of(
-                        Option.<Integer>createBuilder()
-                            .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Flags.flags, Integer.toBinaryString(Flags.flags))) )
-                            .controller(opt -> IntegerSliderControllerBuilder.create(opt).range(0, 0b1111).step(1))
-                            .binding( Flags.flags, () -> Flags.flags, inc -> Flags.flags = inc )
-                            .build(),
-
                         ButtonOption.createBuilder()
                             .name( Text.literal("Print GitHub Option table") )
                             .action((screen, option) -> {
@@ -157,7 +153,7 @@ public class YACLConfig extends Config {
                                         I18n.translate("text.chatpatches." + opt.key),
 
                                         ( opt.getType().equals(Integer.class) && opt.key.contains("Color") )
-                                            ? "`0x%06x`".formatted(opt.def)
+                                            ? "`0x%06x`".formatted( (int)opt.def )
                                             : (opt.getType().equals(String.class))
                                                 ? "`\"" + opt.def + "\"`"
                                                 : "`" + opt.def + "`",
@@ -167,7 +163,7 @@ public class YACLConfig extends Config {
                                     ))
                                 );
 
-                                ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables]" + str);
+								ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables] {}", str);
                             })
                             .build()
                     )
@@ -207,7 +203,7 @@ public class YACLConfig extends Config {
                 ChatLog.deserialize();
                 ChatLog.restore(MinecraftClient.getInstance());
             } else if(key.equals("chatlogSave")) {
-                ChatLog.serialize(false);
+                ChatLog.serialize();
             } else if(key.equals("chatlogBackup")) {
                 ChatLog.backup();
             } else if(key.equals("chatlogOpenFolder")) {
@@ -260,6 +256,7 @@ public class YACLConfig extends Config {
                 case "counterCompactDistance" -> 1024;
                 case "chatlogSaveInterval" -> 180;
                 case "chatWidth" -> MinecraftClient.getInstance().getWindow().getScaledWidth() - 12; // offset length calc'd from ChatHud#render aka magic #
+                case "chatHeight" -> MinecraftClient.getInstance().getWindow().getScaledHeight() - 12;
                 // only issue w ^^^ is if the window is resized while the config screen is open the max value will be incorrect
                 // other issue could be with the future config redo, as annotation constraints must be *constant*
                 case "chatMaxMessages" -> Short.MAX_VALUE;
@@ -312,8 +309,6 @@ public class YACLConfig extends Config {
         try {
             if( MinecraftClient.getInstance().getResourceManager().getResource(id).isPresent() )
                 builder.webpImage(id);
-            else
-                ChatPatches.LOGGER.debug("[YACLConfig.desc] No .{} image found for '{}'", ext, opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
         } catch(Throwable e) {
             ChatPatches.LOGGER.error("[YACLConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
         }
@@ -331,6 +326,7 @@ public class YACLConfig extends Config {
             .name(Text.translatable( "text.chatpatches." + key, (args[0].equals(-1) ? new Object[0] : args) )) // args or nothing
             .description(desc( new ConfigOption<>(o, o, key) ))
             .action(getAction(key))
+            .available( !key.matches("chatlog(Load|Save)") || MinecraftClient.getInstance().world != null ) // must be in-game to load/save
             .build();
     }
 }

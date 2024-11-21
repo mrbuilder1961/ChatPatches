@@ -109,6 +109,7 @@ Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so
 | Save interval (minutes)       | `0`              | How long should the Chat Log wait before saving to disk? This is in minutes, the minimum is 1. Set to 0 to only save when paused (warning: setting to <5 will lag a lot). All values try to save on exit.                                                                                                                                                                       | `text.chatpatches.chatlogSaveInterval`    |
 | Ignore hide message packet    | `true`           | Should hide message packets that delete chat messages be ignored?                                                                                                                                                                                                                                                                                                               | `text.chatpatches.chatHidePacket`         |
 | Override chat width           | `0`              | The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.                                                                                                                                                                                                                        | `text.chatpatches.chatWidth`              |
+| Override chat height          | `0`              | The width of the chat box. This overrides vanilla's default and allows for a much larger height. Set to 0 to use the vanilla setting and not override it.                                                                                                                                                                                                                       | `text.chatpatches.chatHeight`             |
 | Maximum chat messages         | `16384`          | The max amount of chat messages allowed to save. Vanilla caps it at 100, this mod can increase it up to 32,767. Keep in mind a higher max equals higher memory usage.                                                                                                                                                                                                           | `text.chatpatches.chatMaxMessages`        |
 | Playername text               | `"<$>"`          | The text that replaces the playername in chat messages. Vanilla is '<$>', name only is '$'; where '$' is a placeholder for the playername. Only applies to player-sent messages.                                                                                                                                                                                                | `text.chatpatches.chatNameFormat`         |
 | Playername color              | `0xffffff`       | The color that's filled in where it would otherwise be blank white in the resulting formatted playername. To use this with other formatting modifiers, use '&r' in the decoration text option.                                                                                                                                                                                  | `text.chatpatches.chatNameColor`          |
@@ -188,7 +189,24 @@ https://github.com/mrbuilder1961/ChatPatches/actions/runs/8310511511/artifacts/1
 7. Now you should be good to go! Launching the game should now load the beta version. If you experience any issues, make sure to report them as soon as
    possible wherever you were given the link (here on GitHub or [the Discord](https://discord.gg/3MqBvNEyMz)).
 
+### How to find mod(s) causing compatibility issues (binary search)
+*(taken from the Fabric Discord bot, not claiming ownership, just sharing knowledge!)*
+
+> A binary search can be used to quickly find a specific mod causing trouble, which can be especially useful when logs don't give a conclusive answer to your issue.
+
+> Start by removing or disabling half of your mods, then test if the problem still occurs. If it does, remove half of the remaining mods and test again. If it doesn't, add back half of the mods you just removed.
+
+> Keep in mind you don't have to stick strictly to halves each time, and may have to enable some library mods like Fabric API out of order.
+
+> By repeating this on an increasingly smaller set of mods, you'll find the problematic mod within a few iterations.
+
+Make sure you leave Chat Patches and it's dependencies installed when you're looking for the problematic mod, otherwise it won't do anything to help diagnose the issue.
+
 ## Sponsor me!
 - Ko-Fi: https://ko-fi.com/obro1961
 
 [![15% off your first month with code OBRO15!](https://i.imgur.com/9mjs77B.png)](https://billing.kinetichosting.net/aff.php?aff=234)
+
+### (not sponsored; highly encouraged)
+[![Use your voice, help the families of Gaza](https://github.com/user-attachments/assets/111407d3-0018-4ac9-b9db-2e515e2e54a0)
+](https://linktr.ee/opolivebranch)

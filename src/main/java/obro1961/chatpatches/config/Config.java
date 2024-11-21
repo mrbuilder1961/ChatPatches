@@ -6,11 +6,16 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ConfirmLinkScreen;
+import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.ChatUtils;
 
@@ -35,7 +40,17 @@ import static obro1961.chatpatches.util.TextUtils.text;
 public class Config {
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
     public static final Config DEFAULTS = new Config();
+    /**
+     * List of mods installed that, in one way or another,
+     * cause modified messages to have an extra space in
+     * between the timestamp and message content. While
+     * I could open issues to deal with this issue, it's
+     * much easier to just remove the space, especially
+     * if it's unintentionally my fault.
+     */
+    //public static final Stream<String> EXTRA_SPACE_MODS = Stream.of("styledchat");
 
+    private static final FabricLoader FABRIC = FabricLoader.getInstance();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
 	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
@@ -45,7 +60,7 @@ public class Config {
     public boolean counterCompact = false; public int counterCompactDistance = 0;
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
-    public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>"; public int chatNameColor = 0xffffff;
+    public boolean chatHidePacket = true; public int chatWidth = 0, chatHeight = 0, chatMaxMessages = 16384; public String chatNameFormat = "<$>"; public int chatNameColor = 0xffffff;
     public int shiftChat = 10; public boolean messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
 
@@ -54,8 +69,7 @@ public class Config {
      * on installed mods. Should only be called once.
      */
     public static Config create() {
-        FabricLoader fbr = FabricLoader.getInstance();
-		boolean accessibleInGame = fbr.isModLoaded("modmenu") || (fbr.isModLoaded("catalogue") && fbr.isModLoaded("menulogue"));
+		boolean accessibleInGame = FABRIC.isModLoaded("modmenu") || (FABRIC.isModLoaded("catalogue") && FABRIC.isModLoaded("menulogue"));
         config = accessibleInGame ? new YACLConfig() : DEFAULTS;
 
         read();
@@ -65,10 +79,23 @@ public class Config {
     }
 
 
-    public /*static*/ Screen getConfigScreen(Screen parent) {
-        // idea: make this return a new YACL screen here if bool in #create() is true
-        // instead of making a new config object
-        return null;
+    public Screen getConfigScreen(Screen parent) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        boolean suggestYACL = SharedConstants.getProtocolVersion() >= 759; // 1.19 or higher
+        String link = "https://modrinth.com/mod/" + (suggestYACL ? "yacl" : "cloth-config");
+
+        return new ConfirmScreen(
+            clicked -> {
+                if(clicked)
+                    ConfirmLinkScreen.open(parent, link);
+                else
+                    mc.setScreen(parent);
+            },
+            Text.translatable("text.chatpatches.help.missing"),
+            Text.translatable("text.chatpatches.desc.help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
+            ScreenTexts.CONTINUE,
+            ScreenTexts.BACK
+        );
     }
 
 
@@ -145,12 +172,12 @@ public class Config {
                     .append(team.getSuffix())
                     .append(configSuffix);
             }
-        } catch(Exception e) {
+        } catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
-            ChatPatches.logInfoReportMessage(e);
+            ChatPatches.logReportMsg(e);
         }
 
-        return makeObject(chatNameFormat, profile.getName(), "", " ", style);
+        return makeObject(chatNameFormat, profile.getName(), "", /*EXTRA_SPACE_MODS.anyMatch(FABRIC::isModLoaded) ? "" :*/ " ", style);
     }
 
     public MutableText makeDupeCounter(int dupes) {
@@ -214,7 +241,7 @@ public class Config {
      */
     public static void writeCopy() {
 		try {
-			Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+			Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + Util.getFormattedCurrentTime() + ".json" ));
 		} catch(IOException e) {
             LOGGER.warn("[Config.writeCopy] An error occurred trying to write a copy of the original config file:", e);
 		}
@@ -247,7 +274,7 @@ public class Config {
             return new ConfigOption<>( (T)config.getClass().getField(key).get(config), (T)config.getClass().getField(key).get(DEFAULTS), key );
         } catch(IllegalAccessException | NoSuchFieldException e) {
             LOGGER.error("[Config.getOption({})] An error occurred while trying to get an option value!", key);
-            ChatPatches.logInfoReportMessage(e);
+            ChatPatches.logReportMsg(e);
 
             return new ConfigOption<>( (T)new Object(), (T)new Object(), key );
         }
