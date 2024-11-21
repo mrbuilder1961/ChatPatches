@@ -76,18 +76,12 @@ public class ChatUtils {
 		if(index < 0)
 			index = content.getArgs().length + index;
 
-		Object /* StringVisitable */ arg = content.getArgs()[index]; // since 1.21.1, #getArg is private. WHAT THE FUCK??
-
-		if(arg == null)
-			return Text.empty();
-		else if(arg instanceof Text t)
-			return (MutableText) t;
-		else if(arg instanceof StringVisitable sv)
-			return Text.literal(sv.getString());
-		else if(arg instanceof String s)
-			return Text.literal(s);
-		else
-			return Text.empty();
+		return switch( content.getArgs()[index] ) {
+			case Text t -> (MutableText) t;
+			case StringVisitable sv -> Text.literal(sv.getString());
+			case String s -> Text.literal(s);
+			default -> Text.empty();
+		};
 	}
 
 	/**
@@ -170,12 +164,11 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m, boolean refreshing) {
-		if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
+		if( refreshing || ChatLog.isRestoring() )
 			return m; // cancels modifications when loading the chatlog or regenerating visibles
 
 		boolean errorThrown = false;
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
-		boolean boundary = Flags.BOUNDARY_LINE.isRaised() && config.boundary && !config.vanillaClearing;
 		Date now = lastEmpty ? new Date() : msgData.timestamp();
 		String nowStr = String.valueOf(now.getTime()); // for copy menu and storing timestamp data! only affects the timestamp
 		Style style = m.getStyle();
@@ -184,13 +177,13 @@ public class ChatUtils {
 		MutableText content = m.copy();
 
 		try {
-			timestamp = (config.time && !boundary) ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
+			timestamp = config.time ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
 			content = Text.empty().setStyle(style);
 
 			// reconstruct the player message if it's in the vanilla format and should be reformatted
 			// the msgData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(!lastEmpty && !boundary && msgData.vanilla() && m.getString().matches(VANILLA_FORMAT)) {
+			if(!lastEmpty && msgData.vanilla() && m.getString().matches(VANILLA_FORMAT)) {
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches("chat.type.(text|team.(text|sent))")) {
 					String key = ttc.getKey();

@@ -19,15 +19,11 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
-import obro1961.chatpatches.util.Flags;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
@@ -73,22 +69,23 @@ public class ChatPatches implements ClientModInitializer {
 
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
-			if(config.chatlog && !ChatLog.loaded) {
+			if(!ChatLog.loaded && config.chatlog) {
 				ChatLog.deserialize();
 				ChatLog.restore(client);
 			}
 
-			ChatHudAccessor chatHud = ChatHudAccessor.from(client);
+			//prepub move all this to Config or sm? feels out of place...
+			ChatHudAccessor chat = ChatHudAccessor.from(client);
 			String current = currentWorldName(client);
 			// continues if the boundary line is enabled, >0 messages sent, and if the last and current worlds were servers, that they aren't the same
-			if( config.boundary && !chatHud.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
+			if( config.boundary && !config.vanillaClearing && !chat.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
 				try {
 					String levelName = (lastWorld = current).substring(2); // makes a variable to update lastWorld in a cleaner way
+					boolean time = config.time;
 
-					Flags.BOUNDARY_LINE.raise();
+					config.time = false; // disables the time so the boundary line doesn't have a timestamp
 					client.inGameHud.getChatHud().addMessage( config.makeBoundaryLine(levelName) );
-					Flags.BOUNDARY_LINE.lower();
-
+					config.time = time; // re-enables the time accordingly
 				} catch(Exception e) {
 					LOGGER.warn("[ChatPatches.boundary] An error occurred while adding the boundary line:", e);
 				}
@@ -98,7 +95,7 @@ public class ChatPatches implements ClientModInitializer {
 			// only replaces messages that would render instantly to save performance on large chat logs
 			// no longer ran once per game, but once per join (#151) (note: if you open the chat and then close it, the messages will reappear)
 			int t = client.inGameHud.getTicks();
-			chatHud.chatpatches$getVisibleMessages().replaceAll(ln -> (t - ln.addedTime() < 200) ? new ChatHudLine.Visible(0, ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
+			chat.chatpatches$getVisibleMessages().replaceAll(ln -> (t - ln.addedTime() < 200) ? new ChatHudLine.Visible(0, ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
 		});
 
 		LOGGER.info("[ChatPatches()] Finished setting up!");

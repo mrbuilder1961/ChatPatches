@@ -18,7 +18,6 @@ import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.Flags;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -27,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -45,6 +43,7 @@ public class ChatLog {
     public static boolean loaded = false;
     public static int ticksUntilSave = config.chatlogSaveInterval * 60 * 20; // convert minutes to ticks
 
+    private static boolean restoring = false;
     private static ChatLog.Data data = new Data();
     private static int lastHistoryCount = -1, lastMessageCount = -1;
 
@@ -215,15 +214,10 @@ public class ChatLog {
             LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}' in {} seconds",
                 messageCount(), historyCount(), PATH, (System.currentTimeMillis() - start) / 1000.0
             );
-        } catch(ConcurrentModificationException cme) { // rudimentary attempt to fix thrown CMEs (#181)
-            if(!Flags.ALLOW_CME.isRaised()) {
-                LOGGER.warn("[ChatLog.serialize] A ConcurrentModificationException was unexpectedly thrown, trying to serialize one more time:", cme);
-                Flags.ALLOW_CME.raise();
-                serialize();
-                Flags.ALLOW_CME.lower();
-            } else {
-                LOGGER.error("[ChatLog.serialize] A ConcurrentModificationException was thrown again, chat log saving FAILED:", cme);
-            }
+
+            // temporarily removed the ugly ConcurrentModificationException catch block bc it's ugly and not a real solution:
+            // fixme!
+
         } catch(IOException | RuntimeException e) {
             LOGGER.error("[ChatLog.serialize] An I/O or unexpected runtime error occurred while trying to save the chat log:", e);
             dumpData();
@@ -249,7 +243,7 @@ public class ChatLog {
 
     /** Restores the chat log from {@link #data} into Minecraft. */
     public static void restore(MinecraftClient client) {
-        Flags.LOADING_CHATLOG.raise();
+        restoring = true;
 
         if(!data.history.isEmpty())
             data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
@@ -257,7 +251,7 @@ public class ChatLog {
         if(!data.messages.isEmpty())
             data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
 
-        Flags.LOADING_CHATLOG.lower();
+        restoring = false;
 
         LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", messageCount(), historyCount(), PATH);
     }
@@ -296,17 +290,29 @@ public class ChatLog {
 
 
     public static void addMessage(Text msg) {
+        if(restoring)
+            return;
         if(messageCount() > config.chatMaxMessages)
             data.messages.removeFirst();
 
         data.messages.add(msg);
     }
     public static void addHistory(String msg) {
+        if(restoring)
+            return;
         if(historyCount() > config.chatMaxMessages)
             data.history.removeFirst();
 
         data.history.add(msg);
     }
+
+    /**
+     * Returns if the chat log is currently
+     * being restored into the chat. Used
+     * to prevent logging and modifying
+     * restored messages.
+     */
+    public static boolean isRestoring() { return restoring; }
 
     public static void clearMessages() {
         data.messages.clear();

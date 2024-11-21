@@ -2,6 +2,10 @@
 
 ## Chat Patches `213.6.10` for Minecraft 1.21.2, 1.21.3 on Fabric, Quilt
 - Updated `pt_br` translations thanks to [demorogabrtz](https://github.com/demorogabrtz)! ([#209](https://www.github.com/mrbuilder1961/ChatPatches/issues/209))
+- **Dev notes:**
+  - Removed the now redundant `Flags` class, which helped some random parts of the message modification process that didn't actually need to be out of scope
+  - Removed the casting methods in the two `Accessor` interfaces: we don't need an extra method call just for a cast
+    - Also renamed all variable references of `ChatHudAccessor` strictly to `chat` for consistency
 
 ## Chat Patches `213.6.9` for Minecraft 1.21.2, 1.21.3 on Fabric, Quilt
 - Updated to 1.21.2-3

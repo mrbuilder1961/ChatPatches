@@ -1,6 +1,5 @@
 package obro1961.chatpatches.config;
 
-import com.google.common.collect.Lists;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
@@ -16,10 +15,10 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
-import obro1961.chatpatches.util.Flags;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -32,20 +31,20 @@ public class YACLConfig extends Config {
 
     @Override
     public Screen getConfigScreen(Screen parent) {
-        List<Option<?>> timeOpts = Lists.newArrayList();
-        List<Option<?>> hoverOpts = Lists.newArrayList();
-        List<Option<?>> counterOpts = Lists.newArrayList();
-        List<Option<?>> compactChatOpts = Lists.newArrayList();
-        List<Option<?>> boundaryOpts = Lists.newArrayList();
-        List<Option<?>> chatlogOpts = Lists.newArrayList();
-        List<Option<?>> chatlogActions = Lists.newArrayList();
-        List<Option<?>> chatNameOpts = Lists.newArrayList();
-        List<Option<?>> chatHudOpts = Lists.newArrayList();
-        List<Option<?>> chatScreenOpts = Lists.newArrayList();
-        List<Option<?>> copyMenuOpts = Lists.newArrayList();
+        List<Option<?>> timeOpts = new ArrayList<>(),
+                        hoverOpts = new ArrayList<>(),
+                        counterOpts = new ArrayList<>(),
+                        compactChatOpts = new ArrayList<>(),
+                        boundaryOpts = new ArrayList<>(),
+                        chatlogOpts = new ArrayList<>(),
+                        chatlogActions = new ArrayList<>(),
+                        chatNameOpts = new ArrayList<>(),
+                        chatHudOpts = new ArrayList<>(),
+                        chatScreenOpts = new ArrayList<>(),
+                        copyMenuOpts = new ArrayList<>();
 
         Config.getOptions().forEach(opt -> {
-            String key = opt.key; // to fix "local variable opt.key must be final or effectively final"
+            String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
             if( key.contains("counterCompact") )
                 cat = "compact";
@@ -144,12 +143,6 @@ public class YACLConfig extends Config {
                 category(
                     "debug",
                     List.of(
-                        Option.<Integer>createBuilder()
-                            .name( Text.literal("Edit Bit Flags (%d^10, %s^2)".formatted(Flags.flags, Integer.toBinaryString(Flags.flags))) )
-                            .controller(opt -> IntegerSliderControllerBuilder.create(opt).range(0, 0b1111).step(1))
-                            .binding( Flags.flags, () -> Flags.flags, inc -> Flags.flags = inc )
-                            .build(),
-
                         ButtonOption.createBuilder()
                             .name( Text.literal("Print GitHub Option table") )
                             .action((screen, option) -> {

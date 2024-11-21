@@ -16,7 +16,6 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
-import obro1961.chatpatches.util.Flags;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -149,8 +148,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/ArrayListDeque;size()I"))
     private void addHistory(String message, CallbackInfo ci) {
-        if( !Flags.LOADING_CHATLOG.isRaised() )
-            ChatLog.addHistory(message);
+        ChatLog.addHistory(message);
     }
 
     /** Disables logging commands to the vanilla command log if the Chat Patches' ChatLog is enabled. */
@@ -161,7 +159,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
     private void ignoreRestoredMessages(ChatHudLine hudLine, CallbackInfo ci) {
-        if( Flags.LOADING_CHATLOG.isRaised() && hudLine.indicator() != null )
+        if(ChatLog.isRestoring() && hudLine.indicator() != null)
             ci.cancel();
     }
 
