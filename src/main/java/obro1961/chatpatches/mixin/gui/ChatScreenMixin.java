@@ -12,6 +12,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -149,14 +150,35 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	/**
-	 * Renders everything needed for the revamped ChatScreen,
-	 * including the search bar, button, error, settings
-	 * menu, and the context menu.
-	 * */
+	 * @implNote In order, renders:
+	 * <ol>
+	 *     <li>(Everything shifted backwards on the Z-axis in
+	 *     order to render under the {@link ChatInputSuggestor}
+	 *     and suggestion text)</li>
+	 *     <li>The {@link #searchButton}</li>
+	 *     <li>If the search bar should show:</li>
+	 *     <ol>
+	 *     		<li>The {@link #searchField} background</li>
+	 *     		<li>The {@link #searchField} itself</li>
+	 *     		<li>If it isn't null, the {@link #searchError}</li>
+	 *     </ol>
+	 *	   <li>If the settings menu should show:</li>
+	 *     <ol>
+	 *     		<li>The settings menu background</li>
+	 *     		<li>The setting buttons themselves</li>
+	 *     </ol>
+	 *     <li>If the copy menu has been loaded and should show:</li>
+	 *     <ol>
+	 *     		<li>The outline around the selected chat message</li>
+	 *     		<li>The copy menu buttons (the menu itself)</li>
+	 *     </ol>
+	 * </ol>
+	 */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;render(Lnet/minecraft/client/gui/DrawContext;IIF)V"))
 	private void renderSearchAndContextMenuStuff(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
 		context.getMatrices().push();
 		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
+
 		searchButton.render(context, mX, mY, delta);
 		if(showSearch && !config.hideSearchButton) {
 			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
@@ -183,9 +205,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		//todo does this make sense? what about !showSettingsMenu? experiment.
 		// renders the context menu if the settings menu is not open
-		if(!isMouseOverSettingsMenu(mX, mY)) {
+		if(!isMouseOverSettingsMenu(mX, mY))
 			contextMenu.render(context, mX, mY, delta);
-		}
+
 		context.getMatrices().pop();
 	}
 
