@@ -14,6 +14,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -228,11 +229,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	/**
-	 * @implNote Rendering order:
+	 * @implNote In order, renders:
 	 * <ol>
-	 *     <li>(Shifts everything backwards into the Z axis to
-	 *     not render over the ChatInputSuggestor and suggestion
-	 *     text)</li>
+	 *     <li>(Everything shifted backwards on the Z-axis in
+	 *     order to render under the {@link ChatInputSuggestor}
+	 *     and suggestion text)</li>
 	 *     <li>The {@link #searchButton}</li>
 	 *     <li>If the search bar should show:</li>
 	 *     <ol>
