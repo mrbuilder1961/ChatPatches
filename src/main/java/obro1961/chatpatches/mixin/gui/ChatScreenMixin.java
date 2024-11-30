@@ -203,12 +203,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			regex.button.render(context, mX, mY, delta);
 		}
 
+		context.getMatrices().pop(); // stop shifting before the context menu renders so the chat field doesn't cut it off
+
 		//todo does this make sense? what about !showSettingsMenu? experiment.
 		// renders the context menu if the settings menu is not open
 		if(!isMouseOverSettingsMenu(mX, mY))
 			contextMenu.render(context, mX, mY, delta);
-
-		context.getMatrices().pop();
 	}
 
 	/**

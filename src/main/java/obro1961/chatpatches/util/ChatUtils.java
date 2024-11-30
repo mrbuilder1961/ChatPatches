@@ -14,6 +14,7 @@ import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.*;
@@ -101,10 +102,11 @@ public class ChatUtils {
 	 *                  either the dupe counter or the message
 	 *                  content
 	 */
-	public static MutableText buildMessage(Style rootStyle, Text first, Text second, Text third) {
+	@NotNull
+	public static MutableText buildMessage(@Nullable Style rootStyle, @Nullable Text first, @Nullable Text second, @Nullable Text third) {
 		MutableText root = Text.empty();
 
-		if(rootStyle != null && !rootStyle.equals(Style.EMPTY))
+		if(rootStyle != null)
 			root.setStyle(rootStyle);
 
 		first = Objects.requireNonNullElse(first, Text.empty());

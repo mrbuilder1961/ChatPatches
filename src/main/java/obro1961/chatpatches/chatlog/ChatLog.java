@@ -3,12 +3,14 @@ package obro1961.chatpatches.chatlog;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
@@ -37,6 +39,8 @@ import static obro1961.chatpatches.ChatPatches.config;
 public class ChatLog {
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
+
+    private static final MinecraftClient mc = MinecraftClient.getInstance();
 
     public static boolean loaded = false;
     public static int ticksUntilSave = config.chatlogSaveInterval * 60 * 20; // convert minutes to ticks
@@ -146,9 +150,9 @@ public class ChatLog {
 
         try {
             JsonObject jsonData = JsonHelper.deserialize(rawData);
-            data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData).resultOrPartial(e -> {
-                throw new JsonSyntaxException(e);
-            }).orElseThrow();
+            data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData)
+                .resultOrPartial(e -> ChatPatches.logAndThrowReportMsg(new JsonParseException(e)))
+                .orElseThrow();
 
             // the sublist indices make sure to only keep the newest data and remove the oldest
             // NOTE: the chat log system has the oldest messages at 0, but vanilla has the newest at 0
@@ -192,7 +196,7 @@ public class ChatLog {
 
         try {
             JsonElement json = Data.CODEC.encodeStart(ChatPatches.jsonOps(), data)
-                .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+                .resultOrPartial(e -> ChatPatches.logAndThrowReportMsg(new JsonParseException(e)))
                 .orElseThrow();
 
             Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -229,19 +233,35 @@ public class ChatLog {
         }
     }
 
-    /** Restores the chat log from {@link #data} into Minecraft. */
-    public static void restore(MinecraftClient client) {
+    /**
+     * Restores the chat log from {@link #data} into
+     * the {@linkplain ChatHud chat hud}.
+     */
+    public static void restore() {
         restoring = true;
 
         if(!data.history.isEmpty())
-            data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
+            data.history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
 
         if(!data.messages.isEmpty())
-            data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
+            data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
 
         restoring = false;
 
         LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", messageCount(), historyCount(), PATH);
+    }
+
+    /**
+     * Attempts to load the chat log from {@link #PATH}
+     * and restore it into the game. Only does so if
+     * the chat log is enabled in the config and hasn't
+     * been loaded yet.
+     */
+    public static void load() {
+        if(!loaded && config.chatlog) {
+            deserialize();
+            restore();
+        }
     }
 
     /**
@@ -264,6 +284,15 @@ public class ChatLog {
 
         if(ticksUntilSave < 0)
             ticksUntilSave = config.chatlogSaveInterval * 60 * 20;
+    }
+
+    /**
+     * Saves the chat log if the save interval is
+     * disabled and the game is paused.
+     */
+    public static void saveIfPaused(Screen screen) {
+        if(config.chatlogSaveInterval == 0 && (!mc.isWindowFocused() || screen instanceof GameMenuScreen))
+            serialize();
     }
 
     /**
