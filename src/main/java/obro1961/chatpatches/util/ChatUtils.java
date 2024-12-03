@@ -244,12 +244,11 @@ public class ChatUtils {
 				// don't reformat if it isn't vanilla or needed
 				content = m.copy();
 			}
-		} catch(Throwable e) {
-			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}', returning original:", m.getString());
-			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \tOriginal message structure: {}", m);
-			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \tModified message structure:");
-			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
-			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
+		} catch(RuntimeException e) {
+			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}':", m.getString());
+			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] \tModified message structure:");
+			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
+			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
 			ChatPatches.logReportMsg(e);
 		}
 
@@ -317,7 +316,6 @@ public class ChatUtils {
 			}
 		} catch(IndexOutOfBoundsException e) {
 			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
-			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method. Either way,");
 			ChatPatches.logReportMsg(e);
 		} catch(Exception e) {
 			ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error! /!\\");
