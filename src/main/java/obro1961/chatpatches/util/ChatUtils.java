@@ -314,7 +314,7 @@ public class ChatUtils {
 		if(incoming.getContent() instanceof PlainTextContent && incoming.getSiblings().isEmpty())
 			incoming = buildMessage(null, null, incoming, null);
 		if(comparingLine.content().getContent() instanceof PlainTextContent && comparingLine.content().getSiblings().isEmpty())
-			comparingLine = buildMessage(null, null, comparingLine, null);
+			comparingLine = new ChatHudLine(comparingLine.creationTick(), buildMessage(null, null, comparingLine.content(), null), comparingLine.signature(), comparingLine.indicator());
 
 		List<Text> comparingParts = comparingLine.content().getSiblings();
 		List<Text> incomingParts = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs for 1.20.3+
