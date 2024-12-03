@@ -307,20 +307,23 @@ public class ChatUtils {
 		final ChatHudAccessor chat = (ChatHudAccessor) chatHud;
 		final List<ChatHudLine> messages = chat.chatpatches$getMessages();
 		final List<ChatHudLine.Visible> visibleMessages = chat.chatpatches$getVisibleMessages();
+		ChatHudLine comparingLine = messages.get(index); // message being compared
 
 		// just in case the incoming message is a literal string text w no sibs,
 		// we can reformat it as to not throw any annoying errors down the line
 		if(incoming.getContent() instanceof PlainTextContent && incoming.getSiblings().isEmpty())
 			incoming = buildMessage(null, null, incoming, null);
+		if(comparingLine.content().getContent() instanceof PlainTextContent && comparingLine.content().getSiblings().isEmpty())
+			comparingLine = buildMessage(null, null, comparingLine, null);
 
-		ChatHudLine comparingLine = messages.get(index); // message being compared
 		List<Text> comparingParts = comparingLine.content().getSiblings();
 		List<Text> incomingParts = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs for 1.20.3+
 
 
 		// IF the comparing and incoming message bodies are case-insensitively equal,
 		// AND (if we need to check the style) if the messages' metadata are equal, continue
-		Text incMsg = incomingParts.get(MESSAGE_INDEX), compMsg = comparingParts.get(MESSAGE_INDEX);
+		Text incMsg = incomingParts.get(MESSAGE_INDEX),
+			 compMsg = comparingParts.get(MESSAGE_INDEX);
 		boolean equalIgnoreCase = incMsg.getString().equalsIgnoreCase( compMsg.getString() );
 		if( equalIgnoreCase && (!config.counterCheckStyle || copyWithoutContent(incMsg).equals(copyWithoutContent(compMsg))) ) {
 
