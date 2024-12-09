@@ -21,6 +21,7 @@ import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.util.ChatUtils;
 
+import java.io.EOFException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -188,7 +189,7 @@ public class Config {
 
     /**
      * Sends a boundary line in chat when the player
-     * switches worlds. This is only called if
+     * switches worlds. This only runs if
      * {@link #boundary} is enabled,
      * {@link #vanillaClearing} is disabled, and
      * the chat isn't empty.
@@ -228,24 +229,27 @@ public class Config {
     }
 
 
-    /** Loads the config settings saved at {@link Config#PATH} into this Config instance */
+    /** Loads the config settings saved at {@link Config#PATH} into {@link ChatPatches#config} */
     public static void read() {
-        if(!Files.exists(PATH)) {
-            // config already has default values
-            LOGGER.info("[Config.read] No config file found; using default values.");
-        } else {
-            try {
+        if(Files.exists(PATH)) {
+            try {//todo: make sure this works
                 String rawData = Files.readString(PATH);
+                if(rawData.length() < 2 || !rawData.startsWith("{") || !rawData.endsWith("}"))
+                    throw new EOFException("ChatPatches config file is empty or corrupted");
+
                 config = GSON.fromJson(rawData, config.getClass());
                 LOGGER.info("[Config.read] Loaded config info from '{}'!", PATH);
-            } catch(JsonIOException | JsonSyntaxException e) {
+            } catch(JsonIOException | JsonSyntaxException | EOFException e) {
+                LOGGER.info("[Config.read] The config couldn't be loaded; backing up and resetting:", e);
                 writeCopy();
-                reset();
-                LOGGER.info("[Config.read] The config couldn't be loaded; copied old data and reset:", e);
+                config = DEFAULTS;
             } catch(IOException e) {
-                reset();
-                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", PATH, e);
+                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}'; resetting:", PATH, e);
+                config = DEFAULTS;
             }
+        } else {
+            // config already has default values
+            LOGGER.info("[Config.read] No config file found; using default values");
         }
     }
 
@@ -265,7 +269,9 @@ public class Config {
      * log any changes nor does it write to disk.
      */
     public static void reset() {
-        getOptions().forEach(opt -> getOption(opt.key).set(opt.def));
+        //prepub: test this its gotta work, if it doesn't just undo
+        config = DEFAULTS;
+        //getOptions().forEach(opt -> getOption(opt.key).set(opt.def));//delete: this?
     }
 
     /**
