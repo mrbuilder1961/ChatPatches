@@ -1,6 +1,6 @@
 # Changelog
 
-## Chat Patches `214.6.10` for Minecraft 1.21.2, 1.21.3, 1.21.4 on Fabric, Quilt
+## Chat Patches `214.6.10` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Now compatible with 1.21.4! Only ONE code change was made and it's super basic :D
 - Updated `pt_br` translations thanks to [demorogabrtz](https://github.com/demorogabrtz)! ([#209](https://www.github.com/mrbuilder1961/ChatPatches/issues/209))
 - **Dev notes:**
