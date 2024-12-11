@@ -22,7 +22,7 @@ public class SearchButtonWidget extends TexturedButtonWidget {
 
     @Override
     public boolean mouseClicked(double x, double y, int buttonType) {
-        if(active && visible && clicked(x, y)) {
+        if(isMouseOver(x, y)) {
             if(buttonType == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                 this.playDownSound(MinecraftClient.getInstance().getSoundManager());
                 onLeftClick.onPress(this);
