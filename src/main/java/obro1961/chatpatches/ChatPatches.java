@@ -170,6 +170,6 @@ public class ChatPatches implements ClientModInitializer {
 		if(MinecraftClient.getInstance().world instanceof ClientWorld world)
 			return world.getRegistryManager().getOps(JsonOps.INSTANCE);
 		else
-			throw new NullPointerException("[ChatPatches#jsonOps] Expected existing ClientWorld");
+			throw logAndThrowReportMsg(new NullPointerException("[ChatPatches#jsonOps] Expected existing ClientWorld"));
 	}
 }

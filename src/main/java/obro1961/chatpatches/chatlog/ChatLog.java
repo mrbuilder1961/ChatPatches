@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.loader.api.FabricLoader;
@@ -148,9 +147,9 @@ public class ChatLog {
 
         try {
             JsonObject jsonData = JsonHelper.deserialize(rawData);
-            data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData).resultOrPartial(e -> {
-                throw new JsonSyntaxException(e);
-            }).orElseThrow();
+            data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData)
+                .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+                .orElseThrow();
 
             // the sublist indices make sure to only keep the newest data and remove the oldest
             // NOTE: the chat log system has the oldest messages at 0, but vanilla has the newest at 0
@@ -197,7 +196,6 @@ public class ChatLog {
         try {
             registeredOps = ChatPatches.jsonOps();
         } catch(NullPointerException npe) {
-            ChatPatches.logReportMsg(npe);
             dumpData();
             return;
         }

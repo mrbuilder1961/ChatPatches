@@ -8,6 +8,7 @@
   - Removed the casting methods in the two `Accessor` interfaces: we don't need an extra method call just for a cast
     - Also renamed all variable references of `ChatHudAccessor` strictly to `chat` for consistency
   - Cleanup and consistent formatting
+  - Now logs errors from `ChatLog#deserialize` and `ChatPatches#jsonOps` like all other errors
 
 ## Chat Patches `213.6.9` for Minecraft 1.21.2, 1.21.3 on Fabric, Quilt
 - Updated to 1.21.2-3
