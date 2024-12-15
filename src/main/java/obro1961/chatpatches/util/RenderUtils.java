@@ -6,6 +6,9 @@ import net.minecraft.text.Text;
 
 public class RenderUtils {
 	public static final ChatHudLine NIL_HUD_LINE = new ChatHudLine(0, Text.empty(), null, null);
+	/**
+	 * An {@linkplain Style#EMPTY empty style} with all boolean formatting values disabled.
+	 */
 	public static final Style BLANK_STYLE = Style.EMPTY.withBold(false).withItalic(false).withStrikethrough(false).withUnderline(false).withObfuscated(false);
 
 

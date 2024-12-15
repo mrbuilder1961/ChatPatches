@@ -1,8 +1,9 @@
 # Changelog
 
 ## Chat Patches `214.6.10` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
-- Now compatible with 1.21.4! Only ONE code change was made and it's super basic :D
+- Now compatible with 1.21.4! Only ONE code change was made and it's super basic :D ([#212](https://www.github.com/mrbuilder1961/ChatPatches/issues/212))
 - Updated `pt_br` translations thanks to [demorogabrtz](https://github.com/demorogabrtz)! ([#209](https://www.github.com/mrbuilder1961/ChatPatches/issues/209))
+- Fixed players on colored teams not having their names colored when far away ([#202](https://www.github.com/mrbuilder1961/ChatPatches/issues/202))
 - **Dev notes:**
   - Removed the now redundant `Flags` class, which helped some random parts of the message modification process that didn't actually need to be out of scope
   - Removed the casting methods in the two `Accessor` interfaces: we don't need an extra method call just for a cast

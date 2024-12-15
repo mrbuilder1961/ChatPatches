@@ -11,8 +11,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.Util;
@@ -147,32 +147,25 @@ public class Config {
      * player entity and have both a valid name and UUID.
      */
     public MutableText formatPlayername(GameProfile profile) {
-        Style style = BLANK_STYLE.withColor(chatNameColor);
+        Style style = BLANK_STYLE.withColor(chatNameColor); // defaults to the config-specified color
         try {
-            PlayerEntity entity = MinecraftClient.getInstance().world.getPlayerByUuid(profile.getId());
-            Team team = null;
+            // note: creating a new PlayerListEntry might cause issues?
+            Text teamName = MinecraftClient.getInstance().inGameHud.getPlayerListHud().getPlayerName( new PlayerListEntry(profile, false) );
+            String[] configFormat = chatNameFormat.split("\\$");
 
-            if(entity != null) {
-                team = entity.getScoreboard().getScoreHolderTeam(profile.getName());
-                style = entity.getDisplayName().getStyle().withColor( entity.getTeamColorValue() != 0xffffff ? entity.getTeamColorValue() : chatNameColor );
-            }
+            // override the custom color with the team one if it exists
+            if(teamName.getStyle().getColor() instanceof TextColor color)
+                style = style.withColor(color);
 
-            if(team != null) {
-                // note: doesn't set the style on every append, as it's already set in the parent text. might cause issues?
-                // if the player is on a team, add the prefix and suffixes from the config AND team (if they exist) to the formatted name
-                MutableText playername = text(profile.getName());
-                String[] configFormat = chatNameFormat.split("\\$");
-                Text configPrefix = text(configFormat[0]);
-                Text configSuffix = text(configFormat[1] + " ");
-
-                return Text.empty().setStyle(style)
-                    .append(configPrefix)
-                    .append(team.getPrefix())
-                    .append(playername)
-                    .append(team.getSuffix())
-                    .append(configSuffix);
-            }
-        } catch(RuntimeException e) {
+            // note: parent style set in parent text... might cause issues?
+			return Text.empty().setStyle(style)
+				.append( text(configFormat[0]) )                   // config prefix
+				.append( teamName.getSiblings().getFirst() )       // team prefix
+				.append( teamName.getSiblings().get(1) )           // team playername
+				.append( teamName.getSiblings().getLast() )        // team suffix
+				.append( text(configFormat[1] + " ") ) // config suffix
+            ;
+		} catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
             ChatPatches.logReportMsg(e);
         }
@@ -228,7 +221,9 @@ public class Config {
      * log any changes nor does it write to disk.
      */
     public static void reset() {
-        getOptions().forEach(opt -> getOption(opt.key).set(opt.def));
+        // warning: might cause issues, further testing required
+        config = DEFAULTS;
+        //getOptions().forEach(opt -> getOption(opt.key).set(opt.def));
     }
 
     /**
