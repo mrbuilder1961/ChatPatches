@@ -9,7 +9,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryOps;
@@ -60,42 +59,21 @@ public class ChatPatches implements ClientModInitializer {
 		// testing details (server=hypixel): normal disconnects work on both world and server, manual F3+C crash works on world but NOT server
 		// honestly I don't care if it fails on crashes, its fixable a) through the save interval or b) by fixing the crash's source
 		ClientPlayConnectionEvents.DISCONNECT.register((network, client) -> ChatLog.serialize());
-		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> {
-			// saves the chat log if [the save interval is disabled] AND [the pause menu is showing OR the game isn't focused]
-			if( config.chatlogSaveInterval == 0 && (screen instanceof GameMenuScreen || !client.isWindowFocused()) )
-				ChatLog.serialize();
-		});
+		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> ChatLog.saveIfPaused(screen));
 		ClientTickEvents.END_WORLD_TICK.register(world -> ChatLog.tickSaveCounter());
 
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
-			if(!ChatLog.loaded && config.chatlog) {
-				ChatLog.deserialize();
-				ChatLog.restore(client);
-			}
+			ChatLog.load();
 
-			//prepub move all this to Config or sm? feels out of place...
-			ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
-			String current = currentWorldName(client);
-			// continues if the boundary line is enabled, >0 messages sent, and if the last and current worlds were servers, that they aren't the same
-			if( config.boundary && !config.vanillaClearing && !chat.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
-				try {
-					String levelName = (lastWorld = current).substring(2); // makes a variable to update lastWorld in a cleaner way
-					boolean time = config.time;
-
-					config.time = false; // disables the time so the boundary line doesn't have a timestamp
-					client.inGameHud.getChatHud().addMessage( config.makeBoundaryLine(levelName) );
-					config.time = time; // re-enables the time accordingly
-				} catch(Exception e) {
-					LOGGER.warn("[ChatPatches.boundary] An error occurred while adding the boundary line:", e);
-				}
-			}
+			config.sendBoundaryLine();
 
 			// sets all messages (restored and boundary line) to a addedTime of 0 to prevent instant rendering (#42)
 			// only replaces messages that would render instantly to save performance on large chat logs
 			// no longer ran once per game, but once per join (#151) (note: if you open the chat and then close it, the messages will reappear)
 			int t = client.inGameHud.getTicks();
-			chat.chatpatches$getVisibleMessages().replaceAll(ln -> (t - ln.addedTime() < 200) ? new ChatHudLine.Visible(0, ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
+			((ChatHudAccessor) client.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
+				.replaceAll(ln -> (t - ln.addedTime() < 200) ? new ChatHudLine.Visible(-200, ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
 		});
 
 		LOGGER.info("[ChatPatches()] Finished setting up!");

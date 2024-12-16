@@ -13,13 +13,16 @@ import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.util.ChatUtils;
 
+import java.io.EOFException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -53,6 +56,10 @@ public class Config {
 
     private static final FabricLoader FABRIC = FabricLoader.getInstance();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final MinecraftClient mc = MinecraftClient.getInstance();
+
+    /** @see #sendBoundaryLine() */
+    private static String lastWorld = "";
 
 	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
@@ -148,7 +155,6 @@ public class Config {
      * player entity and have both a valid name and UUID.
      */
     public MutableText formatPlayername(GameProfile profile) {
-        MinecraftClient mc = MinecraftClient.getInstance();
         Style style = BLANK_STYLE.withColor(chatNameColor); // defaults to the config-specified color
         try {
             // note: creating a new PlayerListEntry might cause issues?
@@ -189,30 +195,73 @@ public class Config {
     }
 
     public Text makeBoundaryLine(String levelName) {
-        // constructs w empty texts to not throw errors when comparing for the dupe counter
-        MutableText boundary = makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor));
-        return ChatUtils.buildMessage(null, null, boundary, null);
+        // needs empty strings to avoid errors when comparing the dupe counter
+        return ChatUtils.buildMessage(null, null, makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor)), null);
+    }
+
+    /**
+     * Sends a boundary line in chat when the player
+     * switches worlds. This only runs if
+     * {@link #boundary} is enabled,
+     * {@link #vanillaClearing} is disabled, and
+     * the chat isn't empty.
+     *
+     * <p>Grabs the level name from the current world
+     * (singleplayer) or server entry (multiplayer),
+     * the latter of which uses the server IP if the
+     * name is blank. The boundary line will not send
+     * if the server hasn't changed since the last
+     * boundary line was sent.
+     */
+    public void sendBoundaryLine() {
+        if(!config.boundary || config.vanillaClearing)
+            return;
+
+        ChatHudAccessor chat = (ChatHudAccessor) mc.inGameHud.getChatHud();
+        //noinspection DataFlowIssue: see next line
+        String current = mc.isIntegratedServerRunning() // this check prevents NPEs for both if branches
+            ? "C_" + mc.getServer().getSaveProperties().getLevelName()
+            : mc.getCurrentServerEntry() instanceof ServerInfo entry
+                ? "S_" + (entry.name.isBlank() ? entry.address : entry.name) // if the name is blank, uses the address instead
+                : "";
+
+        // continues if messages in chat and if the last and current worlds were servers, that they aren't the same
+        if( !chat.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
+            try {
+                String levelName = (lastWorld = current).substring(2); // makes a variable to update lastWorld in a cleaner way
+                boolean time = config.time;
+
+                config.time = false; // disables the time so the boundary line doesn't have a timestamp
+                mc.inGameHud.getChatHud().addMessage( config.makeBoundaryLine(levelName) );
+                config.time = time; // re-enables the time accordingly
+            } catch(Exception e) {
+                LOGGER.warn("[Config.sendBoundaryLine] An error occurred while adding the boundary line:", e);
+            }
+        }
     }
 
 
-    /** Loads the config settings saved at {@link Config#PATH} into this Config instance */
+    /** Loads the config settings saved at {@link Config#PATH} into {@link ChatPatches#config} */
     public static void read() {
-        if(!Files.exists(PATH)) {
-            // config already has default values
-            LOGGER.info("[Config.read] No config file found; using default values.");
-        } else {
+        // warning: not thoroughly tested... let there be bugs
+        if(Files.exists(PATH)) {
             try {
                 String rawData = Files.readString(PATH);
+                if(rawData.length() < 2 || !rawData.startsWith("{") || !rawData.endsWith("}"))
+                    throw new EOFException("ChatPatches config file is empty or corrupted");
                 config = GSON.fromJson(rawData, config.getClass());
                 LOGGER.info("[Config.read] Loaded config info from '{}'!", PATH);
-            } catch(JsonIOException | JsonSyntaxException e) {
+            } catch(JsonIOException | JsonSyntaxException | EOFException e) {
+                LOGGER.info("[Config.read] The config couldn't be loaded; backing up and resetting:", e);
                 writeCopy();
-                reset();
-                LOGGER.info("[Config.read] The config couldn't be loaded; copied old data and reset:", e);
+                config = DEFAULTS;
             } catch(IOException e) {
-                reset();
-                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}':", PATH, e);
+                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}'; resetting:", PATH, e);
+                config = DEFAULTS;
             }
+        } else {
+            // config already has default values
+            LOGGER.info("[Config.read] No config file found; using default values");
         }
     }
 
@@ -224,17 +273,6 @@ public class Config {
         } catch(Exception e) {
             LOGGER.error("[Config.write] An error occurred while trying to save the config to '{}':", PATH, e);
         }
-    }
-
-    /**
-     * Overwrites all fields with their respective
-     * default values. Note that this does not
-     * log any changes nor does it write to disk.
-     */
-    public static void reset() {
-        // warning: might cause issues, further testing required
-        config = DEFAULTS;
-        //getOptions().forEach(opt -> getOption(opt.key).set(opt.def));
     }
 
     /**
