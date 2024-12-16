@@ -127,7 +127,7 @@ public class ChatPatches implements ClientModInitializer {
 	 * Executes {@link #logReportMsg(Throwable)}
 	 * and throws the passed error.
 	 */
-	public static <X extends Throwable> X logAndThrowReportMsg(@NotNull X error) throws X {
+	public static <X extends Throwable> X logReportAndThrowMsg(@NotNull X error) throws X {
 		logReportMsg(error);
 		throw error;
 	}
@@ -148,6 +148,6 @@ public class ChatPatches implements ClientModInitializer {
 		if(MinecraftClient.getInstance().world instanceof ClientWorld world)
 			return world.getRegistryManager().getOps(JsonOps.INSTANCE);
 		else
-			throw logAndThrowReportMsg(new NullPointerException("[ChatPatches#jsonOps] Expected existing ClientWorld"));
+			throw logReportAndThrowMsg(new NullPointerException("[ChatPatches#jsonOps] Expected existing ClientWorld"));
 	}
 }

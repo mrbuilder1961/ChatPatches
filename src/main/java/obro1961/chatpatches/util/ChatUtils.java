@@ -222,7 +222,7 @@ public class ChatUtils {
 					Text firstPart = parts.stream()
 						.filter(p -> p.getString().contains(">"))
 						.findFirst()
-						.orElseThrow(() -> ChatPatches.logAndThrowReportMsg(
+						.orElseThrow(() -> ChatPatches.logReportAndThrowMsg(
 							new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "'!")
 						));
 

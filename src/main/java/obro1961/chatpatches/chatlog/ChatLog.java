@@ -153,7 +153,7 @@ public class ChatLog {
         try {
             JsonObject jsonData = JsonHelper.deserialize(rawData);
             data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData)
-                .resultOrPartial(e -> ChatPatches.logAndThrowReportMsg(new JsonParseException(e)))
+                .resultOrPartial(e -> ChatPatches.logReportAndThrowMsg(new JsonParseException(e)))
                 .orElseThrow();
 
             // the sublist indices make sure to only keep the newest data and remove the oldest
@@ -207,7 +207,7 @@ public class ChatLog {
 
         try {
             JsonElement json = Data.CODEC.encodeStart(registeredOps, data)
-                .resultOrPartial(e -> ChatPatches.logAndThrowReportMsg(new JsonParseException(e)))
+                .resultOrPartial(e -> ChatPatches.logReportAndThrowMsg(new JsonParseException(e)))
                 .orElseThrow();
 
             Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
