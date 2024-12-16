@@ -165,7 +165,7 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m, boolean refreshing) {
-		if( refreshing || ChatLog.isRestoring() )
+		if( refreshing || ChatLog.isSuspended() )
 			return m; // cancels modifications when loading the chatlog or regenerating visibles
 
 		boolean errorThrown = false;
