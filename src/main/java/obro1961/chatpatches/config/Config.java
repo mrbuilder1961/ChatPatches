@@ -11,6 +11,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.ScreenTexts;
@@ -147,24 +148,34 @@ public class Config {
      * player entity and have both a valid name and UUID.
      */
     public MutableText formatPlayername(GameProfile profile) {
+        MinecraftClient mc = MinecraftClient.getInstance();
         Style style = BLANK_STYLE.withColor(chatNameColor); // defaults to the config-specified color
         try {
             // note: creating a new PlayerListEntry might cause issues?
-            Text teamName = MinecraftClient.getInstance().inGameHud.getPlayerListHud().getPlayerName( new PlayerListEntry(profile, false) );
+            Text teamName = mc.inGameHud.getPlayerListHud().getPlayerName( new PlayerListEntry(profile, false) );
             String[] configFormat = chatNameFormat.split("\\$");
 
             // override the custom color with the team one if it exists
             if(teamName.getStyle().getColor() instanceof TextColor color)
                 style = style.withColor(color);
 
-            // note: parent style set in parent text... might cause issues?
-			return Text.empty().setStyle(style)
-				.append( text(configFormat[0]) )                   // config prefix
-				.append( teamName.getSiblings().getFirst() )       // team prefix
-				.append( teamName.getSiblings().get(1) )           // team playername
-				.append( teamName.getSiblings().getLast() )        // team suffix
-				.append( text(configFormat[1] + " ") ) // config suffix
-            ;
+
+            // uses a fake player entity to get the display name style (hover/click/insertion)
+            //noinspection DataFlowIssue: world should ALWAYS exist when executing this method
+            Text displayName = new OtherClientPlayerEntity(mc.world, profile).getDisplayName();
+            if(teamName.getSiblings().isEmpty()) {
+                return Text.empty().setStyle( style.withParent(displayName.getStyle()) )
+                    .append( text(configFormat[0]) )                    // config prefix
+                    .append( text(profile.getName()) )                  // playername
+                    .append( text(configFormat[1] + " ") ); // config suffix
+            } else {
+                return Text.empty().setStyle( style.withParent(displayName.getStyle()) )
+                    .append( text(configFormat[0]) )                    // config prefix
+                    .append( teamName.getSiblings().getFirst() )        // team prefix
+                    .append( teamName.getSiblings().get(1) )            // team playername
+                    .append( teamName.getSiblings().getLast() )         // team suffix
+                    .append( text(configFormat[1] + " ") ); // config suffix
+            }
 		} catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
             ChatPatches.logReportMsg(e);
