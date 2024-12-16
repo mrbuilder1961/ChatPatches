@@ -246,11 +246,10 @@ public class ChatUtils {
 				content = m.copy();
 			}
 		} catch(Exception e) {
-			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}', returning original:", m.getString());
-			LOGGER.debug("[ChatUtils.modifyMessage] \tOriginal message structure: {}", m);
-			LOGGER.debug("[ChatUtils.modifyMessage] \tModified message structure:");
-			LOGGER.debug("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
-			LOGGER.debug("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
+			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}':", m.getString());
+			LOGGER.error("[ChatUtils.modifyMessage] \tModified message structure:");
+			LOGGER.error("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
+			LOGGER.error("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
 			ChatPatches.logReportMsg(e);
 
 			errorThrown = true;

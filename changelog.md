@@ -12,7 +12,7 @@
     - Also renamed all variable references of `ChatHudAccessor` strictly to `chat` for consistency
   - Cleanup and consistent formatting
   - Now logs errors from `ChatLog#deserialize` and `ChatPatches#jsonOps` like all other errors
-  - Synced with omnivers minor cleanup changes again
+  - Synced with cleanup stuff already present on the `omnivers` branch
 
 ## Chat Patches `213.6.9` for Minecraft 1.21.2, 1.21.3 on Fabric, Quilt
 - Updated to 1.21.2-3
