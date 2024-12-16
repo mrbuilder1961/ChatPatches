@@ -95,9 +95,7 @@ public class YACLConfig extends Config {
             }
         });
 
-        /* for action buttons */
-        // idea: filter all translatable strings for action ones (currently: if the key starts with 'chatlog' and isn't an option)
-        // see https://discord.com/channels/507304429255393322/507982478276034570/1175256182525534218
+        // for action buttons
         List<String> actionKeys = List.of("chatlogClear", "chatlogClearHistory", "chatlogClearMessages", "chatlogLoad", "chatlogSave", "chatlogBackup", "chatlogOpenFolder");
         for(String key : actionKeys) {
             // creates an args array for the translatable string, which is either the message count, history count, or -1
