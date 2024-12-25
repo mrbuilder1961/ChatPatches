@@ -42,7 +42,7 @@ public class ChatPatches implements ClientModInitializer {
 	public void onInitializeClient() {
 		//todo: put all these callbacks somewhere else so i can split them by loader w arch api later
 		/*
-		 * ChatLog saving events, run if config.chatlog is true:
+		 * Chat log saving events, run if config.chatlog is true:
 		 * 	DISCONNECT - Always saves EXCEPT on (most?) server crashes
 		 * 	SCREEN_AFTER_INIT - Saves if the save interval is enabled AND if the screen is paused (GameMenuScreen)
 		 * 	END_WORLD_TICK - Ticks the save counter and saves if it's enabled and the internal counter equals zero

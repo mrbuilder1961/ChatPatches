@@ -161,14 +161,14 @@ public class ChatUtils {
 	 *   prerequisites), then don't change {@code m} and store it.</li>
 	 * 	 <li>Assemble the constructed message and add a duplicate counter
 	 * 	 according to the {@link ChatUtils#addCounter(Text)} method.</li>
-	 * 	 <li>Log the modified message in the {@code ChatLog}.</li>
+	 * 	 <li>Log the modified message in the {@link ChatLog}.</li>
 	 * 	 <li>Reset the {@link ChatPatches#msgData} to prevent an uncommon bug.</li>
 	 * 	 <li>Return the message, regardless of if it was actually modified or not.</li>
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
 		if(ChatLog.isRestoring())
-			return m; // cancels modifications when loading the chatlog or regenerating visibles
+			return m; // cancels modifications when loading the chat log or regenerating visibles
 
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
 		Date now = lastEmpty ? new Date() : msgData.timestamp();

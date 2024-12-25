@@ -165,7 +165,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     /**
      * Disables the vanilla command log, a feature added in 1.20.2 that logs up to
-     * 50 commands only, if the ChatLog is already enabled.
+     * 50 commands only, if the chat log is already enabled.
      *
      * @since 1.20.2, mod WHEN
      */
@@ -175,7 +175,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     /**
-     * Cancels logging chat messages if the ChatLog is loading and the indicator isn't null,
+     * Cancels logging chat messages if the chat log is loading and the indicator isn't null,
      * meaning it's a restored message. Called before a message is logged.
      */
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)

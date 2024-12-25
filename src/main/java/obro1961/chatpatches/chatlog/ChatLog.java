@@ -35,7 +35,7 @@ import static obro1961.chatpatches.ChatPatches.config;
  * Represents the chat log file in the run directory located at {@link ChatLog#PATH}.
  * Contains methods for serializing, deserializing, accessing, modifying, and
  * backing up the data.
- */ //prepub: equalize the use of chat log or ChatLog in all comments; leaning towards chat log
+ */
 public class ChatLog {
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
@@ -90,7 +90,7 @@ public class ChatLog {
      * <ol>
      *   <li>Checks if the file at {@link #PATH} exists.</li>
      *   <li>If it doesn't exist, sets {@link #data} to an empty object and returns.</li>
-     *   <li>If it does exist, converts the ChatLog file to UTF-8 if necessary and loads it into {@code rawData}.</li>
+     *   <li>If it does exist, converts the chat log file to UTF-8 if necessary and loads it into {@code rawData}.</li>
      *   <li>If {@code rawData} contains invalid data, resets {@link #data}.</li>
      *   <li>Transforms any legacy UUID int arrays into a stringified format</li>
      *   <li>Then uses {@link Data#CODEC} to parse {@code rawData} into a usable {@link Data} object.</li>
