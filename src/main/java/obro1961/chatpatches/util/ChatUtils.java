@@ -30,8 +30,28 @@ public class ChatUtils {
 	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 	public static final int TIMESTAMP_INDEX = 0, MESSAGE_INDEX = 1, DUPE_INDEX = 2; // indices of all main (modified message) components
 	public static final int MSG_TEAM_INDEX = 0, MSG_SENDER_INDEX = 1, MSG_CONTENT_INDEX = 2; // indices of all MESSAGE_INDEX components
-	/** Matches only an entire vanilla player message. */
-	public static final String VANILLA_FORMAT = "(?i)^<[a-z0-9_]{3,16}>\\s.+$";
+	/**
+	 * Matches only an entire vanilla player message.
+	 * By default, this is translated under the
+	 * {@code chat.type.text} and
+	 * {@code chat.type.team.*} keys, which resolve
+	 * to {@code <%s> %s} and {@code %s <%s> %s}*
+	 * respectively (assuming no resource
+	 * packs have modified them).
+	 *
+	 * <p>*The first argument, the team name, is
+	 * typically surrounded in square brackets
+	 * ({@code []}). Additionally, the team key
+	 * ending in {@code sent} resolves with a
+	 * leading arrow ({@code -> }).
+	 *
+	 * @implNote The vanilla player name alone
+	 * can only match {@code /<[a-z0-9_]{3,16}>/};
+	 * however, when factoring in team pre- and
+	 * suf-fixes, this limit becomes irrelevant.
+	 */
+	public static final String VANILLA_FORMAT = "(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$";
+	public static final String PARSEABLE_MESSAGE_KEYS = "chat.type.(text|team.(text|sent))";
 
 	/**
 	 * Returns the message component at the given index;
@@ -186,7 +206,7 @@ public class ChatUtils {
 			// see Xaero's Minimap waypoint sharing for more information (#158)
 			if(!lastEmpty && msgData.vanilla() && m.getString().matches(VANILLA_FORMAT)) {
 				// if the message is translatable, then we know exactly where everything is
-				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches("chat.type.(text|team.(text|sent))")) {
+				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches(PARSEABLE_MESSAGE_KEYS)) {
 					String key = ttc.getKey();
 
 					// adds the team name for team messages
