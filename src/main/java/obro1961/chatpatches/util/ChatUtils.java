@@ -28,8 +28,12 @@ import static obro1961.chatpatches.util.TextUtils.reorder;
 public class ChatUtils {
 	public static final UUID NIL_UUID = new UUID(0, 0);
 	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
-	public static final int TIMESTAMP_INDEX = 0, MESSAGE_INDEX = 1, DUPE_INDEX = 2; // indices of all main (modified message) components
-	public static final int MSG_TEAM_INDEX = 0, MSG_SENDER_INDEX = 1, MSG_CONTENT_INDEX = 2; // indices of all MESSAGE_INDEX components
+	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
+							MESSAGE_INDEX = 1,     // contains the actual chat message
+							DUPE_INDEX = 2;        // contains the duplicate counter (can be empty)
+	public static final int MSG_TEAM_INDEX = 0,    // contains the sender's team's name; used for `chat.type.team.*` messages (can be empty)
+							MSG_SENDER_INDEX = 1,  // contains the sender's name
+							MSG_CONTENT_INDEX = 2; // contains the content of the sender's message
 	/**
 	 * Matches only an entire vanilla player message.
 	 * By default, this is translated under the
@@ -94,9 +98,6 @@ public class ChatUtils {
 	 * get the {@code content.getArgs().length-n}th argument.
 	 */
 	public static MutableText getArg(TranslatableTextContent content, int index) {
-		if(index < 0)
-			index = content.getArgs().length + index;
-
 		return switch( content.getArgs()[index] ) {
 			case Text t -> (MutableText) t;
 			case StringVisitable sv -> Text.literal(sv.getString());
@@ -186,7 +187,7 @@ public class ChatUtils {
 	 */
 	public static Text modifyMessage(@NotNull Text m, boolean refreshing) {
 		if( refreshing || ChatLog.isSuspended() )
-			return m; // cancels modifications when loading the chatlog or regenerating visibles
+			return m; // cancels modifications when loading the chat log or regenerating visibles
 
 		boolean errorThrown = false;
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
@@ -201,33 +202,28 @@ public class ChatUtils {
 			timestamp = config.time ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
 			content = Text.empty().setStyle(style);
 
-			// reconstruct the player message if it's in the vanilla format and should be reformatted
+			// reconstruct the player message if it's in the vanilla format and it should be reformatted
 			// the msgData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(!lastEmpty && msgData.vanilla() && m.getString().matches(VANILLA_FORMAT)) {
+			if(!lastEmpty && msgData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches(PARSEABLE_MESSAGE_KEYS)) {
-					String key = ttc.getKey();
+					boolean team = ttc.getKey().contains("team");
 
-					// adds the team name for team messages
-					if(key.startsWith("chat.type.team.")) {
-						MutableText teamPart = Text.empty();
+					MutableText teamPart = Text.empty();
+					if(team) {
 						// adds the preceding arrow for sent team messages
-						if(key.endsWith("sent"))
-							teamPart.append(Text.literal("-> ").setStyle(style));
+						if(ttc.getKey().endsWith("sent"))
+							teamPart.append(Text.literal("-> ").setStyle(style)); // "-> {team} <{player}> {content}"
 
 						// adds the team name for team messages
-						teamPart.append(getArg(ttc, MSG_TEAM_INDEX).copy().append(" ")); // copy() fixes (#199)
-
-						content.append(teamPart);
-					} else {
-						content.append(""); // if there isn't a team message, add an empty string to keep the index constant
+						teamPart.append( getArg(ttc, MSG_TEAM_INDEX).copy().append(" ") ); // copy to prevent UOEs on 1.20.3+ (#199)
 					}
+					content.append( teamPart ); // adds the team part or nothing to keep MSG_TEAM_INDEX constant
 
 					// adds the formatted playername and content for all message types
-					content.append(config.formatPlayername(msgData.sender())); // sender data is already known
-					content.append(getArg(ttc, -1)); // always at the end, sometimes but not necessarily always at MSG_CONTENT_INDEX
-				} else { // reconstructs the message if it matches the vanilla format but isn't translatable
+					content.append( config.formatPlayername(msgData.sender()) );
+					content.append( getArg(ttc, team ? MSG_CONTENT_INDEX : MESSAGE_INDEX) );				} else { // reconstructs the message if it matches the vanilla format but isn't translatable
 					// collect all message parts into one list, including the root TextContent
 					// (assuming this accounts for all parts, TextContents, and siblings)
 					List<Text> parts = Util.make(new ArrayList<>(m.getSiblings().size() + 1), a -> {
@@ -238,7 +234,7 @@ public class ChatUtils {
 					});
 
 					MutableText realContent = Text.empty();
-					// find the first index of a '>' in the message, is formatted like '<%s> %s'
+					// find the first index of a '>' in the '<%s> %s'-formatted message
 					Text firstPart = parts.stream()
 						.filter(p -> p.getString().contains(">"))
 						.findFirst()
@@ -337,7 +333,7 @@ public class ChatUtils {
 			comparingLine = new ChatHudLine(comparingLine.creationTick(), buildMessage(null, null, comparingLine.content(), null), comparingLine.signature(), comparingLine.indicator());
 
 		List<Text> comparingParts = comparingLine.content().getSiblings();
-		List<Text> incomingParts = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs for 1.20.3+
+		List<Text> incomingParts = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+
 
 
 		// IF the comparing and incoming message bodies are case-insensitively equal,
