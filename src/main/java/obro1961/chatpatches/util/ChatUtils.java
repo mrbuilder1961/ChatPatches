@@ -82,20 +82,17 @@ public class ChatUtils {
 	}
 
 	/**
-	 * Returns a MutableText object of the argument
+	 * Returns a {@link MutableText} representing the argument
 	 * located at the given index of the given
-	 * {@link TranslatableTextContent}. Needed because of a weird
-	 * phenomenon where the {@link TranslatableTextContent#getArg(int)}
-	 * method can return a {@link String} or other non-Text related
-	 * object, which otherwise causes {@link ClassCastException}s.
-	 * <p>
-	 * Wraps {@link String}s in {@link Text#literal(String)}
-	 * and nulls in {@link Text#empty()}.
+	 * {@link TranslatableTextContent}. Needed because of a
+	 * weird phenomenon where the
+	 * {@linkplain TranslatableTextContent#getArg(int) original
+	 * <code>getArg</code> method} can return a non-Text object, which
+	 * typically causes a {@link ClassCastException} to be thrown.
 	 *
-	 * @implNote
-	 * If {@code index} is negative, it's added to the args array
-	 * length. In other words, passing index {@code -n} will
-	 * get the {@code content.getArgs().length-n}th argument.
+	 * @return Regular {@link Text} objects as expected,
+	 * {@link String} arguments as {@linkplain Text#literal(String)
+	 * literal texts}, and nulls as {@linkplain Text#empty() empty texts}.
 	 */
 	public static MutableText getArg(TranslatableTextContent content, int index) {
 		return switch( content.getArgs()[index] ) {
