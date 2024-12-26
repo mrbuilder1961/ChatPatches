@@ -1,7 +1,7 @@
 # Changelog
 
 ## Chat Patches `214.6.11` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
-- Fixed teams with prefixes or suffixes preventing playernames from formatting 
+- Fixed teams with prefixes or suffixes preventing playernames from formatting
 
 ## Chat Patches `214.6.10` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Now compatible with 1.21.4! Only ONE code change was made and it's super basic :D ([#212](https://www.github.com/mrbuilder1961/ChatPatches/issues/212))
