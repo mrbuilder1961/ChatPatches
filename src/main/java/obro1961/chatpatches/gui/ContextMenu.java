@@ -393,8 +393,11 @@ public class ContextMenu {
 	 * @implSpec {@code hoveredVisibles} should not be empty.
 	 */
 	public void render(DrawContext drawContext, int mX, int mY, float delta) {
+		mc.getProfiler().push("selectionOutline"); //prepub: keep profiler stuff? if so, make sure it's fleshed out properly (all rendering aspects). else, delete all
 		renderSelectionOutline(drawContext, mX, mY, delta);
+		mc.getProfiler().swap("menuButtons");
 		renderMenuButtons(drawContext, mX, mY, delta);
+		mc.getProfiler().pop();
 	}
 
 	/**

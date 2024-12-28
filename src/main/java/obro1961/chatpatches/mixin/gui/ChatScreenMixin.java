@@ -176,16 +176,23 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;render(Lnet/minecraft/client/gui/DrawContext;IIF)V"))
 	private void renderSearchAndContextMenuStuff(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
+		client.getProfiler().push("chatpatches"); //prepub keep profiler stuff? see ContextMenu#render for more deets
+
 		context.getMatrices().push();
 		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 
+		client.getProfiler().push("searchButton");
 		searchButton.render(context, mX, mY, delta);
 		if(showSearch && !config.hideSearchButton) {
+			client.getProfiler().swap("searchField");
+
 			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(context, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
+				client.getProfiler().swap("searchError");
+
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
 				context.drawTextWithShadow(textRenderer, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
 			}
@@ -193,6 +200,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
+			client.getProfiler().swap("settingsMenu");
+
 			context.drawTexture(
 				id("textures/gui/search_settings_panel.png"),
 				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
@@ -205,10 +214,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		context.getMatrices().pop(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
-		//todo does this make sense? what about !showSettingsMenu? experiment.
 		// renders the context menu if the settings menu is not open
-		if(!isMouseOverSettingsMenu(mX, mY))
+		client.getProfiler().swap("contextMenu");
+		if(!isMouseOverSettingsMenu(mX, mY))//todo does this make sense? what about `!showSettingsMenu`? experiment.
 			contextMenu.render(context, mX, mY, delta);
+		client.getProfiler().pop();
+
+		client.getProfiler().pop();
 	}
 
 	/**
