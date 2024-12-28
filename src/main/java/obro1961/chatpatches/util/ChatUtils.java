@@ -171,7 +171,7 @@ public class ChatUtils {
 			return m; // cancels modifications when loading the chat log or regenerating visibles
 
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
-		Date now = lastEmpty ? new Date() : msgData.timestamp();
+		Date now = lastEmpty ? new Date() : msgData.timestamp;
 		String nowStr = String.valueOf(now.getTime()); // for context menu and storing timestamp data! only affects the timestamp
 		Style style = m.getStyle();
 
@@ -181,9 +181,9 @@ public class ChatUtils {
 		try {
 			timestamp = config.time ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
 			content = Text.empty().setStyle(style);
-
+//fixme: COPY FIX FOR THIS FILE FROM 1.21.4 BRANCH:
 			// reconstruct the player message if it's in the vanilla format and it should be reformatted
-			if(!lastEmpty && msgData.vanilla()) {
+			if(!lastEmpty && msgData.vanilla) {
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches("chat.type.(text|team.(text|sent))")) {
 					String key = ttc.getKey();
@@ -204,7 +204,7 @@ public class ChatUtils {
 					}
 
 					// adds the formatted playername and content for all message types
-					content.append(config.formatPlayername(msgData.sender())); // sender data is already known
+					content.append(config.formatPlayername(msgData.sender)); // sender data is already known
 					content.append(getArg(ttc, -1)); // always at the end
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
 					// collect all message parts into one list, including the root TextContent
@@ -237,7 +237,7 @@ public class ChatUtils {
 					for(int i = parts.indexOf(firstPart) + 1; i < parts.size(); i++)
 						realContent.append(parts.get(i));
 
-					content.append(config.formatPlayername(msgData.sender())); // sender data is already known
+					content.append(config.formatPlayername(msgData.sender)); // sender data is already known
 					content.append(realContent); // adds the reconstructed message content
 				}
 			} else {
