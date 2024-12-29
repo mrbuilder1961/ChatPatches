@@ -36,14 +36,14 @@ public abstract class MessageHandlerMixin {
 	@Shadow protected abstract UUID extractSender(Text text);
 
     /**
-     * Caches the metadata of the last *player* message received by the client.
-     * Only applies to vanilla chat messages, otherwise checks {@link #cacheGameData}
+     * Caches the metadata of the last <i>player</i> message received by the client.
+     * Only applies to vanilla chat messages, otherwise see {@link #cacheGameData}
      * for other potentially player messages that have been modified by the server.
      */
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         // only logs the metadata if it was a player-sent message (otherwise tries to format some commands like /msg and /me)
-        ChatPatches.msgData = params.type().chat().translationKey().equals("chat.type.text")
+        ChatPatches.msgData = params.type().chat().translationKey().matches(ChatUtils.PARSEABLE_MESSAGE_KEYS)
             ? new ChatUtils.MessageData(sender, Date.from(message.getTimestamp()), isVanilla(params.applyChatDecoration(message.getContent())))
             : ChatUtils.NIL_MSG_DATA;
     }
@@ -64,12 +64,11 @@ public abstract class MessageHandlerMixin {
 
 
     /**
-     * Returns true if the given Text is in the vanilla message
-     * format of "{@code <username> message}" (as specified in
-     * {@link ChatUtils#VANILLA_FORMAT}). This should be
-     * true for every message sent by a player, which are the
-     * only messages that need to be heavily modified. In
-     * {@link ChatUtils#modifyMessage(Text)}.
+     * Returns true if the given Text is a vanilla message,
+     * as specified by {@link ChatUtils#VANILLA_FORMAT}.
+     * This should be true for every message sent by a player,
+     * which are the only messages that need to be heavily
+     * modified in {@link ChatUtils#modifyMessage(Text)}}.
      *
      * @apiNote When called in the chat message handler, the
      * message passed should be

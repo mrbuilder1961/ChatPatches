@@ -8,6 +8,7 @@
 - Fatal chat log saving errors will now try and dump all the data to the debug log, as a last-ditch effort to save it
 - Overhauled the copy menu, which is now known as the Context Menu! It now has more features, including a toggle, main buttons copying their first 
   sub-button, and even more message parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), (maybe [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166)?), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
+- Fixed team shenanigans not formatting properly
 - Random misc changes, dependency updates, rewordings, etc.
 - Optimized a lot of stuff for you as a player and me as a developer! (mostly me though :P)
 - **Dev notes:**

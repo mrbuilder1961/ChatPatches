@@ -30,10 +30,36 @@ import static obro1961.chatpatches.util.TextUtils.reorder;
 public class ChatUtils {
 	public static final UUID NIL_UUID = new UUID(0, 0);
 	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
-	public static final int TIMESTAMP_INDEX = 0, MESSAGE_INDEX = 1, DUPE_INDEX = 2; // indices of all main (modified message) components
-	public static final int MSG_TEAM_INDEX = 0, MSG_SENDER_INDEX = 1, MSG_CONTENT_INDEX = 2; // indices of all MESSAGE_INDEX components
-	/** Matches only an entire vanilla player message. */
-	public static final String VANILLA_FORMAT = "(?i)^<[a-z0-9_]{3,16}>\\s.+$";
+	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
+							MESSAGE_INDEX = 1,     // contains the actual chat message
+							DUPE_INDEX = 2;        // contains the duplicate counter (can be empty)
+	public static final int MSG_TEAM_INDEX = 0,    // contains the sender's team's name; used for `chat.type.team.*` messages (can be empty)
+							MSG_SENDER_INDEX = 1,  // contains the sender's name
+							MSG_CONTENT_INDEX = 2; // contains the content of the sender's message
+	/**
+	 * Matches only an entire vanilla player message.
+	 * By default, this is translated under the
+	 * {@code chat.type.text} and
+	 * {@code chat.type.team.*} keys, which resolve
+	 * to {@code <%s> %s} and {@code %s <%s> %s}*
+	 * respectively (assuming no resource
+	 * packs have modified them).
+	 *
+	 *
+	 * <p>*The first argument, the team name, is
+	 * typically surrounded in square brackets
+	 * ({@code []}). Additionally, the team key
+	 * ending in {@code sent} resolves with a
+	 * leading arrow ({@code -> }).
+	 *
+	 *
+	 * @implNote The vanilla player name alone
+	 * can only match {@code /<[a-z0-9_]{3,16}>/};
+	 * however, when factoring in team pre- and
+	 * suf-fixes, this limit becomes irrelevant.
+	 */
+	public static final String VANILLA_FORMAT = "(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$";
+	public static final String PARSEABLE_MESSAGE_KEYS = "chat.type.(text|team.(text|sent))";
 
 	/**
 	 * Returns the message component at the given index;
@@ -60,25 +86,29 @@ public class ChatUtils {
 	}
 
 	/**
-	 * Returns a MutableText object representing the argument
+	 * Returns a {@link MutableText} representing the argument
 	 * located at the given index of the given
-	 * {@link TranslatableTextContent}. Needed because of a weird
+	 * {@link TranslatableTextContent}. Needed because of a
 	 * phenomenon where the {@link TranslatableTextContent#getArg(int)}
+	 * weird phenomenon where the
 	 * method can return a {@link String} or other non-Text related
+	 * {@linkplain TranslatableTextContent#getArg(int) original
 	 * object, which otherwise causes {@link ClassCastException}s.
+	 * <code>getArg</code> method} can return a non-Text object, which
 	 * <p>
+	 * typically causes a {@link ClassCastException} to be thrown.
 	 * Wraps {@link String}s in {@link Text#literal(String)}
 	 * and nulls in {@link Text#empty()}.
 	 *
+	 *
 	 * @implNote
-	 * If {@code index} is negative, adds it to the args array
+	 * @return Regular {@link Text} objects as expected,
+	 * If {@code index} is negative, it's added to the args array
+	 * {@link String} arguments as {@linkplain Text#literal(String)
 	 * length. In other words, passing index {@code -n} will
-	 * get the {@code content.getArgs().length-n}th argument.
+	 * literal texts}, and nulls as {@linkplain Text#empty() empty texts}.
 	 */
 	public static MutableText getArg(TranslatableTextContent content, int index) {
-		if(index < 0)
-			index = content.getArgs().length + index;
-
 		return switch( content.getArgs()[index] ) {
 			case Text t -> (MutableText) t;
 			case StringVisitable sv -> Text.literal(sv.getString());
@@ -181,31 +211,30 @@ public class ChatUtils {
 		try {
 			timestamp = config.time ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
 			content = Text.empty().setStyle(style);
-//fixme: COPY FIX FOR THIS FILE FROM 1.21.4 BRANCH:
+
 			// reconstruct the player message if it's in the vanilla format and it should be reformatted
-			if(!lastEmpty && msgData.vanilla) {
+			// the msgData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
+			// see Xaero's Minimap waypoint sharing for more information (#158)
+			if(!lastEmpty && msgData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
 				// if the message is translatable, then we know exactly where everything is
-				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches("chat.type.(text|team.(text|sent))")) {
-					String key = ttc.getKey();
+				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches(PARSEABLE_MESSAGE_KEYS)) {
+					boolean team = ttc.getKey().contains("team");
 
 					// adds the team name for team messages
-					if(key.startsWith("chat.type.team.")) {
-						MutableText teamPart = Text.empty();
+					MutableText teamPart = Text.empty();
+					if(team) {
 						// adds the preceding arrow for sent team messages
-						if(key.endsWith("sent"))
-							teamPart.append(Text.literal("-> ").setStyle(style));
+						if(ttc.getKey().endsWith("sent"))
+							teamPart.append(Text.literal("-> ").setStyle(style)); // "-> {team} <{player}> {content}"
 
 						// adds the team name for team messages
-						teamPart.append(getArg(ttc, 0).append(" "));
-
-						content.append(teamPart);
-					} else {
-						content.append(""); // if there isn't a team message, add an empty string to keep the index constant
+						teamPart.append( getArg(ttc, MSG_TEAM_INDEX).copy().append(" ") ); // copy to prevent UOEs on 1.20.3+ (#199)
 					}
+					content.append(teamPart); // adds the team part or nothing to keep MSG_TEAM_INDEX constant
 
 					// adds the formatted playername and content for all message types
-					content.append(config.formatPlayername(msgData.sender)); // sender data is already known
-					content.append(getArg(ttc, -1)); // always at the end
+					content.append( config.formatPlayername(msgData.sender) );
+					content.append( getArg(ttc, team ? MSG_CONTENT_INDEX : MESSAGE_INDEX) );
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
 					// collect all message parts into one list, including the root TextContent
 					// (assuming this accounts for all parts, TextContents, and siblings)
@@ -217,7 +246,7 @@ public class ChatUtils {
 					});
 
 					MutableText realContent = Text.empty();
-					// find the first index of a '>' in the message, is formatted like '<%s> %s'
+					// find the first index of a '>' in the '<%s> %s'-formatted message
 					Text firstPart = parts.stream()
 						.filter(p -> p.getString().contains(">"))
 						.findFirst()
@@ -362,7 +391,7 @@ public class ChatUtils {
 
 		ChatHudLine comparingLine = messages.get(index); // message being compared
 		List<Text> comparingParts = comparingLine.content().getSiblings();
-		List<Text> incomingParts = incoming.getSiblings();
+		List<Text> incomingParts = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+
 
 
 		// IF the comparing and incoming message bodies are case-insensitively equal,
