@@ -11,7 +11,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
@@ -19,11 +19,9 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.util.ChatMessages;
-import net.minecraft.network.message.MessageSignatureData;
-import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.accessor.ChatScreenAccessor;
 import obro1961.chatpatches.config.ChatSearchSetting;
@@ -410,6 +408,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 	/** Called when the search field is updated; also sets the regex error and the text input color. */
 	@Unique
+	@SuppressWarnings("DataFlowIssue") // all formattings have colors!
 	private void onSearchFieldUpdate(String text) {
 		if(!text.isEmpty()) {
 			searchField.setSuggestion(null);
@@ -421,21 +420,18 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					searchError = null;
 				} catch(PatternSyntaxException e) {
 					searchError = e;
-					searchField.setEditableColor(0xFF5555);
+					searchField.setEditableColor(Formatting.RED.getColorValue()); // mark the text red if the regex is invalid
 					client.inGameHud.getChatHud().reset();
 				}
 			}
 
-			List<ChatHudLine.Visible> searchResults = filterMessages( searchError != null ? null : text );
-			if(searchError == null && searchResults.isEmpty()) { // mark the text yellow if there are no results
-				searchField.setEditableColor(0xFFFF55);
+			boolean successfulSearch = filterMessages( searchError != null ? null : text );
+			if(searchError == null && !successfulSearch) { // mark the text yellow if there are no results
+				searchField.setEditableColor(Formatting.YELLOW.getColorValue());
 				client.inGameHud.getChatHud().reset();
-			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
-				searchField.setEditableColor(0x55FF55);
-
-				ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
-				chat.chatpatches$getVisibleMessages().clear();
-				chat.chatpatches$getVisibleMessages().addAll(searchResults);
+			} else if(successfulSearch) { // mark the text green if there are results
+				searchField.setEditableColor(Formatting.GREEN.getColorValue());
+				// all actual searching already done in #filterMessages
 			}
 		} else {
 			client.inGameHud.getChatHud().reset();
@@ -449,23 +445,34 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	/**
-	 * Filters all {@link ChatHudLine} messages from the {@link #client}'s ChatHud
-	 * matching the target string (configuration applied from {@link ChatSearchSetting#caseSensitive},
-	 * {@link ChatSearchSetting#modifiers}, and {@link ChatSearchSetting#regex}) into a list of
-	 * {@link ChatHudLine.Visible} visibleMessages to be rendered onto the ChatHud. This does <u>not</u>
-	 * mutate or modify the actual {@link ChatHud#messages} list, only the {@link ChatHud#visibleMessages}
-	 * list that is automatically repopulated with new messages when needed.
+	 * Filters all {@linkplain ChatHud#messages chat messages} using the
+	 * given string and according to all {@link ChatSearchSetting}s, and
+	 * returns the generated {@linkplain ChatHud#visibleMessages visible
+	 * messages} as they are on {@linkplain InGameHud#chatHud the chat hud}.
+	 * This can be easily reversed by calling {@link ChatHud#reset()}.
+	 *
+	 * @return Whether the search was successful and modified visible
+	 * messages.
+	 *
+	 * @implNote This method momentarily mutates the chat hud's messages
+	 * 			 to filter out messages that don't match the target string,
+	 * 			 then resets the chat hud to generate the visible messages
+	 * 			 from the filtered messages. This method does not
+	 * 			 <u>effectively</u> modify the original messages, only the
+	 * 			 visible messages.
 	 */
 	@Unique
-	private List<ChatHudLine.Visible> filterMessages(String target) {
-		if(target == null) // todo || target.isEmpty() ?
-			// todo this might be a good idea to uncomment, just make sure to re-analyze side effects of this method
-			// counter todo: just call chatHud.refresh() instead of manually re-writing the method and calling it? idk look into this
-			return List.of(); //createVisibles( chatHud.chatpatches$getMessages() );
+	private boolean filterMessages(String target) {
+		if(target == null)
+			return false;
 
-		List<ChatHudLine> msgs = new ArrayList<>( ((ChatHudAccessor) client.inGameHud.getChatHud()).chatpatches$getMessages() );
-
-		msgs.removeIf(hudLn -> {
+		ChatHud chatHud = client.inGameHud.getChatHud();
+		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
+		List<ChatHudLine> messageSnapshot = new ArrayList<>(chat.chatpatches$getMessages());
+		List<ChatHudLine.Visible> visibleSnapshot = new ArrayList<>(chat.chatpatches$getVisibleMessages());
+//prepub probably needs more testing
+		// filter messages by removing non-applicable messages
+		chat.chatpatches$getMessages().removeIf(hudLn -> {
 			String content = TextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
 
 			// note that this NOTs the whole expression to simplify the complex nesting
@@ -480,31 +487,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					)
 			);
 		});
+		// effectively generate the visible messages from the filtered messages
+		chatHud.reset();
+		chat.chatpatches$getMessages().clear();
+		// add the real messages back to the chat to keep the visual messages
+		chat.chatpatches$getMessages().addAll(messageSnapshot);
 
-		return createVisibles(msgs);
-	}
-
-	/**
-	 * Creates a new list of to-be-rendered chat messages from the given list
-	 * of chat messages. The steps to achieving this are largely based on
-	 * the first half of the {@link ChatHud#addMessage(Text, MessageSignatureData, int, MessageIndicator, boolean)}
-	 * method, specifically everything before the {@code while} loop.
-	 */
-	@Unique
-	private List<ChatHudLine.Visible> createVisibles(List<ChatHudLine> messages) {
-		List<ChatHudLine.Visible> generated = new ArrayList<>(messages.size());
-		ChatHud chatHud = client.inGameHud.getChatHud();
-		int width = (int)(chatHud.getWidth() / chatHud.getChatScale());
-
-		messages.forEach(hudLn -> {
-			MessageIndicator ind = hudLn.indicator();
-			int indDiff = (ind != null && ind.icon() != null) ? ind.icon().width + 6 : 0;
-			List<OrderedText> list = ChatMessages.breakRenderedChatMessageLines(hudLn.content(), width - indDiff, client.textRenderer);
-
-			for(int i = list.size() - 1; i >= 0; --i)
-				generated.add(new ChatHudLine.Visible(hudLn.creationTick(), list.get(i), ind, (i == list.size() - 1)));
-		});
-
-		return generated;
+		return !visibleSnapshot.equals(chat.chatpatches$getVisibleMessages());
 	}
 }
