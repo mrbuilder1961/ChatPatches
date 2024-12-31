@@ -32,7 +32,9 @@ import java.util.List;
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
- * The main entrypoint mixin for most chat modifications.
+ * The main entrypoint mixin for technical chat modifications,
+ * notably expansive and complex changes to the way messages
+ * are stored, logged, and modified in the chat.
  * Implements {@link ChatHudAccessor} to widen access to
  * extra fields and methods used elsewhere.
  */

@@ -54,14 +54,14 @@ import static obro1961.chatpatches.ChatPatches.id;
 import static obro1961.chatpatches.config.ChatSearchSetting.*;
 
 /**
- * An extension of ChatScreen with searching capabilities.
- * Contains a search button, search bar, and settings menu.
- * Certain features can be toggled via the settings menu or
- * the config options.
+ * The main entrypoint mixin for chat GUI modifications,
+ * notably search and context menu functionality.
+ * Implements {@link ChatScreenAccessor} to widen access to
+ * critical fields and methods used elsewhere.
  */
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
-public abstract class ChatScreenMixin extends Screen implements ChatScreenAccessor { //todo update javadocs!!! best part frfr definitely.>!!
+public abstract class ChatScreenMixin extends Screen implements ChatScreenAccessor {
 	// search text
 	@Unique private static final String SUGGESTION = I18n.translate("text.chatpatches.search.suggestion");
 	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
@@ -251,7 +251,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			client.inGameHud.getChatHud().reset();
 
 		// todo where needed (#close): unhook buttons from chatscreen drawables first..? or is this even needed...
-		contextMenu.close(this::remove);// prepub lowkey this might be useless bc the screen is closing but it def is when the menu is changed
+		contextMenu.close(this::remove);
 	}
 
 	/** Closes the settings menu if the escape key was pressed and it was already open, otherwise closes the screen. */
@@ -314,7 +314,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * TODO: REWRITE THIS JAVADOC LIST ORDER
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
-	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {//todo rename
+	public void registerClickEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValue())
 			return;
 
@@ -330,31 +330,20 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				cir.setReturnValue(true);
 		} else { // context menu (prepub: clarify what)
 			// todo: clicking on search bar w cm open moves selection box to the bottom, clicking on the buttons doesnt close the cm
-			// also todo: this can def be moved into a static ContextMenu method
+			// also todo: this can def (really? maybe...) be moved into a static ContextMenu method
 			if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-				boolean loaded = false;
-				// requires the current mouse position to be different from the last
-				if( !contextMenu.clickPos.equals(RenderUtils.MousePos.of(mX, mY)) ) {//prepub if equals doesnt work add an impl
-					ContextMenu original = contextMenu; // save the original context menu.. todo:relevant? worth it? :NO IT IS NOT WORTH IT OR LOGICAL LET IT DIE STOP ADDING USELESS FEATURES NOBODY ASKED FOR
-
-					// creates a new context menu at the new position
-					contextMenu = ContextMenu.of(mX, mY);
-					if(contextMenu != ContextMenu.NO_OP) {
-						// unhook the old context menu buttons
-						original.close(this::remove);
-						// initializes the context menu and registers the provided buttons
-						contextMenu.init(this::addSelectableChild);
-						loaded = true;
-					} else {
-						// if the context menu didn't load, then restore the original
-						contextMenu = original;
-					}
+				ContextMenu mousePosMenu = ContextMenu.of(mX, mY);
+				// if the mouse right-clicked elsewhere and that location can load a context menu, use it
+				if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && mousePosMenu != ContextMenu.NO_OP) {
+					contextMenu.close(this::remove); // unhook the old context menu buttons
+					contextMenu = mousePosMenu; // keep and use the updated context menu
+					contextMenu.init(this::addSelectableChild); // initialize the context menu and register the provided buttons
+					cir.setReturnValue(true);
 				}
-
-				cir.setReturnValue(loaded);
 			} else { // if we're not initializing the context menu, then delegate back to it
 				//todo: mouse clicks are not registering
 				contextMenu.mouseClicked(mX, mY, button);
+
 				// close the menu because if it clicked it should close; otherwise it clicked off and should still close
 				cir.setReturnValue(true);
 				contextMenu.close(this::remove);

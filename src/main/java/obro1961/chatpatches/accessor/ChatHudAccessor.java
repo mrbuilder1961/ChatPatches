@@ -6,7 +6,6 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import java.util.List;
 
 public interface ChatHudAccessor {
-    //todo: re-eval what method access is still needed outside of ChatHud
     /** {@link ChatHud#messages} */
     List<ChatHudLine> chatpatches$getMessages();
 
