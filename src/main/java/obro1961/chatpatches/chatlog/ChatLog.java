@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -45,8 +46,17 @@ public class ChatLog {
     public static boolean loaded = false;
     public static int ticksUntilSave = config.chatlogSaveInterval * 60 * 20; // convert minutes to ticks
 
+    /**
+     * Used to suspend the addition and restoration
+     * of new messages to the chat log, which
+     * prevents log spam of restored messages and
+     * concurrent modification exceptions.
+     *
+     * @see #restore()
+     * @see #serialize()
+     */
+    private static boolean suspended = false;
     private static ChatLog.Data data = new Data();
-    private static boolean restoring = false;
     private static int lastHistoryCount = -1, lastMessageCount = -1;
 
 
@@ -206,10 +216,21 @@ public class ChatLog {
             LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}' in {} seconds",
                 messageCount(), historyCount(), PATH, (System.currentTimeMillis() - start) / 1000.0
             );
+        } catch(ConcurrentModificationException cme) {
+            // this branch is intended to prevent CMEs, with the assumption they are caused by new messages being added while saving
+            // if the CME is thrown, it will try to save again after the suspension is lifted, otherwise it will dump the data, log
+            // the error, and unsuspend the chat log.
+            // warning: not rigorously tested; if this malfunctions and there's no clear solution just delete this, as it's extremely rare
+            if(suspended) {
+                LOGGER.error("[ChatLog.serialize] A ConcurrentModificationException occurred while trying to save the chat log:", cme);
+                dumpData();
+                suspended = false;
+                return;
+            }
 
-            // temporarily removed the ugly ConcurrentModificationException catch block bc it's ugly and not a real solution:
-            // fixme!
-
+            suspended = true;
+            serialize();
+            suspended = false;
         } catch(IOException | RuntimeException e) {
             LOGGER.error("[ChatLog.serialize] An I/O or unexpected runtime error occurred while trying to save the chat log:", e);
             dumpData();
@@ -238,7 +259,7 @@ public class ChatLog {
      * the {@linkplain ChatHud chat hud}.
      */
     public static void restore() {
-        restoring = true;
+        suspended = true;
 
         if(!data.history.isEmpty())
             data.history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
@@ -246,7 +267,7 @@ public class ChatLog {
         if(!data.messages.isEmpty())
             data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
 
-        restoring = false;
+        suspended = false;
 
         LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", messageCount(), historyCount(), PATH);
     }
@@ -307,7 +328,7 @@ public class ChatLog {
 
 
     public static void addMessage(Text msg) {
-        if(restoring)
+        if(suspended)
             return;
         if(messageCount() > config.chatMaxMessages)
             data.messages.removeFirst();
@@ -315,7 +336,7 @@ public class ChatLog {
         data.messages.add(msg);
     }
     public static void addHistory(String msg) {
-        if(restoring)
+        if(suspended)
             return;
         if(historyCount() > config.chatMaxMessages)
             data.history.removeFirst();
@@ -323,13 +344,8 @@ public class ChatLog {
         data.history.add(msg);
     }
 
-    /**
-     * Returns if the chat log is currently
-     * being restored into the chat. Used
-     * to prevent logging and modifying
-     * restored messages.
-     */
-    public static boolean isRestoring() { return restoring; }
+    /** @see #suspended */
+    public static boolean isSuspended() { return suspended; }
 
     public static void clearMessages() {
         data.messages.clear();
