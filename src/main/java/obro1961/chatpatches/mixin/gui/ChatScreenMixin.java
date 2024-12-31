@@ -181,44 +181,40 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		context.getMatrices().push();
 		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 
-		client.getProfiler().push("searchButton");
-		searchButton.render(context, mX, mY, delta);
+		RenderUtils.profile("searchButton", () -> searchButton.render(context, mX, mY, delta));
 		if(showSearch && !config.hideSearchButton) {
-			client.getProfiler().swap("searchField");
+			RenderUtils.profile("searchField", () -> {
+				context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
+				searchField.render(context, mX, mY, delta);
 
-			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
-			searchField.render(context, mX, mY, delta);
-
-			// renders a suggestion-esq error message if the regex search is invalid
-			if(searchError != null) {
-				client.getProfiler().swap("searchError");
-
-				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				context.drawTextWithShadow(textRenderer, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
-			}
+				// renders a suggestion-esq error message if the regex search is invalid
+				if(searchError != null)
+					RenderUtils.profile("searchError", () -> {
+						int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
+						context.drawTextWithShadow(textRenderer, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
+					});
+			});
 		}
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
-			client.getProfiler().swap("settingsMenu");
+			RenderUtils.profile("settingsMenu", () -> {
+				context.drawTexture(
+					id("textures/gui/search_settings_panel.png"),
+					MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
+				);
 
-			context.drawTexture(
-				id("textures/gui/search_settings_panel.png"),
-				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
-			);
-
-			caseSensitive.button.render(context, mX, mY, delta);
-			modifiers.button.render(context, mX, mY, delta);
-			regex.button.render(context, mX, mY, delta);
+				caseSensitive.button.render(context, mX, mY, delta);
+				modifiers.button.render(context, mX, mY, delta);
+				regex.button.render(context, mX, mY, delta);
+			});
 		}
 
 		context.getMatrices().pop(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
 		// renders the context menu if the settings menu is not open
-		client.getProfiler().swap("contextMenu");
-		if(!isMouseOverSettingsMenu(mX, mY))//todo does this make sense? what about `!showSettingsMenu`? experiment.
-			contextMenu.render(context, mX, mY, delta);
-		client.getProfiler().pop();
+		if(!isMouseOverSettingsMenu(mX, mY)) //todo does this make sense? what about `!showSettingsMenu`? experiment.
+			RenderUtils.profile("contextMenu", () -> contextMenu.render(context, mX, mY, delta));
 
 		client.getProfiler().pop();
 	}
