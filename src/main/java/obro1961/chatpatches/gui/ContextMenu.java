@@ -191,7 +191,7 @@ public class ContextMenu {
 	 * teehee!
 	 */
 	public static ContextMenu resize(ContextMenu oldMenu, int oldWidth, int oldHeight) {
-		if(oldMenu.isNoOp())
+		if(oldMenu == NO_OP)
 			return NO_OP;
 
 		//prepub this doesnt work so figure it out, also see ChatScreenMixin#resizeContextMenu
@@ -537,10 +537,6 @@ public class ContextMenu {
 		return
 			   mX >= buttonGrid.getX() && mX <= buttonGrid.getX() + buttonGrid.getWidth()
 			&& mY >= buttonGrid.getY() && mY <= buttonGrid.getY() + buttonGrid.getHeight();
-	}
-
-	public boolean isNoOp() {
-		return this == NO_OP;//todo see if all of these checks are act needed or if we can just make noop not op aka this call would b irrelevant
 	}
 
 

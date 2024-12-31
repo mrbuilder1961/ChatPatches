@@ -264,17 +264,6 @@ public class Config {
     }
 
     /**
-     * Overwrites all fields with their respective
-     * default values. Note that this does not
-     * log any changes nor does it write to disk.
-     */
-    public static void reset() {
-        //prepub: test this its gotta work, if it doesn't just undo
-        config = DEFAULTS;
-        //getOptions().forEach(opt -> getOption(opt.key).set(opt.def));//delete: this?
-    }
-
-    /**
      * Creates a backup of the current config file
      * located at {@link #PATH} and saves it
      * as "config_" + current time + ".json" in the

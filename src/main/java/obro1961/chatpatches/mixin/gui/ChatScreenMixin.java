@@ -335,11 +335,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				boolean loaded = false;
 				// requires the current mouse position to be different from the last
 				if( !contextMenu.clickPos.equals(RenderUtils.MousePos.of(mX, mY)) ) {//prepub if equals doesnt work add an impl
-					ContextMenu original = contextMenu; // save the original context menu.. todo:relevant? worth it?
+					ContextMenu original = contextMenu; // save the original context menu.. todo:relevant? worth it? :NO IT IS NOT WORTH IT OR LOGICAL LET IT DIE STOP ADDING USELESS FEATURES NOBODY ASKED FOR
 
 					// creates a new context menu at the new position
 					contextMenu = ContextMenu.of(mX, mY);
-					if(!contextMenu.isNoOp()) {
+					if(contextMenu != ContextMenu.NO_OP) {
 						// unhook the old context menu buttons
 						original.close(this::remove);
 						// initializes the context menu and registers the provided buttons
