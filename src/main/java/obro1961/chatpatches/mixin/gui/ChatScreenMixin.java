@@ -63,9 +63,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	// search text
 	@Unique private static final String SEARCH_SUGGESTION = I18n.translate("text.chatpatches.search.suggestion");
 	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
-	@Unique private static final Text CASE_SENSITIVE = Text.translatable("text.chatpatches.search.caseSensitive");
-	@Unique private static final Text FORMATTING = Text.translatable("text.chatpatches.search.formatting");
-	@Unique private static final Text REGEX = Text.translatable("text.chatpatches.search.regex");
 	// coordinates and positioning
 	@Unique private static final int SEARCH_X = 22,
 									 SEARCH_Y_OFFSET = -31,
@@ -143,7 +140,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchField.setSuggestion(SEARCH_SUGGESTION);
 		searchField.setChangedListener(newText -> onSearchFieldUpdate(newText, false));
 		if(config.searchDrafting)
-			searchField.setText( searchDraft.substring(1) ); // remove the null char from the draft
+			searchField.setText( searchDraft.length() > 1 ? searchDraft.substring(1) : "" ); // remove the null char from the draft
 
 		BiFunction<String, Integer, ButtonWidget> settingButtonFactory = (key, yOffset) -> {
 			Config.ConfigOption<Boolean> setting = Config.getOption(key);
@@ -280,6 +277,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(showSettingsMenu) {
 			showSettingsMenu = false;
 			cir.setReturnValue(true);
+			cir.cancel();
 		}
 	}
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
@@ -502,7 +500,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		List<ChatHudLine> messageSnapshot = new ArrayList<>(chat.chatpatches$getMessages());
 
 		// filter messages by removing those that don't match the target
-		chat.chatpatches$getMessages().removeIf(hudLn -> {//prepub probably needs more testing
+		chat.chatpatches$getMessages().removeIf(hudLn -> {
 			String content = TextUtils.reorder(hudLn.content().asOrderedText(), config.formatting);
 
 			// note that this NOTs the whole expression to simplify the complex nesting
