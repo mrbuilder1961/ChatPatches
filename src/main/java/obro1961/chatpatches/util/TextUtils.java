@@ -94,7 +94,7 @@ public class TextUtils {
 	 * @apiNote Intended for use with general and regex comparisons, and not
 	 * for actually obtaining a complete Text object.
 	 * @implNote Visits the OrderedText by each character, and accounts for
-	 * Formatting style data by adding {@code &?} codes when the style changes.
+	 * Formatting style data by adding {@code &<?>} codes when the style changes.
 	 */
 	public static String reorder(OrderedText renderable, boolean includeStyleData) {
 		StringBuilder reordered = new StringBuilder();

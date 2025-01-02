@@ -46,14 +46,17 @@ public class YACLConfig extends Config {
         Config.getOptions().forEach(opt -> {
             String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
-            if( key.contains("counterCompact") )
+
+            if(key.matches("caseSensitive|formatting|regex")) // search settings are edited in the chat screen
+                return;
+            else if( key.contains("counterCompact") )
                 cat = "compact";
             else if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
                 cat = "screen";
             else if( key.contains("Name") )
                 cat = "name";
 
-            if( key.contains("Color") ) {
+            if(key.contains("Color")) {
                 opt = new ConfigOption<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), key) {
                     @Override
                     public Color get() {

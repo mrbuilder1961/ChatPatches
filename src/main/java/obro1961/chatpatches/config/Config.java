@@ -50,7 +50,7 @@ public class Config {
     /** @see #sendBoundaryLine() */
     private static String lastWorld = "";
 
-	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
+	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy, search
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
     public boolean hover = true; public String hoverDate = "MM/dd/yyyy"; public String hoverFormat = "$"; public int hoverColor = 0xffffff;
     public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = 0xffff55; public boolean counterCheckStyle = false;
@@ -61,6 +61,7 @@ public class Config {
     public int shiftChat = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix =
         false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
+    public boolean caseSensitive = true, formatting = false, regex = false;
 
     /**
      * Creates a new Config or YACLConfig, depending
@@ -280,16 +281,15 @@ public class Config {
 	}
 
 
-    /** Returns all Config options as a List of string keys and class types that can be used with {@link #getOption(String)}. */
+    /**
+     * Returns all Config options as a List of string keys and class types that can be used with {@link #getOption(String)}.
+     */
     public static List<ConfigOption<?>> getOptions() {
         List<ConfigOption<?>> options = new ArrayList<>( Config.class.getDeclaredFields().length );
 
-        for(Field field : Config.class.getDeclaredFields()) {
-            if(Modifier.isStatic( field.getModifiers() ))
-                continue;
-
-            options.add( getOption(field.getName()) );
-        }
+        for(Field field : Config.class.getDeclaredFields())
+            if(!Modifier.isStatic( field.getModifiers() ))
+                options.add( getOption(field.getName()) );
 
         return options;
     }

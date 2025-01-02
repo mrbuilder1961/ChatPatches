@@ -528,11 +528,6 @@ public class ContextMenu {
 		//buttonGrid.forEachChild(addDrawableChild::accept);
 	}
 
-	// todo test
-	/**
-	 * Checks if the mouse is over the context menu.
-	 * This is mostly used to optimize rendering.
-	 */
 	public boolean isMouseOver(double mX, double mY) {
 		return
 			   mX >= buttonGrid.getX() && mX <= buttonGrid.getX() + buttonGrid.getWidth()
