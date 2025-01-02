@@ -277,7 +277,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(showSettingsMenu) {
 			showSettingsMenu = false;
 			cir.setReturnValue(true);
-			cir.cancel();
+			// todo: this doesn't work... it just closes the screen as normal
 		}
 	}
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
