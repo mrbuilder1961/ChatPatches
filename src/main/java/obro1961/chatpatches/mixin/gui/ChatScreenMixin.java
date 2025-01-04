@@ -143,7 +143,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			searchField.setText( searchDraft.length() > 1 ? searchDraft.substring(1) : "" ); // remove the null char from the draft
 
 		BiFunction<String, Integer, ButtonWidget> settingButtonFactory = (key, yOffset) -> {
-			Config.ConfigOption<Boolean> setting = Config.getOption(key);
+			Config.Setting<Boolean> setting = config.getOption(key);
 			Text name = Text.translatable("text.chatpatches.search." + key);
 			Text text = ScreenTexts.composeToggleText(name, setting.get());
 
