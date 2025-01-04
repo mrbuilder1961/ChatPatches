@@ -210,18 +210,18 @@ public class ContextMenu {
 	/**
 	 * Registers a button in the {@linkplain #buttonGrid button grid} and
 	 * {@linkplain #gridData associated data lookup manager}. This is done
-	 * through generating a new {@link ButtonWidget} (or
-	 * {link CustomRenderButton} if {@code renderCallback} is specified)
+	 * through creating a new {@link ButtonWidget} (or similarly-implemented
+	 * {@link PressableWidget} if {@code renderCallback} is specified)
 	 * according to the passed id, copy text supplier, press action, and
 	 * coordinates (the local row and absolute column).
 	 *
-	 * @param localRow       The row relative to the current row, which is
-	 *                       specified by the last main button added. The
-	 *                       absolute row is automatically calculated and
-	 *                       {@linkplain GridData#currentRow kept track of}.
-	 * @param col            The column in the grid menu where the button should be
-	 *                       placed. Main buttons are always in column 0, and hover
-	 *                       buttons are in columns 1+.
+	 * @param localRow The row relative to the current row, which is
+	 *                 specified by the last main button added. The
+	 *                 absolute row is automatically calculated and
+	 *                 {@linkplain GridData#currentRow kept track of}.
+	 * @param col The column in the grid menu where the button should be
+	 *            placed. Main buttons are always in column 0, and hover
+	 *            buttons are in columns 1+.
 	 */
 	private void registerButton(@NotNull Text id, @NotNull Supplier<Text> tooltipCopyTextSupplier, @NotNull ButtonWidget.PressAction pressAction, int localRow, int col, RenderUtils.Renderer<PressableWidget> renderCallback) {
 		int w = mc.textRenderer.getWidth(id) + 2 * buttonPadding;
@@ -238,7 +238,7 @@ public class ContextMenu {
 			pressAction.onPress(b);
 
 			//todo idk why the menu doesnt close on click... see #mouseClicked
-			//mc.setScreen(null); // close ourself.. but no this is wrong bc then it closes the chat screen too
+			//dont close ourself bc then it closes the chat screen too
 		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
 
 		button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )//prepub?
@@ -268,12 +268,12 @@ public class ContextMenu {
 	}
 	/** usually main buttons */
 	private void registerProxyActionButton(Text id, Text proxyId, @Nullable ButtonWidget.PressAction pressAction, int localRow, int col) {
-		// tooltip supplier returns the empty Text because they don't actually copy anything, rather they run their proxy's action and underline its text; see #mouseMoved
+		// tooltip supplier returns the empty Text because they don't actually copy anything, rather they run their proxy's action (and underline its text; see #mouseMoved)
 		registerButton(id, () -> ScreenTexts.EMPTY, me -> {
 			// effectively presses the button to actually copy the text
-			if(!id.equals(proxyId)) //todo does this avoid a stack overflow? if it does add a comment about it +in javadoc
+			if(!id.equals(proxyId)) //prepub if this avoids a stack overflow/some error add a comment about it +in javadoc
 				gridData.idMap.get(proxyId).button.onPress();
-			// runs the copy action
+
 			if(pressAction != null)
 				pressAction.onPress(me);
 		}, localRow, col, null);
@@ -447,8 +447,6 @@ public class ContextMenu {
 
 		// consume enter and arrow keys to press and navigate buttons
 
-		// consume escape key(s) to close the menu
-
 		// todo later: the new fabric wiki with screens/guis mentions that implementing Selectable and another interface should allow for tab navigation
 	}
 
@@ -490,24 +488,23 @@ public class ContextMenu {
 
 		PressableWidget hoveredButton = optional.get();
 		for(List<GridData.Entry> group : gridData.groups) {
-			for(GridData.Entry entry : group) { // group.subList(1, group.size())//prepub try this if still relevant, prob not bc of underline stuff
-				PressableWidget button = entry.button;
+			for(GridData.Entry itr : group) {
+				PressableWidget itrButton = itr.button;
 				PressableWidget firstHoverButton = group.size() > 1 ? group.get(1).button : null;
 
-				if(entry.col > 0) {
+				if(itr.col > 0)
 					// if the hovered button is in the group, show all other buttons; otherwise hide them bc they're irrelevant
-					button.visible = group.stream().anyMatch(en -> en.button.equals(hoveredButton)); // group.contains(hoveredButton);
+					itrButton.visible = group.contains( gridData.idMap.get( hoveredButton.getMessage().copyContentOnly() ) ); // copyContentOnly avoids style (underline) nullifying equavalence
 
-					// if the entry is the first hovered button, un-underline the copy source
-					// EFFECTIVELY EQUAL: entry.row == group.getFirst().row <-> button.equals(hoveredButton) | ensures iterated button is the first hovered button
-					// underlined: optimization
-					if(entry.row == group.getFirst().row && button.getMessage().equals(hoveredButton.getMessage()) && firstHoverButton.getMessage().getStyle().isUnderlined())
-						firstHoverButton.setMessage(firstHoverButton.getMessage().copy().styled(s -> s.withUnderline(false)));
+				if(firstHoverButton != null && itrButton.equals(hoveredButton)) {
+					// remove if iterated button is in the group and the message is already underlined
+					boolean hide = itr.col > 0 && itr.row == group.getFirst().row;
 
-					//todo: merge these two calls into one ending in .styled(s -> s.withUnderline(bool)) where bool is the merged condition.. how? idk.
-				} else if(entry.col == 0 && group.size() > 1 && button.getMessage().equals(hoveredButton.getMessage()) && !firstHoverButton.getMessage().getStyle().isUnderlined()) {
-					// main buttons need to underline their copy source
-					firstHoverButton.setMessage( firstHoverButton.getMessage().copy() .styled(s -> s.withUnderline(true)) );
+					// note: removed `&& group.size() > 1` bc it's already true according to firstHoverButton's null check
+					// show if iterated button is a main button and the message is not underlined
+					boolean show = itr.col == 0; // main buttons need to underline their copy source!
+
+					firstHoverButton.setMessage(firstHoverButton.getMessage().copy().styled( s -> s.withUnderline(show || !hide) ));
 				}
 			}
 		}

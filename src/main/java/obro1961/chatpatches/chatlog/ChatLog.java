@@ -99,11 +99,10 @@ public class ChatLog {
      * @implNote
      * <ol>
      *   <li>Checks if the file at {@link #PATH} exists.</li>
-     *   <li>If it doesn't exist, sets {@link #data} to an empty object and returns.</li>
+     *   <li>If it doesn't exist, sets {@link #data} to a default object and returns.</li>
      *   <li>If it does exist, converts the chat log file to UTF-8 if necessary and loads it into {@code rawData}.</li>
-     *   <li>If {@code rawData} contains invalid data, resets {@link #data}.</li>
-     *   <li>Transforms any legacy UUID int arrays into a stringified format</li>
-     *   <li>Then uses {@link Data#CODEC} to parse {@code rawData} into a usable {@link Data} object.</li>
+     *   <li>If {@code rawData} contains invalid data, creates a default object and returns.</li>
+     *   <li>Uses {@link Data#CODEC} to parse {@code rawData} into a usable {@link Data} object.</li>
      *   <li>Removes any overflowing messages.</li>
      *   <li>If any errors are thrown, logs the issue and backs up the broken file just in case.</li>
      *   <li>Otherwise, logs a message noting how many entries were loaded.</li>
