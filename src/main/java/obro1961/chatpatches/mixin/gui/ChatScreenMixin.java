@@ -249,7 +249,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 	@Inject(method = "resize", at = @At("HEAD"))
 	public void resizeContextMenu(MinecraftClient client, int width, int height, CallbackInfo ci) {
-		contextMenu = ContextMenu.resize(contextMenu, this.width, this.height);
+		contextMenu = ContextMenu.resize(contextMenu, this.width, this.height); // screen dimension fields aren't updated yet, perfect for resizing!
 	}
 
 	/**
@@ -267,19 +267,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else if(!searchField.getText().isEmpty())
 			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
 
-		// todo where needed (#close): unhook buttons from chatscreen drawables first..? or is this even needed...
 		contextMenu.close(this::remove);
 	}
 
-	/** Closes the settings menu if the escape key was pressed and it was already open, otherwise closes the screen. */
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0), cancellable = true )
-	public void allowClosingSettings(CallbackInfoReturnable<Boolean> cir) {
-		if(showSettingsMenu) {
-			showSettingsMenu = false;
-			cir.setReturnValue(true);
-			// todo: this doesn't work... it just closes the screen as normal
-		}
-	}
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
 	private void onMessageSentEmptyDraft(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {

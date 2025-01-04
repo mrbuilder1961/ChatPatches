@@ -19,6 +19,7 @@ import net.minecraft.text.*;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
+import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
 
 import java.io.EOFException;
@@ -230,10 +231,20 @@ public class Config {
     }
 
 
-    /** Loads the config settings saved at {@link Config#PATH} into {@link ChatPatches#config} */
+    /**
+     * Loads the config settings saved at {@link Config#PATH}
+     * into {@link ChatPatches#config}.
+     *
+     * @implNote Changed recently to better match
+     *           {@link ChatLog#deserialize()} and to fix
+     *           <a href="https://github.com/mrbuilder1961/ChatPatches/issues/208">#208</a>,
+     *           which was caused by loading an invalid
+     *           config.
+     */
     public static void read() {
+        // warning: modified recently, watch out for bugs!
         if(Files.exists(PATH)) {
-            try {//todo: make sure this works
+            try {
                 String rawData = Files.readString(PATH);
                 if(rawData.length() < 2 || !rawData.startsWith("{") || !rawData.endsWith("}"))
                     throw new EOFException("ChatPatches config file is empty or corrupted");
@@ -282,7 +293,8 @@ public class Config {
 
 
     /**
-     * Returns all Config options as a List of string keys and class types that can be used with {@link #getOption(String)}.
+     * Returns all Config options as a List of string keys and
+     * class types that can be used with {@link #getOption(String)}.
      */
     public static List<ConfigOption<?>> getOptions() {
         List<ConfigOption<?>> options = new ArrayList<>( Config.class.getDeclaredFields().length );
@@ -317,7 +329,7 @@ public class Config {
      * String/Class pair for each Config field. This is
      * merely an abstraction used for simplification.
      */
-    public static class ConfigOption<T> {
+    public static class ConfigOption<T> { //prepub rename to Setting, avoid confusion with yacl.Option but still referred to as options
         private T val;
         public final T def;
         public final String key;
@@ -328,7 +340,7 @@ public class Config {
          * @param key The lang key of the Option; for identification
          */
         public ConfigOption(T val, T def, String key) {
-            this.val = Objects.requireNonNull(val, "Cannot create a ConfigOption without a default value");
+            this.val = Objects.requireNonNull(val, "Cannot create a ConfigOption without a value");
             this.def = Objects.requireNonNull(def, "Cannot create a ConfigOption without a default value");
             this.key = Objects.requireNonNull(key, "Cannot create a ConfigOption without a key");
         }
