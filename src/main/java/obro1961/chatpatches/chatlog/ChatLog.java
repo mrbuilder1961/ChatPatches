@@ -12,7 +12,6 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.registry.RegistryOps;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
@@ -41,7 +40,8 @@ import static obro1961.chatpatches.ChatPatches.config;
  */
 public class ChatLog {
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
-    public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
+    public static final Text RESTORED_TEXT = Text.translatable("text.chatpatches.restored");
+    public static final MessageIndicator INDICATOR_RESTORED = new MessageIndicator(0x382fb5, null, RESTORED_TEXT, "Restored");
 
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
@@ -276,7 +276,7 @@ public class ChatLog {
             data.history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
 
         if(!data.messages.isEmpty())
-            data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
+            data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, INDICATOR_RESTORED));
 
         suspended = false;
 
