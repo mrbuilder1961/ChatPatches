@@ -7,7 +7,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.List;
 
-//prepub make sure this is still critical otherwise trash it!
 @Mixin(GridWidget.class)
 public interface GridWidgetAccessor {
 	@Accessor

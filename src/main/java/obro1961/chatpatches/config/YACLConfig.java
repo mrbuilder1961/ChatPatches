@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import static obro1961.chatpatches.ChatPatches.config;
+
 /**
  * The YetAnotherConfigLib config class.
  * @see Config
@@ -43,18 +45,21 @@ public class YACLConfig extends Config {
                         chatScreenOpts = new ArrayList<>(),
                         copyMenuOpts = new ArrayList<>();
 
-        Config.getOptions().forEach(opt -> {
+        config.getOptions().forEach(opt -> {
             String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
-            if( key.contains("counterCompact") )
+
+            if(key.matches("caseSensitive|formatting|regex")) // search settings are edited in the chat screen
+                return;
+            else if( key.contains("counterCompact") )
                 cat = "compact";
             else if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
                 cat = "screen";
             else if( key.contains("Name") )
                 cat = "name";
 
-            if( key.contains("Color") ) {
-                opt = new ConfigOption<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), key) {
+            if(key.contains("Color")) {
+                opt = new Setting<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), key) {
                     @Override
                     public Color get() {
                         return new Color( (int)getOption(key).get() );
@@ -96,7 +101,6 @@ public class YACLConfig extends Config {
         });
 
         /* for action buttons */
-        // idea: filter all translatable strings for action ones (currently: if the key starts with 'chatlog' and isn't an option)
         // see https://discord.com/channels/507304429255393322/507982478276034570/1175256182525534218
         List<String> actionKeys = List.of("chatlogClear", "chatlogClearHistory", "chatlogClearMessages", "chatlogLoad", "chatlogSave", "chatlogBackup", "chatlogOpenFolder");
         for(String key : actionKeys) {
@@ -145,7 +149,7 @@ public class YACLConfig extends Config {
                             .action((screen, option) -> {
                                 StringBuilder str = new StringBuilder();
 
-                                Config.getOptions().forEach(opt ->
+                                config.getOptions().forEach(opt ->
                                     str.append("\n| %s | %s | %s | `text.chatpatches.%s` |".formatted(
                                         I18n.translate("text.chatpatches." + opt.key),
 
@@ -180,7 +184,7 @@ public class YACLConfig extends Config {
         else if( key.contains("Color") )
             return (ControllerBuilder<T>) ColorControllerBuilder.create( (Option<Color>)opt );
 
-        else if( getOption(key).get() instanceof Integer ) // key is int but not color
+        else if( config.getOption(key).get() instanceof Integer ) // key is int but not color
             return (ControllerBuilder<T>) IntegerSliderControllerBuilder.create( (Option<Integer>)opt )
                 .range( getMinOrMax(key, true), getMinOrMax(key, false) )
                 .step( getInterval(key) );
@@ -213,8 +217,8 @@ public class YACLConfig extends Config {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Binding<T> getBinding(ConfigOption<?> option) {
-        ConfigOption<T> o = (ConfigOption<T>) option;
+    private static <T> Binding<T> getBinding(Setting<?> option) {
+        Setting<T> o = (Setting<T>) option;
 
         if( o.key.contains("Date") )
             // must be able to successfully create a SimpleDateFormat
@@ -229,7 +233,10 @@ public class YACLConfig extends Config {
 
         else if( o.key.contains("Format") )
             // must contain '$'
-            return Binding.generic( o.def, o::get, inc -> o.set(inc, inc.toString().contains("$")) );
+            return Binding.generic(o.def, o::get, inc -> {
+                if(inc.toString().contains("$"))
+                    o.set(inc);
+            });
 
         else
             // every other setting either has no requirements or is already constrained with its controller
@@ -295,7 +302,7 @@ public class YACLConfig extends Config {
             .build();
     }
 
-    private static OptionDescription desc(ConfigOption<?> opt) {
+    private static OptionDescription desc(Setting<?> opt) {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
 
         String ext = "webp";
@@ -322,7 +329,7 @@ public class YACLConfig extends Config {
         Object o = new Object();
         return ButtonOption.createBuilder()
             .name(Text.translatable( "text.chatpatches." + key, (args[0].equals(-1) ? new Object[0] : args) )) // args or nothing
-            .description(desc( new ConfigOption<>(o, o, key) ))
+            .description(desc( new Setting<>(o, o, key) ))
             .action(getAction(key))
             .build();
     }

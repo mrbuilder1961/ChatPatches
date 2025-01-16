@@ -40,15 +40,9 @@ public class ChatPatches implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		//todo: put all these callbacks somewhere else so i can split them by loader w arch api later
-		/*
-		 * Chat log saving events, run if config.chatlog is true:
-		 * 	DISCONNECT - Always saves EXCEPT on (most?) server crashes
-		 * 	SCREEN_AFTER_INIT - Saves if the save interval is enabled AND if the screen is paused (GameMenuScreen)
-		 * 	END_WORLD_TICK - Ticks the save counter and saves if it's enabled and the internal counter equals zero
-		 */
+		//todo arch api: put all these callbacks in another class for splitting by loader.. unless i can just use arch callbacks
 
-
+		// -- chat log saving events --
 		// according to my testing, this event works as needed when the game disconnects and on crashes if the game is functional at that point
 		// testing details (server=hypixel): normal disconnects work on both world and server, manual F3+C crash works on world but NOT server
 		// honestly I don't care if it fails on crashes, its fixable A) through the save interval or B) by fixing the crash's source
@@ -56,15 +50,14 @@ public class ChatPatches implements ClientModInitializer {
 		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> ChatLog.saveIfPaused(screen));
 		ClientTickEvents.END_WORLD_TICK.register(world -> ChatLog.tickSaveCounter());
 
-		// registers the chat log loader and boundary sender
+		// -- chat log loader and boundary sender --
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
 			ChatLog.load();
 
 			config.sendBoundaryLine();
-
-			// sets all messages (restored and boundary line) to a addedTime of -200 to prevent instant rendering (#42)
+			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering (#42)
 			// only replaces messages that would render instantly to save performance on large chat logs
-			// no longer ran once per game, but once per join (#151)
+			// no longer ran once per game, but once per join (#151) [no longer exists for some reason...?]
 			int t = client.inGameHud.getTicks();
 			((ChatHudAccessor) client.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
 				.replaceAll(ln -> (t - ln.addedTime() < 200) ? new ChatHudLine.Visible(-200, ln.content(), ln.indicator(), ln.endOfEntry()) : ln);

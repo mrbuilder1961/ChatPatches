@@ -96,6 +96,7 @@
     "text.chatpatches.hideSearchButton": "Hide search button",
     "text.chatpatches.vanillaClearing": "Vanilla chat clearing",
     "text.chatpatches.searchPrefix": "Use prefix history search",
+    "text.chatpatches.contextMenu": "Context menu",
     "text.chatpatches.desc.chatHidePacket": "Should hide message packets that delete chat messages be ignored?",
     "text.chatpatches.desc.chatWidth": "The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.",
     "text.chatpatches.desc.chatMaxMessages": "The max amount of chat messages allowed to save. Vanilla caps it at 100, this mod can increase it up to 32,767. Keep in mind a higher max equals higher memory usage.",
@@ -108,6 +109,7 @@
     "text.chatpatches.desc.hideSearchButton": "Should the search button be hidden? Note that this disables all search functionality.",
     "text.chatpatches.desc.vanillaClearing": "Should chat messages clear after leaving a world/server like vanilla? Note this completely erases both the chat and chat log.",
     "text.chatpatches.desc.searchPrefix": "Should searching through sent history filter messages with the same prefix behind the cursor? This allows for quicker autocompletion of previous history messages that start with the same string. Vanilla disables this, instead using immediate history only.",
+    "text.chatpatches.desc.contextMenu": "Should a context menu appear when right-clicking on chat messages? This allows for copying chat messages, replying to messages more easily, and more.",
 
     "text.chatpatches.help.dateFormat": "For date and time formatting information, click me!",
     "text.chatpatches.help.formatCodes": "For formatting code characters and which ones do what, click me!",
@@ -121,11 +123,11 @@
 
     "text.chatpatches.search.suggestion": "Search...",
     "text.chatpatches.search.caseSensitive": "Case sensitive",
-    "text.chatpatches.search.modifiers": "Modifiers",
+    "text.chatpatches.search.formatting": "Formatting",
     "text.chatpatches.search.regex": "Regex",
     "text.chatpatches.search.desc": "§bLeft click§r to toggle the search bar, or §dright click§r to toggle the settings menu.\n\n§aGreen§r means the search matched, §eyellow§r means nothing matched, and §cred§r means the search is invalid.",
     "text.chatpatches.search.desc.caseSensitive": "Should the search query only match text with the same capitalization?\n\n\"abc\" would match itself, \"Abc\", and \"ABC\"; case sensitive would only match \"abc\".\n§l§oNOTE:§r This applies to regex searching as well.",
-    "text.chatpatches.search.desc.modifiers": "Should the search query allow matching text according to formatting modifiers?\n\n\"abc\" would match \"abc\" and \"§e§labc§r\"; with modifiers it would only match \"abc\" and not \"§e§labc§r\".\nNOTE: Hex colors §ocan§r be matched in the format \"&#§cRR§aGG§9BB§r\", however §nthis is in beta§f.",
+    "text.chatpatches.search.desc.formatting": "Should the search query allow matching text according to formatting modifiers?\n\n\"abc\" would match \"abc\" and \"§e§labc§r\"; with modifiers it would only match \"abc\" and not \"§e§labc§r\".\nNOTE: Hex colors §ocan§r be matched in the format \"&#§cRR§aGG§9BB§r\", however §nthis is in beta§f.",
     "text.chatpatches.search.desc.regex": "Should the search query be used as a §2reg§rular §2ex§rpression?\n\nTo learn how to use regex, see the help section in the config.\n§l§oNOTE:§r Java regex §nrequires a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end.",
 
 

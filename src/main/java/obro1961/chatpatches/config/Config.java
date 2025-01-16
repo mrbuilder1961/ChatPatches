@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
+import dev.isxander.yacl3.api.Option;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
@@ -19,6 +20,7 @@ import net.minecraft.text.*;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
+import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
 
 import java.io.EOFException;
@@ -50,7 +52,7 @@ public class Config {
     /** @see #sendBoundaryLine() */
     private static String lastWorld = "";
 
-	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy
+	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy, search
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
     public boolean hover = true; public String hoverDate = "MM/dd/yyyy"; public String hoverFormat = "$"; public int hoverColor = 0xffffff;
     public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = 0xffff55; public boolean counterCheckStyle = false;
@@ -61,6 +63,7 @@ public class Config {
     public int shiftChat = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix =
         false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
+    public boolean caseSensitive = true, formatting = false, regex = false;
 
     /**
      * Creates a new Config or YACLConfig, depending
@@ -147,7 +150,7 @@ public class Config {
     public MutableText formatPlayername(GameProfile profile) {
         Style style = BLANK_STYLE.withColor(chatNameColor);
         try {
-			PlayerEntity entity = mc.world.getPlayerByUuid(profile.getId());
+			PlayerEntity entity = mc.world != null ? mc.world.getPlayerByUuid(profile.getId()) : null;
             Team team = null;
 
             if(entity != null) {
@@ -229,10 +232,20 @@ public class Config {
     }
 
 
-    /** Loads the config settings saved at {@link Config#PATH} into {@link ChatPatches#config} */
+    /**
+     * Loads the config settings saved at {@link Config#PATH}
+     * into {@link ChatPatches#config}.
+     *
+     * @implNote Changed recently to better match
+     *           {@link ChatLog#deserialize()} and to fix
+     *           <a href="https://github.com/mrbuilder1961/ChatPatches/issues/208">#208</a>,
+     *           which was caused by loading an invalid
+     *           config.
+     */
     public static void read() {
+        // warning: modified recently, watch out for bugs!
         if(Files.exists(PATH)) {
-            try {//todo: make sure this works
+            try {
                 String rawData = Files.readString(PATH);
                 if(rawData.length() < 2 || !rawData.startsWith("{") || !rawData.endsWith("}"))
                     throw new EOFException("ChatPatches config file is empty or corrupted");
@@ -264,17 +277,6 @@ public class Config {
     }
 
     /**
-     * Overwrites all fields with their respective
-     * default values. Note that this does not
-     * log any changes nor does it write to disk.
-     */
-    public static void reset() {
-        //prepub: test this its gotta work, if it doesn't just undo
-        config = DEFAULTS;
-        //getOptions().forEach(opt -> getOption(opt.key).set(opt.def));//delete: this?
-    }
-
-    /**
      * Creates a backup of the current config file
      * located at {@link #PATH} and saves it
      * as "config_" + current time + ".json" in the
@@ -291,57 +293,66 @@ public class Config {
 	}
 
 
-    /** Returns all Config options as a List of string keys and class types that can be used with {@link #getOption(String)}. */
-    public static List<ConfigOption<?>> getOptions() {
-        List<ConfigOption<?>> options = new ArrayList<>( Config.class.getDeclaredFields().length );
+    public List<Setting<?>> getOptions() {
+        List<Setting<?>> options = new ArrayList<>( getClass().getFields().length );
 
-        for(Field field : Config.class.getDeclaredFields()) {
-            if(Modifier.isStatic( field.getModifiers() ))
-                continue;
-
-            options.add( getOption(field.getName()) );
+        try {
+            for(Field f : getClass().getFields())
+                if(!Modifier.isStatic( f.getModifiers() ))
+                    options.add( new Setting<>(f.get(config), f.get(DEFAULTS), f.getName()) );
+        } catch(IllegalAccessException e) {
+            ChatPatches.logReportMsg(e);
         }
 
         return options;
     }
 
     /**
-     * Returns the {@link ConfigOption} with field name
-     * {@code key}, as configured in {@link ChatPatches#config}.
-     * Logs an error if the field doesn't exist and returns
-     * a blank ConfigOption with the specified key.
+     * Returns a {@link Setting} representing the
+     * option with the given name, or a Setting
+     * populated with blank {@link Object}s and
+     * the given key if an error occurred / the
+     * field doesn't exist.
+     *
+     * @param key The name of the Setting
+     *            to get, as defined in
+     *            {@linkplain Config this class}
      */
     @SuppressWarnings("unchecked")
-    public static <T> ConfigOption<T> getOption(String key) {
-        try {
-            return new ConfigOption<>( (T)config.getClass().getField(key).get(config), (T)config.getClass().getField(key).get(DEFAULTS), key );
-        } catch(IllegalAccessException | NoSuchFieldException e) {
-            LOGGER.error("[Config.getOption({})] An error occurred while trying to get an option value!", key);
-            ChatPatches.logReportMsg(e);
-
-            return new ConfigOption<>( (T)new Object(), (T)new Object(), key );
-        }
+    public <T> Setting<T> getOption(String key) {
+        return (Setting<T>) getOptions()
+            .stream()
+            .filter(opt -> opt.key.equals(key))
+            .findFirst()
+            .orElse( new Setting<>(new Object(), new Object(), key) );
     }
 
     /**
-     * A simple Option class that wraps the internally-used
-     * String/Class pair for each Config field. This is
-     * merely an abstraction used for simplification.
+     * A simple class that wraps the String/Class
+     * pair used for each config field. This is
+     * merely an abstraction used for simplifying
+     * mod config implementations.
+     *
+     * @apiNote This class is commonly explained
+     * as a "config option" or "option". This is
+     * because those are correct, but "setting"
+     * is used only to avoid confusion with the
+     * existing {@link Option} class.
      */
-    public static class ConfigOption<T> {
-        private T val;
+    public static class Setting<T> {
         public final T def;
         public final String key;
+        private T val;
 
         /**
-         * Creates a new Simple Config option.
+         * Creates a new setting option.
          * @param def The default value for creation and resetting.
-         * @param key The lang key of the Option; for identification
+         * @param key The lang key for identification
          */
-        public ConfigOption(T val, T def, String key) {
-            this.val = Objects.requireNonNull(val, "Cannot create a ConfigOption without a default value");
-            this.def = Objects.requireNonNull(def, "Cannot create a ConfigOption without a default value");
-            this.key = Objects.requireNonNull(key, "Cannot create a ConfigOption without a key");
+        public Setting(T val, T def, String key) {
+            this.val = Objects.requireNonNull(val, "Cannot create a setting option without a value");
+            this.def = Objects.requireNonNull(def, "Cannot create a setting option without a default value");
+            this.key = Objects.requireNonNull(key, "Cannot create a setting option without a key");
         }
 
 
@@ -351,34 +362,29 @@ public class Config {
         public Class<T> getType() { return (Class<T>) def.getClass(); }
 
         /**
-         * Sets this Option's value to {@code obj} in {@code this} and also in the config;
-         * assuming {@code obj.getClass().equals(T.class)} is true.
-         * @param obj The new object to replace the old one with
-         * @param set If false, doesn't change the value. For no check, see
-         * {@link #set(Object)}
+         * Sets this setting option's value to {@code obj} in
+         * {@link ChatPatches#config}. This only changes the value
+         * if {@code obj} is not null, not equal to the
+         * current value, and of the correct type.
          */
-        public void set(Object obj, boolean set) {
+        public void set(Object obj) {
             try {
                 @SuppressWarnings("unchecked")
                 T inc = (T) obj;
 
-                if( inc != null && !inc.equals(val) && set ) {
+                if(inc != null && !inc.equals(val)) {
                     config.getClass().getField(key).set(config, inc);
 
                     this.val = inc;
                 }
             } catch(NoSuchFieldException | IllegalAccessException | ClassCastException e) {
-                LOGGER.error("[ConfigOption.set({})] An error occurred trying to set a config option", obj);
+                LOGGER.error("[Setting.set({})] An error occurred trying to change config option '{}'", obj, key);
                 ChatPatches.logReportMsg(e);
             }
         }
 
-        public void set(Object obj) {
-            this.set(obj, true);
-        }
-
         public boolean changed() {
-            return !val.equals(def);
+            return !def.equals(val);
         }
     }
 }

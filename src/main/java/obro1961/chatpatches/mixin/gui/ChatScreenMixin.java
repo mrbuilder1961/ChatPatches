@@ -11,7 +11,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
@@ -19,14 +19,12 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.util.ChatMessages;
-import net.minecraft.network.message.MessageSignatureData;
-import net.minecraft.text.OrderedText;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.accessor.ChatScreenAccessor;
-import obro1961.chatpatches.config.ChatSearchSetting;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
@@ -45,32 +43,35 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.id;
-import static obro1961.chatpatches.config.ChatSearchSetting.*;
 
 /**
- * An extension of ChatScreen with searching capabilities.
- * Contains a search button, search bar, and settings menu.
- * Certain features can be toggled via the settings menu or
- * the config options.
+ * The main entrypoint mixin for chat GUI modifications,
+ * notably search and context menu functionality.
+ * Implements {@link ChatScreenAccessor} to widen access to
+ * critical fields and methods used elsewhere.
  */
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
-public abstract class ChatScreenMixin extends Screen implements ChatScreenAccessor { //todo update javadocs!!! best part frfr definitely.>!!
+public abstract class ChatScreenMixin extends Screen implements ChatScreenAccessor {
 	// search text
-	@Unique private static final String SUGGESTION = I18n.translate("text.chatpatches.search.suggestion");
+	@Unique private static final String SEARCH_SUGGESTION = I18n.translate("text.chatpatches.search.suggestion");
 	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
 	// coordinates and positioning
-	@Unique private static final int SEARCH_X = 22, SEARCH_Y_OFFSET = -31, SEARCH_H = 12;
+	@Unique private static final int SEARCH_X = 22,
+									 SEARCH_Y_OFFSET = -31,
+									 SEARCH_H = 12;
 	@Unique private static final double SEARCH_W_MULT = 0.25;
-	@Unique private static final int MENU_WIDTH = 146, MENU_HEIGHT = 76;
-	@Unique private static final int MENU_X = 2, MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
-
+	@Unique private static final int MENU_WIDTH = 146,
+									 MENU_HEIGHT = 76,
+									 MENU_X = 2,
+									 MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 	// context menu
 	@Unique private static ContextMenu contextMenu = ContextMenu.NO_OP;
 	// search stuff
@@ -78,10 +79,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private static String messageDraft = "";
 
 	@Unique private boolean showSearch = true;
-	@Unique private boolean showSettingsMenu = false;
 	@Unique private TextFieldWidget searchField;
 	@Unique private SearchButton searchButton;
 	@Unique private PatternSyntaxException searchError;
+	// search settings
+	@Unique private boolean showSettingsMenu = false;
+	@Unique private ButtonWidget caseSensitiveButton;
+	@Unique private ButtonWidget formattingButton;
+	@Unique private ButtonWidget regexButton;
 
 	// ChatScreen fields
 	@SuppressWarnings("MissingUnique") //@Shadow
@@ -130,18 +135,30 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));
-		searchField.setMaxLength(384);
+		searchField.setMaxLength(256);
 		searchField.setDrawsBackground(false);
-		searchField.setSuggestion(SUGGESTION);
-		searchField.setChangedListener(this::onSearchFieldUpdate);
+		searchField.setSuggestion(SEARCH_SUGGESTION);
+		searchField.setChangedListener(newText -> onSearchFieldUpdate(newText, false));
 		if(config.searchDrafting)
-			searchField.setText(searchDraft);
+			searchField.setText( searchDraft.length() > 1 ? searchDraft.substring(1) : "" ); // remove the null char from the draft
 
-		int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
-		ButtonWidget.PressAction updateSearch = button -> onSearchFieldUpdate(searchField.getText());
-		caseSensitive.update(yPos, updateSearch);
-		modifiers.update(yPos + 22, updateSearch);
-		regex.update(yPos + 44, updateSearch);
+		BiFunction<String, Integer, ButtonWidget> settingButtonFactory = (key, yOffset) -> {
+			Config.Setting<Boolean> setting = config.getOption(key);
+			Text name = Text.translatable("text.chatpatches.search." + key);
+			Text text = ScreenTexts.composeToggleText(name, setting.get());
+
+			return ButtonWidget.builder(text, me -> {
+				setting.set(!setting.get()); // toggle the setting
+				me.setMessage( ScreenTexts.composeToggleText(name, setting.get()) ); // update the button text
+				onSearchFieldUpdate(searchField.getText(), true); // update the search field color
+			})
+				.dimensions(8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset, client.textRenderer.getWidth(text.getString()) + 10, 20)
+				.tooltip(Tooltip.of( Text.translatable("text.chatpatches.search.desc." + key) ))
+				.build();
+		};
+		caseSensitiveButton = settingButtonFactory.apply("caseSensitive", 0);
+		formattingButton = settingButtonFactory.apply("formatting", 22);
+		regexButton = settingButtonFactory.apply("regex", 44);
 
 		if(!config.hideSearchButton) {
 			addSelectableChild(searchButton);
@@ -181,44 +198,40 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		context.getMatrices().push();
 		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 
-		client.getProfiler().push("searchButton");
-		searchButton.render(context, mX, mY, delta);
+		RenderUtils.profile("searchButton", () -> searchButton.render(context, mX, mY, delta));
 		if(showSearch && !config.hideSearchButton) {
-			client.getProfiler().swap("searchField");
+			RenderUtils.profile("searchField", () -> {
+				context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
+				searchField.render(context, mX, mY, delta);
 
-			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
-			searchField.render(context, mX, mY, delta);
-
-			// renders a suggestion-esq error message if the regex search is invalid
-			if(searchError != null) {
-				client.getProfiler().swap("searchError");
-
-				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				context.drawTextWithShadow(textRenderer, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
-			}
+				// renders a suggestion-esq error message if the regex search is invalid
+				if(searchError != null)
+					RenderUtils.profile("searchError", () -> {
+						int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
+						context.drawTextWithShadow(textRenderer, searchError.getMessage().split( System.lineSeparator() )[0], x, searchField.getY(), 0xD00000);
+					});
+			});
 		}
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
-			client.getProfiler().swap("settingsMenu");
+			RenderUtils.profile("settingsMenu", () -> {
+				context.drawTexture(
+					id("textures/gui/search_settings_panel.png"),
+					MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
+				);
 
-			context.drawTexture(
-				id("textures/gui/search_settings_panel.png"),
-				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
-			);
-
-			caseSensitive.button.render(context, mX, mY, delta);
-			modifiers.button.render(context, mX, mY, delta);
-			regex.button.render(context, mX, mY, delta);
+				caseSensitiveButton.render(context, mX, mY, delta);
+				formattingButton.render(context, mX, mY, delta);
+				regexButton.render(context, mX, mY, delta);
+			});
 		}
 
 		context.getMatrices().pop(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
 		// renders the context menu if the settings menu is not open
-		client.getProfiler().swap("contextMenu");
-		if(!isMouseOverSettingsMenu(mX, mY))//todo does this make sense? what about `!showSettingsMenu`? experiment.
-			contextMenu.render(context, mX, mY, delta);
-		client.getProfiler().pop();
+		if(!isMouseOverSettingsMenu(mX, mY)) //todo does this make sense? what about `!showSettingsMenu`? experiment.
+			RenderUtils.profile("contextMenu", () -> contextMenu.render(context, mX, mY, delta));
 
 		client.getProfiler().pop();
 	}
@@ -236,7 +249,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 	@Inject(method = "resize", at = @At("HEAD"))
 	public void resizeContextMenu(MinecraftClient client, int width, int height, CallbackInfo ci) {
-		contextMenu = ContextMenu.resize(contextMenu, this.width, this.height);
+		contextMenu = ContextMenu.resize(contextMenu, this.width, this.height); // screen dimension fields aren't updated yet, perfect for resizing!
 	}
 
 	/**
@@ -250,22 +263,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			messageDraft = chatField.getText();
 
 		if(config.searchDrafting)
-			searchDraft = searchField.getText();
-		else if(!searchField.getText().isEmpty()) // reset the hud if it had anything in the field (#102)
-			client.inGameHud.getChatHud().reset();
+			searchDraft = '\u0000' + searchField.getText(); // lead with a null char to remove it later and trigger the search field update
+		else if(!searchField.getText().isEmpty())
+			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
 
-		// todo where needed (#close): unhook buttons from chatscreen drawables first..? or is this even needed...
-		contextMenu.close(this::remove);// prepub lowkey this might be useless bc the screen is closing but it def is when the menu is changed
+		contextMenu.close(this::remove);
 	}
 
-	/** Closes the settings menu if the escape key was pressed and it was already open, otherwise closes the screen. */
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 0), cancellable = true )
-	public void allowClosingSettings(CallbackInfoReturnable<Boolean> cir) {
-		if(showSettingsMenu) {
-			showSettingsMenu = false;
-			cir.setReturnValue(true);
-		}
-	}
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
 	private void onMessageSentEmptyDraft(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
@@ -302,9 +306,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * 		<li>If {@linkplain #isMouseOverSettingsMenu(double, double)
 	 * 		the settings menu is visible}, check every search setting:</li>
 	 * 		<ul>
-	 * 			<li>{@link ChatSearchSetting#caseSensitive}</li>
-	 * 			<li>{@link ChatSearchSetting#modifiers}</li>
-	 * 			<li>{@link ChatSearchSetting#regex}</li>
+	 * 			<li>{@link Config#caseSensitive}</li>
+	 * 			<li>{@link Config#formatting}</li>
+	 * 			<li>{@link Config#regex}</li>
 	 * 		</ul>
 	 * 		<li>Otherwise if the settings menu is closed, see if the
 	 *      {@link ContextMenu} should open:</li>
@@ -318,7 +322,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * TODO: REWRITE THIS JAVADOC LIST ORDER
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
-	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {//todo rename
+	public void registerClickEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValue())
 			return;
 
@@ -326,39 +330,28 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			cir.setReturnValue(true);
 
 		if(isMouseOverSettingsMenu(mX, mY)) {
-			if(caseSensitive.button.mouseClicked(mX, mY, button))
+			if(caseSensitiveButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-			if(modifiers.button.mouseClicked(mX, mY, button))
+			if(formattingButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-			if(regex.button.mouseClicked(mX, mY, button))
+			if(regexButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
 		} else { // context menu (prepub: clarify what)
 			// todo: clicking on search bar w cm open moves selection box to the bottom, clicking on the buttons doesnt close the cm
-			// also todo: this can def be moved into a static ContextMenu method
+			// also todo: this can def (really? maybe...) be moved into a static ContextMenu method
 			if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-				boolean loaded = false;
-				// requires the current mouse position to be different from the last
-				if( !contextMenu.clickPos.equals(RenderUtils.MousePos.of(mX, mY)) ) {//prepub if equals doesnt work add an impl
-					ContextMenu original = contextMenu; // save the original context menu.. todo:relevant? worth it?
-
-					// creates a new context menu at the new position
-					contextMenu = ContextMenu.of(mX, mY);
-					if(!contextMenu.isNoOp()) {
-						// unhook the old context menu buttons
-						original.close(this::remove);
-						// initializes the context menu and registers the provided buttons
-						contextMenu.init(this::addSelectableChild);
-						loaded = true;
-					} else {
-						// if the context menu didn't load, then restore the original
-						contextMenu = original;
-					}
+				ContextMenu mousePosMenu = ContextMenu.of(mX, mY);
+				// if the mouse right-clicked elsewhere and that location can load a context menu, use it
+				if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && mousePosMenu != ContextMenu.NO_OP) {
+					contextMenu.close(this::remove); // unhook the old context menu buttons
+					contextMenu = mousePosMenu; // keep and use the updated context menu
+					contextMenu.init(this::addSelectableChild); // initialize the context menu and register the provided buttons
+					cir.setReturnValue(true);
 				}
-
-				cir.setReturnValue(loaded);
 			} else { // if we're not initializing the context menu, then delegate back to it
 				//todo: mouse clicks are not registering
 				contextMenu.mouseClicked(mX, mY, button);
+
 				// close the menu because if it clicked it should close; otherwise it clicked off and should still close
 				cir.setReturnValue(true);
 				contextMenu.close(this::remove);
@@ -423,103 +416,97 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		return showSettingsMenu && (mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT);
 	}
 
-	/** Called when the search field is updated; also sets the regex error and the text input color. */
+	/**
+	 * Called when the search field is updated, and
+	 * applies search settings, field suggestions,
+	 * and field coloring.
+	 */
 	@Unique
-	private void onSearchFieldUpdate(String text) {
-		if(!text.isEmpty()) {
+	@SuppressWarnings("DataFlowIssue") // all formattings have colors!
+	private void onSearchFieldUpdate(String text, boolean refresh) {
+		if(text.equals(searchDraft) && !refresh)
+			return; // prevent useless updates
+
+		if(!text.isEmpty() || refresh) {
 			searchField.setSuggestion(null);
 
 			// if regex is enabled and the text is invalid, set the error and color
-			if(regex.on) {
+			if(config.regex) {
 				try {
 					Pattern.compile(text);
 					searchError = null;
 				} catch(PatternSyntaxException e) {
 					searchError = e;
-					searchField.setEditableColor(0xFF5555);
+					searchField.setEditableColor(Formatting.RED.getColorValue()); // mark the text red if the regex is invalid
 					client.inGameHud.getChatHud().reset();
+				}
+			} else {
+				searchError = null;
+				var results = filterMessages(text); // search messages for the target string and return results
+
+				if(results.isEmpty()) {
+					// mark the text yellow if there are no results
+					searchField.setEditableColor(Formatting.YELLOW.getColorValue());
+					client.inGameHud.getChatHud().reset();
+				} else {
+					// mark the text green if there are results
+					searchField.setEditableColor(Formatting.GREEN.getColorValue());
 				}
 			}
 
-			List<ChatHudLine.Visible> searchResults = filterMessages( searchError != null ? null : text );
-			if(searchError == null && searchResults.isEmpty()) { // mark the text yellow if there are no results
-				searchField.setEditableColor(0xFFFF55);
-				client.inGameHud.getChatHud().reset();
-			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
-				searchField.setEditableColor(0x55FF55);
-
-				ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
-				chat.chatpatches$getVisibleMessages().clear();
-				chat.chatpatches$getVisibleMessages().addAll(searchResults);
-			}
 		} else {
-			client.inGameHud.getChatHud().reset();
-
 			searchError = null;
-			searchField.setEditableColor(0xE0E0E0); // default from TextFieldWidget
-			searchField.setSuggestion(SUGGESTION);
+			searchField.setEditableColor(0xE0E0E0); // default
+			searchField.setSuggestion(SEARCH_SUGGESTION);
+			client.inGameHud.getChatHud().reset();
 		}
 
 		searchDraft = text;
 	}
 
 	/**
-	 * Filters all {@link ChatHudLine} messages from the {@link #client}'s ChatHud
-	 * matching the target string (configuration applied from {@link ChatSearchSetting#caseSensitive},
-	 * {@link ChatSearchSetting#modifiers}, and {@link ChatSearchSetting#regex}) into a list of
-	 * {@link ChatHudLine.Visible} visibleMessages to be rendered onto the ChatHud. This does <u>not</u>
-	 * mutate or modify the actual {@link ChatHud#messages} list, only the {@link ChatHud#visibleMessages}
-	 * list that is automatically repopulated with new messages when needed.
+	 * Filters all {@linkplain ChatHud#messages chat messages} using the
+	 * given string and according to all search settings, and returns the
+	 * generated {@linkplain ChatHud#visibleMessages visible messages} as
+	 * they are on {@linkplain InGameHud#chatHud the chat hud}. This can
+	 * be easily reversed by calling {@link ChatHud#reset()}.
+	 *
+	 * @return Whether the search was successful and modified visible
+	 * messages.
+	 * @implNote This method momentarily mutates the chat hud's messages
+	 * to filter out messages that don't match the target string,
+	 * then resets the chat hud to generate the visible messages
+	 * from the filtered messages. This method does not
+	 * <u>effectively</u> modify the original messages, only the
+	 * visible messages.
 	 */
 	@Unique
 	private List<ChatHudLine.Visible> filterMessages(String target) {
-		if(target == null) // todo || target.isEmpty() ?
-			// todo this might be a good idea to uncomment, just make sure to re-analyze side effects of this method
-			// counter todo: just call chatHud.refresh() instead of manually re-writing the method and calling it? idk look into this
-			return List.of(); //createVisibles( chatHud.chatpatches$getMessages() );
+		if(target == null)
+			return List.of();
 
-		List<ChatHudLine> msgs = new ArrayList<>( ((ChatHudAccessor) client.inGameHud.getChatHud()).chatpatches$getMessages() );
+		ChatHud chatHud = client.inGameHud.getChatHud();
+		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
+		List<ChatHudLine> messageSnapshot = new ArrayList<>(chat.chatpatches$getMessages());
 
-		msgs.removeIf(hudLn -> {
-			String content = TextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
+		// filter messages by removing those that don't match the target
+		chat.chatpatches$getMessages().removeIf(hudLn -> {
+			String content = TextUtils.reorder(hudLn.content().asOrderedText(), config.formatting);
 
 			// note that this NOTs the whole expression to simplify the complex nesting
 			// *removes* the message if it *doesn't* match AKA *keeps* those that *do* match
 			return !(
-				regex.on
-					? content.matches( (caseSensitive.on ? "(?i)" : "") + target )
-					: (
-						caseSensitive.on
-							? content.contains(target)
-							: StringUtils.containsIgnoreCase(content, target)
-					)
+				config.regex
+					? content.matches( (config.caseSensitive ? "(?i)" : "") + target )
+					: (config.caseSensitive ? content.contains(target) : StringUtils.containsIgnoreCase(content, target))
 			);
 		});
+		// generate the visible messages from the filtered messages
+		chatHud.reset();
+		chat.chatpatches$getMessages().clear();
+		// add the real messages back to the chat to keep the visual messages
+		chat.chatpatches$getMessages().addAll(messageSnapshot);
 
-		return createVisibles(msgs);
-	}
-
-	/**
-	 * Creates a new list of to-be-rendered chat messages from the given list
-	 * of chat messages. The steps to achieving this are largely based on
-	 * the first half of the {@link ChatHud#addMessage(Text, MessageSignatureData, int, MessageIndicator, boolean)}
-	 * method, specifically everything before the {@code while} loop.
-	 */
-	@Unique
-	private List<ChatHudLine.Visible> createVisibles(List<ChatHudLine> messages) {
-		List<ChatHudLine.Visible> generated = new ArrayList<>(messages.size());
-		ChatHud chatHud = client.inGameHud.getChatHud();
-		int width = (int)(chatHud.getWidth() / chatHud.getChatScale());
-
-		messages.forEach(hudLn -> {
-			MessageIndicator ind = hudLn.indicator();
-			int indDiff = (ind != null && ind.icon() != null) ? ind.icon().width + 6 : 0;
-			List<OrderedText> list = ChatMessages.breakRenderedChatMessageLines(hudLn.content(), width - indDiff, client.textRenderer);
-
-			for(int i = list.size() - 1; i >= 0; --i)
-				generated.add(new ChatHudLine.Visible(hudLn.creationTick(), list.get(i), ind, (i == list.size() - 1)));
-		});
-
-		return generated;
+		return chat.chatpatches$getVisibleMessages();
 	}
 }
