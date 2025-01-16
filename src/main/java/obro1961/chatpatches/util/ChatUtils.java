@@ -13,6 +13,7 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
+import org.apache.logging.log4j.core.util.Integers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +70,9 @@ public class ChatUtils {
 	 *
 	 * @apiNote Intended to be used with the MAIN
 	 * indices specified in this class.
+	 * @see #TIMESTAMP_INDEX
+	 * @see #MESSAGE_INDEX
+	 * @see #DUPE_INDEX
 	 */
 	public static Text getPart(Text message, int index) {
 		return message.getSiblings().size() > index ? message.getSiblings().get(index) : Text.empty();
@@ -80,6 +84,9 @@ public class ChatUtils {
 	 *
 	 * @apiNote Intended to be used with the {@code MSG}
 	 * indices specified in this class.
+	 * @see #MSG_TEAM_INDEX
+	 * @see #MSG_SENDER_INDEX
+	 * @see #MSG_CONTENT_INDEX
 	 */
 	public static Text getMsgPart(Text message, int index) {
 		return getPart(getPart(message, MESSAGE_INDEX), index);
@@ -197,8 +204,9 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
-		if(ChatLog.isSuspended())
-			return m; // cancels modifications when loading the chat log or regenerating visibles
+		if(ChatLog.isSuspended()) // cancels modifications when loading the chat log
+			//fixme: is this necessary or nah bc refreshing/restoring?
+			return m.getSiblings().size() != DUPE_INDEX ? buildMessage(m.getStyle(), null, m, null) : m; // build message if it's missing message components
 
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
 		Date now = lastEmpty ? new Date() : msgData.timestamp;
@@ -282,7 +290,7 @@ public class ChatUtils {
 		}
 
 		// assembles constructed message and adds a duplicate counter according to the #addCounter method
-		Text modified = addCounter( ChatUtils.buildMessage(style, timestamp, content, null) );
+		Text modified = addCounter( buildMessage(style, timestamp, content, null) );
 		ChatLog.addMessage(modified);
 		msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
@@ -440,6 +448,63 @@ public class ChatUtils {
 		}
 
 		return incoming.copy(); // fixes IntelliJ flagging the return value as always being equal to incoming (not true!)
+	}
+
+	/**
+	 * Updated, more efficient version of the original
+	 * {@code addCounter} and {@code getCondensedMessage}
+	 * method combo. This method is used in conjunction
+	 * with (after) {@link #modifyMessage(Text)} to
+	 * add a duplicate counter and remove duplicate(s)
+	 * to the given message, if they exist and according
+	 * to the config.
+	 */
+	private Text untested_tryCondenseDupes(Text incoming) {
+		ChatHud chathud = MinecraftClient.getInstance().inGameHud.getChatHud();
+		ChatHudAccessor chat = (ChatHudAccessor) chathud;
+		List<ChatHudLine> messages = chat.chatpatches$getMessages();
+
+		if(!config.counter || messages.isEmpty())
+			return incoming;
+
+		List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
+		int attemptDistance =
+			// only check more messages if compact chat is enabled
+			switch(config.counterCompact ? config.counterCompactDistance : 1) {
+				case -1 -> messages.size();
+				case 0 -> chathud.getVisibleLineCount();
+				default -> Math.min(config.counterCompactDistance, messages.size()); // max checked = # of messages in chat, else config option
+			};
+
+
+		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates
+		for(int i = 0; i < attemptDistance; i++) {
+			Text msg = messages.getFirst().content();
+
+			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) )
+				continue; // if the incoming message is different from the iterated message, don't try to condense (delete) it
+			else if( config.counterCheckStyle && !copyWithoutContent(incoming).equals(copyWithoutContent(msg)) )
+				continue; // if the incoming message has different metadata from the iterated message, skip it
+
+			// remove all number formatting codes and non-digits, then replace empty strings with 1 to prevent NumberFormatExceptions
+			int itrDupeCount = Integers.parseInt( getPart(msg, DUPE_INDEX).getString().replaceAll("(§\\d)|\\D", "") , 1);
+
+			// set: this index should always exist
+			incoming.getSiblings().set(DUPE_INDEX, config.makeDupeCounter(itrDupeCount + 1));
+
+			// remove the message being condensed
+			messages.removeFirst(); // messages are added to the front, so remove the most recent one aka the one we're checking
+
+			// remove the visible message(s) of the message being condensed
+			do visibles.removeFirst(); // remove the most recent visible message
+			while(!visibles.isEmpty() && !visibles.getFirst().endOfEntry()); // continue removing them until the next message (EoE) is reached
+
+			i--;  // we removed the first message, but we don't want to skip the next one
+			attemptDistance--; // but we also don't want to check messages we shouldn't be checking
+			//break; // we're done... (todo: do we want to keep condensing..? i feel like yeah but idk..)
+		}
+
+		return incoming;
 	}
 
 	/** Represents the metadata of a chat message. */
