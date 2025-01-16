@@ -151,5 +151,5 @@
     "text.chatpatches.copy.reply": "Reply",
     "text.chatpatches.copy.unknownData": "§c§l/§e!§c\\ §r§7Unknown data for '§9%s§7', please report this issue!",
 
-    "text.chatpatches.restored": "Restored"
+    "text.chatpatches.restored": "Restored message"
 }

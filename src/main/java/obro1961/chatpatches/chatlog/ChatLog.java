@@ -38,7 +38,7 @@ import static obro1961.chatpatches.ChatPatches.config;
  */
 public class ChatLog {
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
-    public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
+    public static final MessageIndicator RESTORED_INDICATOR = new MessageIndicator(0x382fb5, null, Text.translatable("text.chatpatches.restored"), "Restored");
 
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
@@ -244,7 +244,7 @@ public class ChatLog {
             data.history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
 
         if(!data.messages.isEmpty())
-            data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
+            data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_INDICATOR));
 
         restoring = false;
 
