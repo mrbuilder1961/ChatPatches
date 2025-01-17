@@ -290,7 +290,7 @@ public class ChatUtils {
 		}
 
 		// assembles constructed message and adds a duplicate counter according to the #addCounter method
-		Text modified = addCounter( buildMessage(style, timestamp, content, null) );
+		Text modified = TESTED_tryCondenseDupes( buildMessage(style, timestamp, content, null) );
 		ChatLog.addMessage(modified);
 		msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
@@ -459,7 +459,7 @@ public class ChatUtils {
 	 * to the given message, if they exist and according
 	 * to the config.
 	 */
-	private Text untested_tryCondenseDupes(Text incoming) {
+	private static Text TESTED_tryCondenseDupes(Text incoming) {
 		ChatHud chathud = MinecraftClient.getInstance().inGameHud.getChatHud();
 		ChatHudAccessor chat = (ChatHudAccessor) chathud;
 		List<ChatHudLine> messages = chat.chatpatches$getMessages();
@@ -479,7 +479,7 @@ public class ChatUtils {
 
 		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates
 		for(int i = 0; i < attemptDistance; i++) {
-			Text msg = messages.getFirst().content();
+			Text msg = messages.get(i).content();
 
 			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) )
 				continue; // if the incoming message is different from the iterated message, don't try to condense (delete) it
@@ -493,15 +493,14 @@ public class ChatUtils {
 			incoming.getSiblings().set(DUPE_INDEX, config.makeDupeCounter(itrDupeCount + 1));
 
 			// remove the message being condensed
-			messages.removeFirst(); // messages are added to the front, so remove the most recent one aka the one we're checking
+			messages.remove(i);
 
 			// remove the visible message(s) of the message being condensed
-			do visibles.removeFirst(); // remove the most recent visible message
-			while(!visibles.isEmpty() && !visibles.getFirst().endOfEntry()); // continue removing them until the next message (EoE) is reached
+			do visibles.remove(i);
+			while(!visibles.isEmpty() && !visibles.get(i).endOfEntry()); // continue removing them until the next message (EoE) is reached
 
 			i--;  // we removed the first message, but we don't want to skip the next one
 			attemptDistance--; // but we also don't want to check messages we shouldn't be checking
-			//break; // we're done... (todo: do we want to keep condensing..? i feel like yeah but idk..)
 		}
 
 		return incoming;
