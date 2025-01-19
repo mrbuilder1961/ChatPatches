@@ -463,21 +463,23 @@ public class ChatUtils {
 		ChatHud chathud = MinecraftClient.getInstance().inGameHud.getChatHud();
 		ChatHudAccessor chat = (ChatHudAccessor) chathud;
 		List<ChatHudLine> messages = chat.chatpatches$getMessages();
+		List<Text> siblings = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
 
 		if(!config.counter || messages.isEmpty())
 			return incoming;
 
 		List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
 		int attemptDistance =
-			// only check more messages if compact chat is enabled
 			switch(config.counterCompact ? config.counterCompactDistance : 1) {
 				case -1 -> messages.size();
 				case 0 -> chathud.getVisibleLineCount();
+				case 1 -> 1; // only check more messages if compact chat is enabled
 				default -> Math.min(config.counterCompactDistance, messages.size()); // max checked = # of messages in chat, else config option
 			};
 
 
 		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates
+		int dupeCount = 1;
 		for(int i = 0; i < attemptDistance; i++) {
 			Text msg = messages.get(i).content();
 
@@ -487,10 +489,8 @@ public class ChatUtils {
 				continue; // if the incoming message has different metadata from the iterated message, skip it
 
 			// remove all number formatting codes and non-digits, then replace empty strings with 1 to prevent NumberFormatExceptions
-			int itrDupeCount = Integers.parseInt( getPart(msg, DUPE_INDEX).getString().replaceAll("(§\\d)|\\D", "") , 1);
-
-			// set: this index should always exist
-			incoming.getSiblings().set(DUPE_INDEX, config.makeDupeCounter(itrDupeCount + 1));
+			// finally add it to the total dupe count
+			dupeCount += Integers.parseInt( getPart(msg, DUPE_INDEX).getString().replaceAll("(§\\d)|\\D", "") , 1);
 
 			// remove the message being condensed
 			messages.remove(i);
@@ -503,7 +503,11 @@ public class ChatUtils {
 			attemptDistance--; // but we also don't want to check messages we shouldn't be checking
 		}
 
-		return incoming;
+		// update the incoming message with the new dupe counter
+		if(dupeCount > 1)
+			siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // warning: this will throw errors if DUPE_INDEX doesn't exist!
+
+		return TextUtils.newText(incoming.getContent(), siblings, incoming.getStyle());
 	}
 
 	/** Represents the metadata of a chat message. */
