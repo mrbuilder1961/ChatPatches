@@ -75,10 +75,10 @@ public class ChatPatches implements ClientModInitializer {
 	 * <p>Outputs the following message:
 	 * <pre>
 	 * [$class.$method] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
-	 * (error)
+	 * $error
 	 * </pre>
 	 */
-	public static <X extends Throwable> void logReportMsg(@NotNull X error) {
+	public static void logReportMsg(@NotNull Throwable error) {
 		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 		String clazz = walker.getCallerClass().getSimpleName();
 		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
@@ -86,7 +86,8 @@ public class ChatPatches implements ClientModInitializer {
 		if(method.isBlank())
 			method = error.getStackTrace()[0].getMethodName();
 
-		LOGGER.error("[%s.%s] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\".formatted(clazz, method), error);
+		//noinspection StringConcatenationArgumentToLogCall: it's whining but it's totally fine
+		LOGGER.error("[" + clazz + "." + method + "] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\", error);
 	}
 
 	/**
