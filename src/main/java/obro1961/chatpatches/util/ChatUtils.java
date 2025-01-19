@@ -160,8 +160,9 @@ public class ChatUtils {
 	 * <ol>
 	 *   <li>Return {@code m} early if the chat log is suspended to not cause
 	 *   other issues. Also, restructures the message if necessary.</li>
-	 * 	 <li>Reconstruct the message if it has player message data and is in
-	 * 	 the vanilla format as specified {@linkplain #VANILLA_FORMAT here}:
+	 * 	 <li>Reconstruct the message if {@linkplain Config#chatName allowed},
+	 * 	 it has player message data, and is in the vanilla format as specified
+	 * 	 {@linkplain #VANILLA_FORMAT here}:
 	 *     	 <ol>
 	 *     	     <li>If the message is {@linkplain TranslatableTextContent
 	 *     	     translatable} and in a {@linkplain #PARSEABLE_MESSAGE_KEYS
@@ -204,20 +205,20 @@ public class ChatUtils {
 
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
 		Date now = lastEmpty ? new Date() : msgData.timestamp;
-		String nowStr = String.valueOf(now.getTime()); // for context menu and storing timestamp data! only affects the timestamp
 		Style style = m.getStyle();
 
 		MutableText timestamp = null;
-		MutableText content = m.copy();
+		MutableText content = m.copy(); // default to the original message
 
 		try {
-			timestamp = config.time ? config.makeTimestamp(now).setStyle( config.makeHoverStyle(now) ) : Text.empty().styled(s -> s.withInsertion(nowStr));
-			content = Text.empty().setStyle(style);
+			timestamp = (config.time ? config.makeTimestamp(now) : Text.empty()).setStyle( config.makeHoverStyle(now) );
 
 			// reconstruct the player message if it's in the vanilla format and it should be reformatted
 			// the msgData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(!lastEmpty && msgData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
+			if(config.chatName && !lastEmpty && msgData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
+				content = Text.empty().setStyle(style);
+
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches(PARSEABLE_MESSAGE_KEYS)) {
 					boolean team = ttc.getKey().contains("team");
@@ -265,9 +266,6 @@ public class ChatUtils {
 					content.append(config.formatPlayername(msgData.sender)); // sender data is already known
 					content.append(realContent); // adds the reconstructed message content
 				}
-			} else {
-				// don't reformat if it isn't vanilla or needed
-				content = m.copy();
 			}
 		} catch(RuntimeException e) {
 			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}':", m.getString());

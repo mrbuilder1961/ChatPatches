@@ -15,6 +15,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
+import org.apache.commons.lang3.StringUtils;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
@@ -79,7 +80,7 @@ public class YACLConfig extends Config {
                     .controller(me -> getController(me, key))
                     .binding(getBinding(opt))
                     .flag(
-                        key.matches(".*[Cc]hat.*") // contains "chat" somewhere
+                        StringUtils.containsIgnoreCase(key, "chat")
                             ? new OptionFlag[] { client -> client.inGameHud.getChatHud().reset() }
                             : new OptionFlag[0]
                     )
