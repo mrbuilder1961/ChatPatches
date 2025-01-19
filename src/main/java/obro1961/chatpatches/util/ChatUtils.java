@@ -1,12 +1,12 @@
 package obro1961.chatpatches.util;
 
+import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.ChatMessages;
 import net.minecraft.text.*;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -156,38 +156,35 @@ public class ChatUtils {
 	/**
 	 * Reformats the incoming message {@code m} according to configured
 	 * settings, message data, and at indices specified in this class.
-	 * This method is used in the {@link ChatHudMixin#modifyMessage(Text, boolean)}
-	 * mixin for functionality.
+	 * This method is used in the
+	 * {@link ChatHudMixin#modifyMessage(Text, boolean)} mixin.
 	 *
 	 * @implNote
 	 * <ol>
-	 *   <li>Don't modify when {@code refreshing} is true, as that signifies
-	 * 	 re-rendering chat messages, so simply return {@code m}.</li>
-	 * 	 <li>Declare relevant variables, most notably the {@code timestamp}
-	 * 	 and {@code content} components.</li>
-	 * 	 <li>Reconstruct the player message if it should be reformatted
-	 * 	 (message has player data, not a boundary line, and in vanilla
-	 * 	 format):
+	 *   <li>Return {@code m} early if the chat log is suspended to not cause
+	 *   other issues. Also, restructures the message if necessary.</li>
+	 * 	 <li>Reconstruct the message if it has player message data and is in
+	 * 	 the vanilla format as specified {@linkplain #VANILLA_FORMAT here}:
 	 *     	 <ol>
-	 *     	     <li>If the message is translatable and in a known format:
+	 *     	     <li>If the message is {@linkplain TranslatableTextContent
+	 *     	     translatable} and in a {@linkplain #PARSEABLE_MESSAGE_KEYS
+	 *     	     known format}:
 	 *     	     	<ol>
 	 *     	     	  <li>If the message is a team message, add all related
 	 *     	     	  team message components.</li>
 	 *     	     	  <li>Add the formatted playername and content.</li>
 	 *     	     	</ol>
 	 *     	     </li>
-	 *     	     <li>Otherwise, the message must be in an unknown format where all
-	 *     	     we know for sure is the format ({@code <$name> $message}):
+	 *     	     <li>Otherwise, the message isn't translatable, but it is
+	 *     	     formatted correctly, so:
 	 *     	     	<ol>
-	 *     	     	  <li>Collect all message components into a list, including the
-	 *     	     	  root {@link TextContent} (assuming this accounts for all parts,
-	 *     	     	  {@link TextContent}s, and siblings).</li>
-	 *     	     	  <li>Find the first part that contains a '>'.</li>
-	 *     	     	  <li>Add the part after the '>' but before any
-	 *     	     	  remaining siblings, if it exists, to the {@code realContent}
-	 * 	      	      local Text variable (with the proper Style).</li>
-	 *     	     	  <li>Add every part succeeding the '>' component to
-	 *     	     	  the {@code realContent} variable.</li>
+	 *     	     	  <li>Collect all message siblings into a list, including the
+	 *     	     	  root {@link TextContent}</li>
+	 *     	     	  <li>Find the first part that contains a {@code >}.</li>
+	 *     	     	  <li>Cache the part after the {@code >} but before any
+	 *     	     	  remaining siblings, if present.</li>
+	 *     	     	  <li>Add every part succeeding the {@code >} part to
+	 *     	     	  {@code realContent}.</li>
 	 *     	     	  <li>Add the formatted playername and {@code realContent}
 	 *     	     	  variable to the actual content.</li>
 	 *     	     	</ol>
@@ -195,18 +192,18 @@ public class ChatUtils {
 	 *     	 </ol>
 	 * 	 </li>
 	 *   <li>If the message shouldn't be formatted (doesn't satisfy all
-	 *   prerequisites), then don't change {@code m} and store it.</li>
-	 * 	 <li>Assemble the constructed message and add a duplicate counter
-	 * 	 according to the {@link ChatUtils#addCounter(Text)} method.</li>
+	 *   prerequisites), then don't do anything to {@code m}.</li>
+	 * 	 <li>Assemble the message, despite any/all changes and add a duplicate counter
+	 * 	 according to {@link #tryCondenseDupes(Text)}.</li>
 	 * 	 <li>Log the modified message in the {@link ChatLog}.</li>
-	 * 	 <li>Reset the {@link ChatPatches#msgData} to prevent an uncommon bug.</li>
+	 * 	 <li>Reset the {@link ChatPatches#msgData} to prevent a rare bug.</li>
 	 * 	 <li>Return the message, regardless of if it was actually modified or not.</li>
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
-		if(ChatLog.isSuspended()) // cancels modifications when loading the chat log
-			//fixme: is this necessary or nah bc refreshing/restoring?
-			return m.getSiblings().size() != DUPE_INDEX ? buildMessage(m.getStyle(), null, m, null) : m; // build message if it's missing message components
+		if(ChatLog.isSuspended()) // cancel modifications when loading the chat log
+			// restructure the message if it's not already formatted (fixme: should this be here?)
+			return m.getSiblings().size() != DUPE_INDEX ? buildMessage(m.getStyle(), null, m, null) : m;
 
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
 		Date now = lastEmpty ? new Date() : msgData.timestamp;
@@ -244,16 +241,10 @@ public class ChatUtils {
 					content.append( config.formatPlayername(msgData.sender) );
 					content.append( getArg(ttc, team ? MSG_CONTENT_INDEX : MESSAGE_INDEX) );
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
-					// collect all message parts into one list, including the root TextContent
-					// (assuming this accounts for all parts, TextContents, and siblings)
-					List<Text> parts = Util.make(new ArrayList<>(m.getSiblings().size() + 1), a -> {
-						if(!m.equals(Text.EMPTY))
-							a.add( m.copyContentOnly().setStyle(style) );
-
-						a.addAll( m.getSiblings() );
-					});
-
 					MutableText realContent = Text.empty();
+					// collect all message parts into one list, including the root TextContent
+					List<Text> parts = Lists.asList( m.copyContentOnly().setStyle(style), m.getSiblings().toArray(new Text[0]) );
+
 					// find the first index of a '>' in the '<%s> %s'-formatted message
 					Text firstPart = parts.stream()
 						.filter(p -> p.getString().contains(">"))
@@ -262,8 +253,8 @@ public class ChatUtils {
 							new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "'!")
 						));
 
-					String[] endBracketSplit = firstPart.getString().split(">"); // part of #156 AIOOBE i=1 fix
-					String afterEndBracket = endBracketSplit.length > 1 ? endBracketSplit[1] : ""; // just get the part after the closing bracket, we know the start
+					String[] split = firstPart.getString().split(">"); // fixes (#156)
+					String afterEndBracket = split.length > 1 ? split[1] : ""; // only get the part after the closing bracket
 
 					// ignore everything before the '>' because it's the playername, which we already know
 					// adds the part after the closing bracket but before any remaining siblings, if it exists
@@ -290,7 +281,7 @@ public class ChatUtils {
 		}
 
 		// assembles constructed message and adds a duplicate counter according to the #addCounter method
-		Text modified = TESTED_tryCondenseDupes( buildMessage(style, timestamp, content, null) );
+		Text modified = tryCondenseDupes( buildMessage(style, timestamp, content, null) );
 		ChatLog.addMessage(modified);
 		msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
@@ -458,8 +449,52 @@ public class ChatUtils {
 	 * add a duplicate counter and remove duplicate(s)
 	 * to the given message, if they exist and according
 	 * to the config.
+	 *
+	 * @implNote
+	 * <ol>
+	 *     <li>Return the message if the dupe counter is
+	 *     disabled or there are no messages to check.</li>
+	 *     <li>Calculate the attempt distance for condensing
+	 *     the incoming message with:</li>
+	 *     <ol>
+	 *         <li>If {@linkplain Config#counterCompact
+	 *         CompactChat} is enabled, parses
+	 *         {@link Config#counterCompactDistance} from
+	 *         {@code -1} to {@code messages.size()},
+	 *         {@code 0} to
+	 *         {@code chatHud.getVisibleLineCount()},
+	 *         otherwise to itself.</li>
+	 *         <li>Else 1, which is the default and
+	 *         corresponds to the most recent message
+	 *         only.</li>
+	 *     </ol>
+	 *     <li>Iterate through the last {@code attemptDistance}
+	 *     messages to find and condense (remove) any duplicates.</li>
+	 *     <ol>
+	 *         <li>If the incoming message is different from the
+	 *         iterated message, in terms of text or style data
+	 *         ({@linkplain Config#counterCheckStyle if we care about
+	 *         style data}) don't try to condense (delete) it.</li>
+	 *         <li>Remove all number formatting codes and non-digits
+	 *         from the iterated message's dupe counter, parse it with
+	 *         a fallback of 1 (no counter means 1 message), and add
+	 *         it to the total dupe count.</li>
+	 *         <li>Remove the message being condensed.</li>
+	 *         <li>Remove visible message(s), starting at the iterated
+	 *         index, until the next message (EoE) is reached.</li>
+	 *         <li>Decrement the index to prevent skipping the next message.</li>
+	 *         <li>Decrement the attempt distance to prevent checking
+	 *         extra messages.</li>
+	 *     </ol>
+	 *     <li>Update the incoming message with the new dupe counter,
+	 *     if the total dupe count is greater than 1.</li>
+	 *     <li>Return the incoming message, regardless of if it was
+	 *     actually modified or not, reconstructed to avoid an
+	 *     {@link ArrayIndexOutOfBoundsException} in 1.20.3+
+	 *     (<a href="https://github.com/mrbuilder1961/ChatPatches/issues/199">#199</a>)</li>
+	 * </ol>
 	 */
-	private static Text TESTED_tryCondenseDupes(Text incoming) {
+	private static Text tryCondenseDupes(Text incoming) {
 		ChatHud chathud = MinecraftClient.getInstance().inGameHud.getChatHud();
 		ChatHudAccessor chat = (ChatHudAccessor) chathud;
 		List<ChatHudLine> messages = chat.chatpatches$getMessages();

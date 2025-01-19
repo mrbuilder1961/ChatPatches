@@ -148,7 +148,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * refreshing the hud.
      *
      * @see ChatUtils#modifyMessage(Text)
-     * @see ChatUtils#addCounter(Text)
+     * @see ChatUtils#tryCondenseDupes(Text)
      */
     @ModifyVariable(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V",
@@ -156,7 +156,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         argsOnly = true
     )
     private Text modifyMessage(Text m, @Local(argsOnly = true) boolean refreshing) {
-        //PREPUB: fix all this ugly modifymessage/addcounter stuff in 1.21.3 and then copy it over
         return refreshing ? m : ChatUtils.modifyMessage(m);
     }
 
