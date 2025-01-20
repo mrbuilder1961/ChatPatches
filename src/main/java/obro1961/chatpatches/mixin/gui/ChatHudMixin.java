@@ -43,7 +43,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
 
     @Shadow public abstract double getChatScale();
-    @Shadow public abstract int getVisibleLineCount();
     @Shadow protected abstract double toChatLineX(double x);
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
