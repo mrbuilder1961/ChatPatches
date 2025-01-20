@@ -1,6 +1,5 @@
 package obro1961.chatpatches.mixin.gui;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonParseException;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -13,7 +12,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -21,17 +20,18 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.util.ChatMessages;
 import net.minecraft.client.util.SkinTextures;
-import net.minecraft.network.message.MessageSignatureData;
-import net.minecraft.text.*;
+import net.minecraft.screen.ScreenTexts;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.accessor.ChatScreenAccessor;
-import obro1961.chatpatches.config.ChatSearchSetting;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.MenuButtonWidget;
 import obro1961.chatpatches.gui.SearchButtonWidget;
@@ -50,6 +50,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -59,23 +60,22 @@ import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
 import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.id;
-import static obro1961.chatpatches.config.ChatSearchSetting.*;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
 import static obro1961.chatpatches.gui.MenuButtonWidget.of;
 import static obro1961.chatpatches.util.ChatUtils.*;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
 
 /**
- * An extension of ChatScreen with searching capabilities.
- * Contains a search button, search bar, and settings menu.
- * Certain features can be toggled via the settings menu or
- * the config options.
+ * The main entrypoint mixin for chat GUI modifications,
+ * notably search and context menu functionality.
+ * Implements {@link ChatScreenAccessor} to widen access to
+ * critical fields and methods used elsewhere.
  */
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin extends Screen implements ChatScreenAccessor {
 	// search text
-	@Unique private static final String SUGGESTION = Text.translatable("text.chatpatches.search.suggestion").getString();
+	@Unique private static final String SEARCH_SUGGESTION = Text.translatable("text.chatpatches.search.suggestion").getString();
 	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
 	// copy menu text
 	@Unique private static final Text COPY_MENU_STRING = Text.translatable("text.chatpatches.copy.copyString");
@@ -93,14 +93,17 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private static final Text COPY_UUID = Text.translatable("text.chatpatches.copy.uuid");
 	@Unique private static final Text COPY_MENU_REPLY = Text.translatable("text.chatpatches.copy.reply");
 	// coordinates and positioning
-	@Unique private static final int SEARCH_X = 22, SEARCH_Y_OFFSET = -31, SEARCH_H = 12;
+	@Unique private static final int SEARCH_X = 22,
+									 SEARCH_Y_OFFSET = -31,
+									 SEARCH_H = 12;
 	@Unique private static final double SEARCH_W_MULT = 0.25;
-	@Unique private static final int MENU_WIDTH = 146, MENU_HEIGHT = 76;
-	@Unique private static final int MENU_X = 2, MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
+	@Unique private static final int MENU_WIDTH = 146,
+									 MENU_HEIGHT = 76;
+	@Unique private static final int MENU_X = 2,
+									 MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 
 	// search stuff
 	@Unique private static boolean showSearch = true;
-	@Unique private static boolean showSettingsMenu = false; // note: doesn't really need to be static
 	@Unique private static String searchDraft = "";
 	// copy menu stuff
 	@Unique private static boolean showCopyMenu = false; // true when a message was right-clicked on
@@ -113,6 +116,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private TextFieldWidget searchField;
 	@Unique private SearchButtonWidget searchButton;
 	@Unique private PatternSyntaxException searchError;
+	// search settings
+	@Unique private boolean showSettingsMenu = false;
+	@Unique private ButtonWidget caseSensitiveButton;
+	@Unique private ButtonWidget formattingButton;
+	@Unique private ButtonWidget regexButton;
 
 	@SuppressWarnings("MissingUnique") //@Shadow
 	@NotNull protected MinecraftClient client = MinecraftClient.getInstance(); // removes false NPE warnings
@@ -155,18 +163,30 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));
-		searchField.setMaxLength(384);
+		searchField.setMaxLength(256);
 		searchField.setDrawsBackground(false);
-		searchField.setSuggestion(SUGGESTION);
-		searchField.setChangedListener(this::onSearchFieldUpdate);
+		searchField.setSuggestion(SEARCH_SUGGESTION);
+		searchField.setChangedListener(newText -> onSearchFieldUpdate(newText, false));
 		if(config.searchDrafting)
-			searchField.setText(searchDraft);
+			searchField.setText( searchDraft.length() > 1 ? searchDraft.substring(1) : "" ); // remove the null char from the draft
 
-		int yPos = height + (MENU_Y_OFFSET / 2) - 51; // had to extract here cause of mixin restrictions
-		ButtonWidget.PressAction updateSearch = button -> onSearchFieldUpdate(searchField.getText());
-		caseSensitive.update(yPos, updateSearch);
-		modifiers.update(yPos + 22, updateSearch);
-		regex.update(yPos + 44, updateSearch);
+		BiFunction<String, Integer, ButtonWidget> settingButtonFactory = (key, yOffset) -> {
+			Config.Setting<Boolean> setting = config.getOption(key);
+			Text name = Text.translatable("text.chatpatches.search." + key);
+			Text text = ScreenTexts.composeToggleText(name, setting.get());
+
+			return ButtonWidget.builder(text, me -> {
+					setting.set(!setting.get()); // toggle the setting
+					me.setMessage( ScreenTexts.composeToggleText(name, setting.get()) ); // update the button text
+					onSearchFieldUpdate(searchField.getText(), true); // update the search field color
+				})
+				.dimensions(8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset, client.textRenderer.getWidth(text.getString()) + 10, 20)
+				.tooltip(Tooltip.of( Text.translatable("text.chatpatches.search.desc." + key) ))
+				.build();
+		};
+		caseSensitiveButton = settingButtonFactory.apply("caseSensitive", 0);
+		formattingButton = settingButtonFactory.apply("formatting", 22);
+		regexButton = settingButtonFactory.apply("regex", 44);
 
 		if(!config.hideSearchButton) {
 			addSelectableChild(searchField);
@@ -279,9 +299,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
 
-			caseSensitive.button.render(context, mX, mY, delta);
-			modifiers.button.render(context, mX, mY, delta);
-			regex.button.render(context, mX, mY, delta);
+			caseSensitiveButton.render(context, mX, mY, delta);
+			formattingButton.render(context, mX, mY, delta);
+			regexButton.render(context, mX, mY, delta);
 		}
 
 		// renders the copy menu's selection box and menu buttons
@@ -410,13 +430,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
-	 * 		<li>If {@link #showSettingsMenu} is true, checks if these were clicked:</li>
-	 * 		<ul>
-	 * 			<li>{@link ChatSearchSetting#caseSensitive}</li>
-	 * 			<li>{@link ChatSearchSetting#modifiers}</li>
-	 * 			<li>{@link ChatSearchSetting#regex}</li>
+	 * 		<li>If {@linkplain #isMouseOverSettingsMenu(double, double)
+	 * 	   		the settings menu is visible}, check every search setting:</li>
+	 * 	   		<ul>
+	 * 			<li>{@link Config#caseSensitive}</li>
+	 * 			<li>{@link Config#formatting}</li>
+	 * 			<li>{@link Config#regex}</li>
 	 * 		</ul>
-	 * 		<li>Else if {@link #showSettingsMenu} is false:</li>
+	 * 		<li>Else if the settings menu is closed:</li>
 	 * 		<ul>
 	 * 			<li>If the mouse right-clicked, tries to load the copy menu ({@link #loadCopyMenu(double, double)})</li>
 	 * 			<li>Otherwise if the mouse left-clicked and {@link #showCopyMenu} is true, checks if any menu buttons were clicked on</li>
@@ -425,7 +446,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * </ul>
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
-	public void afterClickBtn(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
+	public void registerClickEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValue()) {
 			if(showCopyMenu) // hide copy menu if any other element was clicked first
 				showCopyMenu = false;
@@ -437,11 +458,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			cir.setReturnValue(true);
 
 		if(showSettingsMenu) {
-			if(caseSensitive.button.mouseClicked(mX, mY, button))
+			if(caseSensitiveButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-			if(modifiers.button.mouseClicked(mX, mY, button))
+			if(formattingButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-			if(regex.button.mouseClicked(mX, mY, button))
+			if(regexButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
 		} else {
 			// if button is a right-click, then try and render the copy menu
@@ -704,101 +725,97 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		});
 	}
 
-	/** Called when the search field is updated; also sets the regex error and the text input color. */
+	/**
+	 * Called when the search field is updated, and
+	 * applies search settings, field suggestions,
+	 * and field coloring.
+	 */
 	@Unique
-	private void onSearchFieldUpdate(String text) {
-		if(!text.isEmpty()) {
+	@SuppressWarnings("DataFlowIssue") // all formattings have colors!
+	private void onSearchFieldUpdate(String text, boolean refresh) {
+		if(text.equals(searchDraft) && !refresh)
+			return; // prevent useless updates
+
+		if(!text.isEmpty() || refresh) {
 			searchField.setSuggestion(null);
 
 			// if regex is enabled and the text is invalid, set the error and color
-			if(regex.on) {
+			if(config.regex) {
 				try {
 					Pattern.compile(text);
 					searchError = null;
 				} catch(PatternSyntaxException e) {
 					searchError = e;
-					searchField.setEditableColor(0xFF5555);
+					searchField.setEditableColor(Formatting.RED.getColorValue()); // mark the text red if the regex is invalid
 					client.inGameHud.getChatHud().reset();
+				}
+			} else {
+				searchError = null;
+				var results = filterMessages(text); // search messages for the target string and return results
+
+				if(results.isEmpty()) {
+					// mark the text yellow if there are no results
+					searchField.setEditableColor(Formatting.YELLOW.getColorValue());
+					client.inGameHud.getChatHud().reset();
+				} else {
+					// mark the text green if there are results
+					searchField.setEditableColor(Formatting.GREEN.getColorValue());
 				}
 			}
 
-			List<ChatHudLine.Visible> searchResults = filterMessages( searchError != null ? null : text );
-			if(searchError == null && searchResults.isEmpty()) { // mark the text yellow if there are no results
-				searchField.setEditableColor(0xFFFF55);
-				client.inGameHud.getChatHud().reset();
-			} else if(!searchResults.isEmpty()) { // mark the text green if there are results, and only show those
-				searchField.setEditableColor(0x55FF55);
-
-				ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
-				chat.chatpatches$getVisibleMessages().clear();
-				chat.chatpatches$getVisibleMessages().addAll(searchResults);
-			}
 		} else {
-			client.inGameHud.getChatHud().reset();
-
 			searchError = null;
-			searchField.setEditableColor(0xE0E0E0); // default from TextFieldWidget
-			searchField.setSuggestion(SUGGESTION);
+			searchField.setEditableColor(0xE0E0E0); // default
+			searchField.setSuggestion(SEARCH_SUGGESTION);
+			client.inGameHud.getChatHud().reset();
 		}
 
 		searchDraft = text;
 	}
 
 	/**
-	 * Filters all {@link ChatHudLine} messages from the {@link #client}'s ChatHud
-	 * matching the target string (configuration applied from {@link ChatSearchSetting#caseSensitive},
-	 * {@link ChatSearchSetting#modifiers}, and {@link ChatSearchSetting#regex}) into a list of
-	 * {@link ChatHudLine.Visible} visibleMessages to be rendered onto the ChatHud. This does <u>not</u>
-	 * mutate or modify the actual {@link ChatHud#messages} list, only the {@link ChatHud#visibleMessages}
-	 * list that is automatically repopulated with new messages when needed.
+	 * Filters all {@linkplain ChatHud#messages chat messages} using the
+	 * given string and according to all search settings, and returns the
+	 * generated {@linkplain ChatHud#visibleMessages visible messages} as
+	 * they are on {@linkplain InGameHud#chatHud the chat hud}. This can
+	 * be easily reversed by calling {@link ChatHud#reset()}.
+	 *
+	 * @return Whether the search was successful and modified visible
+	 * messages.
+	 * @implNote This method momentarily mutates the chat hud's messages
+	 * to filter out messages that don't match the target string,
+	 * then resets the chat hud to generate the visible messages
+	 * from the filtered messages. This method does not
+	 * <u>effectively</u> modify the original messages, only the
+	 * visible messages.
 	 */
 	@Unique
 	private List<ChatHudLine.Visible> filterMessages(String target) {
-		final ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
 		if(target == null)
-			return List.of(); //createVisibles( chat.chatpatches$getMessages() );
+			return List.of();
 
-		List<ChatHudLine> msgs = Lists.newArrayList( chat.chatpatches$getMessages() );
+		ChatHud chatHud = client.inGameHud.getChatHud();
+		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
+		List<ChatHudLine> messageSnapshot = new ArrayList<>(chat.chatpatches$getMessages());
 
-		msgs.removeIf(hudLn -> {
-			String content = TextUtils.reorder(hudLn.content().asOrderedText(), modifiers.on);
+		// filter messages by removing those that don't match the target
+		chat.chatpatches$getMessages().removeIf(hudLn -> {
+			String content = TextUtils.reorder(hudLn.content().asOrderedText(), config.formatting);
 
 			// note that this NOTs the whole expression to simplify the complex nesting
-			// *removes* the message if it *doesn't* match
+			// *removes* the message if it *doesn't* match AKA *keeps* those that *do* match
 			return !(
-				regex.on
-					? content.matches( (caseSensitive.on ? "(?i)" : "") + target )
-					: (
-						caseSensitive.on
-							? content.contains(target)
-							: StringUtils.containsIgnoreCase(content, target)
-					)
+				config.regex
+					? content.matches( (config.caseSensitive ? "(?i)" : "") + target )
+					: (config.caseSensitive ? content.contains(target) : StringUtils.containsIgnoreCase(content, target))
 			);
 		});
+		// generate the visible messages from the filtered messages
+		chatHud.reset();
+		chat.chatpatches$getMessages().clear();
+		// add the real messages back to the chat to keep the visual messages
+		chat.chatpatches$getMessages().addAll(messageSnapshot);
 
-		return createVisibles(msgs);
-	}
-
-	/**
-	 * Creates a new list of to-be-rendered chat messages from the given list
-	 * of chat messages. The steps to achieving this are largely based on
-	 * the first half of the {@link ChatHud#addMessage(Text, MessageSignatureData, MessageIndicator)}
-	 * method, specifically everything before the {@code while} loop.
-	 */
-	@Unique
-	private List<ChatHudLine.Visible> createVisibles(List<ChatHudLine> messages) {
-		List<ChatHudLine.Visible> generated = Lists.newArrayListWithExpectedSize(messages.size());
-		ChatHud chatHud = client.inGameHud.getChatHud();
-
-		messages.forEach(hudLn -> {
-			MessageIndicator ind = hudLn.indicator();
-			int width = (int) ((double)chatHud.getWidth() / chatHud.getChatScale()) - (ind != null && ind.icon() != null ? ind.icon().width + 6 : 0);
-			List<OrderedText> list = ChatMessages.breakRenderedChatMessageLines(hudLn.content(), width, this.client.textRenderer);
-
-			for(int i = list.size()-1; i >= 0; --i)
-				generated.add(new ChatHudLine.Visible(hudLn.creationTick(), list.get(i), ind, (i == list.size() - 1)));
-		});
-
-		return generated;
+		return chat.chatpatches$getVisibleMessages();
 	}
 }

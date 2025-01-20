@@ -2,6 +2,15 @@
 
 ## Chat Patches `214.6.11` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Fixed teams with prefixes or suffixes preventing playernames from formatting
+- Synced with the in-progress `omnivers` branch:
+  - Simplified the way messages are condensed (when the dupe counter is enabled) and fixed some bugs relating to it
+  - Added the `chatName` option, which toggles the modification of playernames in chat messages. On by default, but can be turned off to prevent
+    formatting issues with other mods or plugins
+  - Added the search settings to the regular config, so they can be saved and loaded like other options. Note that they are still toggled in the chat
+    screen, like before ([#149](https://www.github.com/mrbuilder1961/ChatPatches/issues/149))
+  - Fixed the search bar not searching properly and the text color not updating properly
+  - Updated the contributors list in the `fabric.mod.json`
+  - Lots of internal code refactoring and cleanup
 
 ## Chat Patches `214.6.10` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Now compatible with 1.21.4! Only ONE code change was made and it's super basic :D ([#212](https://www.github.com/mrbuilder1961/ChatPatches/issues/212))

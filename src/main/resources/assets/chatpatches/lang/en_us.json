@@ -56,7 +56,7 @@
     "text.chatpatches.desc.counterColor": "The color that's filled in where it would otherwise be blank white in the resulting duplicate counter. To use this with other formatting modifiers, use '&r' in the decoration text option. Still applies to the CompactChat method, if enabled.",
     "text.chatpatches.desc.counterCheckStyle": "Should the message counter check formatting modifiers when checking for duplicates? For example, \"§e§labc§r\" and \"abc\" would NOT be considered duplicates if true. Still applies to the CompactChat method, if enabled.",
     "text.chatpatches.desc.counterCompact": "Should the message counter behave like the one from the CompactChat mod?",
-    "text.chatpatches.desc.counterCompactDistance": "The distance (inclusive) up to which messages will be tried for compacting. Setting this to '-1' will try the entire message list, and '0' will try using the maximum amount of messages you can see at once, based on the chat and gui scales. For example, setting this to '7' will try to compact the next message received into one of the last 7 messages already present.",
+    "text.chatpatches.desc.counterCompactDistance": "The distance (inclusive) up to which messages will be tried for compacting. Setting this to '-1' will try the entire message list, and '0' will try using the maximum amount of messages you can see at once. For example, setting this to '7' will try to compact the next message received into the last 7 messages already present.",
 
     "text.chatpatches.boundary": "Boundary toggle",
     "text.chatpatches.boundaryFormat": "Boundary text",
@@ -88,6 +88,7 @@
     "text.chatpatches.chatWidth": "Override chat width",
     "text.chatpatches.chatHeight": "Override chat height",
     "text.chatpatches.chatMaxMessages": "Maximum chat messages",
+    "text.chatpatches.chatName": "Playername text toggle",
     "text.chatpatches.chatNameFormat": "Playername text",
     "text.chatpatches.chatNameColor": "Playername color",
     "text.chatpatches.shiftChat": "Shift chat",
@@ -100,6 +101,7 @@
     "text.chatpatches.desc.chatWidth": "The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.",
     "text.chatpatches.desc.chatHeight": "The height of the chat box. This overrides vanilla's default and allows for a much larger height. Set to 0 to use the vanilla setting and not override it.",
     "text.chatpatches.desc.chatMaxMessages": "The max amount of chat messages allowed to save. Vanilla caps it at 100, this mod can increase it up to 32,767. Keep in mind a higher max equals higher memory usage.",
+    "text.chatpatches.desc.chatName": "Should the playername be modified in chat messages? Turning this off will make the playername appear as it does in vanilla, and disable both of the following options. Toggle this if you have conflicting plugins that modify the playername in chat.",
     "text.chatpatches.desc.chatNameFormat": "The text that replaces the playername in chat messages. Vanilla is '<$>', name only is '$'; where '$' is a placeholder for the playername. Only applies to player-sent messages.",
     "text.chatpatches.desc.chatNameColor": "The color that's filled in where it would otherwise be blank white in the resulting formatted playername. To use this with other formatting modifiers, use '&r' in the decoration text option.",
     "text.chatpatches.desc.shiftChat": "Shifts the chat interface up to not obstruct the armor bar and/or health. Default is 10, set to 0 for no shift.",
@@ -122,11 +124,11 @@
 
     "text.chatpatches.search.suggestion": "Search...",
     "text.chatpatches.search.caseSensitive": "Case sensitive",
-    "text.chatpatches.search.modifiers": "Modifiers",
+    "text.chatpatches.search.formatting": "Formatting",
     "text.chatpatches.search.regex": "Regex",
     "text.chatpatches.search.desc": "§bLeft click§r to toggle the search bar, or §dright click§r to toggle the settings menu.\n\n§aGreen§r means the search matched, §eyellow§r means nothing matched, and §cred§r means the search is invalid.",
     "text.chatpatches.search.desc.caseSensitive": "Should the search query only match text with the same capitalization?\n\n\"abc\" would match itself, \"Abc\", and \"ABC\"; case sensitive would only match \"abc\".\n§l§oNOTE:§r This applies to regex searching as well.",
-    "text.chatpatches.search.desc.modifiers": "Should the search query allow matching text according to formatting modifiers?\n\n\"abc\" would match \"abc\" and \"§e§labc§r\"; with modifiers it would only match \"abc\" and not \"§e§labc§r\".\nNOTE: Hex colors §ocan§r be matched in the format \"&#§cRR§aGG§9BB§r\", however §nthis is in beta§f.",
+    "text.chatpatches.search.desc.formatting": "Should the search query allow matching text according to formatting modifiers?\n\n\"abc\" would match \"abc\" and \"§e§labc§r\"; with modifiers it would only match \"abc\" and not \"§e§labc§r\".\nNOTE: Hex colors §ocan§r be matched in the format \"&#§cRR§aGG§9BB§r\", however §nthis is in beta§f.",
     "text.chatpatches.search.desc.regex": "Should the search query be used as a §2reg§rular §2ex§rpression?\n\nTo learn how to use regex, see the help section in the config.\n§l§oNOTE:§r Java regex §nrequires a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end.",
 
 

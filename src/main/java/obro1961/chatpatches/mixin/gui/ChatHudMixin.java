@@ -11,7 +11,6 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.CommandHistoryManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
-import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
@@ -19,23 +18,19 @@ import obro1961.chatpatches.util.ChatUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.util.ChatUtils.MESSAGE_INDEX;
-import static obro1961.chatpatches.util.ChatUtils.getPart;
 
 /**
- * The main entrypoint mixin for most chat modifications.
- * Implements {@link ChatHudAccessor} to widen access to
- * extra fields and methods used elsewhere.
+ * The main entrypoint mixin for technical chat modifications,
+ * notably expansive and complex changes to the way messages
+ * are stored, logged, and modified in the chat.
  */
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatHud.class, priority = 500)
@@ -130,12 +125,17 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
 
     /**
-     * Modifies the incoming message by adding timestamps, nicer
-     * player names, hover events, and duplicate counters in conjunction with
-     * {@link #addCounter(Text, boolean)}.
-     * <br>
-     * See {@link ChatUtils#modifyMessage(Text, boolean)} for detailed
-     * implementation specifications.
+     * Modifies the incoming message in a multitude of ways.
+     * Additions vary from version to version, but the bulk
+     * of actual message modding is executed here.
+     *
+     * @implNote The refreshing parameter is no longer
+     * specified because the method is now called in such a
+     * way that it only ever modifies real messages, not
+     * visible messages that are subject to refreshing.
+     *
+     * @see ChatUtils#modifyMessage(Text)
+     * @see ChatUtils#tryCondenseDupes(Text)
      */
     @ModifyVariable(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
@@ -143,7 +143,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         argsOnly = true
     )
     private Text modifyMessage(Text m) {
-        return addCounter(ChatUtils.modifyMessage(m, false), false);
+        return ChatUtils.modifyMessage(m);
     }
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/ArrayListDeque;size()I"))
@@ -161,75 +161,5 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     private void ignoreRestoredMessages(ChatHudLine hudLine, CallbackInfo ci) {
         if(ChatLog.isSuspended() && hudLine.indicator() != null)
             ci.cancel();
-    }
-
-    /**
-     * Adds a counter to the chat message, indicating how many times the same
-     * message has been sent. Can check only the last message, or
-     * {@link Config#counterCompactDistance} times back. Slightly more
-     * efficient than the previous method, outlined here: [{@link ChatUtils#tryCondenseMessage(Text, int)}]
-     * but it still is quite slow.
-     *
-     * @implNote
-     * <ol>
-     *     <li>IF {@code COUNTER} is enabled AND the message count >0 AND the message isn't a boundary line, continue.</li>
-     *     <li>Cache the result of trying to condense the incoming message with the last message received.</li>
-     *     <li>IF the counter should use the CompactChat method and the message wasn't already condensed:</li>
-     *     <ol>
-     *         <li>Calculate the adjusted distance to attempt comparing, depending on the amount of messages already in the chat.</li>
-     *         <li>Filter all the messages within the target range that are case-insensitively equal to the incoming message.</li>
-     *         <li>If a message was the same, call {@link ChatUtils#tryCondenseMessage(Text, int)},
-     *         which ultimately removes that message and its visibles.</li>
-     *     </ol>
-     *     <li>Return the (potentially) condensed message, to later be formatted further in {@link #modifyMessage(Text)}</li>
-     * </ol>
-     * (Wraps the entire method in a try-catch to prevent any errors accidentally disabling the chat.)
-     *
-     * @apiNote This injector is pretty ugly and could definitely be cleaner and more concise, but I'm going to deal with it
-     * in the future when I API-ify the rest of the mod. When that happens, this flag-add-flag-cancel method will be replaced
-     * with a simple (enormous) method call alongside
-     * {@link #modifyMessage(Text)} in a @{@link ModifyVariable}
-     * handler. (NOTE: as of v202.6.0, this is partially done already thanks to #132)
-     */
-    @Unique
-    private Text addCounter(Text incoming, boolean refreshing) {
-        try {
-            if( config.counter && !refreshing && !messages.isEmpty() ) {
-                // condenses the incoming message into the last message if it is the same
-                AtomicReference<Text> condensedLastMessage = new AtomicReference<>( ChatUtils.tryCondenseMessage(incoming, 0) );
-
-                // if the counterCompact option is true but the last message received was not condensed, look for
-                // any dupes in the last counterCompactDistance messages and if any are found condense them
-                if( config.counterCompact && condensedLastMessage.get().equals(incoming) ) {
-                    // ensures {0 <= attemptDistance <= messages.size()} is true
-                    int attemptDistance = MathHelper.clamp((
-                        (config.counterCompactDistance == -1)
-                            ? messages.size()
-                            : (config.counterCompactDistance == 0)
-                                ? this.getVisibleLineCount()
-                                : config.counterCompactDistance
-                    ), 0, messages.size());
-
-                    // exclude the first message, already checked above
-                    messages.subList(1, attemptDistance)
-                        .stream()
-                        .filter(hudLine -> getPart(hudLine.content(), MESSAGE_INDEX).getString().equalsIgnoreCase( getPart(incoming, MESSAGE_INDEX).getString() ))
-                        .findFirst()
-                        .ifPresent(hudLine -> condensedLastMessage.set( ChatUtils.tryCondenseMessage(incoming, messages.indexOf(hudLine)) ));
-                }
-
-                // this result is used in #modifyMessage(...)
-                return condensedLastMessage.get();
-            }
-        } catch(IndexOutOfBoundsException e) {
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method. Either way,");
-            ChatPatches.logReportMsg(e);
-        } catch(Exception e) {
-            ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error! /!\\");
-            ChatPatches.logReportMsg(e);
-        }
-
-        return incoming;
     }
 }
