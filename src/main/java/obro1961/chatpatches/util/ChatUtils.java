@@ -187,8 +187,8 @@ public class ChatUtils {
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
 		if(ChatLog.isSuspended()) // cancel modifications when loading the chat log
-			// restructure the message if it's not already formatted (fixme: should this be here?)
-			return m.getSiblings().size() != DUPE_INDEX ? buildMessage(m.getStyle(), null, m, null) : m;
+			// restructure the message if it's not built properly (fixme: should this be here?)
+			return m.getSiblings().size() != (DUPE_INDEX + 1) ? buildMessage(m.getStyle(), null, m, null) : m;
 
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
 		Date now = lastEmpty ? new Date() : msgData.timestamp;
