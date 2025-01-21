@@ -16,7 +16,7 @@
     illegal JSON, but is ultimately fixed when built)
   - Replaced usages of Google's GSON library with Mojang's Codec system, which works better long-term and is slightly less error-prone
   - Make references to the chat log consistent throughout the codebase ("chat log" generally, and "ChatLog" for specific internals)
-  - TODO: FILL THIS OUT LATERRRR PREPUB COMMIT
+  - TODO: FILL THIS OUT LATERRRR PREPUB PUBLISH
 
 ## Chat Patches `202.6.5` for Minecraft 1.20.2 on Fabric, Quilt
 - Added the `searchPrefix` config option, which controls whether to filter previously sent messages based on the text behind the cursor, to speed up 

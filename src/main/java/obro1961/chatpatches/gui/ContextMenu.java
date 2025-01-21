@@ -392,8 +392,8 @@ public class ContextMenu {
 	 * @implSpec {@code hoveredVisibles} should not be empty.
 	 */
 	public void render(DrawContext drawContext, int mX, int mY, float delta) {
-		RenderUtils.profile("selectionOutline", () -> renderSelectionOutline(drawContext, mX, mY, delta));
-		RenderUtils.profile("menuButtons", () -> renderMenuButtons(drawContext, mX, mY, delta));
+		renderSelectionOutline(drawContext, mX, mY, delta);
+		renderMenuButtons(drawContext, mX, mY, delta);
 	}
 
 	/**

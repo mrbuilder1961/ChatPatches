@@ -12,14 +12,6 @@ public class RenderUtils {
 	public static final ChatHudLine NIL_HUD_LINE = new ChatHudLine(0, ScreenTexts.EMPTY, null, null);
 	public static final Style BLANK_STYLE = Style.EMPTY.withBold(false).withItalic(false).withStrikethrough(false).withUnderline(false).withObfuscated(false);
 
-	/** Profiles the given runnable at the given location. */
-	public static void profile(String location, Runnable runnable) {
-		MinecraftClient mc = MinecraftClient.getInstance();
-		mc.getProfiler().push(location);
-		runnable.run();
-		mc.getProfiler().pop();
-	}
-
 
 	public static class MousePos {
 		public double x, y;
