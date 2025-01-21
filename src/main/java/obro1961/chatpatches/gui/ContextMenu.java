@@ -75,6 +75,10 @@ public class ContextMenu {
 	static final Text UUID = Text.translatable("text.chatpatches.copy.uuid");
 	static final Text MENU_REPLY = Text.translatable("text.chatpatches.copy.reply");
 
+	// methods used for closing and initializing the menu
+	private static Consumer<Element> remove;
+	private static Consumer<ClickableWidget> addSelectableChild;
+
 	// widgets
 	/**
 	 * The grid widget that contains all the buttons in this context menu.
@@ -127,7 +131,7 @@ public class ContextMenu {
 	 * constructor}.
 	 */
 	public static final ContextMenu NO_OP = new ContextMenu(0, 0, NIL_HUD_LINE, List.of()) {
-		@Override public void init(Consumer<ClickableWidget> addSelectableChild) {}
+		@Override public void init() {}
 		@Override public void render(DrawContext drawContext, int mX, int mY, float delta) {}
 		@Override public void keyPressed(int keyCode, int scanCode, int modifiers) {}
 		@Override public boolean mouseClicked(double mX, double mY, int button) { return false; }
@@ -139,7 +143,7 @@ public class ContextMenu {
 		this.gridData = new GridData(MAX_ROWS, MAX_COLUMNS);
 		this.buttonGrid = new GridWidget((int) mX, (int) mY);
 		this.selectedLine = hudLine;
-		this.selectedVisibles = selectedVisibles;
+		this.selectedVisibles = new ArrayList<>(selectedVisibles); //prepub get rid of this wrapper, we shouldnt need it if we add the noOp field
 
 		this.widgets = ((GridWidgetAccessor) buttonGrid).getChildren();
 
@@ -147,6 +151,15 @@ public class ContextMenu {
 		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityContent ec
 			? new GameProfile(ec.uuid, ec.name.getString())
 			: NIL_MSG_DATA.sender();
+	}
+
+	/**
+	 * Ugly but critical method to grant the context menu access to ChatScreen methods.
+	 * todo explain hopw this is critical and must be called before the context menu is used
+	 */
+	public static void updateHooks(Consumer<ClickableWidget> addSelectableChild, Consumer<Element> remove) {
+		ContextMenu.addSelectableChild = addSelectableChild;
+		ContextMenu.remove = remove;
 	}
 
 	/**
@@ -159,7 +172,7 @@ public class ContextMenu {
 	 * <p>This method effectively serves as a constructor and
 	 * initializer for the context menu, as it populates the required
 	 * fields. However, this shouldn't be confused with
-	 * {@link #init(Consumer)}, which creates the widget buttons and
+	 * {@link #init()}, which creates the widget buttons and
 	 * related data structures.
 	 *
 	 * @apiNote Needed as a separate method from the constructor to
@@ -171,39 +184,20 @@ public class ContextMenu {
 			return NO_OP;
 
 		final List<ChatHudLine> chatMessages = ((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getMessages();
+
 		// longer messages sometimes fail because extra spaces appear to be added,
 		// so it now uses startsWith() bc the first one never has extra spaces.
-		// (maybe still an issue, but I haven't had any problems lately)
-		String hMF = TextUtils.reorder( visibles.getFirst().content(), false );
-		String hoveredMessageFirst = hMF.isEmpty() ? "\n" : hMF; // fixes messages starting with newlines not being detected
+		String fH = TextUtils.reorder( visibles.getFirst().content(), false );
+		String firstHovered = fH.isEmpty() ? "\n" : fH; // fixes messages starting with newlines not being detected
 
 		// get hovered message index (messages) for all copying data
 		ChatHudLine selectedLine = chatMessages.stream()
-			.filter(msg -> Formatting.strip( msg.content().getString() ).startsWith(hoveredMessageFirst))
+			.filter(msg -> Formatting.strip( msg.content().getString() ).startsWith(firstHovered))
 			.findFirst()
 			.orElse(NIL_HUD_LINE);
 
 		// ensures the selected line is in ChatHud#messages
 		return chatMessages.contains(selectedLine) ? new ContextMenu(mX, mY, selectedLine, visibles) : NO_OP;
-	}
-
-	/**
-	 * teehee!
-	 */
-	public static ContextMenu resize(ContextMenu oldMenu, int oldWidth, int oldHeight) {
-		if(oldMenu == NO_OP)
-			return NO_OP;
-
-		//prepub this doesnt work so figure it out, also see ChatScreenMixin#resizeContextMenu
-		// selectedvisibles seem to break even tho #of isnt called? but we put them in just fine so idk
-		int rescaledX = (int) (oldMenu.clickPos.x * mc.getWindow().getScaledWidth() / oldWidth);
-		int rescaledY = (int) (oldMenu.clickPos.y * mc.getWindow().getScaledHeight() / oldHeight);
-		ContextMenu resized = new ContextMenu(rescaledX, rescaledY, oldMenu.selectedLine, oldMenu.selectedVisibles);
-		ChatPatches.LOGGER.warn("{} old v, {} new v, equal? {}", oldMenu.selectedVisibles.size(), resized.selectedVisibles.size(),
-			oldMenu.selectedVisibles.equals(resized.selectedVisibles));
-		//resized.selectedVisibles.clear();
-		//resized.selectedVisibles.addAll(oldMenu.selectedVisibles);
-		return resized;
 	}
 
 
@@ -237,8 +231,8 @@ public class ContextMenu {
 
 			pressAction.onPress(b);
 
-			//todo idk why the menu doesnt close on click... see #mouseClicked
-			//dont close ourself bc then it closes the chat screen too
+			//fixme idk why the menu doesnt close on click... see #mouseClicked
+			close(); // close the menu after copying (fixme does this work?)
 		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
 
 		button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )//prepub?
@@ -306,7 +300,12 @@ public class ContextMenu {
 	/**
 	 * todo...
 	 */
-	public void init(Consumer<ClickableWidget> addSelectableChild) {
+	public void init() {
+		if(addSelectableChild == null) {
+			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `addSelectableChild` not initialized"));
+			return;
+		}
+
 		// string buttons - unconditional
 		registerProxyButton(MENU_STRING, RAW_STR, 0, 0);
 			registerCopyOnlyButton(RAW_STR, selectedLine.content(), 0, 1);
@@ -347,7 +346,7 @@ public class ContextMenu {
 			}
 			return Optional.empty();
 		}, Style.EMPTY);
-		// todo: image not letting me click (no CE in style) and its not translatable, no idea whats wrong here but it cant work as of now
+		// fixme: image not letting me click (no CE in style) and its not translatable, no idea whats wrong here but it cant work as of now
 		ChatPatches.LOGGER.warn("[DEBUG] [ContextMenu] webLinks: {}, fileLinks: {} translatable: {}", webLinks, fileLinks, selectedLine.content().getContent() instanceof TranslatableTextContent ttc ?
 			ttc.getArgs() : "x");
 		if(!webLinks.isEmpty() || !fileLinks.isEmpty()) {
@@ -377,7 +376,7 @@ public class ContextMenu {
 			}, 0, 0);
 		}
 
-		buttonGrid.refreshPositions(); // todo do i have to manually change the dims of the grid menu?
+		buttonGrid.refreshPositions();
 		gridData.syncButtons();
 		widgets.forEach(w -> addSelectableChild.accept((ClickableWidget)w));
 	}
@@ -402,6 +401,9 @@ public class ContextMenu {
 	 * in the chat, to indicate which message will be copied.
 	 */
 	private void renderSelectionOutline(DrawContext drawContext, int mX, int mY, float delta) {
+		if(selectedVisibles.isEmpty())
+			return;
+
 		ChatHud chatHud = mc.inGameHud.getChatHud();
 		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
 		List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
@@ -439,7 +441,7 @@ public class ContextMenu {
 		//widgets.forEach(widget -> widget.forEachChild(clickableWidget -> clickableWidget.render(drawContext, mX, mY, delta)));
 
 		// alternative way to render widgets, but it's not recursive and takes advantage of ClickableWidget#forEachChild passing itself
-		widgets.forEach(widget -> ((ClickableWidget)widget).render(drawContext, mX, mY, delta));
+		widgets.forEach(w -> ((ClickableWidget)w).render(drawContext, mX, mY, delta));
 	}
 
 	public void keyPressed(int keyCode, int scanCode, int modifiers) {
@@ -512,17 +514,23 @@ public class ContextMenu {
 
 	/**
 	 * Unhooks all widgets provided by this context menu
-	 * (originally from {@link #init(Consumer)}) from
+	 * (originally from {@link #init()}) from
 	 * the screen.
 	 *
-	 * @param remove The {@link Screen#remove(Element)}
-	 *               method, so that the widgets can be
-	 *               removed from the screen.
+	 * @apiNote Uses {@link #remove}, aka the
+	 * 		    {@link Screen#remove(Element)} method, so
+	 * 		    the widgets can be removed from the
+	 * 		    screen properly.
 	 */
-	public void close(Consumer<Element> remove) {
+	public void close() {
+		if(remove == null) {
+			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `remove` not initialized"));
+			return;
+		}
+
 		buttonGrid.forEachChild(remove::accept);
-		//init();//prepub what is this?
-		//buttonGrid.forEachChild(addDrawableChild::accept);
+		//selectedVisibles.clear();
+		widgets.clear();
 	}
 
 	public boolean isMouseOver(double mX, double mY) {

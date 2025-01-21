@@ -44,7 +44,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -100,7 +99,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * Notably used to clear the message draft in
 	 * {@link ScreenMixin#clearMessageDraft} to only do this when
 	 * the user closes the ChatScreen; also in
-	 * {@link ContextMenu#init(Consumer)} for the
+	 * {@link ContextMenu#init()} for the
 	 * {@code #MENU_REPLY} action.
 	 */
 	@Unique public void chatpatches$overrideChatText(String str) { chatField.setText(str); }
@@ -117,6 +116,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			else if(!originalChatText.equals("/"))
 				this.originalChatText = messageDraft;
 		}
+
+		ContextMenu.updateHooks(this::addSelectableChild, this::remove);
 	}
 
 	/**
@@ -229,9 +230,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		context.getMatrices().pop(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
-		// renders the context menu if the settings menu is not open
-		if(!isMouseOverSettingsMenu(mX, mY)) //todo does this make sense? what about `!showSettingsMenu`? experiment.
-			RenderUtils.profile("contextMenu", () -> contextMenu.render(context, mX, mY, delta));
+		RenderUtils.profile("contextMenu", () -> contextMenu.render(context, mX, mY, delta));
 
 		client.getProfiler().pop();
 	}
@@ -247,10 +246,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		return !isMouseOverSettingsMenu(mX, mY) && !contextMenu.isMouseOver(mX, mY);
 	}
 
-	@Inject(method = "resize", at = @At("HEAD"))
-	public void resizeContextMenu(MinecraftClient client, int width, int height, CallbackInfo ci) {
-		contextMenu = ContextMenu.resize(contextMenu, this.width, this.height); // screen dimension fields aren't updated yet, perfect for resizing!
-	}
 
 	/**
 	 * Either resets or saves the drafts for the search and chat fields, depending on
@@ -267,7 +262,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else if(!searchField.getText().isEmpty())
 			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
 
-		contextMenu.close(this::remove);
+		contextMenu = ContextMenu.NO_OP; // not unhooking here, because the screen is totally gone so rendering/usage is impossible
+		ContextMenu.updateHooks(null, null);
 	}
 
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
@@ -295,7 +291,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;getTextStyleAt(DD)Lnet/minecraft/text/Style;"))
-	private Style fixMenuClickthroughStyle(ChatScreen screen, double mX, double mY, Operation<Style> getTextStyleAt) {
+	private Style fixStyleClickthrough(ChatScreen screen, double mX, double mY, Operation<Style> getTextStyleAt) {
 		return (isMouseOverSettingsMenu(mX, mY) || contextMenu.isMouseOver(mX, mY))
 			? null
 			: getTextStyleAt.call(screen, mX, mY);
@@ -326,6 +322,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(cir.getReturnValue())
 			return;
 
+		boolean closeContextMenu = true;
+
 		if(searchField.mouseClicked(mX, mY, button))
 			cir.setReturnValue(true);
 
@@ -336,27 +334,31 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				cir.setReturnValue(true);
 			if(regexButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-		} else { // context menu (prepub: clarify what)
-			// todo: clicking on search bar w cm open moves selection box to the bottom, clicking on the buttons doesnt close the cm
-			// also todo: this can def (really? maybe...) be moved into a static ContextMenu method
-			if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-				ContextMenu mousePosMenu = ContextMenu.of(mX, mY);
-				// if the mouse right-clicked elsewhere and that location can load a context menu, use it
-				if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && mousePosMenu != ContextMenu.NO_OP) {
-					contextMenu.close(this::remove); // unhook the old context menu buttons
-					contextMenu = mousePosMenu; // keep and use the updated context menu
-					contextMenu.init(this::addSelectableChild); // initialize the context menu and register the provided buttons
-					cir.setReturnValue(true);
-				}
-			} else { // if we're not initializing the context menu, then delegate back to it
-				//todo: mouse clicks are not registering
-				contextMenu.mouseClicked(mX, mY, button);
+		} else if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT || contextMenu.mouseClicked(mX, mY, button)) {
+			closeContextMenu = false;
+			contextMenu.close();
+			contextMenu = ContextMenu.NO_OP; // idk if we need to do this but... maybe? todo
+			cir.setReturnValue(true);
+		} else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+			// fixme: figure out how to close menu if anything other than right-click or menu clicked
+			// prepub: move this into a static ContextMenu method
 
-				// close the menu because if it clicked it should close; otherwise it clicked off and should still close
+			ContextMenu mousePosMenu = ContextMenu.of(mX, mY);
+			// if the mouse right-clicked elsewhere and that location can load a context menu, use it
+			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && mousePosMenu != ContextMenu.NO_OP) {
+				contextMenu.close(); // unhook the old context menu buttons
+				contextMenu = mousePosMenu; // keep and use the updated context menu
+				contextMenu.init(); // initialize the context menu and register the provided buttons
+				closeContextMenu = false;
 				cir.setReturnValue(true);
-				contextMenu.close(this::remove);
-				contextMenu = ContextMenu.NO_OP;
 			}
+		}
+
+		// if anything was clicked other than the context menu, and it was open, then close it
+		if(closeContextMenu && contextMenu != ContextMenu.NO_OP) {//fixme (mayb not this statement idk) outline still renders after closing menu... but instead of setting = noop, what if
+			// we just add a noOp field to contextmenu and when we close it, we set it to true, and effectively brick the entire context menu? seems easier and epic
+			contextMenu.close();
+			contextMenu = ContextMenu.NO_OP;
 		}
 	}
 

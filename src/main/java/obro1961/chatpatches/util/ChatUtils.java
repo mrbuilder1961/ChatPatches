@@ -149,7 +149,7 @@ public class ChatUtils {
 	 * @implNote
 	 * <ol>
 	 *   <li>Return {@code m} early if the chat log is suspended to not cause
-	 *   other issues. Also, restructures the message if necessary.</li>
+	 *   other issues.</li>
 	 * 	 <li>Reconstruct the message if {@linkplain Config#chatName allowed},
 	 * 	 it has player message data, and is in the vanilla format as specified
 	 * 	 {@linkplain #VANILLA_FORMAT here}:
@@ -189,9 +189,8 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
-		if(ChatLog.isSuspended()) // cancel modifications when loading the chat log
-			// restructure the message if it's not already formatted (fixme: should this be here?)
-			return m.getSiblings().size() != DUPE_INDEX ? buildMessage(m.getStyle(), null, m, null) : m;
+		if(ChatLog.isSuspended())
+			return m; // cancel modifications when loading the chat log
 
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
 		Date now = lastEmpty ? new Date() : msgData.timestamp;
