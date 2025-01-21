@@ -12,9 +12,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.network.OtherClientPlayerEntity;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.Util;
@@ -148,32 +149,34 @@ public class Config {
      * player entity and have both a valid name and UUID.
      */
     public MutableText formatPlayername(GameProfile profile) {
-        Style style = BLANK_STYLE.withColor(chatNameColor);
+        Style style = BLANK_STYLE.withColor(chatNameColor); // defaults to the config-specified color
         try {
-			PlayerEntity entity = mc.world != null ? mc.world.getPlayerByUuid(profile.getId()) : null;
-            Team team = null;
+            // note: creating a new PlayerListEntry might cause issues?
+            Text teamName = mc.inGameHud.getPlayerListHud().getPlayerName( new PlayerListEntry(profile, false) );
+            String[] configFormat = chatNameFormat.split("\\$");
 
-            if(entity != null) {
-                team = entity.getScoreboard().getPlayerTeam(profile.getName());
-                style = entity.getDisplayName().getStyle().withColor( entity.getTeamColorValue() != 0xffffff ? entity.getTeamColorValue() : chatNameColor );
+            // override the custom color with the team one if it exists
+            if(teamName.getStyle().getColor() instanceof TextColor color)
+                style = style.withColor(color);
+
+
+            // uses a fake player entity to get the display name style (hover/click/insertion)
+            //noinspection DataFlowIssue: world should ALWAYS exist when executing this method
+            Text displayName = new OtherClientPlayerEntity(mc.world, profile).getDisplayName();
+            if(teamName.getSiblings().isEmpty()) {
+                return Text.empty().setStyle( style.withParent(displayName.getStyle()) )
+                    .append( text(configFormat[0]) )                    // config prefix
+                    .append( text(profile.getName()) )                  // playername
+                    .append( text(configFormat[1] + " ") ); // config suffix
+            } else {
+                return Text.empty().setStyle( style.withParent(displayName.getStyle()) )
+                    .append( text(configFormat[0]) )                    // config prefix
+                    .append( teamName.getSiblings().getFirst() )        // team prefix
+                    .append( teamName.getSiblings().get(1) )            // team playername
+                    .append( teamName.getSiblings().getLast() )         // team suffix
+                    .append( text(configFormat[1] + " ") ); // config suffix
             }
-
-            if(team != null) {
-                // note: doesn't set the style on every append, as it's already set in the parent text. might cause issues?
-                // if the player is on a team, add the prefix and suffixes from the config AND team (if they exist) to the formatted name
-                MutableText playername = text(profile.getName());
-                String[] configFormat = chatNameFormat.split("\\$");
-                Text configPrefix = text(configFormat[0]);
-                Text configSuffix = text(configFormat[1] + " ");
-
-                return Text.empty().setStyle(style)
-                    .append(configPrefix)
-                    .append(team.getPrefix())
-                    .append(playername)
-                    .append(team.getSuffix())
-                    .append(configSuffix);
-            }
-        } catch(Exception e) {
+        } catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
             ChatPatches.logReportMsg(e);
         }

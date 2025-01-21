@@ -93,23 +93,13 @@ public class ChatUtils {
 	 * Returns a {@link MutableText} representing the argument
 	 * located at the given index of the given
 	 * {@link TranslatableTextContent}. Needed because of a
-	 * phenomenon where the {@link TranslatableTextContent#getArg(int)}
 	 * weird phenomenon where the
-	 * method can return a {@link String} or other non-Text related
 	 * {@linkplain TranslatableTextContent#getArg(int) original
-	 * object, which otherwise causes {@link ClassCastException}s.
 	 * <code>getArg</code> method} can return a non-Text object, which
-	 * <p>
 	 * typically causes a {@link ClassCastException} to be thrown.
-	 * Wraps {@link String}s in {@link Text#literal(String)}
-	 * and nulls in {@link Text#empty()}.
 	 *
-	 *
-	 * @implNote
 	 * @return Regular {@link Text} objects as expected,
-	 * If {@code index} is negative, it's added to the args array
 	 * {@link String} arguments as {@linkplain Text#literal(String)
-	 * length. In other words, passing index {@code -n} will
 	 * literal texts}, and nulls as {@linkplain Text#empty() empty texts}.
 	 */
 	public static MutableText getArg(TranslatableTextContent content, int index) {
@@ -385,6 +375,7 @@ public class ChatUtils {
 
 		return TextUtils.newText(incoming.getContent(), siblings, incoming.getStyle());
 	}
+
 
 	/** Represents the metadata of a chat message. */
 	public record MessageData(GameProfile sender, Date timestamp, boolean vanilla) {}
