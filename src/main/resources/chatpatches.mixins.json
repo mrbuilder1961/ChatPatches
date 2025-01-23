@@ -7,7 +7,7 @@
   "mixinPriority": 2000,
   "mixins": [],
   "client": [
-    "chat.MessageHandlerMixin",
+    "listener.MessageHandlerMixin",
     "gui.ChatHudMixin",
     "gui.ChatScreenMixin",
     "gui.ScreenMixin",
