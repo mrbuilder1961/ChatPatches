@@ -16,13 +16,16 @@ import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
+import obro1961.chatpatches.util.TextUtils;
 
 import java.io.EOFException;
 import java.io.FileWriter;
@@ -155,38 +158,36 @@ public class Config {
      * {@link PlayerEntity#getDisplayName()}.
      *
      * @implNote {@code player} must reference a valid, existing
-     * player entity and have both a valid name and UUID.
+     * player entity and have both a valid name and UUID. Additionally,
+     * the {@linkplain MinecraftClient#world client world} must exist.
      */
+    @SuppressWarnings("DataFlowIssue") // getDisplayName() is never null, same with Formatting.RESET and getColor()
     public MutableText formatPlayername(GameProfile profile) {
-        Style style = BLANK_STYLE.withColor(chatNameColor); // defaults to the config-specified color
+        Style style = Style.EMPTY.withColor(chatNameColor); // defaults to the config-specified color
         try {
-            // note: creating a new PlayerListEntry might cause issues?
-            Text teamName = mc.inGameHud.getPlayerListHud().getPlayerName( new PlayerListEntry(profile, false) );
+			Team team = mc.world.getScoreboard().getScoreHolderTeam(profile.getName());
+            Style hoverStyle = new OtherClientPlayerEntity(mc.world, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
+                .withParent(style); // fills in the color with chatNameColor if not specified by the team
             String[] configFormat = chatNameFormat.split("\\$");
-
-            // override the custom color with the team one if it exists
-            if(teamName.getStyle().getColor() instanceof TextColor color)
-                style = style.withColor(color);
+            List<Text> components = new ArrayList<>(team != null ? 5 : 3);
 
 
-            // uses a fake player entity to get the display name style (hover/click/insertion)
-            //noinspection DataFlowIssue: world should ALWAYS exist when executing this method
-            Text displayName = new OtherClientPlayerEntity(mc.world, profile).getDisplayName();
-            if(teamName.getSiblings().isEmpty()) {
-                return Text.empty().setStyle( style.withParent(displayName.getStyle()) )
-                    .append( text(configFormat[0]) )                    // config prefix
-                    .append( text(profile.getName()) )                  // playername
-                    .append( text(configFormat[1] + " ") ); // config suffix
-            } else {
-                return Text.empty().setStyle( style.withParent(displayName.getStyle()) )
-                    .append( text(configFormat[0]) )                    // config prefix
-                    .append( teamName.getSiblings().getFirst() )        // team prefix
-                    .append( teamName.getSiblings().get(1) )            // team playername
-                    .append( teamName.getSiblings().getLast() )         // team suffix
-                    .append( text(configFormat[1] + " ") ); // config suffix
+            components.add(text( configFormat[0] ));                    // config prefix
+            components.add(text( profile.getName() ));                  // playername
+            components.add(text( configFormat[1] + " " )); // config suffix
+
+            if(team != null) {
+                components.add(1, team.getPrefix());             // team prefix
+                components.add(3, team.getSuffix());             // team suffix
             }
+
+            return TextUtils.newText(PlainTextContent.EMPTY, components, hoverStyle);
 		} catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
+
+            if(mc.world == null)
+                e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
+
             ChatPatches.logReportMsg(e);
         }
 
