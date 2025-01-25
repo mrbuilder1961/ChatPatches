@@ -28,7 +28,6 @@ import obro1961.chatpatches.accessor.ChatScreenAccessor;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
-import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +71,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 									 MENU_X = 2,
 									 MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 	// context menu
-	@Unique private static ContextMenu contextMenu = ContextMenu.NO_OP;
+	@Unique private static ContextMenu contextMenu = new ContextMenu(-1, -1);
 	// search stuff
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
@@ -256,7 +255,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else if(!searchField.getText().isEmpty())
 			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
 
-		contextMenu = ContextMenu.NO_OP; // not unhooking here, because the screen is totally gone so rendering/usage is impossible
+		contextMenu.close(); // not unhooking here, because the screen is totally gone so rendering/usage is impossible
 		ContextMenu.updateHooks(null, null);
 	}
 
@@ -305,7 +304,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * 		<ul>
 	 * 			<li>If the mouse right-clicked, tries to load a new context menu</li>
 	 * 			<li>Otherwise if the mouse left-clicked and it isn't a
-	 * 			{@linkplain ContextMenu#NO_OP no-op}, delegates to
+	 * 			{@linkplain ContextMenu#noOp no-op}, delegates to
 	 * 			{@link ContextMenu#mouseClicked(double, double, int)}</li>
 	 * 		</ul>
 	 * </ul>
@@ -331,15 +330,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		} else if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT || contextMenu.mouseClicked(mX, mY, button)) {
 			closeContextMenu = false;
 			contextMenu.close();
-			contextMenu = ContextMenu.NO_OP; // idk if we need to do this but... maybe? todo
 			cir.setReturnValue(true);
 		} else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
 			// fixme: figure out how to close menu if anything other than right-click or menu clicked
 			// prepub: move this into a static ContextMenu method
 
-			ContextMenu mousePosMenu = ContextMenu.of(mX, mY);
+			ContextMenu mousePosMenu = new ContextMenu(mX, mY);
 			// if the mouse right-clicked elsewhere and that location can load a context menu, use it
-			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && mousePosMenu != ContextMenu.NO_OP) {
+			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && !mousePosMenu.isNoOp()) {
 				contextMenu.close(); // unhook the old context menu buttons
 				contextMenu = mousePosMenu; // keep and use the updated context menu
 				contextMenu.init(); // initialize the context menu and register the provided buttons
@@ -349,10 +347,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		}
 
 		// if anything was clicked other than the context menu, and it was open, then close it
-		if(closeContextMenu && contextMenu != ContextMenu.NO_OP) {//fixme (mayb not this statement idk) outline still renders after closing menu... but instead of setting = noop, what if
+		if(closeContextMenu && !contextMenu.isNoOp()) {//fixme (mayb not this statement idk) outline still renders after closing menu... but instead of setting = noop, what if
 			// we just add a noOp field to contextmenu and when we close it, we set it to true, and effectively brick the entire context menu? seems easier and epic
 			contextMenu.close();
-			contextMenu = ContextMenu.NO_OP;
 		}
 	}
 

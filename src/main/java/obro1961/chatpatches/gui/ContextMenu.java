@@ -118,44 +118,53 @@ public class ContextMenu {
 	private final List<ChatHudLine.Visible> selectedVisibles;
 	private final GameProfile messageSender;
 
-
 	/**
-	 * A no-op context menu that does nothing when initialized or interacted with.
-	 * This is used when a passed parameter is invalid, the context menu is not
-	 * needed yet, or it's disabled in the config.
-	 *
-	 * @apiNote Shouldn't throw any errors on instantiation because it doesn't call
-	 * {@link #of(double, double)} to create itself, but instead
-	 * the less-stringent
-	 *  {@linkplain ContextMenu#ContextMenu(double, double, ChatHudLine, List)
-	 * constructor}.
+	 * If true, effectively disables this context menu, meaning
+	 * it will do nothing when interacted with. This is used
+	 * when a passed parameter is invalid, the context menu is
+	 * not needed yet, or it's disabled in the config. It is
+	 * also very helpful for closing the menu when it's no
+	 * longer needed.
 	 */
-	public static final ContextMenu NO_OP = new ContextMenu(0, 0, NIL_HUD_LINE, List.of()) {
-		@Override public void init() {}
-		@Override public void render(DrawContext drawContext, int mX, int mY, float delta) {}
-		@Override public void keyPressed(int keyCode, int scanCode, int modifiers) {}
-		@Override public boolean mouseClicked(double mX, double mY, int button) { return false; }
-		@Override public void mouseMoved(double mX, double mY) {}
-	};
+	private boolean noOp = false; public boolean isNoOp() {return noOp;}
 
-	private ContextMenu(double mX, double mY, ChatHudLine hudLine, List<ChatHudLine.Visible> selectedVisibles) {
+
+	public ContextMenu(double mX, double mY) {
 		this.clickPos = RenderUtils.MousePos.of(mX, mY);
 		this.gridData = new GridData(MAX_ROWS, MAX_COLUMNS);
 		this.buttonGrid = new GridWidget((int) mX, (int) mY);
-		this.selectedLine = hudLine;
-		this.selectedVisibles = new ArrayList<>(selectedVisibles); //prepub get rid of this wrapper, we shouldnt need it if we add the noOp field
-
 		this.widgets = ((GridWidgetAccessor) buttonGrid).getChildren();
 
-		Style s = getMsgPart(hudLine.content(), MSG_SENDER_INDEX).getStyle();
+		this.selectedVisibles = getFullMessageAt(mX, mY);
+
+		List<ChatHudLine> chatMessages = ((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getMessages();
+		String fH = TextUtils.reorder( selectedVisibles.getFirst().content(), false );
+		// find the first message that starts with the hovered message (aka the hovered message)
+		this.selectedLine = chatMessages.stream()
+			.filter(msg ->
+				Formatting.strip( msg.content().getString() )
+					// longer messages sometimes fail because extra spaces appear to be added,
+					// so it now uses startsWith() bc the first one never has extra spaces.
+					.startsWith(fH.isEmpty() ? "\n" : fH) // detects messages starting with newlines, along with regular messages
+			)
+			.findFirst()
+			.orElse(NIL_HUD_LINE);
+
+		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityContent ec
 			? new GameProfile(ec.uuid, ec.name.getString())
 			: NIL_MSG_DATA.sender();
+
+
+		// disables the menu if it was passed invalid values or if it's disabled in the config
+		if(!config.contextMenu || mX < 0 || mY < 0 || selectedVisibles.isEmpty() || !chatMessages.contains(selectedLine))
+			noOp = true;
 	}
 
 	/**
 	 * Ugly but critical method to grant the context menu access to ChatScreen methods.
-	 * todo explain hopw this is critical and must be called before the context menu is used
+	 * Must be called before the context menu is initialized, otherwise an
+	 * {@link IllegalStateException} will be thrown.
 	 */
 	public static void updateHooks(Consumer<ClickableWidget> addSelectableChild, Consumer<Element> remove) {
 		ContextMenu.addSelectableChild = addSelectableChild;
@@ -165,9 +174,9 @@ public class ContextMenu {
 	/**
 	 * Creates a new context menu with the specified Minecraft client
 	 * and mouse position. If either mouse coordinate is negative, the
-	 * {@link #NO_OP} menu is returned instead. Calculates the selected
+	 * {@link #noOp} menu is returned instead. Calculates the selected
 	 * message lines from the mouse coordinates, and also returns the
-	 * {@link #NO_OP} menu if they don't exist.
+	 * {@link #noOp} menu if they don't exist.
 	 *
 	 * <p>This method effectively serves as a constructor and
 	 * initializer for the context menu, as it populates the required
@@ -176,12 +185,12 @@ public class ContextMenu {
 	 * related data structures.
 	 *
 	 * @apiNote Needed as a separate method from the constructor to
-	 * allow the {@link #NO_OP} menu to be returned when applicable.
+	 * allow the {@link #noOp} menu to be returned when applicable.
 	 */
 	public static ContextMenu of(double mX, double mY) {
 		List<ChatHudLine.Visible> visibles = getFullMessageAt(mX, mY);
 		if(!config.contextMenu || visibles.isEmpty() || mX < 0 || mY < 0)
-			return NO_OP;
+			return null;
 
 		final List<ChatHudLine> chatMessages = ((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getMessages();
 
@@ -197,7 +206,7 @@ public class ContextMenu {
 			.orElse(NIL_HUD_LINE);
 
 		// ensures the selected line is in ChatHud#messages
-		return chatMessages.contains(selectedLine) ? new ContextMenu(mX, mY, selectedLine, visibles) : NO_OP;
+		return chatMessages.contains(selectedLine) ? new ContextMenu(mX, mY) : null;
 	}
 
 
@@ -301,6 +310,9 @@ public class ContextMenu {
 	 * todo...
 	 */
 	public void init() {
+		if(noOp)
+			return;
+
 		if(addSelectableChild == null) {
 			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `addSelectableChild` not initialized"));
 			return;
@@ -392,6 +404,9 @@ public class ContextMenu {
 	 * @implSpec {@code hoveredVisibles} should not be empty.
 	 */
 	public void render(DrawContext drawContext, int mX, int mY, float delta) {
+		if(noOp)
+			return;
+
 		renderSelectionOutline(drawContext, mX, mY, delta);
 		renderMenuButtons(drawContext, mX, mY, delta);
 	}
@@ -445,6 +460,9 @@ public class ContextMenu {
 	}
 
 	public void keyPressed(int keyCode, int scanCode, int modifiers) {
+		if(noOp)
+			return;
+
 		// accessibility tab consumer thing.. how?
 
 		// consume enter and arrow keys to press and navigate buttons
@@ -468,6 +486,9 @@ public class ContextMenu {
 	 * 	  		 to work properly.
 	 */
 	public boolean mouseClicked(double mX, double mY, int button) {
+		if(noOp)
+			return false;
+
 		// assumes the menu has been initialized
 		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
 			// whether the button at (mX, mY) was clicked or not, otherwise return false and close the menu
@@ -513,9 +534,9 @@ public class ContextMenu {
 	}
 
 	/**
-	 * Unhooks all widgets provided by this context menu
-	 * (originally from {@link #init()}) from
-	 * the screen.
+	 * Unhooks all widgets provided by this context
+	 *  menu(originally from {@link #init()}) from
+	 * the screen. Then flags {@link #noOp} as true.
 	 *
 	 * @apiNote Uses {@link #remove}, aka the
 	 * 		    {@link Screen#remove(Element)} method, so
@@ -529,6 +550,7 @@ public class ContextMenu {
 		}
 
 		buttonGrid.forEachChild(remove::accept);
+		noOp = true;
 		//selectedVisibles.clear();
 		widgets.clear();
 	}
@@ -546,7 +568,7 @@ public class ContextMenu {
 	 * so the last one to render should be the one to return.
 	 */
 	private Optional<PressableWidget> getHoveredButton(double mX, double mY) {
-		return isMouseOver(mX, mY)
+		return !noOp && isMouseOver(mX, mY)
 			? new ArrayList<>(widgets)
 				.reversed() // last button to render is the first to be checked, and for any overlap
 				.stream()

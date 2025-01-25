@@ -1,4 +1,4 @@
-package obro1961.chatpatches.mixin.chat;
+package obro1961.chatpatches.mixin.listener;
 
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.api.EnvType;

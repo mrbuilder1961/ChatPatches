@@ -8,10 +8,10 @@
   "mixins": [],
   "client": [
     "accessor.GridWidgetAccessor",
-    "chat.MessageHandlerMixin",
     "gui.ChatHudMixin",
     "gui.ChatScreenMixin",
     "gui.ScreenMixin",
+    "listener.MessageHandlerMixin",
     "security.CPNHMixin"
   ],
   "injectors": {

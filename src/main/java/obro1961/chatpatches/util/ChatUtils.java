@@ -345,7 +345,7 @@ public class ChatUtils {
 
 		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates
 		int dupeCount = 1;
-		for(int i = 0; i < attemptDistance && i < messages.size(); i++) {
+		for(int i = 0; i < attemptDistance && i < messages.size(); i++) { //prepub: iterate backwards instead and then we dont have to -- at the end..?
 			Text msg = messages.get(i).content();
 
 			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) )
