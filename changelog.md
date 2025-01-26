@@ -1,5 +1,9 @@
 # Changelog
 
+## Chat Patches `214.6.12` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
+- Fixed some playernames not formatting properly
+- Fixed the CompactChat dupe counter sometimes not working ([#216](https://github.com/mrbuilder1961/ChatPatches/issues/216))
+
 ## Chat Patches `214.6.11` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Fixed teams with prefixes or suffixes preventing playernames from formatting
 - Synced with the in-progress `omnivers` branch:
@@ -61,7 +65,7 @@
   - *Note: There was technically TWO code privatizations in 1.21.1, but they had simple fixes*
 - Added Korean translation from [Nooiee](https://github.com/Nooiee)! ([#193](https://github.com/mrbuilder1961/ChatPatches/issues/193))
 - Fixed team messages showing up blank and throwing an error ([#199](https://www.github.com/mrbuilder1961/ChatPatches/issues/199))
-- Modified messages should now be used even if errors occurred, so long as they're still valid. This might be undone in the future based on 
+- Modified messages should now be used even if errors occurred, so long as they're still valid. This might be undone in the future based on
   feedback
 
 ## Chat Patches `210.6.5.1` for Minecraft 1.21 on Fabric, Quilt
