@@ -2,7 +2,6 @@ package obro1961.chatpatches.gui;
 
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
@@ -20,6 +19,7 @@ import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.JsonHelper;
+import net.minecraft.util.StringHelper;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -57,7 +57,7 @@ public class ContextMenu {
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
 	private static final int buttonPadding = 4;
 	// text
-	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable("text.chatpatches.copy.unknownData", id); // todo make sure this looks okay in practice
+	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable("text.chatpatches.copy.unknownData", id);
 	static final Text MENU_STRING = Text.translatable("text.chatpatches.copy.copyString");
 	static final Text RAW_STR = Text.translatable("text.chatpatches.copy.rawString");
 	static final Text FORMATTED_STR = Text.translatable("text.chatpatches.copy.formattedString");
@@ -126,7 +126,7 @@ public class ContextMenu {
 	 * also very helpful for closing the menu when it's no
 	 * longer needed.
 	 */
-	private boolean noOp = false; public boolean isNoOp() {return noOp;}
+	private boolean noOp = false;
 
 
 	public ContextMenu(double mX, double mY) {
@@ -137,28 +137,29 @@ public class ContextMenu {
 
 		this.selectedVisibles = getFullMessageAt(mX, mY);
 
+		// disables the menu if it was passed invalid values or if it's disabled in the config
+		if(!config.contextMenu || mX < 0 || mY < 0 || selectedVisibles.isEmpty())
+			noOp = true;
+
 		List<ChatHudLine> chatMessages = ((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getMessages();
-		String fH = TextUtils.reorder( selectedVisibles.getFirst().content(), false );
+		String fH = noOp ? "\u0000" : TextUtils.reorder(selectedVisibles.getFirst().content(), false);
 		// find the first message that starts with the hovered message (aka the hovered message)
 		this.selectedLine = chatMessages.stream()
 			.filter(msg ->
-				Formatting.strip( msg.content().getString() )
+				!noOp && Formatting.strip(msg.content().getString())
 					// longer messages sometimes fail because extra spaces appear to be added,
 					// so it now uses startsWith() bc the first one never has extra spaces.
 					.startsWith(fH.isEmpty() ? "\n" : fH) // detects messages starting with newlines, along with regular messages
 			)
-			.findFirst()
-			.orElse(NIL_HUD_LINE);
+			.findFirst().orElse(NIL_HUD_LINE);
+
+		if(!noOp && (selectedLine == NIL_HUD_LINE || !chatMessages.contains(selectedLine)))
+			noOp = true;
 
 		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityContent ec
-			? new GameProfile(ec.uuid, ec.name.getString())
+			? new GameProfile(ec.uuid, Objects.requireNonNullElse(ec.name, UNKNOWN.apply(Text.of( "Sender " + ec.uuid.toString() ))).getString())
 			: NIL_MSG_DATA.sender();
-
-
-		// disables the menu if it was passed invalid values or if it's disabled in the config
-		if(!config.contextMenu || mX < 0 || mY < 0 || selectedVisibles.isEmpty() || !chatMessages.contains(selectedLine))
-			noOp = true;
 	}
 
 	/**
@@ -169,44 +170,6 @@ public class ContextMenu {
 	public static void updateHooks(Consumer<ClickableWidget> addSelectableChild, Consumer<Element> remove) {
 		ContextMenu.addSelectableChild = addSelectableChild;
 		ContextMenu.remove = remove;
-	}
-
-	/**
-	 * Creates a new context menu with the specified Minecraft client
-	 * and mouse position. If either mouse coordinate is negative, the
-	 * {@link #noOp} menu is returned instead. Calculates the selected
-	 * message lines from the mouse coordinates, and also returns the
-	 * {@link #noOp} menu if they don't exist.
-	 *
-	 * <p>This method effectively serves as a constructor and
-	 * initializer for the context menu, as it populates the required
-	 * fields. However, this shouldn't be confused with
-	 * {@link #init()}, which creates the widget buttons and
-	 * related data structures.
-	 *
-	 * @apiNote Needed as a separate method from the constructor to
-	 * allow the {@link #noOp} menu to be returned when applicable.
-	 */
-	public static ContextMenu of(double mX, double mY) {
-		List<ChatHudLine.Visible> visibles = getFullMessageAt(mX, mY);
-		if(!config.contextMenu || visibles.isEmpty() || mX < 0 || mY < 0)
-			return null;
-
-		final List<ChatHudLine> chatMessages = ((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getMessages();
-
-		// longer messages sometimes fail because extra spaces appear to be added,
-		// so it now uses startsWith() bc the first one never has extra spaces.
-		String fH = TextUtils.reorder( visibles.getFirst().content(), false );
-		String firstHovered = fH.isEmpty() ? "\n" : fH; // fixes messages starting with newlines not being detected
-
-		// get hovered message index (messages) for all copying data
-		ChatHudLine selectedLine = chatMessages.stream()
-			.filter(msg -> Formatting.strip( msg.content().getString() ).startsWith(firstHovered))
-			.findFirst()
-			.orElse(NIL_HUD_LINE);
-
-		// ensures the selected line is in ChatHud#messages
-		return chatMessages.contains(selectedLine) ? new ContextMenu(mX, mY) : null;
 	}
 
 
@@ -232,7 +195,7 @@ public class ContextMenu {
 
 		PressableWidget button = ButtonWidget.builder(id, b -> {
 			Text copyText = tooltipCopyTextSupplier.get();
-			String copyStr = SharedConstants.stripInvalidChars(copyText.getString(), true); // strip section signs//todo fix?
+			String copyStr = StringHelper.stripTextFormat(copyText.getString());//todo fix?
 			if(!copyStr.isEmpty()) {
 				mc.keyboard.setClipboard(copyStr);
 				mc.getToastManager().add(new SystemToast( SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("text.chatpatches.copy.copied"), copyText ));
@@ -240,8 +203,7 @@ public class ContextMenu {
 
 			pressAction.onPress(b);
 
-			//fixme idk why the menu doesnt close on click... see #mouseClicked
-			close(); // close the menu after copying (fixme does this work?)
+			close();
 		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
 
 		button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )//prepub?
@@ -312,7 +274,6 @@ public class ContextMenu {
 	public void init() {
 		if(noOp)
 			return;
-
 		if(addSelectableChild == null) {
 			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `addSelectableChild` not initialized"));
 			return;
@@ -327,7 +288,7 @@ public class ContextMenu {
 					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
 					.map(JsonHelper::toSortedString)
 					.map(Text::of)
-					.orElse(UNKNOWN.apply(JSON_STR)),
+					.orElse(UNKNOWN.apply(JSON_STR)),//prepub: can we make this format better? like /data get coded or even just ChatInputSuggestor formatting?
 			2, 1);
 
 		// timestamp buttons - conditional (not on boundary lines)
@@ -350,22 +311,20 @@ public class ContextMenu {
 		List<String> webLinks = TextUtils.getLinks(selectedLine.content().getString());
 		List<String> fileLinks = new ArrayList<>();
 		selectedLine.content().visit((style, str) -> {
-			if(style.getClickEvent() instanceof ClickEvent ce) {
-				if(ce.getAction() == ClickEvent.Action.OPEN_FILE)
-					fileLinks.add(ce.getValue());
-				else if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(ce.getValue()))
-					webLinks.add(ce.getValue());
+			if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
+				if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v))
+					webLinks.add(v);
+				else if(ce.getAction() == ClickEvent.Action.OPEN_FILE && !fileLinks.contains(v))
+					fileLinks.add(v);
 			}
 			return Optional.empty();
 		}, Style.EMPTY);
-		// fixme: image not letting me click (no CE in style) and its not translatable, no idea whats wrong here but it cant work as of now
-		ChatPatches.LOGGER.warn("[DEBUG] [ContextMenu] webLinks: {}, fileLinks: {} translatable: {}", webLinks, fileLinks, selectedLine.content().getContent() instanceof TranslatableTextContent ttc ?
-			ttc.getArgs() : "x");
+
 		if(!webLinks.isEmpty() || !fileLinks.isEmpty()) {
 			registerProxyButton(MENU_LINKS, LINK_N.apply(1), 0, 0);
 
 			for(int i = 0; i < fileLinks.size(); i++)
-				registerCopyOnlyButton(LINK_N.apply(i + 1), Text.of("§a§n" + fileLinks.get(i)), i, 1);
+				registerCopyOnlyButton(LINK_N.apply(i + 1), Text.of("§6§n" + fileLinks.get(i)), i, 1);
 
 			for(int i = fileLinks.size(); i < webLinks.size() + fileLinks.size(); i++)
 				// creates link buttons starting at link 1 up to link n, with ids following the same pattern (LINK_1 - LINK_N)
@@ -544,19 +503,27 @@ public class ContextMenu {
 	 * 		    screen properly.
 	 */
 	public void close() {
+		noOp = true;
 		if(remove == null) {
 			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `remove` not initialized"));
 			return;
 		}
-
 		buttonGrid.forEachChild(remove::accept);
-		noOp = true;
-		//selectedVisibles.clear();
 		widgets.clear();
 	}
 
+	/**
+	 * @see #noOp
+	 *
+	 * @apiNote Intended for external
+	 * (non-{@link ContextMenu}) use.
+	 */
+	public boolean isFunctional() {
+		return !noOp;
+	}
+
 	public boolean isMouseOver(double mX, double mY) {
-		return
+		return !noOp &&
 			   mX >= buttonGrid.getX() && mX <= buttonGrid.getX() + buttonGrid.getWidth()
 			&& mY >= buttonGrid.getY() && mY <= buttonGrid.getY() + buttonGrid.getHeight();
 	}
@@ -568,7 +535,7 @@ public class ContextMenu {
 	 * so the last one to render should be the one to return.
 	 */
 	private Optional<PressableWidget> getHoveredButton(double mX, double mY) {
-		return !noOp && isMouseOver(mX, mY)
+		return isMouseOver(mX, mY)
 			? new ArrayList<>(widgets)
 				.reversed() // last button to render is the first to be checked, and for any overlap
 				.stream()
@@ -610,7 +577,7 @@ public class ContextMenu {
 	 * </ol>
 	 */
 	private static @NotNull List<ChatHudLine.Visible> getFullMessageAt(double mX, double mY) {
-		if(mX < 0 || mY < 0)
+		if(!config.contextMenu || mX < 0 || mY < 0)
 			return new ArrayList<>(0);
 
 		final ChatHudAccessor chat = (ChatHudAccessor) mc.inGameHud.getChatHud();
@@ -692,7 +659,7 @@ public class ContextMenu {
 			this.groups = new ArrayList<>(maxRows);
 		}
 
-		public void add(PressableWidget button, int localRow, int col, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction) { //todo final signature: (int lR, int c, ButtonWidget b)
+		public void add(PressableWidget button, int localRow, int col, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction) {
 			boolean newGroupAkaIsMain = button.visible = col == 0; // note: this will only break things if >1 main buttons are grouped together
 			int groupId = newGroupAkaIsMain ? groupCount++ : groupCount - 1;
 

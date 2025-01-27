@@ -1,6 +1,7 @@
 package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.fabricmc.api.EnvType;
@@ -193,8 +194,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;render(Lnet/minecraft/client/gui/DrawContext;IIF)V"))
 	private void renderSearchAndContextMenuStuff(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
-		client.getProfiler().push("chatpatches"); //prepub keep profiler stuff? see ContextMenu#render for more deets
-
 		context.getMatrices().push();
 		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 
@@ -225,7 +224,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		context.getMatrices().pop(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
 		contextMenu.render(context, mX, mY, delta);
-		client.getProfiler().pop();
 	}
 
 	/**
@@ -255,7 +253,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else if(!searchField.getText().isEmpty())
 			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
 
-		contextMenu.close(); // not unhooking here, because the screen is totally gone so rendering/usage is impossible
+		contextMenu.close();
 		ContextMenu.updateHooks(null, null);
 	}
 
@@ -289,6 +287,25 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			? null
 			: getTextStyleAt.call(screen, mX, mY);
 	}
+
+	/**
+	 * We always want to close the context menu,
+	 * EXCEPT when we created one (via right-click).
+	 *
+	 * @apiNote This wrapper can be called a LOT, so
+	 * we want to keep its footprint as minimal as
+	 * possible.
+	 */
+	@WrapMethod(method = "mouseClicked")
+	private boolean fixContextMenuNotClosing(double mX, double mY, int button, Operation<Boolean> mouseClicked) {
+		boolean clicked = mouseClicked.call(mX, mY, button);
+
+		if(button != GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+			contextMenu.close(); // closes the menu if it wasn't just created, we don't care if anything was actually clicked
+
+		return clicked;
+	}
+
 	/**
 	 * Returns {@code true} if the mouse clicked on any of the following:
 	 * <ul>
@@ -315,8 +332,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(cir.getReturnValue())
 			return;
 
-		boolean closeContextMenu = true;
-
 		if(searchField.mouseClicked(mX, mY, button))
 			cir.setReturnValue(true);
 
@@ -327,29 +342,18 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				cir.setReturnValue(true);
 			if(regexButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-		} else if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT || contextMenu.mouseClicked(mX, mY, button)) {
-			closeContextMenu = false;
-			contextMenu.close();
+		} else if(contextMenu.mouseClicked(mX, mY, button)) {
 			cir.setReturnValue(true);
 		} else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-			// fixme: figure out how to close menu if anything other than right-click or menu clicked
-			// prepub: move this into a static ContextMenu method
-
 			ContextMenu mousePosMenu = new ContextMenu(mX, mY);
 			// if the mouse right-clicked elsewhere and that location can load a context menu, use it
-			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && !mousePosMenu.isNoOp()) {
+			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && mousePosMenu.isFunctional()) {
 				contextMenu.close(); // unhook the old context menu buttons
 				contextMenu = mousePosMenu; // keep and use the updated context menu
-				contextMenu.init(); // initialize the context menu and register the provided buttons
-				closeContextMenu = false;
+
+				contextMenu.init(); // initialize the new menu - old hooks are the same too!
 				cir.setReturnValue(true);
 			}
-		}
-
-		// if anything was clicked other than the context menu, and it was open, then close it
-		if(closeContextMenu && !contextMenu.isNoOp()) {//fixme (mayb not this statement idk) outline still renders after closing menu... but instead of setting = noop, what if
-			// we just add a noOp field to contextmenu and when we close it, we set it to true, and effectively brick the entire context menu? seems easier and epic
-			contextMenu.close();
 		}
 	}
 

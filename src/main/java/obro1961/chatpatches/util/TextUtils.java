@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.dynamic.Codecs;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -41,7 +40,7 @@ public class TextUtils {
 	 */
 	public static List<String> getLinks(String str) {
 		// slightly modified from https://stackoverflow.com/a/163398 to not include file links
-		final String urlRegex = "\\bhttps?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+		final String urlRegex = "\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 		final Matcher matcher = Pattern.compile(urlRegex).matcher(str);
 		List<String> urls = new ArrayList<>();
 
@@ -118,7 +117,7 @@ public class TextUtils {
 	/**
 	 * Takes a {@link Style} and returns a string of {@code &<?>}
 	 * codes based upon the style's formatting data.
-	 */
+	 */ //todo: fix known colors returning hex codes, and remove reset codes when no modifier codes were present
 	@SuppressWarnings("StringBufferReplaceableByString") // StringBuilder is faster and String concatenation looks ugly
 	public static String getFormattingCodes(Style style) {
 		StringBuilder codes = new StringBuilder(18);
