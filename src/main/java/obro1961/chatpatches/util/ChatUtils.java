@@ -298,8 +298,10 @@ public class ChatUtils {
 	 *         corresponds to the most recent message
 	 *         only.</li>
 	 *     </ol>
-	 *     <li>Iterate through the last {@code attemptDistance}
-	 *     messages to find and condense (remove) any duplicates.</li>
+	 *     <li>Iterate backwards through the last {@code attemptDistance}
+	 *     messages to find and condense (remove) any duplicates. Goes
+	 *     backwards to avoid skipping messages and needing to decrement
+	 *     the attempt distance after every match.</li>
 	 *     <ol>
 	 *         <li>If the incoming message is different from the
 	 *         iterated message, in terms of text or style data
@@ -312,9 +314,6 @@ public class ChatUtils {
 	 *         <li>Remove the message being condensed.</li>
 	 *         <li>Remove visible message(s), starting at the iterated
 	 *         index, until the next message (EoE) is reached.</li>
-	 *         <li>Decrement the index to prevent skipping the next message.</li>
-	 *         <li>Decrement the attempt distance to prevent checking
-	 *         extra messages.</li>
 	 *     </ol>
 	 *     <li>Update the incoming message with the new dupe counter,
 	 *     if the total dupe count is greater than 1.</li>
@@ -344,8 +343,9 @@ public class ChatUtils {
 
 
 		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates
+		// goes backwards to avoid skipping messages and needing to decrement the attempt distance
 		int dupeCount = 1;
-		for(int i = 0; i < attemptDistance && i < messages.size(); i++) { //prepub: iterate backwards instead and then we dont have to -- at the end..?
+		for(int i = attemptDistance - 1; i >= 0 && i < messages.size(); i--) {
 			Text msg = messages.get(i).content();
 
 			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) )
@@ -363,9 +363,6 @@ public class ChatUtils {
 			// remove the visible message(s) of the message being condensed
 			do visibles.remove(i);
 			while(!visibles.isEmpty() && !visibles.get(i).endOfEntry()); // continue removing them until the next message (EoE) is reached
-
-			i--;  // we removed the first message, but we don't want to skip the next one
-			attemptDistance--; // but we also don't want to check messages we shouldn't be checking
 		}
 
 		// update the incoming message with the new dupe counter
