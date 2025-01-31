@@ -3,9 +3,13 @@ package obro1961.chatpatches.util;
 import com.mojang.serialization.Codec;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Util;
 import net.minecraft.util.dynamic.Codecs;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,6 +19,14 @@ import java.util.regex.Pattern;
 public class TextUtils {
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
+	public static final Map<Integer, Formatting> COLOR_TO_FORMATTING = Util.make(() -> {
+		Map<Integer, Formatting> map = new HashMap<>();
+		for(Formatting f : Formatting.values()) {
+			if(f.isColor())
+				map.put(f.getColorValue(), f);
+		}
+		return map;
+	});
 
 	/**
 	 * Returns a {@link Codec} for {@link Text} objects.
@@ -116,26 +128,37 @@ public class TextUtils {
 
 	/**
 	 * Takes a {@link Style} and returns a string of {@code &<?>}
-	 * codes based upon the style's formatting data.
-	 */ //todo: fix known colors returning hex codes, and remove reset codes when no modifier codes were present
-	@SuppressWarnings("StringBufferReplaceableByString") // StringBuilder is faster and String concatenation looks ugly
+	 * codes based upon the style's formatting data. Additionally,
+	 * if the color is a hex code, it will be converted to a
+	 * formatting code if possible, otherwise translated in the
+	 * format {@code &#RRGGBB}.
+	 */
+	// idea: if (fancyCodes) is true, surround each code with an actual section sign code that styles the code as it would appear in chat!
 	public static String getFormattingCodes(Style style) {
-		StringBuilder codes = new StringBuilder(18);
-		Formatting color;
+		String codes = "";
+		TextColor color = style.getColor();
+		Formatting formatting = color instanceof TextColor ? Formatting.byName(color.getName()) : Formatting.RESET;
 
-		codes.append(
-			style.getColor() != null
-				? (color = Formatting.byName(style.getColor().getName())) != null
-					? "&" + color.getCode()
-					: "&" + style.getColor().getHexCode()
-				: "&r"
-		);
-		codes.append( style.isBold() ? "&l" : "" );
-		codes.append( style.isItalic() ? "&o" : "" );
-		codes.append( style.isUnderlined() ? "&n" : "" );
-		codes.append( style.isStrikethrough() ? "&m" : "" );
-		codes.append( style.isObfuscated() ? "&k" : "" );
+		if(formatting != null)
+			codes += ("&" + formatting.getCode()); // handles default colors and reset codes
+		else if(style.getColor() instanceof TextColor c)
+			codes += ("&" + c.getHexCode()); // handles hex colors
 
-		return codes.toString();
+		if(style.isBold())
+			codes += "&l";
+		if(style.isItalic())
+			codes += "&o";
+		if(style.isUnderlined())
+			codes += "&n";
+		if(style.isStrikethrough())
+			codes += "&m";
+		if(style.isObfuscated())
+			codes += "&k";
+
+		// remove hex codes when they are present and matching codes exist
+		if(color != null && color.getName().startsWith("#") && COLOR_TO_FORMATTING.containsKey(color.getRgb()))
+			codes = codes.replace(color.getHexCode(), "" + COLOR_TO_FORMATTING.get(color.getRgb()).getCode());
+
+		return codes;
 	}
 }

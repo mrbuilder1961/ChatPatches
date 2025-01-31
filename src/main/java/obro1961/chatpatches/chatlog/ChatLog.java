@@ -11,7 +11,6 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
@@ -219,7 +218,7 @@ public class ChatLog {
             // this branch is intended to prevent CMEs, with the assumption they are caused by new messages being added while saving
             // if the CME is thrown, it will try to save again after the suspension is lifted, otherwise it will dump the data, log
             // the error, and unsuspend the chat log.
-            // warning: not rigorously tested; if this malfunctions and there's no clear solution just delete this, as it's extremely rare
+            // note: not rigorously tested; if this malfunctions and there's no clear solution just delete this, as it's extremely rare
             if(suspended) {
                 LOGGER.error("[ChatLog.serialize] A ConcurrentModificationException occurred while trying to save the chat log:", cme);
                 dumpData();
