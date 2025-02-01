@@ -96,13 +96,13 @@ This mod is available under the GNU LGPLv3 license. Check out [this](https://cho
 
 ## Help
 
-### How to upload log files
-There are multiple different types of log file that can be uploaded, although they are all very similar. In order of most useful to least, these are the three
-main types:
+### How to upload log files [log-info]
+There are multiple different types of log file that can be uploaded, although they are all very similar. These are all located in `(directory)/logs/`. In 
+order of most useful to least, these are the three main types:
 1. `debug.log` - Generated when the game is configured to output on the `DEBUG` level. It isn't always present, but when it is, it almost always has a ton of
    extra information that can be critical to solving issues. This is a more detailed subset of the `latest.log`.
 2. `crash-report-<date>-<time>.txt` - Generated when the game crashes; contains a lot of extra information not provided in the other two logs, however it is
-   most useful when coupled with one of the other two logs.
+   most useful when coupled with one of the others.
 3. `latest.log` - The main log file that is generated every time the game is run. It constantly updates, and contains plenty of useful information on what
    the game is doing.
 
@@ -114,14 +114,14 @@ Now that you have the files, simply submitting them to https://mclo.gs/ will giv
 It is really the only site I use, because it provides a lot of useful tools both for me and for you. One of those being that it censors many instances of
 potentially identifiable information, such as your computer's username and IP address.
 
-#### To upload the log(s) without Prism Launcher:
+#### To upload the log(s) without Prism Launcher: [log-upload]
 1. Go to https://mclo.gs/
 2. Click the "Select a file" button, and select a file. **OR** Paste the contents of the log file into the text box.
 3. Click the "Save" button.
 4. Wait for a moment, and it will redirect you to your uploaded log file. Copy the URL from the address bar and paste it wherever you were asked or need to
    share it.
 
-#### With Prism Launcher:
+#### With Prism Launcher: [log-upload-prism]
 1. Open Prism Launcher.
 2. Click on your instance that contains the log you want to upload.
 3. Navigate to the "Minecraft Log" tab (or "Other logs" tab if it's not there)
@@ -131,7 +131,7 @@ potentially identifiable information, such as your computer's username and IP ad
 6. The log should now be uploaded, and you can click the blue underlined text to view it in your browser. The URL is automatically copied to your clipboard,
    so you can now share it wherever you were asked or need to.
 
-### How to access beta releases
+### How to access beta releases [beta-install]
 To access beta releases, you'll need a link that looks like this:
 
 https://github.com/mrbuilder1961/ChatPatches/actions/runs/8310511511/ or
@@ -147,6 +147,19 @@ https://github.com/mrbuilder1961/ChatPatches/actions/runs/8310511511/artifacts/1
 6. If you have another version of Chat Patches already installed there, you can move it, rename the file extension to anything but `.jar`, or delete it.
 7. Now you should be good to go! Launching the game should now load the beta version. If you experience any issues, make sure to report them as soon as
    possible wherever you were given the link (here on GitHub or [the Discord](https://discord.gg/3MqBvNEyMz)).
+
+### How to find mod(s) causing compatibility issues [binary-search]
+*(taken from the Fabric Discord bot, not written by me!)*
+
+> A binary search can be used to quickly find a specific mod causing trouble, which can be especially useful when logs don't give a conclusive answer to your issue.
+
+> Start by removing or disabling half of your mods, then test if the problem still occurs. If it does, remove half of the remaining mods and test again. If it doesn't, add back half of the mods you just removed.
+
+> Keep in mind you don't have to stick strictly to halves each time, and may have to enable some library mods like Fabric API out of order.
+
+> By repeating this on an increasingly smaller set of mods, you'll find the problematic mod within a few iterations.
+
+Make sure you leave Chat Patches and its dependencies installed when you're looking for the problematic mod, otherwise it won't do anything to help diagnose the issue.
 
 ## Config option table
 
