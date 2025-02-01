@@ -83,8 +83,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private PatternSyntaxException searchError;
 	// search settings
 	@Unique private boolean showSettingsMenu = false;
+	/** @see Config#caseSensitive */
 	@Unique private ButtonWidget caseSensitiveButton;
+	/** @see Config#formatting */
 	@Unique private ButtonWidget formattingButton;
+	/** @see Config#regex */
 	@Unique private ButtonWidget regexButton;
 
 	// ChatScreen fields
@@ -268,7 +271,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * when the search field is visible. Seems counterintuitive,
 	 * but it works.
 	 *
-	 * @apiNote todo: see 1.19.2 port comment for more details
+	 * @apiNote todo(pc): see 1.19.2 port comment for more details
 	 */
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
 	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
@@ -307,24 +310,27 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	/**
-	 * Returns {@code true} if the mouse clicked on any of the following:
-	 * <ul>
+	 * Returns {@code true} if the mouse previously clicked on an
+	 * existing chat widget, or if it clicked on any of the following:
+	 * <ol>
+	 * 		<li>The {@linkplain #searchField search bar}</li>
 	 * 		<li>If {@linkplain #isMouseOverSettingsMenu(double, double)
-	 * 		the settings menu is visible}, check every search setting:</li>
-	 * 		<ul>
-	 * 			<li>{@link Config#caseSensitive}</li>
-	 * 			<li>{@link Config#formatting}</li>
-	 * 			<li>{@link Config#regex}</li>
-	 * 		</ul>
-	 * 		<li>Otherwise if the settings menu is closed, see if the
-	 *      {@link ContextMenu} should open:</li>
-	 * 		<ul>
+	 * 		the settings menu is visible}:</li>
+	 * 		<ol>
+	 * 			<li>The {@linkplain #caseSensitiveButton case sensitive button}</li>
+	 * 			<li>The {@linkplain #formattingButton formatting button}</li>
+	 * 			<li>The {@linkplain #regexButton regex button}</li>
+	 * 		</ol>
+	 * 		<li>Otherwise, anything encapsulated by the context menu</li>
+	 * 		<li>Finally, </li>
+	 * 		<li>Otherwise if the settings menu is closed:</li>
+	 * 		<ol>
 	 * 			<li>If the mouse right-clicked, tries to load a new context menu</li>
 	 * 			<li>Otherwise if the mouse left-clicked and it isn't a
 	 * 			{@linkplain ContextMenu#noOp no-op}, delegates to
 	 * 			{@link ContextMenu#mouseClicked(double, double, int)}</li>
-	 * 		</ul>
-	 * </ul>
+	 * 		</ol>
+	 * </ol>
 	 * TODO: REWRITE THIS JAVADOC LIST ORDER
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)

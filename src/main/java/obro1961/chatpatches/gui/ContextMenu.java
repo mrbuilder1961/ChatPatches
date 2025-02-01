@@ -195,7 +195,7 @@ public class ContextMenu {
 
 		PressableWidget button = ButtonWidget.builder(id, b -> {
 			Text copyText = tooltipCopyTextSupplier.get();
-			String copyStr = StringHelper.stripTextFormat(copyText.getString());//todo fix?
+			String copyStr = StringHelper.stripTextFormat(copyText.getString()); //prepub: config opt to copy section signs, disabled by def
 			if(!copyStr.isEmpty()) {
 				mc.keyboard.setClipboard(copyStr);
 				mc.getToastManager().add(new SystemToast( SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("text.chatpatches.copy.copied"), copyText ));
@@ -206,7 +206,7 @@ public class ContextMenu {
 			close();
 		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
 
-		button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )//prepub?
+		button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )//prepub.. see the CIS formatting idea by JSON_STR
 
 		if(renderCallback != null) {
 			PressableWidget effectivelyFinalButton = button;
@@ -288,8 +288,9 @@ public class ContextMenu {
 					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
 					.map(JsonHelper::toSortedString)
 					.map(Text::of)
-					.orElse(UNKNOWN.apply(JSON_STR)),//prepub: can we make this format better? like /data get coded or even just ChatInputSuggestor formatting?
-			2, 1);
+					.orElse(UNKNOWN.apply(JSON_STR)),//prepub: make the format fancy by somehow converting to nbt (ops?), formatting, lowercasing, and adding quotes
+			2, 1); //NbtHelper.toPrettyPrintedText(...)
+
 
 		// timestamp buttons - conditional (not on boundary lines)
 		if( !getPart(selectedLine.content(), TIMESTAMP_INDEX).getString().isBlank() ) {
