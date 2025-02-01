@@ -318,21 +318,22 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * 		<li>If {@linkplain #isMouseOverSettingsMenu(double, double)
 	 * 		the settings menu is visible}:</li>
 	 * 		<ol>
-	 * 			<li>The {@linkplain #caseSensitiveButton case sensitive button}</li>
+	 * 			<li>The {@linkplain #caseSensitiveButton case sensitive
+	 * 			button}</li>
 	 * 			<li>The {@linkplain #formattingButton formatting button}</li>
 	 * 			<li>The {@linkplain #regexButton regex button}</li>
 	 * 		</ol>
-	 * 		<li>Otherwise, anything encapsulated by the context menu</li>
-	 * 		<li>Finally, </li>
-	 * 		<li>Otherwise if the settings menu is closed:</li>
+	 * 		<li>Otherwise, anything encapsulated by the
+	 * 		{@linkplain ContextMenu#mouseClicked(double, double, int)}
+	 * 		context menu}</li>
+	 * 		<li>Finally, the chat box in an attempt to make a new context
+	 * 		menu. If the mouse clicked successfully:</li>
 	 * 		<ol>
-	 * 			<li>If the mouse right-clicked, tries to load a new context menu</li>
-	 * 			<li>Otherwise if the mouse left-clicked and it isn't a
-	 * 			{@linkplain ContextMenu#noOp no-op}, delegates to
-	 * 			{@link ContextMenu#mouseClicked(double, double, int)}</li>
+	 * 			<li>Unloads the old context menu</li>
+	 * 			<li>Saves the new one</li>
+	 * 			<li>Initializes it</li>
 	 * 		</ol>
 	 * </ol>
-	 * TODO: REWRITE THIS JAVADOC LIST ORDER
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
 	public void registerClickEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
