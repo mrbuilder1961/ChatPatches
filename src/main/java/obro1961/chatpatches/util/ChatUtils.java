@@ -359,7 +359,7 @@ public class ChatUtils {
 
 			// remove the visible message(s) of the message being condensed
 			do visibles.remove(i);
-			while(!visibles.isEmpty() && !visibles.get(i).endOfEntry()); // continue removing them until the next message (EoE) is reached
+			while(i < visibles.size() && !visibles.get(i).endOfEntry()); // continue removing them until the next message (EoE) is reached
 
 			i--;  // we removed the first message, but we don't want to skip the next one
 			attemptDistance--; // but we also don't want to check messages we shouldn't be checking
