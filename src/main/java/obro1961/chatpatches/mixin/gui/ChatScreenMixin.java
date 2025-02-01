@@ -268,7 +268,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * when the search field is visible. Seems counterintuitive,
 	 * but it works.
 	 *
-	 * @apiNote todo: see 1.19.2 port comment for more details
+	 * @return {@code (showSearch && !config.hideSearchButton) ?
+	 * false : chatField.mouseClicked(x, y, button)}
 	 */
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
 	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
