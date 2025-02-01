@@ -56,7 +56,7 @@ Many of these features were adopted or inspired from the following existing mods
       provide any logged errors if they exist.
   - <u>For 1.18.x:</u> You need the latest versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu]
     (https://modrinth.com/mod/modmenu/versions?l=fabric&c=release).
-  - <u>For all versions:</u> You can **always** edit the config at `(directory)/config/chatpatches.json`.
+  - <u>**For all versions:**</u> You can **always** edit the config at `(directory)/config/chatpatches.json`.
 - My config is broken/not working!
   - When you load one of the more recent mod versions, it makes a creates a new file with your old settings and resets the main file. You can access this
     copy at `(directory)/config/chatpatches_old.json`. By then opening both the new and old configs at the same time, you can copy and paste over the values.
@@ -67,7 +67,7 @@ Many of these features were adopted or inspired from the following existing mods
 - Can I re-upload this mod elsewhere?
   - No, unless you have explicit permission from me (OBro1961), modify the mod in an undisputable way, or any download links used direct to one of the official 
     pages (see above). If you're unsure, message me on Discord (@obro1961) about it.
-- How do I do X?
+- How do I do XYZ?
   - If the answer you're looking for isn't anywhere here or in the config, check the **#Help** section located below.
   - If you still can't find it, ask in the [Discord](https://discord.gg/3MqBvNEyMz)!
 
