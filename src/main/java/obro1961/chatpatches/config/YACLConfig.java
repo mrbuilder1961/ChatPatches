@@ -4,7 +4,7 @@ import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.ClickEvent;
@@ -16,13 +16,11 @@ import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
 import org.apache.commons.lang3.StringUtils;
-
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
-
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
@@ -254,17 +252,24 @@ public class YACLConfig extends Config {
         if(min) {
             return switch(key) {
                 case "counterCompactDistance" -> -1;
-                default -> 0; // chatWidth, chatMaxMessages, shiftChat, chatlogSaveInterval
+                case "chatWidth", "chatMaxMessages", "shiftChat", "chatlogSaveInterval" -> 0;
+                default -> {
+                    ChatPatches.logReportMsg(new IllegalArgumentException("No minimum value specified for option '" + key + "'"));
+                    yield 0;
+                }
             };
         } else {
             return switch(key) {
-                case "counterCompactDistance" -> 1024;
-                case "chatlogSaveInterval" -> 180;
-                case "chatWidth" -> MinecraftClient.getInstance().getWindow().getScaledWidth() - 12; // offset length calc'd from ChatHud#render aka magic #
-                // only issue w ^^^ is if the window is resized while the config screen is open the max value will be incorrect
-                // other issue could be with the future config redo, as annotation constraints must be *constant*
                 case "chatMaxMessages" -> Short.MAX_VALUE;
-                default -> 100; // shiftChat
+                case "chatWidth" -> mc.getWindow().getScaledWidth() - 12; // offset length calc'd from ChatHud#render aka magic #
+                // only issue w ^^^ is if the window is resized while the config screen is open the max value will be incorrect
+                case "chatlogSaveInterval" -> 180;
+                case "counterCompactDistance" -> mc.inGameHud.getChatHud() instanceof ChatHud chatHud ? chatHud.getVisibleLineCount() : 50;
+                case "shiftChat" -> 100;
+                default -> {
+                    ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
+                    yield 100;
+                }
             };
         }
     }
@@ -311,7 +316,7 @@ public class YACLConfig extends Config {
         Identifier id = ChatPatches.id(image);
 
         try {
-            if( MinecraftClient.getInstance().getResourceManager().getResource(id).isPresent() )
+            if( mc.getResourceManager().getResource(id).isPresent() )
                 builder.webpImage(id);
             else
                 ChatPatches.LOGGER.debug("[YACLConfig.desc] No .{} image found for '{}'", ext, opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());

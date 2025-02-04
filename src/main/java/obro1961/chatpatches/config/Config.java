@@ -48,8 +48,8 @@ public class Config {
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
     public static final Config DEFAULTS = new Config();
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
+    protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     /** @see #sendBoundaryLine() */
     private static String lastWorld = "";
