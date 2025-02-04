@@ -246,7 +246,7 @@ public class Config {
      *           config.
      */
     public static void read() {
-        // warning: modified recently, watch out for bugs!
+        // modified recently, watch out for bugs!
         if(Files.exists(PATH)) {
             try {
                 String rawData = Files.readString(PATH);
