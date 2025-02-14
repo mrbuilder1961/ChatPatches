@@ -113,7 +113,7 @@ public class ContextMenu {
 	 * ugly utility methods constrained in-scope
 	 * and out of sight.
 	 */
-	private final GridData gridData;
+	private final GridData gridData; //TODO ALSO: IS THERE ANY MORE OPTIMIZING WE CAN DO HERE? STILL A LOT OF VARS AND LOOKUPS :(((((
 
 	// variables derived from selected message
 	public final RenderUtils.MousePos clickPos;
@@ -191,27 +191,36 @@ public class ContextMenu {
 	 * @param col The column in the grid menu where the button should be
 	 *            placed. Main buttons are always in column 0, and hover
 	 *            buttons are in columns 1+.
+	 * @param renderer A custom {@link RenderUtils.Renderer} implementation
+	 *                 that overrides this button's
+	 *                 {@link ButtonWidget#renderButton(DrawContext, int, int, float)}
+	 *                 method. See {@linkplain
+	 *                 RenderUtils.Renderer#render(DrawContext, int, int, float, Widget)
+	 *                 its functional method} for more information.
 	 */
-	private void registerButton(@NotNull Text id, @NotNull Supplier<Text> tooltipCopyTextSupplier, @NotNull ButtonWidget.PressAction pressAction, int localRow, int col, RenderUtils.Renderer<PressableWidget> renderCallback) {
+	private void registerButton(Text id, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction, int localRow, int col,
+								RenderUtils.ParentRenderer<PressableWidget> renderer) {
 		int w = mc.textRenderer.getWidth(id) + 2 * buttonPadding;
 		int h = buttonPadding + 14;
 
 		PressableWidget button = ButtonWidget.builder(id, b -> {
-			Text copyText = tooltipCopyTextSupplier.get();
+			Text copyText = tooltipCopyTextSupplier != null ? tooltipCopyTextSupplier.get() : ScreenTexts.EMPTY;
 			String copyStr = StringHelper.stripTextFormat(copyText.getString()); //prepub: config opt to copy section signs, disabled by def..?
 			if(!copyStr.isEmpty()) {
 				mc.keyboard.setClipboard(copyStr);
 				mc.getToastManager().add(new SystemToast( SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("text.chatpatches.copy.copied"), copyText ));
 			}
 
-			pressAction.onPress(b);
+			if(pressAction != null)
+				pressAction.onPress(b);
 
 			close();
 		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
 
-		button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )//prepub.. see the CIS formatting idea by JSON_STR
+		if(tooltipCopyTextSupplier != null)
+			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )//prepub.. see the CIS formatting idea by JSON_STR
 
-		if(renderCallback != null) {
+		if(renderer != null) {
 			PressableWidget effectivelyFinalButton = button;
 			button = new PressableWidget(button.getX(), button.getY(), button.getWidth(), button.getHeight(), id) {
 				final ButtonWidget.NarrationSupplier narrationSupplier = Supplier::get;
@@ -221,9 +230,11 @@ public class ContextMenu {
 					effectivelyFinalButton.onPress();
 				}
 				@Override
-				protected void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
-					super.renderButton(context, mouseX, mouseY, delta);
-					renderCallback.render(this, context, mouseX, mouseY, delta);
+				protected void renderButton(DrawContext context, int mX, int mY, float delta) {
+					// renders the custom implementation, with the original method passed as a parameter to be called
+					renderer.renderWithParent(context, mX, mY, delta, this,
+						(c, x, y, d, w) -> super.renderButton(c, x, y, d)
+					);
 				}
 
 				// pulled from ButtonWidget
@@ -234,46 +245,73 @@ public class ContextMenu {
 
 		gridData.add(button, localRow, col, tooltipCopyTextSupplier, pressAction);
 	}
-	/** usually main buttons */
-	private void registerProxyActionButton(Text id, Text proxyId, @Nullable ButtonWidget.PressAction pressAction, int localRow, int col) {
-		// tooltip supplier returns the empty Text because they don't actually copy anything, rather they run their proxy's action (and underline its text; see #mouseMoved)
+	/**
+	 * Registers a <b>main</b> button that gets its copy text
+	 * from {@code proxyId} and <b>does</b> perform an extra
+	 * press action.
+	 *
+	 * @see #registerProxyButton(Text, Text)
+	 * @see #registerActionButton(Text, ButtonWidget.PressAction, int)
+	 * @see #MENU_SENDER
+	 */
+	private void registerProxyActionButton(Text id, Text proxyId, int localRow, int col, RenderUtils.ParentRenderer<PressableWidget> renderer) {
 		if(id.equals(proxyId)) {
 			ChatPatches.logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
 			return;
 		}
 
-		// copy nothing bc copying happens in the proxy's press action (and the underlining of text; see #mouseMoved)
-		registerButton(id, () -> ScreenTexts.EMPTY, me -> {
+		registerButton(id, null, me -> {
 			// effectively presses the button to actually copy the text
 			gridData.idMap.get(proxyId).button.onPress();
 
 			// run callback if it exists
-			if(pressAction != null)
-				pressAction.onPress(me);
-		}, localRow, col, null);
-	}
-	/** usually main buttons */
-	private void registerProxyButton(Text id, Text proxyId, int localRow, int col) {
-		registerProxyActionButton(id, proxyId, null, localRow, col);
-	}
-	private void registerActionButton(Text id, ButtonWidget.PressAction pressAction, int localRow, int col) {
-		registerButton(id, () -> ScreenTexts.EMPTY, pressAction, localRow, col, null);
-	}
-	/** usually hover buttons */
-	private void registerCopyOnlyButton(Text id, Supplier<Text> tooltipCopyTextSupplier, int localRow, int col) {
-		registerButton(id, tooltipCopyTextSupplier, me -> {}, localRow, col, null);
+			/*if(pressAction != null)
+				pressAction.onPress(me);*/
+		}, localRow, col, renderer);
 	}
 	/**
-	 * Registers a button with pre-calculated copy text
-	 * and no extra press action.
-	 * Typically used for hover buttons: when the
-	 * tooltip/copy text isn't complicated enough to
-	 * require a
-	 * {@linkplain #registerCopyOnlyButton(Text, Supplier, int, int) Supplier},
-	 * and when no extra press action is necessary.
+	 * Registers a <b>main</b> button that gets its copy text
+	 * from {@code proxyId} and does <b>not</b> perform an
+	 * extra press action.
+	 *
+	 * @see #registerProxyActionButton(Text, Text, int, int, RenderUtils.ParentRenderer)
+	 * @see #MENU_STRING
+	 * @see #MENU_TIMESTAMP
+	 * @see #MENU_LINKS
 	 */
-	private void registerCopyOnlyButton(Text id, Text tooltipCopyText, int localRow, int col) {
-		registerButton(id, () -> tooltipCopyText, me -> {}, localRow, col, null);
+	private void registerProxyButton(Text id, Text proxyId) {
+		registerProxyActionButton(id, proxyId, 0, 0, null);
+	}
+	/**
+	 * Registers a <b>main</b> button that <b>does</b> perform
+	 * an extra press action.
+	 *
+	 * @see #MENU_REPLY
+	 */
+	private void registerActionButton(Text id, ButtonWidget.PressAction pressAction, int localRow) {
+		registerButton(id, null, pressAction, localRow, 0, null);
+	}
+	/**
+	 * Registers a button that gets its copy text from
+	 * a <b>supplier</b> and does <b>not</b> perform an
+	 * extra press action.
+	 *
+	 * @see #registerCopyOnlyButton(Text, Text, int)
+	 * @see #TIMESTAMP_HOVER
+	 * @see #MENU_UNIX
+	 */
+	private void registerCopyOnlyButton(Text id, Supplier<Text> tooltipCopyTextSupplier, int localRow, int col) {
+		registerButton(id, tooltipCopyTextSupplier, null, localRow, col, null);
+	}
+	/**
+	 * Registers a <b>hover</b> button with <b>precalculated</b>
+	 * copy text that does <b>not</b> perform an extra press action.
+	 *
+	 * @see #registerCopyOnlyButton(Text, Supplier, int, int)
+	 * @see "Literally every other button not mentioned in the other <code>registerButton</code> methods."
+	 */
+	private void registerCopyOnlyButton(Text id, Text tooltipCopyText, int localRow) {
+		registerButton(id, () -> tooltipCopyText, null, localRow, 1, null);
 	}
 
 
@@ -281,22 +319,23 @@ public class ContextMenu {
 	 * todo...
 	 */
 	public void init() {
-		if(noOp)
+		if(noOp) {
 			return;
-		if(addSelectableChild == null) {
+		} else if(addSelectableChild == null) {
 			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `addSelectableChild` not initialized"));
 			return;
 		}
+
 		Text text = selectedLine.content();
 		Text timestamp = getPart(text, TIMESTAMP_INDEX);
 
 		// string buttons - unconditional
-		boolean timestampPresent = !timestamp.getString().isBlank();
-		registerProxyButton(MENU_STRING, RAW_STR, 0, 0);
-			registerCopyOnlyButton(RAW_STR, text, 0, 1);
-			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(text.asOrderedText(), true)), 1, 1);
-			if(timestampPresent)
-				registerCopyOnlyButton(NO_TIMESTAMP, TextUtils.newText(text.getContent(), text.getSiblings().subList(1, text.getSiblings().size()), text.getStyle()), 2, 1);
+		boolean timestamped = !timestamp.getString().isBlank();
+		registerProxyButton(MENU_STRING, RAW_STR);
+			registerCopyOnlyButton(RAW_STR, text, 0);
+			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(text.asOrderedText(), true)), 1);
+			if(timestamped)
+				registerCopyOnlyButton(NO_TIMESTAMP, TextUtils.newText(text.getContent(), text.getSiblings().subList(1, text.getSiblings().size()), text.getStyle()), 2);
 			registerCopyOnlyButton(JSON_STR,
 				textCodec().encodeStart(ChatPatches.jsonOps(), text)
 					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
@@ -304,13 +343,13 @@ public class ContextMenu {
 					.map(Text::of)
 					.orElse(UNKNOWN.apply(JSON_STR)),
 					//NbtHelper.toPrettyPrintedText(...) //prepub: make the format fancy by somehow converting to nbt (ops?), formatting, lowercasing, and adding quotes
-			(timestampPresent ? 3 : 2), 1);
+			(timestamped ? 3 : 2));
 
 
-		// timestamp buttons - conditional (not on boundary lines)
-		if(timestampPresent) {
-			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP, 0, 0);
-				registerCopyOnlyButton(TIMESTAMP, timestamp, 0, 1);
+		// timestamp buttons - conditional (not on boundary lines) // prepub or if option that disables timestamps on system messages is true, dont add timestamps (ik this is not the right spot leave me alone)
+		if(timestamped) {
+			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP);
+				registerCopyOnlyButton(TIMESTAMP, timestamp, 0);
 				registerCopyOnlyButton(TIMESTAMP_HOVER, () -> {
 					HoverEvent hoverEvent = timestamp.getStyle().getHoverEvent();
 					return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : Text.empty();
@@ -337,30 +376,32 @@ public class ContextMenu {
 		}, Style.EMPTY);
 
 		if(!webLinks.isEmpty() || !fileLinks.isEmpty()) {
-			registerProxyButton(MENU_LINKS, LINK_N.apply(1), 0, 0);
+			registerProxyButton(MENU_LINKS, LINK_N.apply(1));
 
 			for(int i = 0; i < fileLinks.size(); i++)
-				registerCopyOnlyButton(LINK_N.apply(i + 1), Text.of("§6§n" + fileLinks.get(i)), i, 1);
+				registerCopyOnlyButton(LINK_N.apply(i + 1), Text.of("§6§n" + fileLinks.get(i)), i);
 
 			for(int i = fileLinks.size(); i < webLinks.size() + fileLinks.size(); i++)
 				// creates link buttons starting at link 1 up to link n, with ids following the same pattern (LINK_1 - LINK_N)
-				registerCopyOnlyButton(LINK_N.apply(i + 1), Text.of("§9§n" + webLinks.get(i)), i, 1);
+				registerCopyOnlyButton(LINK_N.apply(i + 1), Text.of("§9§n" + webLinks.get(i)), i);
 		}
 
 		// sender buttons - conditional
 		if( !messageSender.equals(NIL_MSG_DATA.sender()) ) {
 			SkinTextures playerSkin = mc.getSkinProvider().getSkinTextures(messageSender);
 
-			registerButton(MENU_SENDER, () -> ScreenTexts.EMPTY, me -> {
-				//todo proxy copy thing here for NAME
-				ChatPatches.LOGGER.warn("[DEBUG] [ContextMenu] new icon button system using Renderer s not yet implemented... might be canceled");
-			}, 0, 0, (me, context, mX, mY, delta) -> PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16));
-				registerCopyOnlyButton(NAME, Text.of(messageSender.getName()), 0, 1);
-				registerCopyOnlyButton(UUID, Text.of(messageSender.getId().toString()), 1, 1);
+			registerProxyActionButton(MENU_SENDER, NAME, 0, 0,
+				(context, mX, mY, delta, me, sup3r) -> {
+					sup3r.render(context, mX, mY, delta, me);
+					PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16);
+				}
+			);
+				registerCopyOnlyButton(NAME, Text.of(messageSender.getName()), 0);
+				registerCopyOnlyButton(UUID, Text.of(messageSender.getId().toString()), 1);
 			registerActionButton(MENU_REPLY, me -> {
 				if(mc.currentScreen instanceof ChatScreen chatScreen)
 					((ChatScreenAccessor) chatScreen).chatpatches$overrideChatText( TextUtils.fillVars(config.copyReplyFormat, messageSender.getName()) );
-			}, 0, 0);
+			}, 0);
 		}
 
 		buttonGrid.refreshPositions();
@@ -442,7 +483,10 @@ public class ContextMenu {
 
 		// consume enter and arrow keys to press and navigate buttons
 
-		// todo later: the new fabric wiki with screens/guis mentions that implementing Selectable and another interface should allow for tab navigation
+		// FIXME SOON: so it seems like the chat screen actually handles tabbing fine, as long as you aren't focused on the chat. but
+		//  the only issue is that tabbing over menu buttons doesn't trigger the same refreshing of buttons as hovering does!
+		//  my guess: impl some override in the registerButton constructor so that if col==0, trigger wtv we need. @see wherever tab hover events are triggered
+		// also todo: we should probably auto-select the top-left button on right-click
 	}
 
 	/** todo...
