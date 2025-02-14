@@ -77,7 +77,7 @@
     "text.chatpatches.desc.chatNameFormat": "Текст, який замінює ім'я гравця у повідомленнях чату. Ванільний варіант - '<$>', тільки ім'я - '$'; де '$' - заповнювач для імені гравця. Застосовується лише до повідомлень, надісланих гравцями.",
     "text.chatpatches.desc.shiftChat": "Зсуває інтерфейс чату вгору, щоб не затуляти панель броні та/або здоров'я. Значення за замовчуванням 10, встановіть на 0, щоб вимкнути.",
     "text.chatpatches.desc.messageDrafting": "Чи зберігати текст у полі чату після закриття і повторного відкриття чату?",
-    "text.chatpatches.desc.searchDrafting": "Чи зберігати текст у полі пошуку після закриття та повторного відкриття чату?", 
+    "text.chatpatches.desc.searchDrafting": "Чи зберігати текст у полі пошуку після закриття та повторного відкриття чату?",
     "text.chatpatches.desc.hideSearchButton": "Чи слід приховати кнопку пошуку? Зауважте, що це вимкне всю функціональність пошуку.",
     "text.chatpatches.desc.vanillaClearing": "Чи слід очищати повідомлення чату після виходу зі світу/сервера, як у ванільному Майнкрафті? Зауважте, що при цьому повністю стирається як і чат, так і журнал чату.",
 
@@ -98,9 +98,9 @@
 
 
     "text.chatpatches.copy.copied": "Скопійовано компонент повідомлення: \"%s\"!",
-    "text.chatpatches.copy.copyString": "Копіювати рядок >",
-    "text.chatpatches.copy.rawString": "Неформатований",
-    "text.chatpatches.copy.formattedString": "Відформатований",
+    "text.chatpatches.copy.copyText": "Копіювати рядок >",
+    "text.chatpatches.copy.rawText": "Неформатований",
+    "text.chatpatches.copy.formattedText": "Відформатований",
     "text.chatpatches.copy.jsonString": "JSON",
     "text.chatpatches.copy.links": "Скопіювати посилання >",
     "text.chatpatches.copy.linkN": "Посилання %d",

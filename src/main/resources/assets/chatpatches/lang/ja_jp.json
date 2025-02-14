@@ -102,9 +102,9 @@
 
 
 	"text.chatpatches.copy.copied": "コピー内容: \"%s\"",
-	"text.chatpatches.copy.copyString": "文字列をコピー >",
-	"text.chatpatches.copy.rawString": "原文",
-	"text.chatpatches.copy.formattedString": "書式付き",
+	"text.chatpatches.copy.copyText": "文字列をコピー >",
+	"text.chatpatches.copy.rawText": "原文",
+	"text.chatpatches.copy.formattedText": "書式付き",
 	"text.chatpatches.copy.jsonString": "JSON",
 	"text.chatpatches.copy.links": "リンクをコピー >",
 	"text.chatpatches.copy.linkN": "リンク %d",

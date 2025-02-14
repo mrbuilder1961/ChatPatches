@@ -100,9 +100,9 @@
 
 
     "text.chatpatches.copy.copied": "已复制消息组件：“%s”！",
-    "text.chatpatches.copy.copyString": "复制字符串 >",
-    "text.chatpatches.copy.rawString": "原始",
-    "text.chatpatches.copy.formattedString": "格式化",
+    "text.chatpatches.copy.copyText": "复制字符串 >",
+    "text.chatpatches.copy.rawText": "原始",
+    "text.chatpatches.copy.formattedText": "格式化",
     "text.chatpatches.copy.jsonString": "JSON",
     "text.chatpatches.copy.links": "复制链接 >",
     "text.chatpatches.copy.linkN": "链接 %d",

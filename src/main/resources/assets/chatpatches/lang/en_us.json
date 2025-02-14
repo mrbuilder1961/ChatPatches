@@ -139,9 +139,10 @@
     "text.chatpatches.desc.copyColor": "The color of the selection box that's shown after right-clicking on a chat message.",
 
     "text.chatpatches.copy.copied": "§aSuccessfully copied to clipboard!",
-    "text.chatpatches.copy.copyString": "Copy String >",
-    "text.chatpatches.copy.rawString": "Raw",
-    "text.chatpatches.copy.formattedString": "Formatted",
+    "text.chatpatches.copy.copyText": "Copy Text >",
+    "text.chatpatches.copy.rawText": "Raw",
+    "text.chatpatches.copy.formattedText": "Formatted",
+    "text.chatpatches.copy.noTimestampText": "Without Timestamp",
     "text.chatpatches.copy.jsonString": "JSON",
     "text.chatpatches.copy.links": "Copy Link(s) >",
     "text.chatpatches.copy.linkN": "Link %d",

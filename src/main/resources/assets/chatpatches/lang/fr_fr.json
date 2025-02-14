@@ -98,9 +98,9 @@
 
 
   "text.chatpatches.copy.copied": "Composant de message copié : \"%s\" !",
-  "text.chatpatches.copy.copyString": "Copier...",
-  "text.chatpatches.copy.rawString": "Chaîne de caractères",
-  "text.chatpatches.copy.formattedString": "Chaîne de caractères formatée",
+  "text.chatpatches.copy.copyText": "Copier...",
+  "text.chatpatches.copy.rawText": "Chaîne de caractères",
+  "text.chatpatches.copy.formattedText": "Chaîne de caractères formatée",
   "text.chatpatches.copy.jsonString": "JSON",
   "text.chatpatches.copy.links": "Copier le(s) lien(s)...",
   "text.chatpatches.copy.linkN": "Le lien %d",

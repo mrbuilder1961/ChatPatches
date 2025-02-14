@@ -56,13 +56,14 @@ public class ContextMenu {
 	// normal variables
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
 	private static final int buttonPadding = 4;
-	// text
+
+	// region text constants
 	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable("text.chatpatches.copy.unknownData", id);
-	static final Text MENU_STRING = Text.translatable("text.chatpatches.copy.copyString");
-	static final Text RAW_STR = Text.translatable("text.chatpatches.copy.rawString");
-	static final Text FORMATTED_STR = Text.translatable("text.chatpatches.copy.formattedString");
-	// todo close (#129):
-	//static final Text NO_TIMESTAMP = Text.translatable("text.chatpatches.copy.noTimestamp"); // same as RAW_STR but substr timestamp
+	static final Text MENU_STRING = Text.translatable("text.chatpatches.copy.copyText");
+	static final Text RAW_STR = Text.translatable("text.chatpatches.copy.rawText");
+	static final Text FORMATTED_STR = Text.translatable("text.chatpatches.copy.formattedText");
+	static final Text NO_TIMESTAMP = Text.translatable("text.chatpatches.copy.noTimestampText"); // fixes (#129)
+	//idea: noDupeText option? seems fitting..!
 	static final Text JSON_STR = Text.translatable("text.chatpatches.copy.jsonString");
 	static final Text MENU_TIMESTAMP = Text.translatable("text.chatpatches.copy.timestamp");
 	static final Text TIMESTAMP = Text.translatable("text.chatpatches.copy.timestampText");
@@ -74,12 +75,13 @@ public class ContextMenu {
 	static final Text NAME = Text.translatable("text.chatpatches.copy.name");
 	static final Text UUID = Text.translatable("text.chatpatches.copy.uuid");
 	static final Text MENU_REPLY = Text.translatable("text.chatpatches.copy.reply");
+	// endregion
 
 	// methods used for closing and initializing the menu
 	private static Consumer<Element> remove;
 	private static Consumer<ClickableWidget> addSelectableChild;
 
-	// widgets
+	// grid/widget stuff
 	/**
 	 * The grid widget that contains all the buttons in this context menu.
 	 * Buttons can overlap, as the grid is internally a list of buttons.
@@ -96,6 +98,7 @@ public class ContextMenu {
 	 * | MENU_SENDER        | NAME, UUID                 |
 	 * | MENU_REPLY         | x                          |
 	 * |--------------------|----------------------------|
+	 * todo: move this visual somewhere else in here, and move the overlapping button comment too
 	 */
 	private final GridWidget buttonGrid;
 	/**
@@ -176,8 +179,8 @@ public class ContextMenu {
 	/**
 	 * Registers a button in the {@linkplain #buttonGrid button grid} and
 	 * {@linkplain #gridData associated data lookup manager}. This is done
-	 * through creating a new {@link ButtonWidget} (or similarly-implemented
-	 * {@link PressableWidget} if {@code renderCallback} is specified)
+	 * by creating a new {@link ButtonWidget} (or similarly-implemented
+	 * {@link PressableWidget} if {@code renderer} is specified)
 	 * according to the passed id, copy text supplier, press action, and
 	 * coordinates (the local row and absolute column).
 	 *
@@ -195,7 +198,7 @@ public class ContextMenu {
 
 		PressableWidget button = ButtonWidget.builder(id, b -> {
 			Text copyText = tooltipCopyTextSupplier.get();
-			String copyStr = StringHelper.stripTextFormat(copyText.getString()); //prepub: config opt to copy section signs, disabled by def
+			String copyStr = StringHelper.stripTextFormat(copyText.getString()); //prepub: config opt to copy section signs, disabled by def..?
 			if(!copyStr.isEmpty()) {
 				mc.keyboard.setClipboard(copyStr);
 				mc.getToastManager().add(new SystemToast( SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("text.chatpatches.copy.copied"), copyText ));
@@ -234,11 +237,17 @@ public class ContextMenu {
 	/** usually main buttons */
 	private void registerProxyActionButton(Text id, Text proxyId, @Nullable ButtonWidget.PressAction pressAction, int localRow, int col) {
 		// tooltip supplier returns the empty Text because they don't actually copy anything, rather they run their proxy's action (and underline its text; see #mouseMoved)
+		if(id.equals(proxyId)) {
+			ChatPatches.logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
+			return;
+		}
+
+		// copy nothing bc copying happens in the proxy's press action (and the underlining of text; see #mouseMoved)
 		registerButton(id, () -> ScreenTexts.EMPTY, me -> {
 			// effectively presses the button to actually copy the text
-			if(!id.equals(proxyId)) //prepub if this avoids a stack overflow/some error add a comment about it +in javadoc
-				gridData.idMap.get(proxyId).button.onPress();
+			gridData.idMap.get(proxyId).button.onPress();
 
+			// run callback if it exists
 			if(pressAction != null)
 				pressAction.onPress(me);
 		}, localRow, col, null);
@@ -278,40 +287,46 @@ public class ContextMenu {
 			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `addSelectableChild` not initialized"));
 			return;
 		}
+		Text text = selectedLine.content();
+		Text timestamp = getPart(text, TIMESTAMP_INDEX);
 
 		// string buttons - unconditional
+		boolean timestampPresent = !timestamp.getString().isBlank();
 		registerProxyButton(MENU_STRING, RAW_STR, 0, 0);
-			registerCopyOnlyButton(RAW_STR, selectedLine.content(), 0, 1);
-			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(selectedLine.content().asOrderedText(), true)), 1, 1);
+			registerCopyOnlyButton(RAW_STR, text, 0, 1);
+			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(text.asOrderedText(), true)), 1, 1);
+			if(timestampPresent)
+				registerCopyOnlyButton(NO_TIMESTAMP, TextUtils.newText(text.getContent(), text.getSiblings().subList(1, text.getSiblings().size()), text.getStyle()), 2, 1);
 			registerCopyOnlyButton(JSON_STR,
-				textCodec().encodeStart(ChatPatches.jsonOps(), selectedLine.content())
+				textCodec().encodeStart(ChatPatches.jsonOps(), text)
 					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
 					.map(JsonHelper::toSortedString)
 					.map(Text::of)
-					.orElse(UNKNOWN.apply(JSON_STR)),//prepub: make the format fancy by somehow converting to nbt (ops?), formatting, lowercasing, and adding quotes
-			2, 1); //NbtHelper.toPrettyPrintedText(...)
+					.orElse(UNKNOWN.apply(JSON_STR)),
+					//NbtHelper.toPrettyPrintedText(...) //prepub: make the format fancy by somehow converting to nbt (ops?), formatting, lowercasing, and adding quotes
+			(timestampPresent ? 3 : 2), 1);
 
 
 		// timestamp buttons - conditional (not on boundary lines)
-		if( !getPart(selectedLine.content(), TIMESTAMP_INDEX).getString().isBlank() ) {
+		if(timestampPresent) {
 			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP, 0, 0);
-				registerCopyOnlyButton(TIMESTAMP, getPart(selectedLine.content(), TIMESTAMP_INDEX), 0, 1);
+				registerCopyOnlyButton(TIMESTAMP, timestamp, 0, 1);
 				registerCopyOnlyButton(TIMESTAMP_HOVER, () -> {
-					HoverEvent hoverEvent = getPart(selectedLine.content(), TIMESTAMP_INDEX).getStyle().getHoverEvent();
+					HoverEvent hoverEvent = timestamp.getStyle().getHoverEvent();
 					return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : Text.empty();
 				}, 1, 1);
 		}
 
 		// unix timestamp button - unconditional
 		registerCopyOnlyButton(MENU_UNIX, () -> {
-			String time = getPart(selectedLine.content(), TIMESTAMP_INDEX).getStyle().getInsertion();
+			String time = timestamp.getStyle().getInsertion();
 			return time != null && !time.isEmpty() ? Text.of(time) : UNKNOWN.apply(MENU_UNIX);
 		}, 0, 0);
 
 		// link buttons - conditional
-		List<String> webLinks = TextUtils.getLinks(selectedLine.content().getString());
+		List<String> webLinks = TextUtils.getLinks(text.getString());
 		List<String> fileLinks = new ArrayList<>();
-		selectedLine.content().visit((style, str) -> {
+		text.visit((style, str) -> {
 			if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
 				if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v))
 					webLinks.add(v);
