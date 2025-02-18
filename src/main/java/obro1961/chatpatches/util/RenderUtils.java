@@ -24,7 +24,7 @@ public class RenderUtils {
 			return new MousePos(x, y);
 		}
 	}
-
+//FIXME: SEE THE DRAWABLE CLASS AND MAKE SURE IM NOT RE-IMPL ING A PREEXISTING CLASS
 	/**
 	 * A simpler version of {@link ParentRenderer} that does not provide any original
 	 * parent method to invoke during execution. Useful for renderers that are

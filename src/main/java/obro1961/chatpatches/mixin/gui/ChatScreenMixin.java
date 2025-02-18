@@ -126,11 +126,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/**
 	 * @implNote
 	 * <ol>
-	 *     <li>Initialize the search button</li>
-	 *     <li>Initialize the search field</li>
-	 *     <li>Initialize the setting options</li>
-	 *     <li>If {@link Config#hideSearchButton} is true, hide the search widgets</li>
-	 *     <li>Initialize the context menu</li>
+	 *     <li>Initializes the search button</li>
+	 *     <li>Initializes the search field</li>
+	 *     <li>Initializes the setting options</li>
+	 *     <li>If {@link Config#hideSearchButton} is true,
+	 *     hides the search widgets</li>
 	 * </ol>
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
@@ -157,6 +157,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				onSearchFieldUpdate(searchField.getText(), true); // update the search field color
 			})
 				.dimensions(8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset, client.textRenderer.getWidth(text.getString()) + 10, 20)
+					client.textRenderer.getWidth(text.getString()) + 10,
+					20
+				)
 				.tooltip(Tooltip.of( Text.translatable("text.chatpatches.search.desc." + key) ))
 				.build();
 		};
@@ -324,7 +327,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * 			<li>The {@linkplain #regexButton regex button}</li>
 	 * 		</ol>
 	 * 		<li>Otherwise, anything encapsulated by the
-	 * 		{@linkplain ContextMenu#mouseClicked(double, double, int)}
+	 * 		{@linkplain ContextMenu#mouseClicked(double, double, int)
 	 * 		context menu}</li>
 	 * 		<li>Finally, the chat box in an attempt to make a new context
 	 * 		menu. If the mouse clicked successfully:</li>
@@ -337,7 +340,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
 	public void registerClickEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		if(cir.getReturnValue())
+		if(cir.getReturnValueZ())
 			return;
 
 		if(searchField.mouseClicked(mX, mY, button))

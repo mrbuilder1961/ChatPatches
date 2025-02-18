@@ -153,7 +153,7 @@ public class YACLConfig extends Config {
                                         I18n.translate("text.chatpatches." + opt.key),
 
                                         ( opt.getType().equals(Integer.class) && opt.key.contains("Color") )
-                                            ? "`0x%06x`".formatted(opt.def)
+                                            ? "`0x%06x`".formatted( (int)opt.def )
                                             : (opt.getType().equals(String.class))
                                                 ? "`\"" + opt.def + "\"`"
                                                 : "`" + opt.def + "`",

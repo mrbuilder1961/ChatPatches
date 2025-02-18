@@ -132,6 +132,15 @@ public class ContextMenu {
 	private boolean noOp = false;
 
 
+	/**
+	 * Creates a new context menu at the specified mouse position.
+	 * Returns a {@linkplain #noOp non-operational} menu if either
+	 * coordinate is negative, the selected message lines are empty
+	 * or invalid, or if the context menu is disabled in the config.
+	 *
+	 * <p>Not to be confused with {@link #init()}, which populates,
+	 * configures, and positions the widgets.
+	 */
 	public ContextMenu(double mX, double mY) {
 		this.clickPos = RenderUtils.MousePos.of(mX, mY);
 		this.gridData = new GridData(MAX_ROWS, MAX_COLUMNS);
@@ -149,7 +158,7 @@ public class ContextMenu {
 		// find the first message that starts with the hovered message (aka the hovered message)
 		this.selectedLine = chatMessages.stream()
 			.filter(msg ->
-				!noOp && Formatting.strip(msg.content().getString())
+				!noOp && StringHelper.stripTextFormat(msg.content().getString())
 					// longer messages sometimes fail because extra spaces appear to be added,
 					// so it now uses startsWith() bc the first one never has extra spaces.
 					.startsWith(fH.isEmpty() ? "\n" : fH) // detects messages starting with newlines, along with regular messages
@@ -316,7 +325,32 @@ public class ContextMenu {
 
 
 	/**
-	 * todo...
+	 * Initializes the context menu by registering all buttons,
+	 * their features, and by positioning everything correctly.
+	 * Does nothing if the menu is {@linkplain #noOp disabled}
+	 * or if the {@linkplain #updateHooks(Consumer, Consumer)
+	 * addSelectableChild hook} was not specified.
+	 *
+	 * @implNote Registers buttons in the following order:
+	 * <ol>
+	 *     <li>{@link #MENU_STRING}</li>
+	 *     <li>{@link #RAW_STR}</li>
+	 *     <li>{@link #FORMATTED_STR}</li>
+	 *     <li>*{@link #NO_TIMESTAMP}</li>
+	 *     <li>{@link #JSON_STR}</li>
+	 *     <li>If a timestamp is present*: {@link #MENU_TIMESTAMP}</li>
+	 *     <li>*{@link #TIMESTAMP}</li>
+	 *     <li>*{@link #TIMESTAMP_HOVER}</li>
+	 *     <li>{@link #MENU_UNIX}</li>
+	 *     <li>If any web or file links are present**: {@link #MENU_LINKS}</li>
+	 *     <li>**{@link #LINK_N} (for each link)</li>
+	 *     <li>If the message sender is a player***: {@link #MENU_SENDER}</li>
+	 *     <li>***{@link #NAME}</li>
+	 *     <li>***{@link #UUID}</li>
+	 *     <li>***{@link #MENU_REPLY}</li>
+	 * </ol>
+	 * Finally, updates and syncs the button positions and registers them with
+	 * the screen hooks provided by {@link #updateHooks(Consumer, Consumer)}.
 	 */
 	public void init() {
 		if(noOp) {
