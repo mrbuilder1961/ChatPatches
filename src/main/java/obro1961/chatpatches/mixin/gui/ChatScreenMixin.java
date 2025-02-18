@@ -464,7 +464,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		} else {
 			searchError = null;
-			searchField.setEditableColor(0xE0E0E0); // default
+			searchField.setEditableColor(TextFieldWidget.DEFAULT_EDITABLE_COLOR);
 			searchField.setSuggestion(SEARCH_SUGGESTION);
 			client.inGameHud.getChatHud().reset();
 		}
