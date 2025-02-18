@@ -199,16 +199,12 @@ public class ContextMenu {
 	 *                 {@linkplain GridData#currentRow kept track of}.
 	 * @param col The column in the grid menu where the button should be
 	 *            placed. Main buttons are always in column 0, and hover
-	 *            buttons are in columns 1+.
-	 * @param renderer A custom {@link RenderUtils.Renderer} implementation
-	 *                 that overrides this button's
-	 *                 {@link ButtonWidget#renderButton(DrawContext, int, int, float)}
-	 *                 method. See {@linkplain
-	 *                 RenderUtils.Renderer#render(DrawContext, int, int, float, Widget)
-	 *                 its functional method} for more information.
+	 *            buttons are in columns ≥1.
+	 *                 ButtonWidget#renderButton(DrawContext, int, int, float)}
+	 *                 method if not {@code null}.
 	 */
 	private void registerButton(Text id, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction, int localRow, int col,
-								RenderUtils.ParentRenderer<PressableWidget> renderer) {
+								RenderUtils.Renderer<PressableWidget> renderer) {
 		int w = mc.textRenderer.getWidth(id) + 2 * buttonPadding;
 		int h = buttonPadding + 14;
 
@@ -241,9 +237,7 @@ public class ContextMenu {
 				@Override
 				protected void renderButton(DrawContext context, int mX, int mY, float delta) {
 					// renders the custom implementation, with the original method passed as a parameter to be called
-					renderer.renderWithParent(context, mX, mY, delta, this,
-						(c, x, y, d, w) -> super.renderButton(c, x, y, d)
-					);
+					renderer.render(context, mX, mY, delta, this, super::renderButton);
 				}
 
 				// pulled from ButtonWidget
@@ -256,34 +250,29 @@ public class ContextMenu {
 	}
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
-	 * from {@code proxyId} and <b>does</b> perform an extra
-	 * press action.
+	 * from {@code proxyId}, does <b>not</b> perform an extra
+	 * press action, and <b>can</b> override this button's
+	 * renderer.
 	 *
 	 * @see #registerProxyButton(Text, Text)
 	 * @see #registerActionButton(Text, ButtonWidget.PressAction, int)
 	 * @see #MENU_SENDER
 	 */
-	private void registerProxyActionButton(Text id, Text proxyId, int localRow, int col, RenderUtils.ParentRenderer<PressableWidget> renderer) {
+	private void registerProxyActionButton(Text id, Text proxyId, int localRow, int col, RenderUtils.Renderer<PressableWidget> renderer) {
 		if(id.equals(proxyId)) {
 			ChatPatches.logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
 			return;
 		}
 
-		registerButton(id, null, me -> {
-			// effectively presses the button to actually copy the text
-			gridData.idMap.get(proxyId).button.onPress();
-
-			// run callback if it exists
-			/*if(pressAction != null)
-				pressAction.onPress(me);*/
-		}, localRow, col, renderer);
+		// copies the proxy button's text by executing its press action instead
+		registerButton(id, null, me -> gridData.idMap.get(proxyId).button.onPress(), localRow, col, renderer);
 	}
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
 	 * from {@code proxyId} and does <b>not</b> perform an
 	 * extra press action.
 	 *
-	 * @see #registerProxyActionButton(Text, Text, int, int, RenderUtils.ParentRenderer)
+	 * @see #registerProxyActionButton(Text, Text, int, int, RenderUtils.Renderer)
 	 * @see #MENU_STRING
 	 * @see #MENU_TIMESTAMP
 	 * @see #MENU_LINKS
@@ -426,7 +415,7 @@ public class ContextMenu {
 
 			registerProxyActionButton(MENU_SENDER, NAME, 0, 0,
 				(context, mX, mY, delta, me, sup3r) -> {
-					sup3r.render(context, mX, mY, delta, me);
+					sup3r.render(context, mX, mY, delta);
 					PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16);
 				}
 			);
