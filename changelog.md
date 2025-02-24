@@ -3,6 +3,7 @@
 ## Chat Patches `214.6.12` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Fixed some playernames not formatting properly
 - Fixed the CompactChat dupe counter sometimes not working ([#216](https://github.com/mrbuilder1961/ChatPatches/issues/216))
+- Fixed YACL config screen not opening if the locale is set to Turkish (tr)
 
 ## Chat Patches `214.6.11` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Fixed teams with prefixes or suffixes preventing playernames from formatting
