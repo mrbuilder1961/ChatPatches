@@ -157,7 +157,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				me.setMessage( ScreenTexts.composeToggleText(name, setting.get()) ); // update the button text
 				onSearchFieldUpdate(searchField.getText(), true); // update the search field color
 			})
-				.dimensions(8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset, client.textRenderer.getWidth(text.getString()) + 10, 20)
+				.dimensions(
+					8,
+					(height + (MENU_Y_OFFSET / 2) - 51) + yOffset,
 					client.textRenderer.getWidth(text.getString()) + 10,
 					20
 				)
