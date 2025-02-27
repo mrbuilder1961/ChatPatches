@@ -34,6 +34,9 @@ public class ChatUtils {
 	public static final int MSG_TEAM_INDEX = 0,    // contains the sender's team's name; used for `chat.type.team.*` messages (can be empty)
 							MSG_SENDER_INDEX = 1,  // contains the sender's name
 							MSG_CONTENT_INDEX = 2; // contains the content of the sender's message
+
+	public static final int MAX_MESSAGE_LENGTH = 256; // pulled from chatField's max length
+
 	/**
 	 * Matches only an entire vanilla player message.
 	 * By default, this is translated under the

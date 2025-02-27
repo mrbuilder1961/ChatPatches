@@ -29,6 +29,7 @@ import obro1961.chatpatches.accessor.ChatScreenAccessor;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
+import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +140,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
 		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));
-		searchField.setMaxLength(256);
+		searchField.setMaxLength(ChatUtils.MAX_MESSAGE_LENGTH);
 		searchField.setDrawsBackground(false);
 		searchField.setSuggestion(SEARCH_SUGGESTION);
 		searchField.setChangedListener(newText -> onSearchFieldUpdate(newText, false));
@@ -211,7 +212,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				context.drawTextWithShadow(textRenderer, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), 0xD00000);
+
+				//noinspection DataFlowIssue: DARK_RED is a color. READ THE FIELD ToT
+				context.drawTextWithShadow(textRenderer, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), Formatting.DARK_RED.getColorValue());
 			}
 		}
 
