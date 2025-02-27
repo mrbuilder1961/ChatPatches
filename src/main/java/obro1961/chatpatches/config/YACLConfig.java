@@ -16,11 +16,14 @@ import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
 import org.apache.commons.lang3.StringUtils;
+
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BiConsumer;
+
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
@@ -312,14 +315,15 @@ public class YACLConfig extends Config {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
 
         String ext = "webp";
-        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase() + "." + ext;
+        // using Locale.ROOT fixes turkish locale causing file mismatch
+        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT) + "." + ext;
         Identifier id = ChatPatches.id(image);
 
         try {
             if( mc.getResourceManager().getResource(id).isPresent() )
                 builder.webpImage(id);
             else
-                ChatPatches.LOGGER.debug("[YACLConfig.desc] No .{} image found for '{}'", ext, opt.key.replaceAll("([A-Z])", "_$1").toLowerCase());
+                ChatPatches.LOGGER.debug("[YACLConfig.desc] Couldn't find '{}'", image);
         } catch(Throwable e) {
             ChatPatches.LOGGER.error("[YACLConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
         }
