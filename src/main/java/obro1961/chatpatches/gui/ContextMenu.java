@@ -14,7 +14,10 @@ import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.*;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.GridWidget;
+import net.minecraft.client.gui.widget.PressableWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyCodes;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.util.SkinTextures;
@@ -84,26 +87,17 @@ public class ContextMenu implements Element {
 	static final Text MENU_REPLY = Text.translatable("text.chatpatches.copy.reply");
 	// endregion
 
-	// grid/widget stuff
-	/**
-	 * The grid widget that contains all the buttons in this context menu.
-	 * Functional as a menu because buttons can overlap, as the grid is
-	 * internally a list of buttons.
-	 */
-	private final GridWidget buttonGrid;
-	/**
-	 * Contains all buttons in the grid, indiscriminate of
-	 * their position in the grid (main/hover).
-	 */
-	private final List<Widget> widgets;
 	/**
 	 * Associates every widget with its relevant
 	 * identifiers, which condenses accessing and
 	 * mutating operations while also keeping
 	 * ugly utility methods constrained in-scope
-	 * and out of sight.
+	 * and out of sight. Contains a positioning
+	 * {@link GridWidget} and multiple lists for
+	 * sorting and placing buttons in their
+	 * intended locations.
 	 */
-	private final GridData gridData; // prepub: replace this with a positioner instead? it's only for organizing the buttons, griddata can handle everything else..
+	private final Grid grid;
 
 	// variables derived from selected message
 	public final RenderUtils.MousePos clickPos;
@@ -137,16 +131,14 @@ public class ContextMenu implements Element {
 	 * or invalid, or if the context menu is disabled in the config.
 	 *
 	 * <p>Not to be confused with {@link #init(Consumer)}, which
-	 * populates, configures, and positions the widgets.
+	 * populates, configures, and positions the button widgets.
 	 */
 	public ContextMenu(ChatScreen parentScreen, double mX, double mY) {
 		if(!config.contextMenu || mX < 0 || mY < 0)
 			noOp = true;
 
 		this.clickPos = RenderUtils.MousePos.of(mX, mY);
-		this.gridData = new GridData(MAX_ROWS, MAX_COLUMNS);
-		this.buttonGrid = new GridWidget((int) mX, (int) mY);
-		this.widgets = ((GridWidgetAccessor) buttonGrid).getChildren();
+		this.grid = new Grid(MAX_ROWS, MAX_COLUMNS);
 		this.parentScreen = noOp ? ((ChatScreen) mc.currentScreen) : parentScreen;
 
 		this.selectedVisibles = getFullMessageAt(mX, mY);
@@ -178,8 +170,8 @@ public class ContextMenu implements Element {
 
 
 	/**
-	 * Registers a button in the {@linkplain #buttonGrid button grid} and
-	 * {@linkplain #gridData associated data lookup manager}. This is done
+	 * Registers a button in the {@linkplain Grid#widget button grid} and
+	 * {@linkplain #grid associated data lookup manager}. This is done
 	 * by creating a new {@link ButtonWidget} (or similarly-implemented
 	 * {@link PressableWidget} if {@code renderer} is specified)
 	 * according to the passed id, copy text supplier, press action, and
@@ -188,7 +180,7 @@ public class ContextMenu implements Element {
 	 * @param localRow The row relative to the current row, which is
 	 *                 specified by the last main button added. The
 	 *                 absolute row is automatically calculated and
-	 *                 {@linkplain GridData#currentRow kept track of}.
+	 *                 {@linkplain Grid#currentRow kept track of}.
 	 * @param col The column in the grid menu where the button should be
 	 *            placed. Main buttons are always in column 0, and hover
 	 *            buttons are in columns ≥1.
@@ -234,7 +226,7 @@ public class ContextMenu implements Element {
 			};
 		}
 
-		gridData.add(button, localRow, col, tooltipCopyTextSupplier, pressAction);
+		grid.add(button, localRow, col, tooltipCopyTextSupplier, pressAction);
 	}
 
 	/**
@@ -254,7 +246,7 @@ public class ContextMenu implements Element {
 		}
 
 		// copies the proxy button's text by executing its press action instead
-		registerButton(id, null, me -> gridData.idMap.get(proxyId).button.onPress(), localRow, col, renderer);
+		registerButton(id, null, me -> grid.idMap.get(proxyId).button.onPress(), localRow, col, renderer);
 	}
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
@@ -412,8 +404,8 @@ public class ContextMenu implements Element {
 			}, 0);
 		}
 
-		gridData.updateButtonPositions();
-		pressables().forEach(addSelectableChild);
+		grid.updateButtonPositions();
+		grid.buttons().forEach(addSelectableChild);
 	}
 
 	/**
@@ -473,7 +465,7 @@ public class ContextMenu implements Element {
 	}
 
 	private void renderMenuButtons(DrawContext drawContext, int mX, int mY, float delta) {
-		pressables().forEach(w -> w.render(drawContext, mX, mY, delta));
+		grid.buttons().forEach(w -> w.render(drawContext, mX, mY, delta));
 	}
 
 
@@ -499,14 +491,14 @@ public class ContextMenu implements Element {
 		if(keyCode == GLFW.GLFW_KEY_TAB) {
 			PressableWidget tabbed = parentScreen.getFocused() instanceof PressableWidget w ? w : null;
 
-			if(gridData.contains(tabbed) && tabbed.getType() != Selectable.SelectionType.NONE) {
+			if(grid.contains(tabbed) && tabbed.getType() != Selectable.SelectionType.NONE) {
 				updateButtons(Optional.of(tabbed));
 				return true; // true - extra KeyCodes.isToggle check does not pass
 			}
 		}
 
 		// true - if a button was pressed, then close the menu, bc the check will pass
-		return KeyCodes.isToggle(keyCode) && gridData.contains(parentScreen.getFocused()) && parentScreen.getFocused().keyPressed(keyCode, scanCode, modifiers);
+		return KeyCodes.isToggle(keyCode) && grid.contains(parentScreen.getFocused()) && parentScreen.getFocused().keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	/**
@@ -541,25 +533,15 @@ public class ContextMenu implements Element {
 		updateButtons(getHoveredButton(mX, mY));
 	}
 
-	@SuppressWarnings("unchecked")
-	private List<PressableWidget> pressables() {
-		try {
-			return (List<PressableWidget>) (Object) widgets;
-		} catch(ClassCastException e) {
-			ChatPatches.logReportMsg(e);
-			return List.of();
-		}
-	}
-
 	public boolean isMouseOver(double mX, double mY) {
 		return !noOp &&
-			   mX >= buttonGrid.getX() && mX <= buttonGrid.getX() + buttonGrid.getWidth()
-			&& mY >= buttonGrid.getY() && mY <= buttonGrid.getY() + buttonGrid.getHeight();
+			   mX >= grid.widget.getX() && mX <= grid.widget.getX() + grid.widget.getWidth()
+			&& mY >= grid.widget.getY() && mY <= grid.widget.getY() + grid.widget.getHeight();
 	}
 
 	/**
 	 * Marks the context menu {@linkplain #noOp disabled},
-	 * unhooks all widgets provided by this context
+	 * unhooks all button widgets provided by this context
 	 * menu (created in {@link #init(Consumer)}) from the
 	 * screen, then clears all stored fields and focuses
 	 * the {@link ChatScreen#chatField}. It must be focused
@@ -570,8 +552,8 @@ public class ContextMenu implements Element {
 		if(noOp)
 			return; // if the menu is already disabled, it was born broken, and therefore was never initialized
 
-		pressables().forEach(remove);
-		gridData.clear();
+		grid.buttons().forEach(remove);
+		grid.clear();
 
 		// focus the chat field here, shifting from a now deleted menu button
 		if(!parentScreen.children().isEmpty()) {
@@ -614,7 +596,7 @@ public class ContextMenu implements Element {
 	 */
 	@Override
 	public boolean isFocused() {
-		return !noOp && !widgets.isEmpty() && pressables().getFirst().isFocused();
+		return !noOp && !grid.buttons().isEmpty() && grid.buttons().getFirst().isFocused();
 	}
 
 	/**
@@ -628,8 +610,8 @@ public class ContextMenu implements Element {
 		if(noOp)
 			return;
 
-		if(!widgets.isEmpty())
-			widgets.getFirst().forEachChild(MENU_STRING_BUTTON -> MENU_STRING_BUTTON.setFocused(focused));
+		if(!grid.buttons().isEmpty())
+			grid.buttons().getFirst().forEachChild(MENU_STRING_BUTTON -> MENU_STRING_BUTTON.setFocused(focused));
 	}
 
 
@@ -645,14 +627,14 @@ public class ContextMenu implements Element {
 			return;
 
 		PressableWidget hoveredButton = widgetOptional.get();
-		for(List<GridData.Entry> group : gridData.groups) {
-			for(GridData.Entry itr : group) {
+		for(List<Grid.Entry> group : grid.groups) {
+			for(Grid.Entry itr : group) {
 				PressableWidget itrButton = itr.button;
 				PressableWidget firstHoverButton = group.size() > 1 ? group.get(1).button : null;
 
 				if(itr.col > 0)
 					// if the hovered button is in the group, show all other buttons; otherwise hide them bc they're irrelevant
-					itrButton.visible = group.contains( gridData.idMap.get( hoveredButton.getMessage().copyContentOnly() ) ); // copyContentOnly avoids style (underline) nullifying equavalence
+					itrButton.visible = group.contains( grid.idMap.get( hoveredButton.getMessage().copyContentOnly() ) ); // copyContentOnly avoids style (underline) nullifying equavalence
 
 				if(firstHoverButton != null && itrButton.equals(hoveredButton)) {
 					// remove if iterated button is in the group and the message is already underlined
@@ -767,7 +749,8 @@ public class ContextMenu implements Element {
 	 * alternative that simplifies the omniversion approach
 	 * required for the long-term goal of the mod.
 	 */
-	class GridData { //prepub: use it.unimi.dsi.fastutil classes for lists/maps/etc. for performance! should be ez-pz
+	class Grid { //prepub: use it.unimi.dsi.fastutil classes for lists/maps/etc. for performance! should be ez-pz +PLUS: move the gridwidget here!
+		private final GridWidget widget;
 		private final ObjectList<Entry> entries;
 		/**
 		 * Maps {@link Text} button ids (ex. {@link #RAW_STR})
@@ -788,7 +771,8 @@ public class ContextMenu implements Element {
 		private int currentRow = -1;
 		private int groupCount = 0;
 
-		public GridData(int maxRows, int maxCols) {
+		public Grid(int maxRows, int maxCols) {
+			this.widget = new GridWidget((int) clickPos.x, (int) clickPos.y);
 			this.entries = new ObjectArrayList<>(maxRows * maxCols);
 			this.idMap = new Object2ObjectArrayMap<>(maxRows * maxCols);
 			this.groups = new ObjectArrayList<>(maxRows);
@@ -804,13 +788,23 @@ public class ContextMenu implements Element {
 
 			Entry entry = new Entry(absRow, col, groupId, button, tooltipCopyTextSupplier, pressAction);
 
-			buttonGrid.add(button, absRow, col);
+			widget.add(button, absRow, col);
 			entries.add(entry);
 			idMap.put(button.getMessage(), entry);
 			if(groups.size() > groupId)
 				groups.get(groupId).add(entry);
 			else
 				groups.add(groupId, new ObjectArrayList<>(ObjectArrayList.of(entry)));
+		}
+
+		@SuppressWarnings("unchecked")
+		public List<PressableWidget> buttons() {
+			try {
+				return (List<PressableWidget>) (Object) ((GridWidgetAccessor) widget).getChildren();
+			} catch(ClassCastException e) {
+				ChatPatches.logReportMsg(e);
+				return List.of();
+			}
 		}
 
 		/**
@@ -824,7 +818,7 @@ public class ContextMenu implements Element {
 		 * be cut off.
 		 */
 		public void updateButtonPositions() {
-			buttonGrid.refreshPositions();
+			widget.refreshPositions();
 
 			// sync main button widths
 			int mainWidth = entries.stream()
@@ -844,17 +838,21 @@ public class ContextMenu implements Element {
 
 
 			// if the grid menu goes off the screen, shift it up
-			int y = buttonGrid.getY();
-			if(buttonGrid.getHeight() + y > mc.getWindow().getScaledHeight()) {
+			int y = widget.getY();
+			if(widget.getHeight() + y > mc.getWindow().getScaledHeight()) {
 				// moves the menu up by the amount it goes off the screen, plus a padding buffer
-				buttonGrid.setY(y - ((buttonGrid.getHeight() + y) - mc.getWindow().getScaledHeight()) - buttonPadding);
+				widget.setY(y - ((widget.getHeight() + y) - mc.getWindow().getScaledHeight()) - buttonPadding);
 			}
 			// if the grid menu goes off the screen, shift it left
-			int x = buttonGrid.getX();
-			if(buttonGrid.getWidth() + x > mc.getWindow().getScaledWidth()) {
+			int x = widget.getX();
+			if(widget.getWidth() + x > mc.getWindow().getScaledWidth()) {
 				// moves the menu left by the amount it goes off the screen, plus a padding buffer
-				buttonGrid.setX(x - ((buttonGrid.getWidth() + x) - mc.getWindow().getScaledWidth()) - buttonPadding);
+				widget.setX(x - ((widget.getWidth() + x) - mc.getWindow().getScaledWidth()) - buttonPadding);
 			}
+		}
+
+		public boolean isEmpty() {
+			return entries.isEmpty();
 		}
 
 		@Contract("null -> false")
@@ -866,9 +864,7 @@ public class ContextMenu implements Element {
 			idMap.clear();
 			groups.clear();
 			entries.clear();
-			widgets.clear();
-			currentRow = -1;
-			groupCount = 0;
+			((GridWidgetAccessor) widget).getChildren().clear();
 		}
 
 		record Entry(int row, int col, int groupId, PressableWidget button, @NotNull Supplier<Text> tooltipCopyTextSupplier, @Nullable ButtonWidget.PressAction pressAction) {}
