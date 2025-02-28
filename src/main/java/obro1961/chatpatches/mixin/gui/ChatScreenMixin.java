@@ -19,6 +19,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyCodes;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Style;
@@ -45,6 +46,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -73,7 +75,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 									 MENU_X = 2,
 									 MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 	// context menu
-	@Unique private static ContextMenu contextMenu = new ContextMenu(-1, -1);
+	@Unique private static ContextMenu contextMenu = new ContextMenu(null, -1, -1);
 	// search stuff
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
@@ -103,7 +105,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * Notably used to clear the message draft in
 	 * {@link ScreenMixin#clearMessageDraft} to only do this when
 	 * the user closes the ChatScreen; also in
-	 * {@link ContextMenu#init()} for the
+	 * {@link ContextMenu#init(Consumer)} for the
 	 * {@code #MENU_REPLY} action.
 	 */
 	@Unique public void chatpatches$overrideChatText(String str) { chatField.setText(str); }
@@ -120,8 +122,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			else if(!originalChatText.equals("/"))
 				this.originalChatText = messageDraft;
 		}
-
-		ContextMenu.updateHooks(this::addSelectableChild, this::remove);
 	}
 
 	/**
@@ -264,8 +264,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		else if(!searchField.getText().isEmpty())
 			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
 
-		contextMenu.close();
-		ContextMenu.updateHooks(null, null);
+		contextMenu.close(this::remove);
 	}
 
 	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
@@ -313,7 +312,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		boolean clicked = mouseClicked.call(mX, mY, button);
 
 		if(button != GLFW.GLFW_MOUSE_BUTTON_RIGHT)
-			contextMenu.close(); // closes the menu if it wasn't just created, we don't care if anything was actually clicked
+			contextMenu.close(this::remove); // closes the menu if it wasn't just created, we don't care if anything was actually clicked
 
 		return clicked;
 	}
@@ -340,6 +339,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * 			<li>Unloads the old context menu</li>
 	 * 			<li>Saves the new one</li>
 	 * 			<li>Initializes it</li>
+	 * 			<li>Focuses it</li>
 	 * 		</ol>
 	 * </ol>
 	 */
@@ -359,24 +359,38 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			if(regexButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
 		} else if(contextMenu.mouseClicked(mX, mY, button)) {
+			contextMenu.close(this::remove);
 			cir.setReturnValue(true);
 		} else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-			ContextMenu mousePosMenu = new ContextMenu(mX, mY);
+			ContextMenu newMenu = new ContextMenu((ChatScreen)(Object)this, mX, mY);
 			// if the mouse right-clicked elsewhere and that location can load a context menu, use it
-			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && mousePosMenu.isFunctional()) {
-				contextMenu.close(); // unhook the old context menu buttons
-				contextMenu = mousePosMenu; // keep and use the updated context menu
+			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && newMenu.isFunctional()) {
+				contextMenu.close(this::remove);
 
-				contextMenu.init(); // initialize the new menu - old hooks are the same too!
+				newMenu.init(this::addSelectableChild); // load the new menu
+				setFocused(newMenu); // shift focus from the chat field
+				contextMenu = newMenu;
+
 				cir.setReturnValue(true);
 			}
 		}
 	}
 
 	/**
-	 * Provides functionality to the
-	 * {@link #contextMenu}.
+	 * Allows tabbing through the context menu buttons and
+	 * registering button clicks properly (by closing the
+	 * menu after successful keystrokes).
+	 *
+	 * @see ContextMenu#keyPressed(int, int, int)
 	 */
+	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
+	private void allowAccessibilityTabbing(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+		if(contextMenu.keyPressed(keyCode, scanCode, modifiers) && KeyCodes.isToggle(keyCode)) {
+			contextMenu.close(this::remove);
+			cir.setReturnValue(true);
+		}
+	}
+
 	@Override
 	public void mouseMoved(double mX, double mY) {
 		contextMenu.mouseMoved(mX, mY);

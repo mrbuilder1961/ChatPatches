@@ -2,10 +2,12 @@ package obro1961.chatpatches.gui;
 
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
+import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.PlayerSkinDrawer;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -13,11 +15,11 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.*;
+import net.minecraft.client.input.KeyCodes;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.StringHelper;
 import net.minecraft.util.math.MathHelper;
@@ -26,15 +28,20 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.accessor.ChatScreenAccessor;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.accessor.GridWidgetAccessor;
+import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.TextUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -48,7 +55,7 @@ import static obro1961.chatpatches.util.TextUtils.textCodec;
  * Controls the behavior and raw rendering of the menu buttons, as well as the
  * logic for utilizing, processing, and copying data from the selected message.
  */
-public class ContextMenu {
+public class ContextMenu implements Element {
 	// based on the total amount of buttons that currently exist, excluding link buttons
 	public static final int MAX_ROWS = 6;
 	public static final int MAX_COLUMNS = 2;
@@ -70,35 +77,18 @@ public class ContextMenu {
 	static final Text TIMESTAMP_HOVER = Text.translatable("text.chatpatches.copy.timestampHoverText");
 	static final Text MENU_UNIX = Text.translatable("text.chatpatches.copy.unix");
 	static final Text MENU_LINKS = Text.translatable("text.chatpatches.copy.links");
-	static final Function<Integer, Text> LINK_N = (n) -> Text.translatable("text.chatpatches.copy.linkN", n);
+	static final Int2ObjectFunction<Text> LINK_N = (n) -> Text.translatable("text.chatpatches.copy.linkN", n);
 	static final Text MENU_SENDER = Text.translatable("text.chatpatches.copy.sender");
 	static final Text NAME = Text.translatable("text.chatpatches.copy.name");
 	static final Text UUID = Text.translatable("text.chatpatches.copy.uuid");
 	static final Text MENU_REPLY = Text.translatable("text.chatpatches.copy.reply");
 	// endregion
 
-	// methods used for closing and initializing the menu
-	private static Consumer<Element> remove;
-	private static Consumer<ClickableWidget> addSelectableChild;
-
 	// grid/widget stuff
 	/**
 	 * The grid widget that contains all the buttons in this context menu.
-	 * Buttons can overlap, as the grid is internally a list of buttons.
-	 * Overlapping hover buttons should only render when the main, self,
-	 * or sibling buttons are hovered.
-	 * Organized in a two column layout:
-	 * |--------------------|----------------------------|
-	 * | always shown (c=0) |  shown by * on hover (c=1) |
-	 * |--------------------|----------------------------|
-	 * | MENU_STRING        | RAW, FORMATTED, JSON       |
-	 * | MENU_TIMESTAMP     | TIMESTAMP, TIMESTAMP_HOVER |
-	 * | MENU_UNIX	        | x						     |
-	 * | MENU_LINKS         | LINK_N(1), LINK_N(2), ...  |
-	 * | MENU_SENDER        | NAME, UUID                 |
-	 * | MENU_REPLY         | x                          |
-	 * |--------------------|----------------------------|
-	 * todo: move this visual somewhere else in here, and move the overlapping button comment too
+	 * Functional as a menu because buttons can overlap, as the grid is
+	 * internally a list of buttons.
 	 */
 	private final GridWidget buttonGrid;
 	/**
@@ -113,13 +103,21 @@ public class ContextMenu {
 	 * ugly utility methods constrained in-scope
 	 * and out of sight.
 	 */
-	private final GridData gridData; //TODO ALSO: IS THERE ANY MORE OPTIMIZING WE CAN DO HERE? STILL A LOT OF VARS AND LOOKUPS :(((((
+	private final GridData gridData; // prepub: replace this with a positioner instead? it's only for organizing the buttons, griddata can handle everything else..
 
 	// variables derived from selected message
 	public final RenderUtils.MousePos clickPos;
 	private final ChatHudLine selectedLine;
 	private final List<ChatHudLine.Visible> selectedVisibles;
 	private final GameProfile messageSender;
+	/**
+	 * The ChatScreen this menu is contained within.
+	 * If {@link #noOp} is {@code false}, this field
+	 * is guaranteed to be non-null. However, if
+	 * {@link #noOp} is {@code true}, this field may
+	 * or may not be null.
+	 */
+	private final ChatScreen parentScreen;
 
 	/**
 	 * If true, effectively disables this context menu, meaning
@@ -138,19 +136,23 @@ public class ContextMenu {
 	 * coordinate is negative, the selected message lines are empty
 	 * or invalid, or if the context menu is disabled in the config.
 	 *
-	 * <p>Not to be confused with {@link #init()}, which populates,
-	 * configures, and positions the widgets.
+	 * <p>Not to be confused with {@link #init(Consumer)}, which
+	 * populates, configures, and positions the widgets.
 	 */
-	public ContextMenu(double mX, double mY) {
+	public ContextMenu(ChatScreen parentScreen, double mX, double mY) {
+		if(!config.contextMenu || mX < 0 || mY < 0)
+			noOp = true;
+
 		this.clickPos = RenderUtils.MousePos.of(mX, mY);
 		this.gridData = new GridData(MAX_ROWS, MAX_COLUMNS);
 		this.buttonGrid = new GridWidget((int) mX, (int) mY);
 		this.widgets = ((GridWidgetAccessor) buttonGrid).getChildren();
+		this.parentScreen = noOp ? ((ChatScreen) mc.currentScreen) : parentScreen;
 
 		this.selectedVisibles = getFullMessageAt(mX, mY);
 
 		// disables the menu if it was passed invalid values or if it's disabled in the config
-		if(!config.contextMenu || mX < 0 || mY < 0 || selectedVisibles.isEmpty())
+		if(!noOp && selectedVisibles.isEmpty())
 			noOp = true;
 
 		List<ChatHudLine> chatMessages = ((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getMessages();
@@ -174,16 +176,6 @@ public class ContextMenu {
 			: NIL_MSG_DATA.sender();
 	}
 
-	/**
-	 * Ugly but critical method to grant the context menu access to ChatScreen methods.
-	 * Must be called before the context menu is initialized, otherwise an
-	 * {@link IllegalStateException} will be thrown.
-	 */
-	public static void updateHooks(Consumer<ClickableWidget> addSelectableChild, Consumer<Element> remove) {
-		ContextMenu.addSelectableChild = addSelectableChild;
-		ContextMenu.remove = remove;
-	}
-
 
 	/**
 	 * Registers a button in the {@linkplain #buttonGrid button grid} and
@@ -200,8 +192,6 @@ public class ContextMenu {
 	 * @param col The column in the grid menu where the button should be
 	 *            placed. Main buttons are always in column 0, and hover
 	 *            buttons are in columns ≥1.
-	 *                 ButtonWidget#renderButton(DrawContext, int, int, float)}
-	 *                 method if not {@code null}.
 	 */
 	private void registerButton(Text id, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction, int localRow, int col,
 								RenderUtils.Renderer<PressableWidget> renderer) {
@@ -209,6 +199,9 @@ public class ContextMenu {
 		int h = buttonPadding + 14;
 
 		PressableWidget button = ButtonWidget.builder(id, b -> {
+			if(noOp)
+				return;
+
 			Text copyText = tooltipCopyTextSupplier != null ? tooltipCopyTextSupplier.get() : ScreenTexts.EMPTY;
 			String copyStr = StringHelper.stripTextFormat(copyText.getString()); //prepub: config opt to copy section signs, disabled by def..?
 			if(!copyStr.isEmpty()) {
@@ -218,8 +211,6 @@ public class ContextMenu {
 
 			if(pressAction != null)
 				pressAction.onPress(b);
-
-			close();
 		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
 
 		if(tooltipCopyTextSupplier != null)
@@ -231,15 +222,12 @@ public class ContextMenu {
 				final ButtonWidget.NarrationSupplier narrationSupplier = Supplier::get;
 
 				@Override
-				public void onPress() {
-					effectivelyFinalButton.onPress();
-				}
-				@Override
 				protected void renderButton(DrawContext context, int mX, int mY, float delta) {
 					// renders the custom implementation, with the original method passed as a parameter to be called
 					renderer.render(context, mX, mY, delta, this, super::renderButton);
 				}
 
+				@Override public void onPress() { effectivelyFinalButton.onPress(); }
 				// pulled from ButtonWidget
 				@Override protected MutableText getNarrationMessage() { return narrationSupplier.createNarrationMessage(super::getNarrationMessage); }
 				@Override public void appendClickableNarrations(NarrationMessageBuilder builder) { appendDefaultNarrations(builder); }
@@ -248,6 +236,7 @@ public class ContextMenu {
 
 		gridData.add(button, localRow, col, tooltipCopyTextSupplier, pressAction);
 	}
+
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
 	 * from {@code proxyId}, does <b>not</b> perform an extra
@@ -316,9 +305,9 @@ public class ContextMenu {
 	/**
 	 * Initializes the context menu by registering all buttons,
 	 * their features, and by positioning everything correctly.
-	 * Does nothing if the menu is {@linkplain #noOp disabled}
-	 * or if the {@linkplain #updateHooks(Consumer, Consumer)
-	 * addSelectableChild hook} was not specified.
+	 * Takes the {@link Screen#addSelectableChild(Element)}
+	 * method and registers all buttons with it. Does nothing
+	 * if the menu is {@linkplain #noOp disabled}.
 	 *
 	 * @implNote Registers buttons in the following order:
 	 * <ol>
@@ -338,16 +327,12 @@ public class ContextMenu {
 	 *     <li>***{@link #UUID}</li>
 	 *     <li>***{@link #MENU_REPLY}</li>
 	 * </ol>
-	 * Finally, updates and syncs the button positions and registers them with
-	 * the screen hooks provided by {@link #updateHooks(Consumer, Consumer)}.
+	 * Finally, updates and syncs the button positions and registers them
+	 * with the {@link Screen#addSelectableChild(Element)} method.
 	 */
-	public void init() {
-		if(noOp) {
+	public void init(Consumer<PressableWidget> addSelectableChild) {
+		if(noOp)
 			return;
-		} else if(addSelectableChild == null) {
-			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `addSelectableChild` not initialized"));
-			return;
-		}
 
 		Text text = selectedLine.content();
 		Text timestamp = getPart(text, TIMESTAMP_INDEX);
@@ -427,9 +412,8 @@ public class ContextMenu {
 			}, 0);
 		}
 
-		buttonGrid.refreshPositions();
-		gridData.syncButtons();
-		widgets.forEach(w -> addSelectableChild.accept((ClickableWidget)w));
+		gridData.updateButtonPositions();
+		pressables().forEach(addSelectableChild);
 	}
 
 	/**
@@ -437,16 +421,14 @@ public class ContextMenu {
 	 * {@link #clickPos} and highlights its selected message
 	 * in chat.
 	 *
-	 * @see #renderSelectionOutline(DrawContext, int, int, float)
+	 * @see #renderSelectionOutline(DrawContext)
 	 * @see #renderMenuButtons(DrawContext, int, int, float)
-	 *
-	 * @implSpec {@code hoveredVisibles} should not be empty.
 	 */
 	public void render(DrawContext drawContext, int mX, int mY, float delta) {
 		if(noOp)
 			return;
 
-		renderSelectionOutline(drawContext, mX, mY, delta);
+		renderSelectionOutline(drawContext/*, mX, mY, delta*/);
 		renderMenuButtons(drawContext, mX, mY, delta);
 	}
 
@@ -454,7 +436,7 @@ public class ContextMenu {
 	 * Renders a selection outline around the hovered message lines
 	 * in the chat, to indicate which message will be copied.
 	 */
-	private void renderSelectionOutline(DrawContext drawContext, int mX, int mY, float delta) {
+	private void renderSelectionOutline(DrawContext drawContext/*, int mX, int mY, float delta*/) {
 		if(selectedVisibles.isEmpty())
 			return;
 
@@ -491,50 +473,57 @@ public class ContextMenu {
 	}
 
 	private void renderMenuButtons(DrawContext drawContext, int mX, int mY, float delta) {
-		// "official" way to render widgets, however the recursive-nature of it, even if only 1 level deep, feels too laggy
-		//widgets.forEach(widget -> widget.forEachChild(clickableWidget -> clickableWidget.render(drawContext, mX, mY, delta)));
-
-		// alternative way to render widgets, but it's not recursive and takes advantage of ClickableWidget#forEachChild passing itself
-		widgets.forEach(w -> ((ClickableWidget)w).render(drawContext, mX, mY, delta));
+		pressables().forEach(w -> w.render(drawContext, mX, mY, delta));
 	}
 
-	public void keyPressed(int keyCode, int scanCode, int modifiers) {
+
+	/**
+	 * If the tab key is pressed and the menu isn't disabled,
+	 * check if the chat screen is hovered/focused on a menu
+	 * button, and if so update the buttons accordingly.
+	 * Otherwise, presses the selected button.
+	 *
+	 * @return {@code true} if a menu button was pressed, and
+	 * that the menu should now close, {@code false} otherwise
+	 * (when a key was not pressed, and when the menu was
+	 * updated).
+	 *
+	 * @implNote Called in {@link
+	 * ChatScreenMixin#allowAccessibilityTabbing(int, int, int, CallbackInfoReturnable)}.
+	 */
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
 		if(noOp)
-			return;
+			return false; // failed - did nothing
 
-		// accessibility tab consumer thing.. how?
+		if(keyCode == GLFW.GLFW_KEY_TAB) {
+			PressableWidget tabbed = parentScreen.getFocused() instanceof PressableWidget w ? w : null;
 
-		// consume enter and arrow keys to press and navigate buttons
+			if(gridData.contains(tabbed) && tabbed.getType() != Selectable.SelectionType.NONE) {
+				updateButtons(Optional.of(tabbed));
+				return true; // true - extra KeyCodes.isToggle check does not pass
+			}
+		}
 
-		// FIXME SOON: so it seems like the chat screen actually handles tabbing fine, as long as you aren't focused on the chat. but
-		//  the only issue is that tabbing over menu buttons doesn't trigger the same refreshing of buttons as hovering does!
-		//  my guess: impl some override in the registerButton constructor so that if col==0, trigger wtv we need. @see wherever tab hover events are triggered
-		// also todo: we should probably auto-select the top-left button on right-click
+		// true - if a button was pressed, then close the menu, bc the check will pass
+		return KeyCodes.isToggle(keyCode) && gridData.contains(parentScreen.getFocused()) && parentScreen.getFocused().keyPressed(keyCode, scanCode, modifiers);
 	}
 
-	/** todo...
+	/**
 	 * Handles the logic for triggering button click events,
 	 * aka copying text, whenever the mouse is clicked.
 	 *
-	 * @return Whether the menu was clicked or not.
-	 *		   <br><em>Note: the return value of this method
-	 *		   is largely useless, because any click after
-	 *		   the menu has been opened should either trigger
-	 *		   a button (job done, close menu) or close the
-	 *		   menu because it's been clicked off.</em>
+	 * @return {@code true} if any of the menu buttons were
+	 * 			clicked, {@code false} otherwise.
 	 *
-	 * @implNote Must be called in
-	 * 	  		 {@link ChatScreen#mouseClicked(double, double, int)}
-	 * 	  		 to work properly.
+	 * @implNote Called in {@link
+	 * ChatScreenMixin#mouseClicked(double, double, int)}.
 	 */
+	@Override
 	public boolean mouseClicked(double mX, double mY, int button) {
-		if(noOp)
-			return false;
-
-		// assumes the menu has been initialized
-		if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if(!noOp && button == GLFW.GLFW_MOUSE_BUTTON_LEFT && getHoveredButton(mX, mY) instanceof Optional<PressableWidget> opt) {
 			// whether the button at (mX, mY) was clicked or not, otherwise return false and close the menu
-			return getHoveredButton(mX, mY).map(b -> b.mouseClicked(mX, mY, button)).orElse(false);
+			return opt.isPresent() && opt.get().mouseClicked(mX, mY, button);
 		}
 
 		return false; // signifies that the menu should be closed (clicked off)
@@ -542,16 +531,120 @@ public class ContextMenu {
 
 	/**
 	 * Handles the logic for showing and hiding buttons when
-	 * the mouse is moved over the context menu. Must be called
-	 * in {@link ChatScreen#mouseMoved(double, double)} to work
-	 * properly.
+	 * the mouse is moved over the context menu.
+	 *
+	 * @implNote Called in
+	 * {@link ChatScreenMixin#mouseMoved(double, double)}.
 	 */
+	@Override
 	public void mouseMoved(double mX, double mY) {
-		Optional<PressableWidget> optional = getHoveredButton(mX, mY);
-		if(optional.isEmpty())
+		updateButtons(getHoveredButton(mX, mY));
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<PressableWidget> pressables() {
+		try {
+			return (List<PressableWidget>) (Object) widgets;
+		} catch(ClassCastException e) {
+			ChatPatches.logReportMsg(e);
+			return List.of();
+		}
+	}
+
+	public boolean isMouseOver(double mX, double mY) {
+		return !noOp &&
+			   mX >= buttonGrid.getX() && mX <= buttonGrid.getX() + buttonGrid.getWidth()
+			&& mY >= buttonGrid.getY() && mY <= buttonGrid.getY() + buttonGrid.getHeight();
+	}
+
+	/**
+	 * Marks the context menu {@linkplain #noOp disabled},
+	 * unhooks all widgets provided by this context
+	 * menu (created in {@link #init(Consumer)}) from the
+	 * screen, then clears all stored fields and focuses
+	 * the {@link ChatScreen#chatField}. It must be focused
+	 * at this specific time to ensure the focus call isn't
+	 * ignored and delegated to a (now deleted) menu button.
+	 */
+	public void close(Consumer<PressableWidget> remove) {
+		if(noOp)
+			return; // if the menu is already disabled, it was born broken, and therefore was never initialized
+
+		pressables().forEach(remove);
+		gridData.clear();
+
+		// focus the chat field here, shifting from a now deleted menu button
+		if(!parentScreen.children().isEmpty()) {
+			if(parentScreen.children().getFirst() instanceof TextFieldWidget tfw && tfw.getMessage().equals(CHAT_FIELD_TEXT))
+				parentScreen.setFocused(tfw);
+			else
+				parentScreen.children()
+					.stream()
+					.skip(1) // skip the first child, which we already checked
+					.filter(e -> e instanceof TextFieldWidget tfw && tfw.getMessage().equals(CHAT_FIELD_TEXT))
+					.findFirst()
+					.ifPresent(parentScreen::setFocused);
+		}
+
+		noOp = true;
+	}
+
+	/**
+	 * @see #noOp
+	 *
+	 * @apiNote Intended for external
+	 * (non-{@link ContextMenu}) use.
+	 */
+	public boolean isFunctional() {
+		return !noOp;
+	}
+
+	/**
+	 * Signifies if the menu is focused to allow proper
+	 * tab-navigation (aka forces the menu to update its
+	 * buttons on keyboard input).
+	 *
+	 * @see #setFocused(boolean)
+	 * @see #updateButtons(Optional)
+	 *
+	 * @return {@code true} if the menu is
+	 * {@linkplain #noOp functional} and if the
+	 * {@linkplain #MENU_STRING first button} is
+	 * focused, {@code false} otherwise.
+	 */
+	@Override
+	public boolean isFocused() {
+		return !noOp && !widgets.isEmpty() && pressables().getFirst().isFocused();
+	}
+
+	/**
+	 * Marks the {@linkplain #MENU_STRING first button} (and subsequently the
+	 * context menu itself) focused according to the passed parameter. Does
+	 * nothing if this menu is {@linkplain #noOp disabled}.
+	 */
+	@Override
+	@Deprecated
+	public void setFocused(boolean focused) {
+		if(noOp)
 			return;
 
-		PressableWidget hoveredButton = optional.get();
+		if(!widgets.isEmpty())
+			widgets.getFirst().forEachChild(MENU_STRING_BUTTON -> MENU_STRING_BUTTON.setFocused(focused));
+	}
+
+
+	/**
+	 * Updates the visibility of all buttons in the context menu,
+	 * along with the underlining of the first hover button in
+	 * each group, if applicable.
+	 *
+	 * @implNote Todo! how does this method work? it would be nice to know!
+	 */
+	public void updateButtons(Optional<PressableWidget> widgetOptional) {
+		if(widgetOptional.isEmpty())
+			return;
+
+		PressableWidget hoveredButton = widgetOptional.get();
 		for(List<GridData.Entry> group : gridData.groups) {
 			for(GridData.Entry itr : group) {
 				PressableWidget itrButton = itr.button;
@@ -576,56 +669,15 @@ public class ContextMenu {
 	}
 
 	/**
-	 * Unhooks all widgets provided by this context
-	 *  menu(originally from {@link #init()}) from
-	 * the screen. Then flags {@link #noOp} as true.
+	 * @return The button currently being hovered over, wrapped
+	 * in an {@link Optional}. If the menu is {@linkplain #noOp
+	 * disabled}, not hovered over, or if the parent screen wasn't
+	 * specified, then an empty {@code Optional} is returned.
 	 *
-	 * @apiNote Uses {@link #remove}, aka the
-	 * 		    {@link Screen#remove(Element)} method, so
-	 * 		    the widgets can be removed from the
-	 * 		    screen properly.
-	 */
-	public void close() {
-		noOp = true;
-		if(remove == null) {
-			ChatPatches.logReportMsg(new IllegalStateException("ChatScreen hook `remove` not initialized"));
-			return;
-		}
-		buttonGrid.forEachChild(remove::accept);
-		widgets.clear();
-	}
-
-	/**
-	 * @see #noOp
-	 *
-	 * @apiNote Intended for external
-	 * (non-{@link ContextMenu}) use.
-	 */
-	public boolean isFunctional() {
-		return !noOp;
-	}
-
-	public boolean isMouseOver(double mX, double mY) {
-		return !noOp &&
-			   mX >= buttonGrid.getX() && mX <= buttonGrid.getX() + buttonGrid.getWidth()
-			&& mY >= buttonGrid.getY() && mY <= buttonGrid.getY() + buttonGrid.getHeight();
-	}
-
-
-	/**
-	 * Returns the last button that is being hovered over.
-	 * Doesn't return the first, because buttons can overlap,
-	 * so the last one to render should be the one to return.
+	 * @see ParentElement#hoveredElement(double, double)
 	 */
 	private Optional<PressableWidget> getHoveredButton(double mX, double mY) {
-		return isMouseOver(mX, mY)
-			? new ArrayList<>(widgets)
-				.reversed() // last button to render is the first to be checked, and for any overlap
-				.stream()
-				.map(b -> (PressableWidget)b)
-				.filter(b -> b.isMouseOver(mX, mY))
-				.findFirst()
-			: Optional.empty();
+		return isMouseOver(mX, mY) ? parentScreen.hoveredElement(mX, mY).map(e -> (PressableWidget)e) : Optional.empty();
 	}
 
 	/**
@@ -707,7 +759,7 @@ public class ContextMenu {
 
 
 	/**
-	 * Util class for organizing the buttons in the context menu,
+	 * Util class for organizing the buttons in the context menu;
 	 * avoids the need for multiple separate lists and maps.
 	 * Although it would make more sense to just add an AW
 	 * entry to the GridWidget$Element class and associated
@@ -715,13 +767,13 @@ public class ContextMenu {
 	 * alternative that simplifies the omniversion approach
 	 * required for the long-term goal of the mod.
 	 */
-	class GridData {
-		private final List<Entry> entries;
+	class GridData { //prepub: use it.unimi.dsi.fastutil classes for lists/maps/etc. for performance! should be ez-pz
+		private final ObjectList<Entry> entries;
 		/**
 		 * Maps {@link Text} button ids (ex. {@link #RAW_STR})
 		 * to their respective {@link PressableWidget}s in the grid.
 		 */
-		private final Map<Text, Entry> idMap;
+		private final Object2ObjectArrayMap<Text, Entry> idMap;
 		/**
 		 * Holds a list of buttons at each index (group number)
 		 * in the root list.
@@ -731,19 +783,19 @@ public class ContextMenu {
 		 * regardless of message contents is the first
 		 * group, which contains basic copy options.
 		 */
-		private final List<List<Entry>> groups;
+		private final ObjectList<ObjectList<Entry>> groups;
 
 		private int currentRow = -1;
 		private int groupCount = 0;
 
 		public GridData(int maxRows, int maxCols) {
-			this.entries = new ArrayList<>(maxRows * maxCols);
-			this.idMap = new HashMap<>(maxRows * maxCols);
-			this.groups = new ArrayList<>(maxRows);
+			this.entries = new ObjectArrayList<>(maxRows * maxCols);
+			this.idMap = new Object2ObjectArrayMap<>(maxRows * maxCols);
+			this.groups = new ObjectArrayList<>(maxRows);
 		}
 
 		public void add(PressableWidget button, int localRow, int col, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction) {
-			boolean newGroupAkaIsMain = button.visible = col == 0; // note: this will only break things if >1 main buttons are grouped together
+			boolean newGroupAkaIsMain = button.visible = col == 0; // this will only break things if >1 main buttons are grouped together
 			int groupId = newGroupAkaIsMain ? groupCount++ : groupCount - 1;
 
 			if(newGroupAkaIsMain)
@@ -758,17 +810,22 @@ public class ContextMenu {
 			if(groups.size() > groupId)
 				groups.get(groupId).add(entry);
 			else
-				groups.add(groupId, new ArrayList<>(List.of(entry)));
+				groups.add(groupId, new ObjectArrayList<>(ObjectArrayList.of(entry)));
 		}
 
 		/**
+		 * Aligns all buttons in a grid pattern in accordance
+		 * with {@link GridWidget#refreshPositions()}.
 		 * Synchronizes the widths of the main buttons (col 0)
 		 * unconditionally, and the hover buttons (col 1) by
 		 * group, so that they are all the same width.
 		 * Additionally, ensures the entire grid menu is visible
-		 * on-screen by shifting it up if it gets cut off.
+		 * on-screen by shifting it up and/or left if it would
+		 * be cut off.
 		 */
-		public void syncButtons() {
+		public void updateButtonPositions() {
+			buttonGrid.refreshPositions();
+
 			// sync main button widths
 			int mainWidth = entries.stream()
 				.filter(e -> e.col == 0)
@@ -792,9 +849,27 @@ public class ContextMenu {
 				// moves the menu up by the amount it goes off the screen, plus a padding buffer
 				buttonGrid.setY(y - ((buttonGrid.getHeight() + y) - mc.getWindow().getScaledHeight()) - buttonPadding);
 			}
+			// if the grid menu goes off the screen, shift it left
+			int x = buttonGrid.getX();
+			if(buttonGrid.getWidth() + x > mc.getWindow().getScaledWidth()) {
+				// moves the menu left by the amount it goes off the screen, plus a padding buffer
+				buttonGrid.setX(x - ((buttonGrid.getWidth() + x) - mc.getWindow().getScaledWidth()) - buttonPadding);
+			}
 		}
 
-		//
+		@Contract("null -> false")
+		public boolean contains(Element e) {
+			return e instanceof PressableWidget b && idMap.containsKey(b.getMessage());
+		}
+
+		public void clear() {
+			idMap.clear();
+			groups.clear();
+			entries.clear();
+			widgets.clear();
+			currentRow = -1;
+			groupCount = 0;
+		}
 
 		record Entry(int row, int col, int groupId, PressableWidget button, @NotNull Supplier<Text> tooltipCopyTextSupplier, @Nullable ButtonWidget.PressAction pressAction) {}
 	}
