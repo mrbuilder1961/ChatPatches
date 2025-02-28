@@ -749,7 +749,8 @@ public class ContextMenu implements Element {
 	 * alternative that simplifies the omniversion approach
 	 * required for the long-term goal of the mod.
 	 */
-	class Grid { //prepub: use it.unimi.dsi.fastutil classes for lists/maps/etc. for performance! should be ez-pz +PLUS: move the gridwidget here!
+	class Grid { //prepub: use it.unimi.dsi.fastutil classes for lists/maps/etc. for performance! should be ez-pz
+		//prepub also, seriously, there has GOT to be a way to eliminate at least ONE of these lists. its the same thing over and overrrr
 		private final GridWidget widget;
 		private final ObjectList<Entry> entries;
 		/**
@@ -772,6 +773,8 @@ public class ContextMenu implements Element {
 		private int groupCount = 0;
 
 		public Grid(int maxRows, int maxCols) {
+			//idea: calculate the rows and cols needed here - we have selectedLine initialized already!
+
 			this.widget = new GridWidget((int) clickPos.x, (int) clickPos.y);
 			this.entries = new ObjectArrayList<>(maxRows * maxCols);
 			this.idMap = new Object2ObjectArrayMap<>(maxRows * maxCols);
