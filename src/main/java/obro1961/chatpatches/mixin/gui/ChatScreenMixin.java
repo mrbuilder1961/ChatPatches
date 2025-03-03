@@ -135,7 +135,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * </ol>
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
-	protected void initSearchStuff(CallbackInfo ci) {
+	protected void initSearchWidgets(CallbackInfo ci) {
 		searchButton = new SearchButton(2, height - 35, me -> showSearch = !showSearch, me -> showSettingsMenu = !showSettingsMenu);
 		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
 
@@ -202,7 +202,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * </ol>
 	 */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;render(Lnet/minecraft/client/gui/DrawContext;IIF)V"))
-	private void renderSearchAndContextMenuStuff(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
+	private void renderCustomWidgets(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
 		context.getMatrices().push();
 		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 
@@ -252,7 +252,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/**
 	 * Either resets or saves the drafts for the search and chat fields, depending on
 	 * {@link Config#searchDrafting} and {@link Config#messageDrafting}.
-	 * Additionally, resets the chat hud.
+	 * Additionally, resets the chat if needed, and closes the context menu.
 	 */
 	@Inject(method = "removed", at = @At("TAIL"))
 	public void onScreenClose(CallbackInfo ci) {
@@ -267,7 +267,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		contextMenu.close(this::remove);
 	}
 
-	/** Clears the message draft **AFTER** a message has been (successfully) sent. Uses At.Shift.AFTER to ensure we don't clear if an error occurs */
+	/**
+	 * Clears the message draft <b>after</b> a message has been
+	 * (successfully) sent. Uses {@link At.Shift#AFTER} to ensure
+	 * we don't clear if an error occurs.
+	 */
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
 	private void onMessageSentEmptyDraft(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
 		messageDraft = "";
@@ -344,7 +348,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * </ol>
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
-	public void registerClickEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
+	public void mouseClickedEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValueZ())
 			return;
 
@@ -354,9 +358,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(isMouseOverSettingsMenu(mX, mY)) {
 			if(caseSensitiveButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-			if(formattingButton.mouseClicked(mX, mY, button))
+			else if(formattingButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
-			if(regexButton.mouseClicked(mX, mY, button))
+			else if(regexButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
 		} else if(contextMenu.mouseClicked(mX, mY, button)) {
 			contextMenu.close(this::remove);

@@ -3,7 +3,6 @@ package obro1961.chatpatches.gui;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.client.MinecraftClient;
@@ -17,7 +16,6 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.GridWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyCodes;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.util.SkinTextures;
@@ -38,6 +36,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
@@ -132,6 +131,9 @@ public class ContextMenu implements Element {
 	 *
 	 * <p>Not to be confused with {@link #init(Consumer)}, which
 	 * populates, configures, and positions the button widgets.
+	 *
+	 * @see ChatScreenMixin#contextMenu
+	 * @see ChatScreenMixin#mouseClickedEvents(double, double, int, CallbackInfoReturnable)
 	 */
 	public ContextMenu(ChatScreen parentScreen, double mX, double mY) {
 		if(!config.contextMenu || mX < 0 || mY < 0)
@@ -321,6 +323,8 @@ public class ContextMenu implements Element {
 	 * </ol>
 	 * Finally, updates and syncs the button positions and registers them
 	 * with the {@link Screen#addSelectableChild(Element)} method.
+	 *
+	 * @see ChatScreenMixin#initSearchWidgets(CallbackInfo)
 	 */
 	public void init(Consumer<PressableWidget> addSelectableChild) {
 		if(noOp)
@@ -415,6 +419,8 @@ public class ContextMenu implements Element {
 	 *
 	 * @see #renderSelectionOutline(DrawContext)
 	 * @see #renderMenuButtons(DrawContext, int, int, float)
+	 *
+	 * @see ChatScreenMixin#renderCustomWidgets(DrawContext, int, int, float, CallbackInfo)
 	 */
 	public void render(DrawContext drawContext, int mX, int mY, float delta) {
 		if(noOp)
@@ -471,17 +477,16 @@ public class ContextMenu implements Element {
 
 	/**
 	 * If the tab key is pressed and the menu isn't disabled,
-	 * check if the chat screen is hovered/focused on a menu
-	 * button, and if so update the buttons accordingly.
-	 * Otherwise, presses the selected button.
+	 * checks if the chat screen is hovered/focused on a menu
+	 * button, and if so {@linkplain #updateButtons(Optional)
+	 * updates the buttons} accordingly. Otherwise, tries to
+	 * press the selected button.
 	 *
-	 * @return {@code true} if a menu button was pressed, and
-	 * that the menu should now close, {@code false} otherwise
-	 * (when a key was not pressed, and when the menu was
-	 * updated).
+	 * @return {@code true} if the menu was successfully updated
+	 * or if a button was pressed, otherwise {@code false} if the
+	 * menu is {@linkplain #noOp disabled}.
 	 *
-	 * @implNote Called in {@link
-	 * ChatScreenMixin#allowAccessibilityTabbing(int, int, int, CallbackInfoReturnable)}.
+	 * @see ChatScreenMixin#allowAccessibilityTabbing(int, int, int, CallbackInfoReturnable)
 	 */
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
@@ -508,8 +513,7 @@ public class ContextMenu implements Element {
 	 * @return {@code true} if any of the menu buttons were
 	 * 			clicked, {@code false} otherwise.
 	 *
-	 * @implNote Called in {@link
-	 * ChatScreenMixin#mouseClicked(double, double, int)}.
+	 * @see ChatScreenMixin#mouseClicked(double, double, int)
 	 */
 	@Override
 	public boolean mouseClicked(double mX, double mY, int button) {
@@ -525,8 +529,7 @@ public class ContextMenu implements Element {
 	 * Handles the logic for showing and hiding buttons when
 	 * the mouse is moved over the context menu.
 	 *
-	 * @implNote Called in
-	 * {@link ChatScreenMixin#mouseMoved(double, double)}.
+	 * @see ChatScreenMixin#mouseMoved(double, double)
 	 */
 	@Override
 	public void mouseMoved(double mX, double mY) {
@@ -617,10 +620,27 @@ public class ContextMenu implements Element {
 
 	/**
 	 * Updates the visibility of all buttons in the context menu,
-	 * along with the underlining of the first hover button in
-	 * each group, if applicable.
+	 * focuses the hovered button, and underlines the first hover
+	 * button in each group, if it exists.
 	 *
-	 * @implNote Todo! how does this method work? it would be nice to know!
+	 * @see #mouseMoved(double, double)
+	 * @see #keyPressed(int, int, int)
+	 *
+	 * @implNote
+	 * <ol>
+	 *	 <li>If the passed {@link Optional} is empty, ensures nothing is focused on in the
+	 *	 {@linkplain #parentScreen chat screen} and returns</li>
+	 *	 <li>Otherwise, focuses the hovered button in the chat screen</li>
+	 *	 <li>Then iterates through every {@linkplain Grid#groups group} and every button in those groups:</li>
+	 *	 <ol>
+	 *	     <li>If the iterated button is not a main button ({@code col > 0}), sets its visibility based
+	 *	     on whether the hovered button is in the iterated group or not</li>
+	 *	     <li>If the iterated button is the hovered button and the iterated group has at least one hover
+	 *	     button, toggles the {@link Style#underlined} attribute of the group's first hovered button
+	 *	     based on whether it should show (main button) or hide (hover button aligned with its main
+	 *	     button).</li>
+	 *	 </ol>
+	 * </ol>
 	 */
 	public void updateButtons(Optional<PressableWidget> widgetOptional) {
 		if(widgetOptional.isEmpty())
@@ -741,13 +761,14 @@ public class ContextMenu implements Element {
 
 
 	/**
-	 * Util class for organizing the buttons in the context menu;
-	 * avoids the need for multiple separate lists and maps.
-	 * Although it would make more sense to just add an AW
-	 * entry to the GridWidget$Element class and associated
-	 * methods, this is a more flexible and less invasive
-	 * alternative that simplifies the omniversion approach
-	 * required for the long-term goal of the mod.
+	 * Associates every widget with its relevant
+	 * identifiers, which condenses accessing and
+	 * mutating operations while also keeping
+	 * ugly utility methods constrained in-scope
+	 * and out of sight. Contains a positioning
+	 * {@link GridWidget} and multiple lists for
+	 * sorting and placing buttons in their
+	 * intended locations.
 	 */
 	class Grid { //prepub: use it.unimi.dsi.fastutil classes for lists/maps/etc. for performance! should be ez-pz
 		//prepub also, seriously, there has GOT to be a way to eliminate at least ONE of these lists. its the same thing over and overrrr
@@ -773,8 +794,6 @@ public class ContextMenu implements Element {
 		private int groupCount = 0;
 
 		public Grid(int maxRows, int maxCols) {
-			//idea: calculate the rows and cols needed here - we have selectedLine initialized already!
-
 			this.widget = new GridWidget((int) clickPos.x, (int) clickPos.y);
 			this.entries = new ObjectArrayList<>(maxRows * maxCols);
 			this.idMap = new Object2ObjectArrayMap<>(maxRows * maxCols);
@@ -782,10 +801,9 @@ public class ContextMenu implements Element {
 		}
 
 		public void add(PressableWidget button, int localRow, int col, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction) {
-			boolean newGroupAkaIsMain = button.visible = col == 0; // this will only break things if >1 main buttons are grouped together
-			int groupId = newGroupAkaIsMain ? groupCount++ : groupCount - 1;
-
-			if(newGroupAkaIsMain)
+			boolean newGroup = button.visible = (col == 0); // this will only break things if >1 main buttons are grouped together
+			int groupId = newGroup ? groupCount++ : groupCount - 1;
+			if(newGroup)
 				currentRow++;
 			int absRow = currentRow + localRow;
 
