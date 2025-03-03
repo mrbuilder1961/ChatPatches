@@ -109,6 +109,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * {@code #MENU_REPLY} action.
 	 */
 	@Unique public void chatpatches$overrideChatText(String str) { chatField.setText(str); }
+	@Unique public void chatpatches$focusChatField() { setFocused(chatField); }
 
 	protected ChatScreenMixin(Text title) { super(title); }
 

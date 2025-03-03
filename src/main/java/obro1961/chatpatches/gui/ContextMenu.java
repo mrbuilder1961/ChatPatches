@@ -248,7 +248,7 @@ public class ContextMenu implements Element {
 		}
 
 		// copies the proxy button's text by executing its press action instead
-		registerButton(id, null, me -> grid.idMap.get(proxyId).button.onPress(), localRow, col, renderer);
+		registerButton(id, null, me -> grid.get(proxyId).button.onPress(), localRow, col, renderer);
 	}
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
@@ -527,13 +527,23 @@ public class ContextMenu implements Element {
 
 	/**
 	 * Handles the logic for showing and hiding buttons when
-	 * the mouse is moved over the context menu.
+	 * the mouse is moved over the context menu: Stores the
+	 * result of calling {@link #getHoveredButton(double, double)}
+	 * and checks if it's different from the currently focused
+	 * element, and if so, passes the result to {@link
+	 * #updateButtons(Optional)}. This optimizes the somewhat
+	 * expensive, iterative {@link #updateButtons(Optional)} call
+	 * by only calling it when a new button is hovered over.
 	 *
 	 * @see ChatScreenMixin#mouseMoved(double, double)
 	 */
 	@Override
 	public void mouseMoved(double mX, double mY) {
-		updateButtons(getHoveredButton(mX, mY));
+		if(!noOp) {
+			Optional<PressableWidget> opt = getHoveredButton(mX, mY);
+			if(opt.orElse(null) != parentScreen.getFocused())
+				updateButtons(opt); // only update (and subsequently iterate through) every button if a new one is hovered over!
+		}
 	}
 
 	public boolean isMouseOver(double mX, double mY) {
@@ -555,23 +565,10 @@ public class ContextMenu implements Element {
 		if(noOp)
 			return; // if the menu is already disabled, it was born broken, and therefore was never initialized
 
+		noOp = true;
 		grid.buttons().forEach(remove);
 		grid.clear();
-
-		// focus the chat field here, shifting from a now deleted menu button
-		if(!parentScreen.children().isEmpty()) {
-			if(parentScreen.children().getFirst() instanceof TextFieldWidget tfw && tfw.getMessage().equals(CHAT_FIELD_TEXT))
-				parentScreen.setFocused(tfw);
-			else
-				parentScreen.children()
-					.stream()
-					.skip(1) // skip the first child, which we already checked
-					.filter(e -> e instanceof TextFieldWidget tfw && tfw.getMessage().equals(CHAT_FIELD_TEXT))
-					.findFirst()
-					.ifPresent(parentScreen::setFocused);
-		}
-
-		noOp = true;
+		((ChatScreenAccessor) parentScreen).chatpatches$focusChatField();
 	}
 
 	/**
@@ -643,20 +640,22 @@ public class ContextMenu implements Element {
 	 * </ol>
 	 */
 	public void updateButtons(Optional<PressableWidget> widgetOptional) {
-		if(widgetOptional.isEmpty())
+		if(widgetOptional.isEmpty()) {
+			parentScreen.setFocused(null); // removes the selected outline from the last hovered button.
+			// (the most this call can do is unfocus the previous element and nullify the current one)
 			return;
+		}
 
 		PressableWidget hoveredButton = widgetOptional.get();
+		parentScreen.setFocused(hoveredButton); // allows much more efficient update checks, see #mouseMoved(int, int)
 		for(List<Grid.Entry> group : grid.groups) {
 			for(Grid.Entry itr : group) {
-				PressableWidget itrButton = itr.button;
-				PressableWidget firstHoverButton = group.size() > 1 ? group.get(1).button : null;
-
 				if(itr.col > 0)
 					// if the hovered button is in the group, show all other buttons; otherwise hide them bc they're irrelevant
-					itrButton.visible = group.contains( grid.idMap.get( hoveredButton.getMessage().copyContentOnly() ) ); // copyContentOnly avoids style (underline) nullifying equavalence
+					itr.button.visible = group.contains(grid.get( hoveredButton.getMessage() ));
 
-				if(firstHoverButton != null && itrButton.equals(hoveredButton)) {
+				// proceed with underlining if the hovered button is in the iterated group and the group has a hover button
+				if(itr.button == hoveredButton && group.size() > 1 && group.get(1).button instanceof PressableWidget firstHoverButton) {
 					// remove if iterated button is in the group and the message is already underlined
 					boolean hide = itr.col > 0 && itr.row == group.getFirst().row;
 
@@ -771,14 +770,8 @@ public class ContextMenu implements Element {
 	 * intended locations.
 	 */
 	class Grid { //prepub: use it.unimi.dsi.fastutil classes for lists/maps/etc. for performance! should be ez-pz
-		//prepub also, seriously, there has GOT to be a way to eliminate at least ONE of these lists. its the same thing over and overrrr
 		private final GridWidget widget;
 		private final ObjectList<Entry> entries;
-		/**
-		 * Maps {@link Text} button ids (ex. {@link #RAW_STR})
-		 * to their respective {@link PressableWidget}s in the grid.
-		 */
-		private final Object2ObjectArrayMap<Text, Entry> idMap;
 		/**
 		 * Holds a list of buttons at each index (group number)
 		 * in the root list.
@@ -796,7 +789,6 @@ public class ContextMenu implements Element {
 		public Grid(int maxRows, int maxCols) {
 			this.widget = new GridWidget((int) clickPos.x, (int) clickPos.y);
 			this.entries = new ObjectArrayList<>(maxRows * maxCols);
-			this.idMap = new Object2ObjectArrayMap<>(maxRows * maxCols);
 			this.groups = new ObjectArrayList<>(maxRows);
 		}
 
@@ -811,13 +803,51 @@ public class ContextMenu implements Element {
 
 			widget.add(button, absRow, col);
 			entries.add(entry);
-			idMap.put(button.getMessage(), entry);
 			if(groups.size() > groupId)
 				groups.get(groupId).add(entry);
 			else
 				groups.add(groupId, new ObjectArrayList<>(ObjectArrayList.of(entry)));
 		}
 
+		/**
+		 * @return The {@link Entry} object associated with the given
+		 * {@link Text} id, otherwise {@code null} if none exists.
+		 *
+		 * @implNote While iterating, compares the results of calling
+		 * {@link Text#getString()} on the button's message with the
+		 * given id, because comparing directly caused very strange
+		 * errors and skipping over buttons that should have been
+		 * considered equal.
+		 */
+		public Entry get(Text id) {
+			for(Entry e : entries)
+				if(e.button.getMessage().getString().equals(id.getString()))
+					return e;
+
+			return null;
+		}
+
+		@Contract("null -> false")
+		public boolean contains(Object o) {
+			return o instanceof PressableWidget b && get(b.getMessage()) != null;
+		}
+
+		public void clear() {
+			entries.clear();
+			groups.clear();
+			((GridWidgetAccessor) widget).getChildren().clear();
+		}
+
+		/**
+		 * @return The widgets stored in this Grid's internal
+		 * {@link GridWidget} object, cast to
+		 * <code>{@link List}<{@link PressableWidget}></code>.
+		 * Will log a {@link ClassCastException} and return an
+		 * empty list if any of the widgets are not of the correct
+		 * type. However, this should never happen, per the
+		 * {@linkplain #registerButton(Text, Supplier, ButtonWidget.PressAction, int, int, RenderUtils.Renderer)
+		 * button registering methods}.
+		 */
 		@SuppressWarnings("unchecked")
 		public List<PressableWidget> buttons() {
 			try {
@@ -870,22 +900,6 @@ public class ContextMenu implements Element {
 				// moves the menu left by the amount it goes off the screen, plus a padding buffer
 				widget.setX(x - ((widget.getWidth() + x) - mc.getWindow().getScaledWidth()) - buttonPadding);
 			}
-		}
-
-		public boolean isEmpty() {
-			return entries.isEmpty();
-		}
-
-		@Contract("null -> false")
-		public boolean contains(Element e) {
-			return e instanceof PressableWidget b && idMap.containsKey(b.getMessage());
-		}
-
-		public void clear() {
-			idMap.clear();
-			groups.clear();
-			entries.clear();
-			((GridWidgetAccessor) widget).getChildren().clear();
 		}
 
 		record Entry(int row, int col, int groupId, PressableWidget button, @NotNull Supplier<Text> tooltipCopyTextSupplier, @Nullable ButtonWidget.PressAction pressAction) {}
