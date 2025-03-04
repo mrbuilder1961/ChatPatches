@@ -166,7 +166,7 @@ public class ContextMenu implements Element {
 
 		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityContent ec
-			? new GameProfile(ec.uuid, Objects.requireNonNullElse(ec.name, UNKNOWN.apply(Text.of( "Sender " + ec.uuid.toString() ))).getString())
+			? new GameProfile(ec.uuid, Objects.requireNonNullElse(ec.name, UNKNOWN.apply(Text.of("Sender " + ec.uuid))).getString())
 			: NIL_MSG_DATA.sender();
 	}
 

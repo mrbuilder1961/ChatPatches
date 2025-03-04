@@ -99,7 +99,7 @@ public class TextUtils {
 	/**
 	 * Converts an {@link OrderedText} into a {@link String} with {@code &<?>}
 	 * codes. Strips any complex style data, including hover events, fonts,
-	 * insertion text, etc. If {@code includeStyleData} is true, then the
+	 * insertion text, etc. If {@code includeStyles} is true, then the
 	 * returned string will not include any formatting codes.
 	 *
 	 * @apiNote Intended for use with general and regex comparisons, and not
@@ -107,14 +107,14 @@ public class TextUtils {
 	 * @implNote Visits the OrderedText by each character, and accounts for
 	 * Formatting style data by adding {@code &<?>} codes when the style changes.
 	 */
-	public static String reorder(OrderedText renderable, boolean includeStyleData) {
-		StringBuilder reordered = new StringBuilder();
+	public static String reorder(OrderedText renderable, boolean includeStyles) {
+		StringBuilder reordered = new StringBuilder(); // required for the lambda expression
 		Style[] last = {null}; // ensures that the first equality check returns false
 
 		renderable.accept((index, style, codepoint) -> {
 
 			// if style is different from last, add any formatting codes
-			if( !style.equals(last[0]) && includeStyleData )
+			if(includeStyles && !style.equals(last[0]))
 				reordered.append( getFormattingCodes(last[0] = style) );
 
 			reordered.append( Character.toChars(codepoint) );

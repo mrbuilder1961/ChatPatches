@@ -522,15 +522,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		List<ChatHudLine> messageSnapshot = new ArrayList<>(chat.chatpatches$getMessages());
 
 		// filter messages by removing those that don't match the target
-		chat.chatpatches$getMessages().removeIf(hudLn -> {
-			String content = TextUtils.reorder(hudLn.content().asOrderedText(), config.formatting);
+		chat.chatpatches$getMessages().removeIf(msg -> {
+			String text = config.formatting ? TextUtils.reorder(msg.content().asOrderedText(), true) : msg.content().getString();
 
 			// note that this NOTs the whole expression to simplify the complex nesting
 			// *removes* the message if it *doesn't* match AKA *keeps* those that *do* match
 			return !(
 				config.regex
-					? content.matches( (config.caseSensitive ? "(?i)" : "") + target )
-					: (config.caseSensitive ? content.contains(target) : StringUtils.containsIgnoreCase(content, target))
+					? text.matches( (config.caseSensitive ? "(?i)" : "") + target )
+					: (config.caseSensitive ? text.contains(target) : StringUtils.containsIgnoreCase(text, target))
 			);
 		});
 		// generate the visible messages from the filtered messages
