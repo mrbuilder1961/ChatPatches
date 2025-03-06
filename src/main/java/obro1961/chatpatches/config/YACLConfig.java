@@ -133,7 +133,7 @@ public class YACLConfig extends Config {
                         List.of(
                             action("help.reloadConfig", -1),
                             label( Text.translatable("text.chatpatches.help.dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
-                            label( Text.translatable("text.chatpatches.help.formatCodes"), "https://minecraft.gamepedia.com/Formatting_codes" ),
+                            label( Text.translatable("text.chatpatches.help.formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
                             label( Text.translatable("text.chatpatches.help.faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
                             label( Text.translatable("text.chatpatches.help.regex"), "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
                             label( Text.translatable("text.chatpatches.help.regexTester"), "https://regex101.com/" )
