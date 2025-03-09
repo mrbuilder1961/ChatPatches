@@ -172,7 +172,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		regexButton = settingButtonFactory.apply("regex", 44);
 
 		if(!config.hideSearchButton) {
-			addSelectableChild(searchButton);
+			addDrawableChild(searchButton); // simplifies rendering; it should be called automatically bc it's unconditionally shown or hidden
 			addSelectableChild(searchField);
 		}
 	}
@@ -182,7 +182,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * <ol>
 	 *     <li>(Everything shifted backwards on the Z-axis in
 	 *     order to render under the {@link ChatInputSuggestor}
-	 *     and suggestion text)</li>
+	 *     and suggestion text, see <a href="https://github.com/mrbuilder1961/ChatPatches/issues/186">
+	 *     (#186)</a>)</li>
 	 *     <li>The {@link #searchButton}</li>
 	 *     <li>If the search bar should show:</li>
 	 *     <ol>
@@ -207,7 +208,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		context.getMatrices().push();
 		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 
-		searchButton.render(context, mX, mY, delta);
 		if(showSearch && !config.hideSearchButton) {
 			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(context, mX, mY, delta);
