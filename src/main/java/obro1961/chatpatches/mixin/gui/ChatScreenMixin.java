@@ -257,8 +257,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "removed", at = @At("TAIL"))
 	public void onScreenClose(CallbackInfo ci) {
-		if(config.messageDrafting)
-			messageDraft = chatField.getText();
+		messageDraft = config.messageDrafting ? chatField.getText() : "";
 
 		if(config.searchDrafting)
 			searchDraft = '\u0000' + searchField.getText(); // lead with a null char to remove it later and trigger the search field update
@@ -266,6 +265,19 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
 
 		contextMenu.close(this::remove);
+	}
+
+	/**
+	 * Empties the message draft if the screen was closed manually and only
+	 * invasive drafting is enabled.
+	 * Injects at the super method call because it closes the screen if the
+	 * key is an escape key, which is beaten out by the chat screen's redundant
+	 * functionality also provided.
+	 */
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;keyPressed(III)Z"))
+	private void emptyNonInvasiveDrafts(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+		if(config.onlyInvasiveDrafting && keyCode == GLFW.GLFW_KEY_ESCAPE)
+			chatField.setText(""); // required to empty both the chat field and the messageDraft (later on in #onScreenClose)
 	}
 
 	/**
