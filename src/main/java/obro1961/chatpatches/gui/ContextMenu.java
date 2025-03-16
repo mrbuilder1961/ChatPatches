@@ -486,7 +486,7 @@ public class ContextMenu implements Element {
 	 * or if a button was pressed, otherwise {@code false} if the
 	 * menu is {@linkplain #noOp disabled}.
 	 *
-	 * @see ChatScreenMixin#allowAccessibilityTabbing(int, int, int, CallbackInfoReturnable)
+	 * @see ChatScreenMixin#allowContextMenuKeyPressing(int, int, int, CallbackInfoReturnable)
 	 */
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {

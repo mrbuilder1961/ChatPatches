@@ -397,18 +397,49 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	/**
-	 * Allows tabbing through the context menu buttons and
-	 * registering button clicks properly (by closing the
-	 * menu after successful keystrokes).
+	 * Allows the context menu to consume key presses for
+	 * accessibility tabbing and registering button clicks
+	 * properly (closing the menu after successful keystrokes).
 	 *
 	 * @see ContextMenu#keyPressed(int, int, int)
+	 * @see #blockChatFieldConsumingSpace(ChatScreen, int, int, int, Operation)
 	 */
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-	private void allowAccessibilityTabbing(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+	private void allowContextMenuKeyPressing(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+		// keyPressed must be called first otherwise tabbing will not work
 		if(contextMenu.keyPressed(keyCode, scanCode, modifiers) && KeyCodes.isToggle(keyCode)) {
 			contextMenu.close(this::remove);
+			setFocused(null);
+			refocusField = true;
 			cir.setReturnValue(true);
 		}
+	}
+
+
+	/**
+	 * Refocuses the chat field after pressing the space key, if multiple
+	 * conditions are met. This is used to prevent the extremely odd bug
+	 * where the chat field keeps its focus after pressing space, even when
+	 * another button was pressed and should have already consumed the key.
+	 *
+	 * @implNote If any key but {@linkplain GLFW#GLFW_KEY_SPACE tab} is pressed,
+	 * {@link #refocusField} is true, {@link #contextMenu} is not functional,
+	 * and nothing is focused, refocuses the chat field. Otherwise, the method
+	 * delegates to {@linkplain Screen#keyPressed(int, int, int)
+	 * <code>super#keyPressed</code>}.
+	 *
+	 * @see #allowContextMenuKeyPressing(int, int, int, CallbackInfoReturnable)
+	 */
+	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;keyPressed(III)Z"))
+	private boolean blockChatFieldConsumingSpace(ChatScreen me, int keyCode, int scanCode, int modifiers, Operation<Boolean> superKeyPressed) {
+		//prepub: replace != TAB with a isValidChar(keyCode.asChar()) check, if possible
+		if(keyCode != GLFW.GLFW_KEY_TAB && refocusField && !contextMenu.isFunctional() && getFocused() == null) {
+			refocusField = false;
+			setFocused(chatField);
+			return false;
+		}
+
+		return superKeyPressed.call(me, keyCode, scanCode, modifiers);
 	}
 
 	@Override
