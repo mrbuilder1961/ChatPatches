@@ -1,11 +1,8 @@
 package obro1961.chatpatches.accessor;
 
-import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 
 public interface ChatScreenAccessor {
-    /** {@link ChatScreen#chatField}{@code .setText(str)} */
-    void chatpatches$overrideChatText(String str);
-
-    /** {@code ChatScreen.setFocused(ChatScreen.chatField)} */
-    void chatpatches$focusChatField();
+    /** @link ChatScreen#chatField} */
+    TextFieldWidget chatpatches$getChatField();
 }

@@ -76,6 +76,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 									 MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 	// context menu
 	@Unique private static ContextMenu contextMenu = new ContextMenu(null, -1, -1);
+	/**
+	 * Needed to prevent space key presses from both triggering
+	 * the context menu and the chat field simultaneously.
+	 *
+	 * @see #blockChatFieldConsumingSpace(ChatScreen, int, int, int, Operation)
+	 */
+	@Unique private boolean refocusField = false;
 	// search stuff
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
@@ -101,15 +108,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Shadow private int messageHistorySize;
 
 	/**
-	 * Allows overriding the chat text stored in {@link #chatField}.
-	 * Notably used to clear the message draft in
-	 * {@link ScreenMixin#clearMessageDraft} to only do this when
-	 * the user closes the ChatScreen; also in
-	 * {@link ContextMenu#init(Consumer)} for the
+	 * Allows access to {@link #chatField}. Notably used
+	 * in {@link ContextMenu#init(Consumer)} for the
 	 * {@code #MENU_REPLY} action.
 	 */
-	@Unique public void chatpatches$overrideChatText(String str) { chatField.setText(str); }
-	@Unique public void chatpatches$focusChatField() { setFocused(chatField); }
+	public TextFieldWidget chatpatches$getChatField() { return chatField; }
 
 	protected ChatScreenMixin(Text title) { super(title); }
 

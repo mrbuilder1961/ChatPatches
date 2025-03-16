@@ -6,7 +6,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.ParentElement;
+import net.minecraft.client.gui.PlayerSkinDrawer;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -16,7 +19,6 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.GridWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
-import net.minecraft.client.input.KeyCodes;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.screen.ScreenTexts;
@@ -110,7 +112,7 @@ public class ContextMenu implements Element {
 	 * {@link #noOp} is {@code true}, this field may
 	 * or may not be null.
 	 */
-	private final ChatScreen parentScreen;
+	private final ChatScreen screen;
 
 	/**
 	 * If true, effectively disables this context menu, meaning
@@ -135,13 +137,13 @@ public class ContextMenu implements Element {
 	 * @see ChatScreenMixin#contextMenu
 	 * @see ChatScreenMixin#mouseClickedEvents(double, double, int, CallbackInfoReturnable)
 	 */
-	public ContextMenu(ChatScreen parentScreen, double mX, double mY) {
+	public ContextMenu(ChatScreen screen, double mX, double mY) {
 		if(!config.contextMenu || mX < 0 || mY < 0)
 			noOp = true;
 
 		this.clickPos = RenderUtils.MousePos.of(mX, mY);
 		this.grid = new Grid(MAX_ROWS, MAX_COLUMNS);
-		this.parentScreen = noOp ? ((ChatScreen) mc.currentScreen) : parentScreen;
+		this.screen = noOp ? ((ChatScreen) mc.currentScreen) : screen;
 
 		this.selectedVisibles = getFullMessageAt(mX, mY);
 
@@ -394,18 +396,16 @@ public class ContextMenu implements Element {
 		if( !messageSender.equals(NIL_MSG_DATA.sender()) ) {
 			SkinTextures playerSkin = mc.getSkinProvider().getSkinTextures(messageSender);
 
-			registerProxyActionButton(MENU_SENDER, NAME, 0, 0,
-				(context, mX, mY, delta, me, sup3r) -> {
-					sup3r.render(context, mX, mY, delta);
-					PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16);
-				}
-			);
+			registerProxyActionButton(MENU_SENDER, NAME, 0, 0, null);
 				registerCopyOnlyButton(NAME, Text.of(messageSender.getName()), 0);
 				registerCopyOnlyButton(UUID, Text.of(messageSender.getId().toString()), 1);
-			registerActionButton(MENU_REPLY, me -> {
-				if(mc.currentScreen instanceof ChatScreen chatScreen)
-					((ChatScreenAccessor) chatScreen).chatpatches$overrideChatText( TextUtils.fillVars(config.copyReplyFormat, messageSender.getName()) );
-			}, 0);
+			registerButton(MENU_REPLY, null, me ->
+				((ChatScreenAccessor) screen).chatpatches$getChatField().setText( TextUtils.fillVars(config.copyReplyFormat, messageSender.getName()) )
+			, 0, 0, (context, mX, mY, delta, me, supEr) -> {
+					supEr.render(context, mX, mY, delta);
+					PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16);
+				}
+			); // prepub: reevaluate which buttons need the skin renderer, as both make sense but lowkey maybe we should ditch it or add icons for all? it feels out of place
 		}
 
 		grid.updateButtonPositions();
@@ -480,7 +480,7 @@ public class ContextMenu implements Element {
 	 * checks if the chat screen is hovered/focused on a menu
 	 * button, and if so {@linkplain #updateButtons(Optional)
 	 * updates the buttons} accordingly. Otherwise, tries to
-	 * press the selected button.
+	 * press the selected button, if it's part of the menu.
 	 *
 	 * @return {@code true} if the menu was successfully updated
 	 * or if a button was pressed, otherwise {@code false} if the
@@ -493,17 +493,17 @@ public class ContextMenu implements Element {
 		if(noOp)
 			return false; // failed - did nothing
 
-		if(keyCode == GLFW.GLFW_KEY_TAB) {
-			PressableWidget tabbed = parentScreen.getFocused() instanceof PressableWidget w ? w : null;
+		Element focused = screen.getFocused();
 
-			if(grid.contains(tabbed) && tabbed.getType() != Selectable.SelectionType.NONE) {
+		if(keyCode == GLFW.GLFW_KEY_TAB) {
+			if(focused instanceof PressableWidget tabbed && grid.contains(tabbed)) {
 				updateButtons(Optional.of(tabbed));
-				return true; // true - extra KeyCodes.isToggle check does not pass
+				return true; // true - extra KeyCodes.isToggle check does NOT pass
 			}
 		}
 
-		// true - if a button was pressed, then close the menu, bc the check will pass
-		return KeyCodes.isToggle(keyCode) && grid.contains(parentScreen.getFocused()) && parentScreen.getFocused().keyPressed(keyCode, scanCode, modifiers);
+		// true - extra KeyCodes.isToggle check DOES pass
+		return grid.contains(focused) && focused.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	/**
@@ -541,7 +541,7 @@ public class ContextMenu implements Element {
 	public void mouseMoved(double mX, double mY) {
 		if(!noOp) {
 			Optional<PressableWidget> opt = getHoveredButton(mX, mY);
-			if(opt.orElse(null) != parentScreen.getFocused())
+			if(opt.orElse(null) != screen.getFocused())
 				updateButtons(opt); // only update (and subsequently iterate through) every button if a new one is hovered over!
 		}
 	}
@@ -568,7 +568,7 @@ public class ContextMenu implements Element {
 		noOp = true;
 		grid.buttons().forEach(remove);
 		grid.clear();
-		((ChatScreenAccessor) parentScreen).chatpatches$focusChatField();
+		screen.setFocused( ((ChatScreenAccessor) screen).chatpatches$getChatField() );
 	}
 
 	/**
@@ -626,7 +626,7 @@ public class ContextMenu implements Element {
 	 * @implNote
 	 * <ol>
 	 *	 <li>If the passed {@link Optional} is empty, ensures nothing is focused on in the
-	 *	 {@linkplain #parentScreen chat screen} and returns</li>
+	 *	 {@linkplain #screen chat screen} and returns</li>
 	 *	 <li>Otherwise, focuses the hovered button in the chat screen</li>
 	 *	 <li>Then iterates through every {@linkplain Grid#groups group} and every button in those groups:</li>
 	 *	 <ol>
@@ -641,13 +641,12 @@ public class ContextMenu implements Element {
 	 */
 	public void updateButtons(Optional<PressableWidget> widgetOptional) {
 		if(widgetOptional.isEmpty()) {
-			parentScreen.setFocused(null); // removes the selected outline from the last hovered button.
-			// (the most this call can do is unfocus the previous element and nullify the current one)
+			screen.setFocused(null); // removes the selected outline from the last hovered button.
 			return;
 		}
 
 		PressableWidget hoveredButton = widgetOptional.get();
-		parentScreen.setFocused(hoveredButton); // allows much more efficient update checks, see #mouseMoved(int, int)
+		screen.setFocused(hoveredButton); // allows much more efficient update checks, see #mouseMoved(int, int)
 		for(List<Grid.Entry> group : grid.groups) {
 			for(Grid.Entry itr : group) {
 				if(itr.col > 0)
@@ -674,11 +673,13 @@ public class ContextMenu implements Element {
 	 * in an {@link Optional}. If the menu is {@linkplain #noOp
 	 * disabled}, not hovered over, or if the parent screen wasn't
 	 * specified, then an empty {@code Optional} is returned.
+	 * Additionally, silently returns an empty optional if the
+	 * hovered element is not a {@link PressableWidget}.
 	 *
 	 * @see ParentElement#hoveredElement(double, double)
 	 */
 	private Optional<PressableWidget> getHoveredButton(double mX, double mY) {
-		return isMouseOver(mX, mY) ? parentScreen.hoveredElement(mX, mY).map(e -> (PressableWidget)e) : Optional.empty();
+		return isMouseOver(mX, mY) ? screen.hoveredElement(mX, mY).map(e -> e instanceof PressableWidget p ? p : null) : Optional.empty();
 	}
 
 	/**
