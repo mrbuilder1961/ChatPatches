@@ -77,12 +77,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	// context menu
 	@Unique private static ContextMenu contextMenu = new ContextMenu(null, -1, -1);
 	/**
-	 * Needed to prevent space key presses from both triggering
-	 * the context menu and the chat field simultaneously.
-	 *
-	 * @see #blockChatFieldConsumingSpace(ChatScreen, int, int, int, Operation)
+	 * @see #charTyped(char, int)
 	 */
-	@Unique private boolean refocusField = false;
+	@Unique private boolean blockSpaceConsumption = false;
 	// search stuff
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
@@ -402,44 +399,31 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * properly (closing the menu after successful keystrokes).
 	 *
 	 * @see ContextMenu#keyPressed(int, int, int)
-	 * @see #blockChatFieldConsumingSpace(ChatScreen, int, int, int, Operation)
+	 * @see #charTyped(char, int)
 	 */
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
 	private void allowContextMenuKeyPressing(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
 		// keyPressed must be called first otherwise tabbing will not work
 		if(contextMenu.keyPressed(keyCode, scanCode, modifiers) && KeyCodes.isToggle(keyCode)) {
 			contextMenu.close(this::remove);
-			setFocused(null);
-			refocusField = true;
+			blockSpaceConsumption = true; // see #charTyped
 			cir.setReturnValue(true);
 		}
 	}
 
 
 	/**
-	 * Refocuses the chat field after pressing the space key, if multiple
-	 * conditions are met. This is used to prevent the extremely odd bug
-	 * where the chat field keeps its focus after pressing space, even when
-	 * another button was pressed and should have already consumed the key.
+	 * Blocks the chat field from consuming space characters {@linkplain #blockSpaceConsumption
+	 * if it shouldn't}. Prevents a space being both entered into the chat field and also
+	 * triggering a context menu button press.
 	 *
-	 * @implNote If any key but {@linkplain GLFW#GLFW_KEY_SPACE tab} is pressed,
-	 * {@link #refocusField} is true, {@link #contextMenu} is not functional,
-	 * and nothing is focused, refocuses the chat field. Otherwise, the method
-	 * delegates to {@linkplain Screen#keyPressed(int, int, int)
-	 * <code>super#keyPressed</code>}.
-	 *
-	 * @see #allowContextMenuKeyPressing(int, int, int, CallbackInfoReturnable)
+	 * @implNote If {@link #blockSpaceConsumption} is true, the character is a space, and the chat field
+	 * is focused, sets {@link #blockSpaceConsumption} to false and returns such. Otherwise, delegates to
+	 * {@linkplain Screen#charTyped(char, int) <code>super#charTyped</code>}.
 	 */
-	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;keyPressed(III)Z"))
-	private boolean blockChatFieldConsumingSpace(ChatScreen me, int keyCode, int scanCode, int modifiers, Operation<Boolean> superKeyPressed) {
-		//prepub: replace != TAB with a isValidChar(keyCode.asChar()) check, if possible
-		if(keyCode != GLFW.GLFW_KEY_TAB && refocusField && !contextMenu.isFunctional() && getFocused() == null) {
-			refocusField = false;
-			setFocused(chatField);
-			return false;
-		}
-
-		return superKeyPressed.call(me, keyCode, scanCode, modifiers);
+	@Override
+	public boolean charTyped(char chr, int modifiers) {
+		return (blockSpaceConsumption && chr == ' ' && chatField.isFocused()) ? (blockSpaceConsumption = false) : super.charTyped(chr, modifiers);
 	}
 
 	@Override
@@ -500,7 +484,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * and field coloring.
 	 */
 	@Unique
-	@SuppressWarnings("DataFlowIssue") // all formattings have colors!
+	@SuppressWarnings("DataFlowIssue") // every used formatting has a color!
 	private void onSearchFieldUpdate(String text, boolean refresh) {
 		if(text.equals(searchDraft) && !refresh)
 			return; // prevent useless updates
