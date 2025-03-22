@@ -141,7 +141,7 @@
     "text.chatpatches.copy.copied": "§aSuccessfully copied to clipboard!",
     "text.chatpatches.copy.copyText": "Copy Text >",
     "text.chatpatches.copy.rawText": "Raw",
-    "text.chatpatches.copy.formattedText": "Formatted",
+    "text.chatpatches.copy.formattedString": "Formatted",
     "text.chatpatches.copy.noTimestampText": "Timestamp-less",
     "text.chatpatches.copy.jsonString": "JSON",
     "text.chatpatches.copy.links": "Copy Link(s) >",

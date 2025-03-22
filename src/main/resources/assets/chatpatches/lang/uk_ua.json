@@ -100,7 +100,7 @@
     "text.chatpatches.copy.copied": "Скопійовано компонент повідомлення: \"%s\"!",
     "text.chatpatches.copy.copyText": "Копіювати рядок >",
     "text.chatpatches.copy.rawText": "Неформатований",
-    "text.chatpatches.copy.formattedText": "Відформатований",
+    "text.chatpatches.copy.formattedString": "Відформатований",
     "text.chatpatches.copy.jsonString": "JSON",
     "text.chatpatches.copy.links": "Скопіювати посилання >",
     "text.chatpatches.copy.linkN": "Посилання %d",

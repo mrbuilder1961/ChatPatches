@@ -71,8 +71,8 @@ public class ContextMenu implements Element {
 	// region text constants
 	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable("text.chatpatches.copy.unknownData", id);
 	static final Text MENU_STRING = Text.translatable("text.chatpatches.copy.copyText");
-	static final Text RAW_STR = Text.translatable("text.chatpatches.copy.rawText");
-	static final Text FORMATTED_STR = Text.translatable("text.chatpatches.copy.formattedText");
+	static final Text RAW_TEXT = Text.translatable("text.chatpatches.copy.rawText");
+	static final Text FORMATTED_STR = Text.translatable("text.chatpatches.copy.formattedString");
 	static final Text NO_TIMESTAMP = Text.translatable("text.chatpatches.copy.noTimestampText"); // fixes (#129)
 	//idea: noDupeText option? seems fitting..!
 	static final Text JSON_STR = Text.translatable("text.chatpatches.copy.jsonString");
@@ -308,7 +308,7 @@ public class ContextMenu implements Element {
 	 * @implNote Registers buttons in the following order:
 	 * <ol>
 	 *     <li>{@link #MENU_STRING}</li>
-	 *     <li>{@link #RAW_STR}</li>
+	 *     <li>{@link #RAW_TEXT}</li>
 	 *     <li>{@link #FORMATTED_STR}</li>
 	 *     <li>*{@link #NO_TIMESTAMP}</li>
 	 *     <li>{@link #JSON_STR}</li>
@@ -337,8 +337,8 @@ public class ContextMenu implements Element {
 
 		// string buttons - unconditional
 		boolean timestamped = !timestamp.getString().isBlank();
-		registerProxyButton(MENU_STRING, RAW_STR);
-			registerCopyOnlyButton(RAW_STR, text, 0);
+		registerProxyButton(MENU_STRING, RAW_TEXT);
+			registerCopyOnlyButton(RAW_TEXT, text, 0);
 			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(text.asOrderedText(), true)), 1);
 			if(timestamped)
 				registerCopyOnlyButton(NO_TIMESTAMP, TextUtils.newText(text.getContent(), text.getSiblings().subList(1, text.getSiblings().size()), text.getStyle()), 2);

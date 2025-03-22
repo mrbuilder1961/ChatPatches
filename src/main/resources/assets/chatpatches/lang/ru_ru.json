@@ -104,7 +104,7 @@
     "text.chatpatches.copy.copied": "Скопированный компонент сообщения: \"%s\"!",
     "text.chatpatches.copy.copyText": "Копировать строку >",
     "text.chatpatches.copy.rawText": "Сырой",
-    "text.chatpatches.copy.formattedText": "Отформатированный",
+    "text.chatpatches.copy.formattedString": "Отформатированный",
     "text.chatpatches.copy.jsonString": "JSON",
     "text.chatpatches.copy.links": "Скопировать ссылку(и) >",
     "text.chatpatches.copy.linkN": "Ссылка %d",
