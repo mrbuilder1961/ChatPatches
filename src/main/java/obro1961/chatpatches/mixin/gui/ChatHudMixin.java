@@ -66,15 +66,24 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     /** Utility Methods - placed above all other methods for scoping */
     @Unique
-    int resolveDynamicOffset(PlayerEntity player) {
+    int resolveOffset(PlayerEntity player) {
+        // ? Get player stats and standardise to scaled number of rows
+
         int armor = player.getArmor();
         float absorption = player.getAbsorptionAmount();
         float health = player.getMaxHealth();
 
+        // * Calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
+
         int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
         int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
-        // float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f};
+        
+        // * For contingency
+        // * float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f};
         float healthScale = healthHeightMultiplier > 7 ? 0.3f : 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
+
+        // ? If Dynamic Shifting is off, offset will simply be shiftChat
+        if (!config.useDynamicShifting) return config.shiftChat;
 
         return (armorHeightMultiplier * MathHelper.floor(10 / this.getChatScale()))
         + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / this.getChatScale()))
@@ -130,10 +139,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     private int moveChat(int m) {
         PlayerEntity player = MinecraftClient.getInstance().player;
 
-        // ? If Dynamic Shifting is off
-        if (!config.useDynamicShifting) return m - config.shiftChat;
-
-        targetPos = m - resolveDynamicOffset(player);
+        targetPos = m - resolveOffset(player);
         
         // TODO: Animation Code, currently an Artifact for the next PR
         // float t = currentTime / smoothTime;
@@ -166,10 +172,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     private double moveChatLineY(double y) {
         PlayerEntity player = MinecraftClient.getInstance().player;
 
-        // ? If Dynamic Shifting is off
-        if (!config.useDynamicShifting) return y + config.shiftChat;
-
-        return y + resolveDynamicOffset(player);
+        return y + resolveOffset(player);
     }
 
     /**
