@@ -3,7 +3,6 @@ package obro1961.chatpatches.mixin.gui;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -37,20 +36,11 @@ import static obro1961.chatpatches.ChatPatches.config;
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatHud.class, priority = 500)
 public abstract class ChatHudMixin implements ChatHudAccessor {
-    @Shadow
-    @Final
-    private MinecraftClient client;
-    @Shadow
-    @Final
-    private List<ChatHudLine> messages;
-    @Shadow
-    @Final
-    private List<ChatHudLine.Visible> visibleMessages;
-    @Shadow
-    @Final
-    private List<?> removalQueue;
-    @Shadow
-    private int scrolledLines;
+    @Shadow @Final private MinecraftClient client;
+    @Shadow @Final private List<ChatHudLine> messages;
+    @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
+    @Shadow @Final private List<?> removalQueue;
+    @Shadow private int scrolledLines;
     private int targetPos;
     private int currentPos;
     private float distanceToTravel;
@@ -58,56 +48,31 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     private float currentTime = 0;
     private boolean launched = false;
 
-    @Shadow
-    public abstract double getChatScale();
+    @Shadow public abstract double getChatScale();
 
-    @Shadow
-    protected abstract double toChatLineX(double x);
+    @Shadow protected abstract double toChatLineX(double x);
 
-    @Shadow
-    protected abstract double toChatLineY(double y);
+    @Shadow protected abstract double toChatLineY(double y);
 
-    @Shadow
-    protected abstract int getLineHeight();
+    @Shadow protected abstract int getLineHeight();
 
-    @Shadow
-    protected abstract int getMessageLineIndex(double x, double y);
+    @Shadow protected abstract int getMessageLineIndex(double x, double y);
 
     // ChatHudAccessor methods used outside this mixin
-    public List<ChatHudLine> chatpatches$getMessages() {
-        return messages;
-    }
-
-    public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() {
-        return visibleMessages;
-    }
-
-    public int chatpatches$getScrolledLines() {
-        return scrolledLines;
-    }
-
-    public int chatpatches$getMessageLineIndex(double x, double y) {
-        return getMessageLineIndex(x, y);
-    }
-
-    public double chatpatches$toChatLineX(double x) {
-        return toChatLineX(x);
-    }
-
-    public double chatpatches$toChatLineY(double y) {
-        return toChatLineY(y);
-    }
-
-    public int chatpatches$getLineHeight() {
-        return getLineHeight();
-    }
+    public List<ChatHudLine> chatpatches$getMessages() { return messages; }
+    public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }
+    public int chatpatches$getScrolledLines() { return scrolledLines; }
+    public int chatpatches$getMessageLineIndex(double x, double y) { return getMessageLineIndex(x, y); }
+    public double chatpatches$toChatLineX(double x) { return toChatLineX(x); }
+    public double chatpatches$toChatLineY(double y) { return toChatLineY(y); }
+    public int chatpatches$getLineHeight() { return getLineHeight(); }
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
     private void clear(boolean clearHistory, CallbackInfo ci) {
-        if (!config.vanillaClearing) {
+        if(!config.vanillaClearing) {
             // Clear message using F3+D
-            if (!clearHistory) {
+            if(!clearHistory) {
                 client.getMessageHandler().processAll();
                 removalQueue.clear();
                 messages.clear();
@@ -144,8 +109,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * {@link Config#shiftChat}, including the text
      * and scroll bar, by shifting the y position of the chat.
      *
-     * <p>
-     * Target: {@code int m = MathHelper.floor((float)(l - 40) / f);}
+     * <p> Target: {@code int m = MathHelper.floor((float)(l - 40) / f);}
      */
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
     private int moveChat(int m) {
@@ -192,9 +156,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * message indicators and chat hover tooltips when
      * needed in the shifted position.
      *
-     * <p>
-     * Target:
-     * {@code double d = this.client.getWindow().getScaledHeight() - y - 40.0;}
+     * <p> Target: {@code double d = this.client.getWindow().getScaledHeight() - y - 40.0;}
      */
     @ModifyVariable(method = "toChatLineY", at = @At("HEAD"), argsOnly = true)
     private double moveChatLineY(double y) {
@@ -222,9 +184,9 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * of actual message modding is executed here.
      *
      * @implNote The refreshing parameter is no longer
-     *           specified because the method is now called in such a
-     *           way that it only ever modifies real messages, not
-     *           visible messages that are subject to refreshing.
+     * specified because the method is now called in such a
+     * way that it only ever modifies real messages, not
+     * visible messages that are subject to refreshing.
      *
      * @see ChatUtils#modifyMessage(Text)
      * @see ChatUtils#tryCondenseDupes(Text)
@@ -239,10 +201,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         ChatLog.addHistory(message);
     }
 
-    /**
-     * Disables logging commands to the vanilla command log if the Chat Patches'
-     * ChatLog is enabled.
-     */
+    /** Disables logging commands to the vanilla command log if the Chat Patches' ChatLog is enabled. */
     @WrapWithCondition(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/CommandHistoryManager;add(Ljava/lang/String;)V"))
     private boolean disableCommandLog(CommandHistoryManager manager, String message) {
         return !config.chatlog; // if the ChatLog is enabled, don't add to the vanilla command log
@@ -250,7 +209,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
     private void ignoreRestoredMessages(ChatHudLine hudLine, CallbackInfo ci) {
-        if (ChatLog.isSuspended() && hudLine.indicator() != null)
+        if(ChatLog.isSuspended() && hudLine.indicator() != null)
             ci.cancel();
     }
 }
