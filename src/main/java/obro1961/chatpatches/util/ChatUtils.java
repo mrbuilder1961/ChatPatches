@@ -5,6 +5,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -20,7 +21,7 @@ import java.util.*;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.msgData;
-import static obro1961.chatpatches.util.TextUtils.copyWithoutContent;
+import static obro1961.chatpatches.util.TextUtils.withoutContent;
 
 /**
  * Utility methods relating directly to the chat.
@@ -64,10 +65,10 @@ public class ChatUtils {
 	public static final String PARSEABLE_MESSAGE_KEYS = "chat.type.(text|team.(text|sent))";
 
 	/**
-	 * Returns the message component at the given index;
-	 * returns an empty Text if it doesn't exist. This
-	 * prevents {@code IndexOutOfBoundsException} and
-	 * {@code NullPointerException} errors.
+	 * @return The message component at the given index; otherwise
+	 * {@link ScreenTexts#EMPTY} <u>(not the same as {@link Text#empty()})</u>
+	 * if it doesn't exist. This prevents {@code IndexOutOfBoundsException}
+	 * and {@code NullPointerException} errors.
 	 *
 	 * @apiNote Intended to be used with the MAIN
 	 * indices specified in this class.
@@ -76,7 +77,7 @@ public class ChatUtils {
 	 * @see #DUPE_INDEX
 	 */
 	public static Text getPart(Text message, int index) {
-		return message.getSiblings().size() > index ? message.getSiblings().get(index) : Text.empty();
+		return message.getSiblings().size() > index ? message.getSiblings().get(index) : ScreenTexts.EMPTY;
 	}
 
 	/**
@@ -205,6 +206,7 @@ public class ChatUtils {
 
 		try {
 			timestamp = (config.time ? config.makeTimestamp(now) : Text.empty()).setStyle( config.makeHoverStyle(now) );
+			// prepub if option that disables timestamps on system messages is true, dont add timestamps
 
 			// reconstruct the player message if it's in the vanilla format and it should be reformatted
 			// the msgData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
@@ -355,7 +357,7 @@ public class ChatUtils {
 
 			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) )
 				continue; // if the incoming message is different from the iterated message, don't try to condense (delete) it
-			else if( config.counterCheckStyle && !copyWithoutContent(incoming).equals(copyWithoutContent(msg)) )
+			else if( config.counterCheckStyle && !withoutContent(incoming).equals(withoutContent(msg)) )
 				continue; // if the incoming message has different metadata from the iterated message, skip it
 
 			// remove all number formatting codes and non-digits, then replace empty strings with 1 to prevent NumberFormatExceptions

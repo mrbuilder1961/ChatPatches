@@ -49,6 +49,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
+import static net.minecraft.screen.ScreenTexts.EMPTY;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.ChatUtils.*;
 import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
@@ -198,7 +199,7 @@ public class ContextMenu implements Element {
 			if(noOp)
 				return;
 
-			Text copyText = tooltipCopyTextSupplier != null ? tooltipCopyTextSupplier.get() : ScreenTexts.EMPTY;
+			Text copyText = tooltipCopyTextSupplier != null ? tooltipCopyTextSupplier.get() : EMPTY;
 			String copyStr = StringHelper.stripTextFormat(copyText.getString()); //prepub: config opt to copy section signs, disabled by def..?
 			if(!copyStr.isEmpty()) {
 				mc.keyboard.setClipboard(copyStr);
@@ -210,7 +211,7 @@ public class ContextMenu implements Element {
 		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
 
 		if(tooltipCopyTextSupplier != null)
-			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )//prepub.. see the CIS formatting idea by JSON_STR
+			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )
 
 		if(renderer != null) {
 			PressableWidget effectivelyFinalButton = button;
@@ -351,14 +352,13 @@ public class ContextMenu implements Element {
 					//NbtHelper.toPrettyPrintedText(...) //prepub: make the format fancy by somehow converting to nbt (ops?), formatting, lowercasing, and adding quotes
 			(timestamped ? 3 : 2));
 
-
-		// timestamp buttons - conditional (not on boundary lines) // prepub or if option that disables timestamps on system messages is true, dont add timestamps (ik this is not the right spot leave me alone)
+		// timestamp buttons - conditional (not on boundary lines)
 		if(timestamped) {
 			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP);
 				registerCopyOnlyButton(TIMESTAMP, timestamp, 0);
 				registerCopyOnlyButton(TIMESTAMP_HOVER, () -> {
 					HoverEvent hoverEvent = timestamp.getStyle().getHoverEvent();
-					return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : Text.empty();
+					return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : EMPTY;
 				}, 1, 1);
 		}
 

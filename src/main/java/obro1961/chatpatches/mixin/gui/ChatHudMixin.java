@@ -10,6 +10,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.CommandHistoryManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
@@ -66,15 +67,14 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     /**
      * Clears the entire chat of all messages and history.
      * Vanilla triggers this method when leaving a world or disconnecting
-     * (clearHistory = false), or when pressing F3+D (clearHistory = true).
-     * In either case, however, the method clears the entire visible chat,
+     * ({@code clearHistory} = false), or when pressing F3+D ({@code clearHistory}
+     * = true). In either case, however, the method clears the entire visible chat,
      * which should only be allowed if {@link Config#vanillaClearing} is true.
      *
      * @implNote Since Minecraft 1.20.2, the vanilla method is also called
-     * in between switching worlds (client reconfigure phase), so it also
-     * <i>needs</i> to prevent that as well, unconditionally.
-     * todo impl this, see (#147)
-     */
+     * {@linkplain MinecraftClient#enterReconfiguration(Screen) in between
+     * switching worlds}, so this method also prevents unwanted chat clearing then too.
+     */ // prepub: i closed (#147) as completed bc it seems like this already covers that issue case but idk.
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
     private void clear(boolean clearHistory, CallbackInfo ci) {
         if(!config.vanillaClearing) {

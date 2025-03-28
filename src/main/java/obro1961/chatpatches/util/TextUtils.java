@@ -75,13 +75,23 @@ public class TextUtils {
 	}
 
 	/**
+	 * Returns a copy of {@code text} with the specified {@code siblings}
+	 * parameter replacing the original siblings. The passed {@code text}'s
+	 * content and style are preserved.
+	 */
+	public static MutableText newSiblings(Text text, List<Text> siblings) {
+		return newText(text.getContent(), siblings, text.getStyle());
+	}
+
+	/**
 	 * Returns a copy of {@code text} with an empty content.
 	 * Useful for comparing {@link Text} objects'
 	 * metadata (style and siblings) only.
 	 * */
-	public static MutableText copyWithoutContent(Text text) {
+	public static MutableText withoutContent(Text text) {
 		return newText(TextContent.EMPTY, text.getSiblings(), text.getStyle());
 	}
+
 
 	/**
 	 * Formats a String with {@code &} formatting codes into a {@link Text}.
@@ -133,7 +143,6 @@ public class TextUtils {
 	 * formatting code if possible, otherwise translated in the
 	 * format {@code &#RRGGBB}.
 	 */
-	// idea: if (fancyCodes) is true, surround each code with an actual section sign code that styles the code as it would appear in chat!
 	public static String getFormattingCodes(Style style) {
 		String codes = "";
 		TextColor color = style.getColor();
