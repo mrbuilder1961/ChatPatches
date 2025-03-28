@@ -48,12 +48,12 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow @Final private List<?> removalQueue;
     @Shadow private int scrolledLines;
 
-
     @Shadow protected abstract double toChatLineX(double x);
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageLineIndex(double x, double y);
     @Shadow public abstract double getChatScale();
+
     // ChatHudAccessor methods used outside this mixin
     @Intrinsic public List<ChatHudLine> chatpatches$getMessages() { return messages; }
     @Intrinsic public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }
