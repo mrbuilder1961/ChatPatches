@@ -19,6 +19,7 @@ import obro1961.chatpatches.util.ChatUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -41,12 +42,12 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
     @Shadow @Final private List<?> removalQueue;
     @Shadow private int scrolledLines;
-    private int targetPos;
-    private int currentPos;
-    private float distanceToTravel;
-    private final float smoothTime = 20;
-    private float currentTime = 0;
-    private boolean launched = false;
+    @Unique private int targetPos;
+    @Unique private int currentPos;
+    @Unique private float distanceToTravel;
+    @Unique private final float smoothTime = 20;
+    @Unique private float currentTime = 0;
+    @Unique private boolean launched = false;
 
     @Shadow public abstract double getChatScale();
     @Shadow protected abstract double toChatLineX(double x);
@@ -62,6 +63,23 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     public double chatpatches$toChatLineX(double x) { return toChatLineX(x); }
     public double chatpatches$toChatLineY(double y) { return toChatLineY(y); }
     public int chatpatches$getLineHeight() { return getLineHeight(); }
+
+    /** Utility Methods - placed above all other methods for scoping */
+    @Unique
+    int resolveDynamicOffset(PlayerEntity player) {
+        int armor = player.getArmor();
+        float absorption = player.getAbsorptionAmount();
+        float health = player.getMaxHealth();
+
+        int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
+        int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
+        // float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f};
+        float healthScale = healthHeightMultiplier > 7 ? 0.3f : 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
+
+        return (armorHeightMultiplier * MathHelper.floor(10 / this.getChatScale()))
+        + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / this.getChatScale()))
+        + (config.shiftChat - 10);
+    }
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
@@ -111,22 +129,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
     private int moveChat(int m) {
         PlayerEntity player = MinecraftClient.getInstance().player;
-        int armor = player.getArmor();
-        float absorption = player.getAbsorptionAmount();
-        float health = player.getMaxHealth();
 
-        // If Dynamic Shifting is off
+        // ? If Dynamic Shifting is off
         if (!config.useDynamicShifting) return m - config.shiftChat;
 
-        int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
-        int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
-        // float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f};
-        float healthScale = healthHeightMultiplier > 7 ? 0.3f : 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
-
-        targetPos = m
-        - (armorHeightMultiplier * MathHelper.floor(10 / this.getChatScale()))
-        - (healthHeightMultiplier * MathHelper.floor(10 * healthScale / this.getChatScale()))
-        - (config.shiftChat - 10);
+        targetPos = m - resolveDynamicOffset(player);
         
         // TODO: Animation Code, currently an Artifact for the next PR
         // float t = currentTime / smoothTime;
@@ -158,21 +165,11 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @ModifyVariable(method = "toChatLineY", at = @At("HEAD"), argsOnly = true)
     private double moveChatLineY(double y) {
         PlayerEntity player = MinecraftClient.getInstance().player;
-        int armor = player.getArmor();
-        float absorption = player.getAbsorptionAmount();
-        float health = player.getMaxHealth();
 
-        // If Dynamic Shifting is off
+        // ? If Dynamic Shifting is off
         if (!config.useDynamicShifting) return y + config.shiftChat;
 
-        int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
-        int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
-        // float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f};
-        float healthScale = healthHeightMultiplier > 7 ? 0.3f : 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
-
-        return y + (armorHeightMultiplier * MathHelper.floor(10 / this.getChatScale()))
-        + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / this.getChatScale()))
-        + (config.shiftChat - 10);
+        return y + resolveDynamicOffset(player);
     }
 
     /**
