@@ -83,9 +83,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     @ModifyExpressionValue(
-        method = { "addMessage(Lnet/minecraft/client/gui/hud/ChatHudLine;)V", "addVisibleMessage" },
-        at = @At(value = "CONSTANT",
-        args = "intValue=100"))
+        method = {"addMessage(Lnet/minecraft/client/gui/hud/ChatHudLine;)V", "addVisibleMessage"},
+        at = @At(value = "CONSTANT", args = "intValue=100"))
     private int moreMessages(int hundred) {
         return config.chatMaxMessages;
     }
@@ -192,7 +191,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @ModifyVariable(
         method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
         at = @At("HEAD"),
-        argsOnly = true)
+        argsOnly = true
+    )
     private Text modifyMessage(Text m) {
         return ChatUtils.modifyMessage(m);
     }
