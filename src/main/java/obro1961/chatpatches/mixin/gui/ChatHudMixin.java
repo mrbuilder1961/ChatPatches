@@ -42,6 +42,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
     @Shadow @Final private List<?> removalQueue;
     @Shadow private int scrolledLines;
+    
     @Unique private int targetPos;
     @Unique private int currentPos;
     @Unique private float distanceToTravel;
@@ -111,7 +112,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     @ModifyExpressionValue(
         method = {"addMessage(Lnet/minecraft/client/gui/hud/ChatHudLine;)V", "addVisibleMessage"},
-        at = @At(value = "CONSTANT", args = "intValue=100"))
+        at = @At(value = "CONSTANT", args = "intValue=100")
+    )
     private int moreMessages(int hundred) {
         return config.chatMaxMessages;
     }
