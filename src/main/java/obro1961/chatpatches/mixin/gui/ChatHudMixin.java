@@ -167,18 +167,19 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         - (healthHeightMultiplier * MathHelper.floor(10 * healthScale / this.getChatScale()))
         - (config.shiftChat - 10);
         
-        float t = currentTime / smoothTime;
+        // TODO: Animation Code, currently an Artifact for the next PR
+        // float t = currentTime / smoothTime;
 
-        if (!launched) { currentPos = m; launched = true; }
+        // if (!launched) { currentPos = m; launched = true; }
 
-        if (launched && currentTime < smoothTime) {
-            if (currentTime == 0) distanceToTravel = Math.abs(targetPos - currentPos);
-            if (currentPos < targetPos) currentPos += distanceToTravel * (3*Math.pow(t, 2) - 2*Math.pow(t,3));
-            else if (currentPos > targetPos) currentPos -= distanceToTravel * (3*Math.pow(t, 2) - 2*Math.pow(t,3));
-            else currentTime = 0;
-        } else if (launched && currentTime == smoothTime) currentTime = 0;
+        // if (launched && currentTime < smoothTime) {
+        //     if (currentTime == 0) distanceToTravel = Math.abs(targetPos - currentPos);
+        //     if (currentPos < targetPos) currentPos += distanceToTravel * (3*Math.pow(t, 2) - 2*Math.pow(t,3));
+        //     else if (currentPos > targetPos) currentPos -= distanceToTravel * (3*Math.pow(t, 2) - 2*Math.pow(t,3));
+        //     else currentTime = 0;
+        // } else if (launched && currentTime == smoothTime) currentTime = 0;
         
-        currentTime++;
+        // currentTime++;
 
 
         return targetPos;
