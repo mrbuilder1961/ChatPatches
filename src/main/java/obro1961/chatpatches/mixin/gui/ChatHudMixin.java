@@ -9,6 +9,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.CommandHistoryManager;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -18,6 +19,7 @@ import obro1961.chatpatches.util.ChatUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -40,13 +42,20 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
     @Shadow @Final private List<?> removalQueue;
     @Shadow private int scrolledLines;
-
+    
+    @Unique private int targetPos;
+    @Unique private int currentPos;
+    @Unique private float distanceToTravel;
+    @Unique private final float smoothTime = 20;
+    @Unique private float currentTime = 0;
+    @Unique private boolean launched = false;
 
     @Shadow public abstract double getChatScale();
     @Shadow protected abstract double toChatLineX(double x);
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageLineIndex(double x, double y);
+
     // ChatHudAccessor methods used outside this mixin
     public List<ChatHudLine> chatpatches$getMessages() { return messages; }
     public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }
@@ -56,6 +65,31 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     public double chatpatches$toChatLineY(double y) { return toChatLineY(y); }
     public int chatpatches$getLineHeight() { return getLineHeight(); }
 
+    /** Utility Methods - placed above all other methods for scoping */
+    @Unique
+    int resolveOffset(PlayerEntity player) {
+        // ? Get player stats and standardise to scaled number of rows
+
+        int armor = player.getArmor();
+        float absorption = player.getAbsorptionAmount();
+        float health = player.getMaxHealth();
+
+        // * Calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
+
+        int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
+        int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
+        
+        // * For contingency
+        // * float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f};
+        float healthScale = healthHeightMultiplier > 7 ? 0.3f : 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
+
+        // ? If Dynamic Shifting is off, offset will simply be shiftChat
+        if (!config.useDynamicShifting) return config.shiftChat;
+
+        return (armorHeightMultiplier * MathHelper.floor(10 / this.getChatScale()))
+        + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / this.getChatScale()))
+        + (config.shiftChat - 10);
+    }
 
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
@@ -105,7 +139,26 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      */
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
     private int moveChat(int m) {
-        return m - MathHelper.floor(config.shiftChat / this.getChatScale());
+        PlayerEntity player = MinecraftClient.getInstance().player;
+
+        targetPos = m - resolveOffset(player);
+        
+        // TODO: Animation Code, currently an Artifact for the next PR
+        // float t = currentTime / smoothTime;
+
+        // if (!launched) { currentPos = m; launched = true; }
+
+        // if (launched && currentTime < smoothTime) {
+        //     if (currentTime == 0) distanceToTravel = Math.abs(targetPos - currentPos);
+        //     if (currentPos < targetPos) currentPos += distanceToTravel * (3*Math.pow(t, 2) - 2*Math.pow(t,3));
+        //     else if (currentPos > targetPos) currentPos -= distanceToTravel * (3*Math.pow(t, 2) - 2*Math.pow(t,3));
+        //     else currentTime = 0;
+        // } else if (launched && currentTime == smoothTime) currentTime = 0;
+        
+        // currentTime++;
+
+
+        return targetPos;
     }
 
     /**
@@ -119,9 +172,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      */
     @ModifyVariable(method = "toChatLineY", at = @At("HEAD"), argsOnly = true)
     private double moveChatLineY(double y) {
-        return y + config.shiftChat;
-    }
+        PlayerEntity player = MinecraftClient.getInstance().player;
 
+        return y + resolveOffset(player);
+    }
 
     /**
      * Modifies the incoming message in a multitude of ways.

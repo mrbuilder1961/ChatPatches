@@ -10,6 +10,7 @@ classes/
 .settings/
 .vscode/
 bin/
+.cspell/
 .classpath
 .project
 *.DS_Store
