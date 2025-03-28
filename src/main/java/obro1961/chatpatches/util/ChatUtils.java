@@ -36,7 +36,6 @@ public class ChatUtils {
 							MSG_SENDER_INDEX = 1,  // contains the sender's name
 							MSG_CONTENT_INDEX = 2; // contains the content of the sender's message
 
-	public static final Text CHAT_FIELD_TEXT = Text.translatable("chat.editBox");
 	public static final int MAX_MESSAGE_LENGTH = 256; // pulled from chatField's max length
 
 	/**

@@ -21,7 +21,6 @@ import net.minecraft.client.gui.widget.GridWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.util.SkinTextures;
-import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.StringHelper;
@@ -74,12 +73,15 @@ public class ContextMenu implements Element {
 	static final Text MENU_STRING = Text.translatable("text.chatpatches.copy.copyText");
 	static final Text RAW_TEXT = Text.translatable("text.chatpatches.copy.rawText");
 	static final Text FORMATTED_STR = Text.translatable("text.chatpatches.copy.formattedString");
-	static final Text NO_TIMESTAMP = Text.translatable("text.chatpatches.copy.noTimestampText"); // fixes (#129)
-	//idea: noDupeText option? seems fitting..!
+	static final Text NO_TIMESTAMP_TEXT = Text.translatable("text.chatpatches.copy.noTimestampText");
+	static final Text NO_DUPE_TEXT = Text.translatable("text.chatpatches.copy.noCounterText");
 	static final Text JSON_STR = Text.translatable("text.chatpatches.copy.jsonString");
 	static final Text MENU_TIMESTAMP = Text.translatable("text.chatpatches.copy.timestamp");
 	static final Text TIMESTAMP = Text.translatable("text.chatpatches.copy.timestampText");
 	static final Text TIMESTAMP_HOVER = Text.translatable("text.chatpatches.copy.timestampHoverText");
+	static final Text MENU_DUPE_COUNTER = Text.translatable("text.chatpatches.copy.counter");
+	static final Text COUNTER_TEXT = Text.translatable("text.chatpatches.copy.counterText");
+	static final Text COUNTER_VALUE = Text.translatable("text.chatpatches.copy.counterValue");
 	static final Text MENU_UNIX = Text.translatable("text.chatpatches.copy.unix");
 	static final Text MENU_LINKS = Text.translatable("text.chatpatches.copy.links");
 	static final Int2ObjectFunction<Text> LINK_N = (n) -> Text.translatable("text.chatpatches.copy.linkN", n);
@@ -311,18 +313,22 @@ public class ContextMenu implements Element {
 	 *     <li>{@link #MENU_STRING}</li>
 	 *     <li>{@link #RAW_TEXT}</li>
 	 *     <li>{@link #FORMATTED_STR}</li>
-	 *     <li>*{@link #NO_TIMESTAMP}</li>
+	 *     <li>*{@link #NO_TIMESTAMP_TEXT}</li>
+	 *     <li>^{@link #NO_DUPE_TEXT}</li>
 	 *     <li>{@link #JSON_STR}</li>
 	 *     <li>If a timestamp is present*: {@link #MENU_TIMESTAMP}</li>
 	 *     <li>*{@link #TIMESTAMP}</li>
 	 *     <li>*{@link #TIMESTAMP_HOVER}</li>
+	 *     <li>If a dupe counter is present^: {@link #MENU_DUPE_COUNTER}</li>
+	 *     <li>^{@link #COUNTER_TEXT}</li>
+	 *     <li>^{@link #COUNTER_VALUE}</li>
 	 *     <li>{@link #MENU_UNIX}</li>
 	 *     <li>If any web or file links are present**: {@link #MENU_LINKS}</li>
 	 *     <li>**{@link #LINK_N} (for each link)</li>
-	 *     <li>If the message sender is a player***: {@link #MENU_SENDER}</li>
-	 *     <li>***{@link #NAME}</li>
-	 *     <li>***{@link #UUID}</li>
-	 *     <li>***{@link #MENU_REPLY}</li>
+	 *     <li>If the message sender is a player^^: {@link #MENU_SENDER}</li>
+	 *     <li>^^{@link #NAME}</li>
+	 *     <li>^^{@link #UUID}</li>
+	 *     <li>^^{@link #MENU_REPLY}</li>
 	 * </ol>
 	 * Finally, updates and syncs the button positions and registers them
 	 * with the {@link Screen#addSelectableChild(Element)} method.
@@ -335,14 +341,20 @@ public class ContextMenu implements Element {
 
 		Text text = selectedLine.content();
 		Text timestamp = getPart(text, TIMESTAMP_INDEX);
+		boolean timestamped = !timestamp.getString().isBlank();
+		Text counter = getPart(text, DUPE_INDEX);
+		boolean duped = text.getSiblings().size() > DUPE_INDEX && !counter.getString().isEmpty();
+
 
 		// string buttons - unconditional
-		boolean timestamped = !timestamp.getString().isBlank();
+		int strRow = 0; // current row for string and text buttons
 		registerProxyButton(MENU_STRING, RAW_TEXT);
-			registerCopyOnlyButton(RAW_TEXT, text, 0);
-			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(text.asOrderedText(), true)), 1);
+			registerCopyOnlyButton(RAW_TEXT, text, strRow++); // 0
+			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(text.asOrderedText(), true)), strRow++); // 1
 			if(timestamped)
-				registerCopyOnlyButton(NO_TIMESTAMP, TextUtils.newText(text.getContent(), text.getSiblings().subList(1, text.getSiblings().size()), text.getStyle()), 2);
+				registerCopyOnlyButton(NO_TIMESTAMP_TEXT, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size())), strRow++); // 2
+			if(duped)
+				registerCopyOnlyButton(NO_DUPE_TEXT, TextUtils.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX)), strRow++); // timestamped ? 3 : 2
 			registerCopyOnlyButton(JSON_STR,
 				textCodec().encodeStart(ChatPatches.jsonOps(), text)
 					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
@@ -350,7 +362,7 @@ public class ContextMenu implements Element {
 					.map(Text::of)
 					.orElse(UNKNOWN.apply(JSON_STR)),
 					//NbtHelper.toPrettyPrintedText(...) //prepub: make the format fancy by somehow converting to nbt (ops?), formatting, lowercasing, and adding quotes
-			(timestamped ? 3 : 2));
+			strRow); // timestamped && duped ? 4 : timestamped || duped ? 3 : 2
 
 		// timestamp buttons - conditional (not on boundary lines)
 		if(timestamped) {
@@ -360,6 +372,13 @@ public class ContextMenu implements Element {
 					HoverEvent hoverEvent = timestamp.getStyle().getHoverEvent();
 					return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : EMPTY;
 				}, 1, 1);
+		}
+
+		// dupe counter buttons - conditional
+		if(duped) {
+			registerProxyButton(MENU_DUPE_COUNTER, COUNTER_TEXT);
+				registerCopyOnlyButton(COUNTER_TEXT, counter, 0);
+				registerCopyOnlyButton(COUNTER_VALUE, Text.of(counter.getString().replaceAll("(§\\d)|\\D", "").trim()), 1);
 		}
 
 		// unix timestamp button - unconditional
