@@ -49,13 +49,9 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     private boolean launched = false;
 
     @Shadow public abstract double getChatScale();
-
     @Shadow protected abstract double toChatLineX(double x);
-
     @Shadow protected abstract double toChatLineY(double y);
-
     @Shadow protected abstract int getLineHeight();
-
     @Shadow protected abstract int getMessageLineIndex(double x, double y);
 
     // ChatHudAccessor methods used outside this mixin
@@ -86,8 +82,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         }
     }
 
-    @ModifyExpressionValue(method = { "addMessage(Lnet/minecraft/client/gui/hud/ChatHudLine;)V",
-            "addVisibleMessage" }, at = @At(value = "CONSTANT", args = "intValue=100"))
+    @ModifyExpressionValue(
+        method = { "addMessage(Lnet/minecraft/client/gui/hud/ChatHudLine;)V", "addVisibleMessage" },
+        at = @At(value = "CONSTANT",
+        args = "intValue=100"))
     private int moreMessages(int hundred) {
         return config.chatMaxMessages;
     }
@@ -109,7 +107,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * {@link Config#shiftChat}, including the text
      * and scroll bar, by shifting the y position of the chat.
      *
-     * <p> Target: {@code int m = MathHelper.floor((float)(l - 40) / f);}
+     * <p>Target: {@code int m = MathHelper.floor((float)(l - 40) / f);}
      */
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
     private int moveChat(int m) {
@@ -156,7 +154,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * message indicators and chat hover tooltips when
      * needed in the shifted position.
      *
-     * <p> Target: {@code double d = this.client.getWindow().getScaledHeight() - y - 40.0;}
+     * <p>Target: {@code double d = this.client.getWindow().getScaledHeight() - y - 40.0;}
      */
     @ModifyVariable(method = "toChatLineY", at = @At("HEAD"), argsOnly = true)
     private double moveChatLineY(double y) {
@@ -191,7 +189,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * @see ChatUtils#modifyMessage(Text)
      * @see ChatUtils#tryCondenseDupes(Text)
      */
-    @ModifyVariable(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V", at = @At("HEAD"), argsOnly = true)
+    @ModifyVariable(
+        method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
+        at = @At("HEAD"),
+        argsOnly = true)
     private Text modifyMessage(Text m) {
         return ChatUtils.modifyMessage(m);
     }
