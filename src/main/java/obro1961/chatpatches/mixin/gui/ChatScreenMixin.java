@@ -317,7 +317,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			final int lH = chat.chatpatches$getLineHeight();
 			final int sW = MathHelper.ceil(chatHud.getWidth() / s); // scaled width
 			final int sH = MathHelper.floor((client.getWindow().getScaledHeight() - 40) / s); // scaled height
-			int shift = MathHelper.floor(config.shiftChat / s);
+			int shift = MathHelper.floor(config.calcDynamicChatShift() / s);
 			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.chatpatches$getScrolledLines();
 			int hoveredY = sH - (i * lH) - shift;
 
@@ -532,8 +532,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * combined with some logic to determine the entire message from only the hovered
 	 * (visible) message.
 	 * <padding>Automatically adjusts the parameters {@code mX} and {@code mY} to be accurate values,
-	 * including any shifts according to {@link Config#shiftChat}. If either {@code mX} or
-	 * {@code mY} are equal to {@code -1}, then an empty List is returned.</padding>
+	 * including any shifts according to {@link Config#calcDynamicChatShift()}. If either {@code mX}
+	 * or {@code mY} are equal to {@code -1}, then an empty List is returned.</padding>
 	 *
 	 * @implNote
 	 * <ol>
