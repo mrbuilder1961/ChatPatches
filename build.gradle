@@ -24,7 +24,7 @@ def changelogText = "Changelog could not be found... 😬"
 repositories {
   	mavenCentral()
 
-	maven { url = "https://maven.terraformersmc.com/releases/" }// Mod Menu
+	maven { url = "https://maven.terraformersmc.com/releases/" } // Mod Menu
 	maven { url = "https://maven.isxander.dev/releases" } // YACL
 }
 

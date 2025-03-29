@@ -13,19 +13,19 @@ import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.OtherClientPlayerEntity;
-import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
+import org.spongepowered.asm.mixin.Unique;
 
 import java.io.EOFException;
 import java.io.FileWriter;
@@ -49,15 +49,6 @@ import static obro1961.chatpatches.util.TextUtils.text;
 public class Config {
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
     public static final Config DEFAULTS = new Config();
-    /**
-     * List of mods installed that, in one way or another,
-     * cause modified messages to have an extra space in
-     * between the timestamp and message content. While
-     * I could open issues to deal with this issue, it's
-     * much easier to just remove the space, especially
-     * if it's unintentionally my fault.
-     */
-    //public static final Stream<String> EXTRA_SPACE_MODS = Stream.of("styledchat");
 
     private static final FabricLoader FABRIC = FabricLoader.getInstance();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -74,7 +65,7 @@ public class Config {
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
     public boolean chatHidePacket = true; public int chatWidth = 0, chatHeight = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = 0xffffff;
-    public int shiftChat = 10; public boolean useDynamicShifting = true, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
+    public int shiftChat = 0; public boolean dynamicShiftChat = true, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
 
@@ -191,7 +182,7 @@ public class Config {
             ChatPatches.logReportMsg(e);
         }
 
-        return makeObject(chatNameFormat, profile.getName(), "", /*EXTRA_SPACE_MODS.anyMatch(FABRIC::isModLoaded) ? "" :*/ " ", style);
+        return makeObject(chatNameFormat, profile.getName(), "", " ", style);
     }
 
     public MutableText makeDupeCounter(int dupes) {
@@ -244,6 +235,45 @@ public class Config {
         }
     }
 
+    /**
+     * Calculates the appropriate chat shifting offset to use if
+     * {@link Config#dynamicShiftChat} is enabled, which accounts
+     * for the player's visible armor and health bars. If this
+     * option is disabled or the player is null (shouldn't
+     * ever happen), simply returns {@link Config#shiftChat}.
+     *
+     * @author <a href="https://github.com/radioactive-exe">radioactive-exe</a>!
+     * The majority of this code was contributed in
+     * <a href="https://github.com/mrbuilder1961/ChatPatches/pull/224">#224</a>.
+     */
+    @Unique
+    public int calcDynamicChatShift() {
+        PlayerEntity player = mc.player;
+        if(!config.dynamicShiftChat || player == null)
+            return shiftChat;
+
+        // get player stats and standardize to scaled number of rows
+        int armor = player.getArmor();
+        float absorption = player.getAbsorptionAmount();
+        float health = player.getMaxHealth();
+        double scale = mc.inGameHud.getChatHud().getChatScale();
+
+        // calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
+        int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
+        int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
+
+        //float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f}; // contingency
+        // currently uses a third-degree polynomial regression to calculate the health scale (based on the above values)
+        float healthScale = healthHeightMultiplier > 7
+            ? 0.3f
+            : 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
+
+        return (armorHeightMultiplier * MathHelper.floor(10 / scale))
+            + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / scale))
+            + shiftChat
+            /*+ (shiftChat - 10)*/;
+    }
+
 
     /**
      * Loads the config settings saved at {@link Config#PATH}
@@ -256,7 +286,6 @@ public class Config {
      *           config.
      */
     public static void read() {
-        // warning: not thoroughly tested... let there be bugs
         if(Files.exists(PATH)) {
             try {
                 String rawData = Files.readString(PATH);
