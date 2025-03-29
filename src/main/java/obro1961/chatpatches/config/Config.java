@@ -270,8 +270,7 @@ public class Config {
 
         return (armorHeightMultiplier * MathHelper.floor(10 / scale))
             + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / scale))
-            + shiftChat
-            /*+ (shiftChat - 10)*/;
+            + shiftChat;
     }
 
 

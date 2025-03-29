@@ -249,10 +249,23 @@ public class YACLConfig extends Config {
             return Binding.generic(o.def, o::get, o::set);
     }
 
+    /*@SuppressWarnings("unchecked") // currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues
+    private static ValueFormatter<Integer> getValueFormatter(String key) {
+        return switch(key) {
+            //for all the values like -1 or 0 for number guys
+            case "chatlogSaveInterval" -> (val -> Text.of("" + Formatting.GREEN + val + "§f ticks"));
+            case "chatWidth", "chatHeight", "shiftChat" -> (val -> Text.of("" + Formatting.GREEN + val + "§f pixels"));
+            case "chatMaxMessages", "counterCompactDistance" -> (val -> Text.of("" + Formatting.GREEN + val + "§f messages"));
+            default -> (ValueFormatter<Integer>) IntegerSliderController.DEFAULT_FORMATTER;
+        };
+    }*/
+
+
     /**
      * Returns the appropriate minimum or maximum value for the given key.
      * Used for upholding the disorganized yet clean look to this class.
      */
+    @SuppressWarnings("SwitchStatementWithTooFewBranches")
     private static int getMinOrMax(String key, boolean min) {
         if(min) {
             return switch(key) {
@@ -274,7 +287,8 @@ public class YACLConfig extends Config {
     }
 
     /** Returns the appropriate interval for the given key. */
-    private static int getInterval(String key) {
+    @SuppressWarnings("SwitchStatementWithTooFewBranches")
+	private static int getInterval(String key) {
         return switch(key) {
             case "chatMaxMessages" -> 16;
             default -> 1;
