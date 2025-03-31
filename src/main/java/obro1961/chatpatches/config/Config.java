@@ -18,6 +18,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -55,15 +56,15 @@ public class Config {
     private static String lastWorld = "";
 
 	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy, search
-    public boolean time = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = 0xFF55FF;
-    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = 0xFFFFFF;
-    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = 0xFFFF55; public boolean counterCheckStyle = false;
+    public boolean time = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = Formatting.LIGHT_PURPLE.getColorValue();
+    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = Formatting.WHITE.getColorValue();
+    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = Formatting.YELLOW.getColorValue(); public boolean counterCheckStyle = false;
     public boolean counterCompact = false; public int counterCompactDistance = 0;
-    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55FFFF;
+    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = Formatting.AQUA.getColorValue();
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
-    public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = 0xFFFFFF;
+    public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = Formatting.WHITE.getColorValue();
     public int shiftChat = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix = false;
-    public int copyColor = 0x55FFFF; public String copyReplyFormat = "/msg $ ";
+    public int copyColor = Formatting.AQUA.getColorValue(); public String copyReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
 
     /**
@@ -150,7 +151,6 @@ public class Config {
      * player entity and have both a valid name and UUID. Additionally,
      * the {@linkplain MinecraftClient#world client world} must exist.
      */
-    @SuppressWarnings("DataFlowIssue") // getDisplayName() is never null, same with Formatting.RESET and getColor()
     public MutableText formatPlayername(GameProfile profile) {
         Style style = Style.EMPTY.withColor(chatNameColor); // defaults to the config-specified color
         try {
@@ -211,7 +211,6 @@ public class Config {
             return;
 
         ChatHudAccessor chat = (ChatHudAccessor) mc.inGameHud.getChatHud();
-		//noinspection DataFlowIssue: see next line
 		String current = mc.isIntegratedServerRunning() // this check prevents NPEs for both if branches
             ? "C_" + mc.getServer().getSaveProperties().getLevelName()
             : mc.getCurrentServerEntry() instanceof ServerInfo entry

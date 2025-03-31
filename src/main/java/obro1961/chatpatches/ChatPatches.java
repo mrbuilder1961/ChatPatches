@@ -86,7 +86,7 @@ public class ChatPatches implements ClientModInitializer {
 		if(method.isBlank())
 			method = error.getStackTrace()[0].getMethodName();
 
-		//noinspection StringConcatenationArgumentToLogCall: it's whining but it's totally fine
+		//noinspection StringConcatenationArgumentToLogCall: not an issue...
 		LOGGER.error("[" + clazz + "." + method + "] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\", error);
 	}
 
