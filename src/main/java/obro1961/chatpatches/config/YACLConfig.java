@@ -4,7 +4,6 @@ import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.text.ClickEvent;
@@ -24,6 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 
+import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
@@ -51,6 +51,7 @@ public class YACLConfig extends Config {
             String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
 
+            // todo: make this simpler. aka: put prefixes/suffixes in every config setting, these exceptions have gotten very out-of-hand
             if(key.matches("caseSensitive|formatting|regex")) // search settings are edited in the chat screen
                 return;
             else if( key.contains("counterCompact") )
@@ -168,7 +169,7 @@ public class YACLConfig extends Config {
                                     ))
                                 );
 
-								ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables] {}", str);
+								LOGGER.warn("[YACLConfig.printGithubTables] {}", str);
                             })
                             .build()
                     )
@@ -231,7 +232,7 @@ public class YACLConfig extends Config {
                     new SimpleDateFormat( inc.toString() );
                     o.set( inc );
                 } catch(IllegalArgumentException e) {
-                    ChatPatches.LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
+                    LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
                 }
             });
 
@@ -254,7 +255,7 @@ public class YACLConfig extends Config {
         return switch(key) {
             //for all the values like -1 or 0 for number guys
             case "chatlogSaveInterval" -> (val -> Text.of("" + Formatting.GREEN + val + "§f ticks"));
-            case "chatWidth", "chatHeight", "shiftChat" -> (val -> Text.of("" + Formatting.GREEN + val + "§f pixels"));
+            case "chatWidth", "chatHeight", "chatShift" -> (val -> Text.of("" + Formatting.GREEN + val + "§f pixels"));
             case "chatMaxMessages", "counterCompactDistance" -> (val -> Text.of("" + Formatting.GREEN + val + "§f messages"));
             default -> (ValueFormatter<Integer>) IntegerSliderController.DEFAULT_FORMATTER;
         };
@@ -265,23 +266,23 @@ public class YACLConfig extends Config {
      * Returns the appropriate minimum or maximum value for the given key.
      * Used for upholding the disorganized yet clean look to this class.
      */
-    @SuppressWarnings("SwitchStatementWithTooFewBranches")
     private static int getMinOrMax(String key, boolean min) {
         if(min) {
             return switch(key) {
                 case "counterCompactDistance" -> -1;
-                default -> 0; // chatWidth, chatMaxMessages, shiftChat, chatlogSaveInterval
+                case "chatShift" -> -50;
+                default -> 0; // chatWidth, chatMaxMessages, chatlogSaveInterval
             };
         } else {
             return switch(key) {
                 case "counterCompactDistance" -> 1024;
                 case "chatlogSaveInterval" -> 180;
-                case "chatWidth" -> MinecraftClient.getInstance().getWindow().getScaledWidth() - 12; // offset length calc'd from ChatHud#render aka magic #
-                case "chatHeight" -> MinecraftClient.getInstance().getWindow().getScaledHeight() - 12;
+                case "chatWidth" -> mc.getWindow().getScaledWidth() - 12; // offset length calc'd from ChatHud#render aka magic #
+                case "chatHeight" -> mc.getWindow().getScaledHeight() - 12;
                 // only issue w ^^^ is if the window is resized while the config screen is open the max value will be incorrect
                 // other issue could be with the future config redo, as annotation constraints must be *constant*
                 case "chatMaxMessages" -> Short.MAX_VALUE;
-                default -> 100; // shiftChat
+                default -> 100; // chatShift
             };
         }
     }
@@ -324,18 +325,17 @@ public class YACLConfig extends Config {
     private static OptionDescription desc(Setting<?> opt) {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
 
-        String ext = "webp";
-	// using Locale.ROOT fixes turkish locale causing file mismatch
-        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT) + "." + ext;
+	    // using Locale.ROOT fixes turkish locale causing file mismatch
+        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT) + ".webp";
         Identifier id = Identifier.of(ChatPatches.MOD_ID, image);
 
         try {
-            if( MinecraftClient.getInstance().getResourceManager().getResource(id).isPresent() )
+            if( mc.getResourceManager().getResource(id).isPresent() )
                 builder.webpImage(id);
-	    else
-                ChatPatches.LOGGER.debug("[YACLConfig.desc] Couldn't find '{}'", image);
+	        else
+                LOGGER.debug("[YACLConfig.desc] Couldn't find '{}'", image);
         } catch(Throwable e) {
-            ChatPatches.LOGGER.error("[YACLConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
+            LOGGER.error("[YACLConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
         }
 
         return builder.build();
@@ -351,7 +351,7 @@ public class YACLConfig extends Config {
             .name(Text.translatable( "text.chatpatches." + key, (args[0].equals(-1) ? new Object[0] : args) )) // args or nothing
             .description(desc( new Setting<>(o, o, key) ))
             .action(getAction(key))
-            .available( !key.matches("chatlog(Load|Save)") || MinecraftClient.getInstance().world != null ) // must be in-game to load/save
+            .available( !key.matches("chatlog(Load|Save)") || mc.world != null ) // must be in-game to load/save
             .build();
     }
 }

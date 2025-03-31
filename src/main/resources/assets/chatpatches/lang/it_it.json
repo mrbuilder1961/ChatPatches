@@ -57,7 +57,7 @@
     "text.chatpatches.chatName": "Attiva/Disattiva testo nome giocatore",
     "text.chatpatches.chatNameFormat": "Testo nome giocatore",
     "text.chatpatches.chatNameColor": "Colore del nome del giocatore",
-    "text.chatpatches.shiftChat": "Cambia chat",
+    "text.chatpatches.chatShift": "Cambia chat",
     "text.chatpatches.messageDrafting": "Attiva/Disattiva la modalità bozza della chat",
     "text.chatpatches.onlyInvasiveDrafting": "Only invasive drafting toggle",
     "text.chatpatches.searchDrafting": "Search drafting toggle",

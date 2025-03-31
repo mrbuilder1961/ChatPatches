@@ -96,7 +96,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     /**
      * These methods shift most of the chat hud by
-     * {@link Config#shiftChat}, including the text
+     * {@link Config#chatShift}, including the text
      * and scroll bar, by shifting the y position of the chat.
      *
      * <p>Target: {@code int m = MathHelper.floor((float)(l - 40) / f);}
@@ -107,7 +107,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     /**
-     * Moves the chat line by {@link Config#shiftChat} to
+     * Moves the chat line by {@link Config#chatShift} to
      * correctly shift the chat with the other components.
      * Used by the {@link ChatHud} to correctly render
      * message indicators and chat hover tooltips when

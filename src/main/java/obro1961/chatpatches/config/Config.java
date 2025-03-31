@@ -50,12 +50,12 @@ public class Config {
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
     public static final Config DEFAULTS = new Config();
 
-    private static final FabricLoader FABRIC = FabricLoader.getInstance();
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
+    protected static final FabricLoader FABRIC = FabricLoader.getInstance();
+    protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     /** @see #sendBoundaryLine() */
-    private static String lastWorld = "";
+    protected static String lastWorld = "";
 
 	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy, search
     public boolean time = true; public String timeDate = "HH:mm:ss"; public String timeFormat = "[$]"; public int timeColor = 0xff55ff;
@@ -65,7 +65,7 @@ public class Config {
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
     public boolean chatHidePacket = true; public int chatWidth = 0, chatHeight = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = 0xffffff;
-    public int shiftChat = 0; public boolean dynamicShiftChat = true, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
+    public int chatShift = 0; public boolean dynamicChatShift = true, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
 
@@ -237,10 +237,10 @@ public class Config {
 
     /**
      * Calculates the appropriate chat shifting offset to use if
-     * {@link Config#dynamicShiftChat} is enabled, which accounts
+     * {@link Config#dynamicChatShift} is enabled, which accounts
      * for the player's visible armor and health bars. If this
      * option is disabled or the player is null (shouldn't
-     * ever happen), simply returns {@link Config#shiftChat}.
+     * ever happen), simply returns {@link Config#chatShift}.
      *
      * @author <a href="https://github.com/radioactive-exe">radioactive-exe</a>!
      * The majority of this code was contributed in
@@ -249,8 +249,8 @@ public class Config {
     @Unique
     public int calcDynamicChatShift() {
         PlayerEntity player = mc.player;
-        if(!config.dynamicShiftChat || player == null)
-            return shiftChat;
+        if(!config.dynamicChatShift || player == null)
+            return chatShift;
 
         // get player stats and standardize to scaled number of rows
         int armor = player.getArmor();
@@ -270,7 +270,7 @@ public class Config {
 
         return (armorHeightMultiplier * MathHelper.floor(10 / scale))
             + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / scale))
-            + shiftChat;
+            + chatShift;
     }
 
 
