@@ -2,6 +2,7 @@
 
 ## Chat Patches `214.6.13` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Added the dynamic shift feature, which shifts the chat according to the player's health and armor bars (thanks [radioactive-exe](https://github.com/radioactive-exe)!)
+- Fixed a few translations not applying due to poorly-executed renaming
 
 ## Chat Patches `214.6.12` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Bumped dependencies, now requires Fabric Loader >=0.16.10
