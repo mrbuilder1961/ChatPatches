@@ -93,11 +93,11 @@
 
 	"text.chatpatches.search.suggestion": "検索...",
 	"text.chatpatches.search.caseSensitive": "文字種区別",
-	"text.chatpatches.search.modifiers": "修飾子",
+	"text.chatpatches.search.formatting": "修飾子",
 	"text.chatpatches.search.regex": "正規表現",
 	"text.chatpatches.search.desc": "§b左クリック§rで検索バー，§d右クリック§rで設定メニューの表示を切り替えます．\n\n§a緑§rは検索が一致したこと，§e黄§rは一致するものが無いこと，§c赤§rは検索が無効であることを示します．",
 	"text.chatpatches.search.desc.caseSensitive": "検索で大文字と小文字を区別するかどうか．\n\n区別しない場合，\"abc\"は自身以外に\"Abc\"や\"ABC\"にも一致しますが，区別する場合には\"abc\"にのみ一致します．\n§l§o注意:§r これは正規表現検索にも適用されます．",
-	"text.chatpatches.search.desc.modifiers": "検索の一致判定で装飾修飾子を含めるかどうか．\n\n修飾子を含めない場合，\"abc\"は\"abc\"や\"§e§labc§r\"に一致しますが，含める場合には\"abc\"にのみ一致し，\"§e§labc§r\"には一致しません．\n§l§o注意:§r 16進カラーコードは\"&#§cRR§aGG§9BB§r\"の形式で一致させられますが，§nこの機能はベータ版です§f．",
+	"text.chatpatches.search.desc.formatting": "検索の一致判定で装飾修飾子を含めるかどうか．\n\n修飾子を含めない場合，\"abc\"は\"abc\"や\"§e§labc§r\"に一致しますが，含める場合には\"abc\"にのみ一致し，\"§e§labc§r\"には一致しません．\n§l§o注意:§r 16進カラーコードは\"&#§cRR§aGG§9BB§r\"の形式で一致させられますが，§nこの機能はベータ版です§f．",
 	"text.chatpatches.search.desc.regex": "検索で正規表現を使用するかどうか．\n\n正規表現の使い方については，設定画面のヘルプタブを参照してください．\n§l§o注意:§r Javaの正規表現は§n完全一致を要求する§fため，先頭に\"^.*\"，末尾に\".*$\"を付けることを忘れないでください．",
 
 

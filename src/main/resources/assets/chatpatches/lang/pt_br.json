@@ -121,11 +121,11 @@
 
     "text.chatpatches.search.suggestion": "Pesquisar...",
     "text.chatpatches.search.caseSensitive": "Diferenciar maiúsculas/minúsculas",
-    "text.chatpatches.search.modifiers": "Modificadores",
+    "text.chatpatches.search.formatting": "Modificadores",
     "text.chatpatches.search.regex": "Regex",
     "text.chatpatches.search.desc": "§bClique com o botão esquerdo§r para alternar a barra de pesquisa, ou §dclique com o botão direito§r para alternar o menu de configurações.\n\n§aVerde§r significa que a pesquisa correspondeu, §eamarelo§r significa que nada correspondeu, e §cvermelho§r significa que a pesquisa é inválida.",
     "text.chatpatches.search.desc.caseSensitive": "A consulta de pesquisa deve corresponder apenas ao texto com a mesma capitalização?\n\n\"abc\" corresponderia a si mesmo, \"Abc\" e \"ABC\"; sensível a maiúsculas/minúsculas corresponderia apenas a \"abc\".\n§l§oNOTA:§r Isso também se aplica à pesquisa regex.",
-    "text.chatpatches.search.desc.modifiers": "A consulta de pesquisa deve permitir corresponder ao texto de acordo com modificadores de formatação?\n\n\"abc\" corresponderia a \"abc\" e \"§e§labc§r\"; com modificadores só corresponderia a \"abc\" e não \"§e§labc§r\".\nNOTA: Cores hexadecimais §opodem§r ser correspondidas no formato \"&#§cRR§aGG§9BB§r\", no entanto §nestá em beta§f.",
+    "text.chatpatches.search.desc.formatting": "A consulta de pesquisa deve permitir corresponder ao texto de acordo com modificadores de formatação?\n\n\"abc\" corresponderia a \"abc\" e \"§e§labc§r\"; com modificadores só corresponderia a \"abc\" e não \"§e§labc§r\".\nNOTA: Cores hexadecimais §opodem§r ser correspondidas no formato \"&#§cRR§aGG§9BB§r\", no entanto §nestá em beta§f.",
     "text.chatpatches.search.desc.regex": "A consulta de pesquisa deve ser usada como uma §2reg§rular §2ex§rpressão?\n\nPara saber como usar regex, veja a seção de ajuda na configuração.\n§l§oNOTA:§r Regex em Java §nrequer uma correspondência completa§f, então lembre-se de colocar \"^.*\" no início e \".*$\" no final.",
 
     "text.chatpatches.copyReplyFormat": "Formato do texto de resposta",

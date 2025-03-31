@@ -89,11 +89,11 @@
 
     "text.chatpatches.search.suggestion": "搜索...",
     "text.chatpatches.search.caseSensitive": "区分大小写",
-    "text.chatpatches.search.modifiers": "修饰符",
+    "text.chatpatches.search.formatting": "修饰符",
     "text.chatpatches.search.regex": "正则表达式",
     "text.chatpatches.search.desc": "§b左键单击§r切换搜索栏，或§d右键单击§r切换设置菜单。\n\n§a绿色§r表示搜索匹配，§e黄色§r表示没有匹配，§c红色§r表示搜索无效。",
     "text.chatpatches.search.desc.caseSensitive": "搜索查询是否仅匹配具有相同大小写的文本？\n\n“abc”可以与自身、“Abc”和“ABC”匹配；区分大小写仅会匹配“abc”。\n§l§o注意：§r这也适用于正则表达式搜索。",
-    "text.chatpatches.search.desc.modifiers": "搜索查询是否允许根据格式修饰符匹配文本？\n\n“abc”可以与“abc”和“§e§labc§r”匹配；具有修饰符时，它将只匹配“abc”而不匹配“§e§labc§r”。\n注意：十六进制颜色 §ocan§r 在格式为“&#§cRR§aGG§9BB§r”的情况下进行匹配，然而§n这还处于测试阶段§f。",
+    "text.chatpatches.search.desc.formatting": "搜索查询是否允许根据格式修饰符匹配文本？\n\n“abc”可以与“abc”和“§e§labc§r”匹配；具有修饰符时，它将只匹配“abc”而不匹配“§e§labc§r”。\n注意：十六进制颜色 §ocan§r 在格式为“&#§cRR§aGG§9BB§r”的情况下进行匹配，然而§n这还处于测试阶段§f。",
     "text.chatpatches.search.desc.regex": "搜索查询是否作为§2正则表达式§r使用？\n\n要了解如何使用正则表达式，请参阅配置文件中的帮助部分。\n§l§o注意：§rJava 正则表达式§n需要完全匹配§f，所以请记得在前面加上“^.*”，并在末尾加上“.*$”。",
 
 

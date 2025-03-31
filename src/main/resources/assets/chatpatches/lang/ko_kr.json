@@ -118,11 +118,11 @@
 
     "text.chatpatches.search.suggestion": "검색...",
     "text.chatpatches.search.caseSensitive": "대소문자 구분",
-    "text.chatpatches.search.modifiers": "서식 코드",
+    "text.chatpatches.search.formatting": "서식 코드",
     "text.chatpatches.search.regex": "정규 표현",
     "text.chatpatches.search.desc": "§b좌클릭§r으로 검색창,§d우클릭§r으로 설정 메뉴의 표시를 바꿉니다.\n\n§a녹색§r은 찾는 것이 있을 때,§e노란색§r은 찾는 것이 없을 때,§c빨간색§r은 검색이 무효일 때를 나타냅니다.",
     "text.chatpatches.search.desc.caseSensitive": "검색에서 대문자와 소문자를 구분할까요?\n\n구별하지 않는 경우 \"abc\"는 자신 이외에 \"Abc\" 또는 \"ABC\"도 동일하게 검색되지만, 구별하는 경우\"abc\"만 검색됩니다.\n§l§o주의:§r 이것은 정규 표현에도 적용됩니다.",
-    "text.chatpatches.search.desc.modifiers": "검색의 일치 판정에서 서식 코드를 포함시킬까요?\n\n서식 코드를 포함하지 않는 경우, \"abc\"는 \"abc\" 또는 \"§e§labc§r\"와 일치하지만, 서식 코드를 포함하는 경우에는 \"abc\"만 일치하고, \"§e§labc§r\"에는 일치하지 않습니다.\n§l§o주의:§r 16진수 색 코드는\"&#§cRR§aGG§9BB§r\"의 형식으로 일치합니다만,§n이 기능은 미완성입니다§f.",
+    "text.chatpatches.search.desc.formatting": "검색의 일치 판정에서 서식 코드를 포함시킬까요?\n\n서식 코드를 포함하지 않는 경우, \"abc\"는 \"abc\" 또는 \"§e§labc§r\"와 일치하지만, 서식 코드를 포함하는 경우에는 \"abc\"만 일치하고, \"§e§labc§r\"에는 일치하지 않습니다.\n§l§o주의:§r 16진수 색 코드는\"&#§cRR§aGG§9BB§r\"의 형식으로 일치합니다만,§n이 기능은 미완성입니다§f.",
     "text.chatpatches.search.desc.regex": "검색에서 정규 표현을 사용할까요?\n\n정규 표현의 사용법에 대해서는, 설정 화면의 도움말 탭을 참조해 주세요.\n§l§o주의:§r Java의 정규 표현은 §n완전 일치를 요구§f하기 때문에, 앞에는\"^.*\", 뒤에는\".*$\"을 붙이는 것을 잊지 마세요.",
 
 
