@@ -62,7 +62,7 @@
     "text.chatpatches.desc.boundaryFormat": "格式化并用于边界线的文本。支持‘&’+格式代码修饰符，‘\\n’表示换行，使用‘$’作为世界名称的占位符。",
     "text.chatpatches.desc.boundaryColor": "边界线中填充的颜色，替代原本的白色部分。要与其他格式修饰符一起使用此颜色，请在装饰文本选项中使用‘&r’。",
 
-    "text.chatpatches.chatLog": "聊天记录切换",
+    "text.chatpatches.chatlog": "聊天记录切换",
     "text.chatpatches.chatWidth": "覆盖聊天宽度",
     "text.chatpatches.chatMaxMessages": "最大聊天消息数",
     "text.chatpatches.chatNameFormat": "玩家名文本",
@@ -71,7 +71,7 @@
     "text.chatpatches.searchDrafting": "搜索草稿切换",
     "text.chatpatches.hideSearchButton": "隐藏搜索按钮",
     "text.chatpatches.vanillaClearing": "原版聊天清除",
-    "text.chatpatches.desc.chatLog": "是否保存聊天记录，以便在另一个游戏会话中重新添加到聊天中？",
+    "text.chatpatches.desc.chatlog": "是否保存聊天记录，以便在另一个游戏会话中重新添加到聊天中？",
     "text.chatpatches.desc.chatWidth": "聊天框的宽度。这将覆盖原版的默认设置，允许更大的宽度。设置为0以使用原版设置而不进行覆盖。",
     "text.chatpatches.desc.chatMaxMessages": "允许保存的最大聊天消息数量。原版限制为100，这个模组可以增加到32767。请记住，更高的最大值意味着更高的内存使用。",
     "text.chatpatches.desc.chatNameFormat": "在聊天消息中替代玩家名称的文本。原版为‘<$>’，仅显示名称为‘$’；其中‘$’是玩家名称的占位符。仅适用于玩家发送的消息。",

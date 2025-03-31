@@ -64,7 +64,7 @@
 	"text.chatpatches.desc.boundaryFormat": "境界線の書式を指定する文字列．「'&'+装飾コード修飾子」，'\\n'での改行，ワールド名のプレースホルダとしての'$'の使用に対応しています．",
 	"text.chatpatches.desc.boundaryColor": "生成される境界線の装飾なし部分につける色．これを他の装飾修飾子と一緒に使う場合，文字列設定で'&r'を使用します．",
 
-	"text.chatpatches.chatLog": "チャットログ",
+	"text.chatpatches.chatlog": "チャットログ",
 	"text.chatpatches.chatHidePacket": "非表示パケットを無視",
 	"text.chatpatches.chatWidth": "チャット欄の幅を上書き",
 	"text.chatpatches.chatMaxMessages": "最大メッセージ数",
@@ -74,7 +74,7 @@
 	"text.chatpatches.searchDrafting": "検索の下書き",
 	"text.chatpatches.hideSearchButton": "検索ボタン非表示",
 	"text.chatpatches.vanillaClearing": "バニラのチャット消去",
-	"text.chatpatches.desc.chatLog": "チャットをログに保存し，別のゲームセッションで復元できるようにするかどうか．",
+	"text.chatpatches.desc.chatlog": "チャットをログに保存し，別のゲームセッションで復元できるようにするかどうか．",
 	"text.chatpatches.desc.chatHidePacket": "メッセージを削除するメッセージ非表示パケットを無視するかどうか．",
 	"text.chatpatches.desc.chatWidth": "チャット欄の幅．バニラのデフォルト設定を上書きし，より広い幅にできます．'0'にすることでバニラの設定を使用します．",
 	"text.chatpatches.desc.chatMaxMessages": "保存可能な最大メッセージ数．バニラでの最大は100ですが，このmodでは32,767まで増やせます．ただし，最大数を大きくするほどメモリ使用量が多くなることに注意してください．",

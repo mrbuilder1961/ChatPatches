@@ -62,7 +62,7 @@
   "text.chatpatches.desc.boundaryFormat": "Le texte qui est formaté et utilisé pour la ligne de séparation. Prend en charge les modificateurs de code de formatage ('&'), '\\n' pour les nouvelles lignes et utilise le caractère '$' comme espace réservé pour le nom du monde.",
   "text.chatpatches.desc.boundaryColor": "La couleur qui est utilisée là où elle serait autrement blanc vide dans la ligne de séparation finale. Pour l'utiliser avec d'autres modificateurs de formatage, utilisez '&r' dans l'option de texte de décoration.",
 
-  "text.chatpatches.chatLog": "Activer l'enregistrement du chat",
+  "text.chatpatches.chatlog": "Activer l'enregistrement du chat",
   "text.chatpatches.chatWidth": "Remplacer la largeur du chat",
   "text.chatpatches.chatMaxMessages": "Nombre maximal de messages dans le chat",
   "text.chatpatches.chatNameFormat": "Texte du nom du joueur",
@@ -71,7 +71,7 @@
   "text.chatpatches.searchDrafting": "Activer la sauvegarde des brouillons de recherche",
   "text.chatpatches.hideSearchButton": "Masquer le bouton de recherche",
   "text.chatpatches.vanillaClearing": "Effacement vanilla du chat",
-  "text.chatpatches.desc.chatLog": "Le chat doit-il être enregistré dans un journal pour pouvoir être réintégré dans le chat lors d'une autre session de jeu ?",
+  "text.chatpatches.desc.chatlog": "Le chat doit-il être enregistré dans un journal pour pouvoir être réintégré dans le chat lors d'une autre session de jeu ?",
   "text.chatpatches.desc.chatWidth": "La largeur de la fenêtre de chat. Cela remplace la valeur par défaut de Minecraft et permet une largeur beaucoup plus grande. Mettez 0 pour utiliser les réglages par défaut de Minecraft sans les remplacer.",
   "text.chatpatches.desc.chatMaxMessages": "Le nombre maximal de messages dans le chat autorisés à être enregistrés. Vanilla le limite à 100, ce mod peut l'augmenter jusqu'à 32 767. Gardez à l'esprit qu'un nombre maximal plus élevé entraîne une utilisation de mémoire plus élevée.",
   "text.chatpatches.desc.chatNameFormat": "Le texte qui remplace le nom du joueur dans le chat. Vanilla utilise '<$>', le nom seul utilise '$' ; où '$' est un espace réservé pour le nom du joueur. S'applique uniquement aux messages envoyés par les joueurs.",
