@@ -17,6 +17,7 @@ import obro1961.chatpatches.chatlog.ChatLog;
 import org.apache.commons.lang3.StringUtils;
 
 import java.awt.*;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +118,7 @@ public class YACLConfig extends Config {
                 .category( category("time", timeOpts) )
                 .category( category("hover", hoverOpts) )
                 .category( category("counter", counterOpts, group(
-                    "counter.compact", compactChatOpts, Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modrinth.com/mod/compact-chat"))
+                    "counter.compact", compactChatOpts, Style.EMPTY.withClickEvent(new ClickEvent.OpenUrl(URI.create("https://modrinth.com/mod/compact-chat")))
                 )) )
                 .category( category("boundary", boundaryOpts) )
                 .category( category("chatlog", chatlogOpts, group("chatlog.actions", chatlogActions, null)) )
@@ -251,14 +252,26 @@ public class YACLConfig extends Config {
     }
 
     /*@SuppressWarnings("unchecked") // currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues
-    private static ValueFormatter<Integer> getValueFormatter(String key) {
-        return switch(key) {
-            //for all the values like -1 or 0 for number guys
-            case "chatlogSaveInterval" -> (val -> Text.of("" + Formatting.GREEN + val + "§f ticks"));
-            case "chatWidth", "chatHeight", "chatShift" -> (val -> Text.of("" + Formatting.GREEN + val + "§f pixels"));
-            case "chatMaxMessages", "counterCompactDistance" -> (val -> Text.of("" + Formatting.GREEN + val + "§f messages"));
-            default -> (ValueFormatter<Integer>) IntegerSliderController.DEFAULT_FORMATTER;
-        };
+    private static ValueFormatter<?> getValueFormatter(String key) {
+        Class<?> type = config.getOption(key).getType();
+
+        if(type == Integer.class) {
+            return switch(key) {
+                //for all the values like -1 or 0 for number guys
+                case "chatlogSaveInterval" -> (val -> Text.of("" + Formatting.GREEN + val + "§f ticks"));
+                case "chatWidth", "chatHeight", "chatShift" -> (val -> Text.of("" + Formatting.GREEN + val + "§f pixels"));
+                case "chatMaxMessages", "counterCompactDistance" -> (val -> Text.of("" + Formatting.GREEN + val + "§f messages"));
+                default -> (ValueFormatter<Integer>) IntegerSliderController.DEFAULT_FORMATTER;
+            };
+        } else if(type == Boolean.class) {
+            return switch(key) {
+                case "chatHidePacket", "hideSearchButton" -> (ValueFormatter<Boolean>) BooleanController.YES_NO_FORMATTER;
+                //case "tf" -> (ValueFormatter<Boolean>) BooleanController.TRUE_FALSE_FORMATTER;
+                default -> (ValueFormatter<Boolean>) BooleanController.ON_OFF_FORMATTER;
+            };
+        }
+
+        return value -> Text.of(value.toString());
     }*/
 
 
@@ -342,7 +355,7 @@ public class YACLConfig extends Config {
     }
 
     private static Option<Text> label(MutableText labelText, String urlTooltip) {
-        return LabelOption.create( labelText.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, urlTooltip))) );
+        return LabelOption.create( labelText.styled(style -> style.withClickEvent(new ClickEvent.OpenUrl(URI.create(urlTooltip)))) );
     }
 
     private static ButtonOption action(String key, Object... args) {

@@ -321,7 +321,7 @@ public class ChatUtils {
 	 *     (<a href="https://github.com/mrbuilder1961/ChatPatches/issues/199">#199</a>)</li>
 	 * </ol>
 	 */
-	private static Text tryCondenseDupes(Text incoming) {
+	private static Text tryCondenseDupes(Text incoming) { //prepub: very inconsistently and oddly, the dupe counter will get roughly doubled? its easiest to see on the boundary lines
 		ChatHud chathud = MinecraftClient.getInstance().inGameHud.getChatHud();
 		ChatHudAccessor chat = (ChatHudAccessor) chathud;
 		List<ChatHudLine> messages = chat.chatpatches$getMessages();
@@ -338,7 +338,6 @@ public class ChatUtils {
 				case 1 -> 1; // only check more messages if compact chat is enabled
 				default -> Math.min(config.counterCompactDistance, messages.size()); // max checked = # of messages in chat, else config option
 			};
-
 
 		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates
 		int dupeCount = 1; // todo: iterate backwards to avoid ugly decrementing at the end?

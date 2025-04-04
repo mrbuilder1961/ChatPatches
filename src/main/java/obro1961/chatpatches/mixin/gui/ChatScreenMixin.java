@@ -56,8 +56,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
-import static net.minecraft.text.HoverEvent.Action.SHOW_ENTITY;
-import static net.minecraft.text.HoverEvent.Action.SHOW_TEXT;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.id;
 import static obro1961.chatpatches.gui.MenuButtonWidget.anchor;
@@ -210,17 +208,17 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> getPart(selectedLine.content(), TIMESTAMP_INDEX).getString()));
 			hoverButtons.put(COPY_TIMESTAMP_HOVER_TEXT, of(1, COPY_TIMESTAMP_HOVER_TEXT, () -> {
 				HoverEvent hoverEvent = getPart(selectedLine.content(), TIMESTAMP_INDEX).getStyle().getHoverEvent();
-				return hoverEvent != null ? hoverEvent.getValue(SHOW_TEXT).getString() : "";
+				return hoverEvent instanceof HoverEvent.ShowText (Text value) ? value.getString() : "";
 			}));
 			hoverButtons.put(COPY_NAME, of(1, COPY_NAME, () -> {
 				HoverEvent senderHoverEvent = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle().getHoverEvent();
-				HoverEvent.EntityContent player = senderHoverEvent != null ? senderHoverEvent.getValue(SHOW_ENTITY) : null;
-				return player != null && player.name.isPresent() ? player.name.get().getString() : getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getString();
+				return senderHoverEvent instanceof HoverEvent.ShowEntity (HoverEvent.EntityContent p)
+					&& p.name.isPresent() ? p.name.get().getString() : getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getString();
 			}));
 			hoverButtons.put(COPY_UUID, of(1, COPY_UUID, () -> {
 				HoverEvent senderHoverEvent = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle().getHoverEvent();
-				HoverEvent.EntityContent player = senderHoverEvent != null ? senderHoverEvent.getValue(SHOW_ENTITY) : null;
-				return player != null ? player.uuid.toString() : getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getString();
+				return senderHoverEvent instanceof HoverEvent.ShowEntity (HoverEvent.EntityContent p)
+					&& p.uuid != null ? p.uuid.toString() : getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getString();
 			}));
 
 			// main menu buttons, column one
