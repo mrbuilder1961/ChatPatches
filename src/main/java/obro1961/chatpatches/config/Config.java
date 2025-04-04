@@ -380,19 +380,21 @@ public class Config {
      * existing {@link Option} class.
      */
     public static class Setting<T> {
+        /**
+         * The lang key of this setting option, aka
+         * the field name in {@link Config}.
+         */
         public final String key;
+        /**
+         * The default value of this setting option.
+         */
         public final T def;
         private T val;
 
-        /**
-         * Creates a new Simple Config option.
-         * @param def The default value for creation and resetting.
-         * @param key The lang key of the Option; for identification
-         */
         public Setting(T val, T def, String key) {
             this.val = Objects.requireNonNull(val, "Cannot create a setting option without a value");
             this.def = Objects.requireNonNull(def, "Cannot create a setting option without a default value");
-            this.key = Objects.requireNonNull(key, "Cannot create a setting option without a key");
+            this.key = Objects.requireNonNull(key, "Cannot create a setting option without a lang key");
         }
 
 
@@ -421,10 +423,6 @@ public class Config {
                 LOGGER.error("[Setting.set({})] An error occurred trying to change config option '{}':", obj, key);
                 ChatPatches.logReportMsg(e);
             }
-        }
-
-        public boolean changed() {
-            return !def.equals(val);
         }
     }
 }

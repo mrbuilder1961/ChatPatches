@@ -1,5 +1,9 @@
 # Changelog
 
+## Chat Patches `214.6.14` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
+- Removed debug logs sending after every message (whoops!)
+- Added an animated preview image for the dynamic shift feature to better explain how it works
+
 ## Chat Patches `214.6.13` for Minecraft 1.21.2-1.21.4 on Fabric, Quilt
 - Added the dynamic shift feature, which shifts the chat according to the player's health and armor bars (thanks [radioactive-exe](https://github.com/radioactive-exe)!)
 - Fixed a few translations not applying due to poorly-executed renaming
