@@ -870,7 +870,7 @@ public class ContextMenu implements Element {
 		 * button registering methods}.
 		 */
 		@SuppressWarnings("unchecked")
-		public List<PressableWidget> buttons() {// come back to meee delete: haha
+		public List<PressableWidget> buttons() {
 			try {
 				return (List<PressableWidget>) (Object) ((GridWidgetAccessor) widget).getChildren();
 			} catch(ClassCastException e) {

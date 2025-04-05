@@ -353,7 +353,6 @@ public class ChatUtils {
 				default -> Math.min(config.counterCompactDistance, messages.size()); // max checked = # of messages in chat, else config option
 			};
 
-
 		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates
 		int dupeCount = 1;
 		for(int i = 0; i < attemptDistance && i < messages.size(); i++) {
