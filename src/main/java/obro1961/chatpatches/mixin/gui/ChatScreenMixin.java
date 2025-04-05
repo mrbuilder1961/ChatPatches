@@ -4,6 +4,8 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
@@ -43,7 +45,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -545,11 +546,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique
 	private List<ChatHudLine.Visible> filterMessages(String target) {
 		if(target == null)
-			return List.of();
+			return ObjectList.of();
 
 		ChatHud chatHud = client.inGameHud.getChatHud();
 		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
-		List<ChatHudLine> messageSnapshot = new ArrayList<>(chat.chatpatches$getMessages());
+		List<ChatHudLine> messageSnapshot = new ObjectArrayList<>(chat.chatpatches$getMessages());
 
 		// filter messages by removing those that don't match the target
 		chat.chatpatches$getMessages().removeIf(msg -> {

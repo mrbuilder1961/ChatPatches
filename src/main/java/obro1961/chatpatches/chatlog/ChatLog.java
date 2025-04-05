@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
@@ -24,7 +25,6 @@ import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.function.Function;
 
@@ -70,19 +70,19 @@ public class ChatLog {
          * lists mutable.
          */
         public static final Codec<Data> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-            Codec.list(TextUtils.textCodec()).xmap(ArrayList::new, Function.identity()).fieldOf("messages").forGetter(data -> data.messages),
-            Codec.list(Codec.STRING).xmap(ArrayList::new, Function.identity()).fieldOf("history").forGetter(data -> data.history)
+            Codec.list(TextUtils.textCodec()).xmap(ObjectArrayList::new, Function.identity()).fieldOf("messages").forGetter(data -> data.messages),
+            Codec.list(Codec.STRING).xmap(ObjectArrayList::new, Function.identity()).fieldOf("history").forGetter(data -> data.history)
         ).apply(inst, (messages, history) -> Util.make(new Data(), data -> {
             data.messages = messages;
             data.history = history;
         })));
 
-        public ArrayList<Text> messages;
-        public ArrayList<String> history;
+        public ObjectArrayList<Text> messages;
+        public ObjectArrayList<String> history;
 
         private Data() {
-            messages = new ArrayList<>(DEFAULT_SIZE);
-            history = new ArrayList<>(DEFAULT_SIZE);
+            messages = new ObjectArrayList<>(DEFAULT_SIZE);
+            history = new ObjectArrayList<>(DEFAULT_SIZE);
         }
 
         private Data(boolean done) {
@@ -165,9 +165,9 @@ public class ChatLog {
             // the sublist indices make sure to only keep the newest data and remove the oldest
             // NOTE: the chat log system has the oldest messages at 0, but vanilla has the newest at 0
             if(messageCount() > config.chatMaxMessages)
-                data.messages = (ArrayList<Text>)data.messages.subList( messageCount() - config.chatMaxMessages, messageCount() );
+                data.messages = (ObjectArrayList<Text>) data.messages.subList( messageCount() - config.chatMaxMessages, messageCount() );
             if(historyCount() > config.chatMaxMessages)
-                data.history = (ArrayList<String>)data.history.subList( historyCount() - config.chatMaxMessages, historyCount() );
+                data.history = (ObjectArrayList<String>) data.history.subList( historyCount() - config.chatMaxMessages, historyCount() );
 
             loaded = true;
         } catch(Exception e) {

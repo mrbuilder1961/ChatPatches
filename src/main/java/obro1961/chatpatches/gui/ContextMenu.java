@@ -3,6 +3,8 @@ package obro1961.chatpatches.gui;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.client.MinecraftClient;
@@ -40,7 +42,6 @@ import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -106,7 +107,7 @@ public class ContextMenu implements Element {
 	// variables derived from selected message
 	public final RenderUtils.MousePos clickPos;
 	private final ChatHudLine selectedLine;
-	private final List<ChatHudLine.Visible> selectedVisibles;
+	private final ObjectList<ChatHudLine.Visible> selectedVisibles;
 	private final GameProfile messageSender;
 	/**
 	 * The ChatScreen this menu is contained within.
@@ -388,8 +389,8 @@ public class ContextMenu implements Element {
 		}, 0, 0);
 
 		// link buttons - conditional
-		List<String> webLinks = TextUtils.getLinks(text.getString());
-		List<String> fileLinks = new ArrayList<>();
+		ObjectList<String> webLinks = TextUtils.getLinks(text.getString());
+		ObjectList<String> fileLinks = new ObjectArrayList<>();
 		text.visit((style, str) -> {
 			if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
 				if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v))
@@ -666,7 +667,7 @@ public class ContextMenu implements Element {
 
 		PressableWidget hoveredButton = widgetOptional.get();
 		screen.setFocused(hoveredButton); // allows much more efficient update checks, see #mouseMoved(int, int)
-		for(List<Grid.Entry> group : grid.groups) {
+		for(ObjectList<Grid.Entry> group : grid.groups) {
 			for(Grid.Entry itr : group) {
 				if(itr.col > 0)
 					// if the hovered button is in the group, show all other buttons; otherwise hide them bc they're irrelevant
@@ -732,9 +733,9 @@ public class ContextMenu implements Element {
 	 *	 <li>Returns the full message as a {@link List} of {@link ChatHudLine.Visible}s</li>
 	 * </ol>
 	 */
-	private static @NotNull List<ChatHudLine.Visible> getFullMessageAt(double mX, double mY) {
+	private static @NotNull ObjectList<ChatHudLine.Visible> getFullMessageAt(double mX, double mY) {
 		if(!config.contextMenu || mX < 0 || mY < 0)
-			return new ArrayList<>(0);
+			return ObjectArrayList.of();
 
 		final ChatHudAccessor chat = (ChatHudAccessor) mc.inGameHud.getChatHud();
 		final List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
@@ -743,7 +744,7 @@ public class ContextMenu implements Element {
 		final int hoveredI = chat.chatpatches$getMessageLineIndex(chat.chatpatches$toChatLineX(mX), chat.chatpatches$toChatLineY(mY));
 
 		if(hoveredI == -1)
-			return new ArrayList<>(0);
+			return ObjectArrayList.of();
 
 		int startI;
 		int endI;
@@ -771,7 +772,7 @@ public class ContextMenu implements Element {
 		}
 
 		// note that the startI is always greater than the endI bc the newest message index = 0
-		List<ChatHudLine.Visible> messageParts = new ArrayList<>(startI - endI);
+		ObjectList<ChatHudLine.Visible> messageParts = new ObjectArrayList<>(startI - endI);
 		for(int i = startI; i >= endI; i--)
 			messageParts.add( visibles.get(i) );
 
@@ -789,7 +790,7 @@ public class ContextMenu implements Element {
 	 * sorting and placing buttons in their
 	 * intended locations.
 	 */
-	class Grid { //prepub: use it.unimi.dsi.fastutil classes for lists/maps/etc. for performance! should be ez-pz
+	class Grid {
 		private final GridWidget widget;
 		private final ObjectList<Entry> entries;
 		/**
@@ -869,7 +870,7 @@ public class ContextMenu implements Element {
 		 * button registering methods}.
 		 */
 		@SuppressWarnings("unchecked")
-		public List<PressableWidget> buttons() {
+		public List<PressableWidget> buttons() {// come back to meee delete: haha
 			try {
 				return (List<PressableWidget>) (Object) ((GridWidgetAccessor) widget).getChildren();
 			} catch(ClassCastException e) {
@@ -899,13 +900,15 @@ public class ContextMenu implements Element {
 			entries.stream().filter(e -> e.col == 0).forEach(e -> e.button.setWidth(mainWidth));
 
 			// sync hover button widths
-			List<Integer> groupWidths = groups.stream()
-				.map(g -> g.stream()
-					.skip(1) // avoid the main button
-					.mapToInt(e -> e.button.getWidth()).max()
-					.orElse(6 * buttonPadding)
-				).toList();
-			groups.forEach(g -> g.subList(1, g.size()).forEach(b -> b.button.setWidth(groupWidths.get(groups.indexOf(g)))));
+			IntList groupWidths = IntArrayList.toList(
+				groups.stream()
+					.mapToInt(g -> g.stream()
+						.skip(1) // avoid the main button
+						.mapToInt(e -> e.button.getWidth()).max()
+						.orElse(6 * buttonPadding)
+					)
+			);
+			groups.forEach(g -> g.subList(1, g.size()).forEach(b -> b.button.setWidth(groupWidths.getInt(groups.indexOf(g)))));
 
 
 			// if the grid menu goes off the screen, shift it up

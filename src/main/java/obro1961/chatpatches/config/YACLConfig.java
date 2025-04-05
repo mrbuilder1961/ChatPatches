@@ -3,6 +3,8 @@ package obro1961.chatpatches.config;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.screen.Screen;
@@ -19,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
@@ -35,17 +36,17 @@ public class YACLConfig extends Config {
 
     @Override
     public Screen getConfigScreen(Screen parent) {
-        List<Option<?>> timeOpts = new ArrayList<>(),
-                        hoverOpts = new ArrayList<>(),
-                        counterOpts = new ArrayList<>(),
-                        compactChatOpts = new ArrayList<>(),
-                        boundaryOpts = new ArrayList<>(),
-                        chatlogOpts = new ArrayList<>(),
-                        chatlogActions = new ArrayList<>(),
-                        chatNameOpts = new ArrayList<>(),
-                        chatHudOpts = new ArrayList<>(),
-                        chatScreenOpts = new ArrayList<>(),
-                        copyMenuOpts = new ArrayList<>();
+        ObjectList<Option<?>> timeOpts = new ObjectArrayList<>(),
+                        hoverOpts = new ObjectArrayList<>(),
+                        counterOpts = new ObjectArrayList<>(),
+                        compactChatOpts = new ObjectArrayList<>(),
+                        boundaryOpts = new ObjectArrayList<>(),
+                        chatlogOpts = new ObjectArrayList<>(),
+                        chatlogActions = new ObjectArrayList<>(),
+                        chatNameOpts = new ObjectArrayList<>(),
+                        chatHudOpts = new ObjectArrayList<>(),
+                        chatScreenOpts = new ObjectArrayList<>(),
+                        copyMenuOpts = new ObjectArrayList<>();
 
         config.getOptions().forEach(opt -> {
             String key = opt.key; // effectively final
@@ -104,7 +105,7 @@ public class YACLConfig extends Config {
 
         /* for action buttons */
         // see https://discord.com/channels/507304429255393322/507982478276034570/1175256182525534218
-        List<String> actionKeys = List.of("chatlogClear", "chatlogClearHistory", "chatlogClearMessages", "chatlogLoad", "chatlogSave", "chatlogBackup", "chatlogOpenFolder");
+        ObjectList<String> actionKeys = ObjectList.of("chatlogClear", "chatlogClearHistory", "chatlogClearMessages", "chatlogLoad", "chatlogSave", "chatlogBackup", "chatlogOpenFolder");
         for(String key : actionKeys) {
             // creates an args array for the translatable string, which is either the message count, history count, or -1
             Object[] args = { key.equals("chatlogClearMessages") ? ChatLog.messageCount() : key.equals("chatlogClearHistory") ? ChatLog.historyCount() : -1 };
@@ -121,14 +122,14 @@ public class YACLConfig extends Config {
                 )) )
                 .category( category("boundary", boundaryOpts) )
                 .category( category("chatlog", chatlogOpts, group("chatlog.actions", chatlogActions, null)) )
-                .category( category("chat", List.of(),
+                .category( category("chat", ObjectList.of(),
                     group("chat.name", chatNameOpts, null), group("chat.hud", chatHudOpts, null), group("chat.screen", chatScreenOpts, null)) )
                 .category( category("copy", copyMenuOpts) )
 
                 .category(
                     category(
                     "help",
-                        List.of(
+                        ObjectList.of(
                             action("help.reloadConfig", -1),
                             label( Text.translatable("text.chatpatches.help.dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
                             label( Text.translatable("text.chatpatches.help.formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
@@ -145,7 +146,7 @@ public class YACLConfig extends Config {
             builder.category(
                 category(
                     "debug",
-                    List.of(
+                    ObjectList.of(
                         ButtonOption.createBuilder()
                             .name( Text.literal("Print GitHub Option table") )
                             .action((screen, option) -> {
@@ -278,7 +279,8 @@ public class YACLConfig extends Config {
     }
 
     /** Returns the appropriate interval for the given key. */
-    private static int getInterval(String key) {
+    @SuppressWarnings("SwitchStatementWithTooFewBranches")
+	private static int getInterval(String key) {
         return switch(key) {
             case "chatMaxMessages" -> 16;
             default -> 1;
@@ -287,7 +289,7 @@ public class YACLConfig extends Config {
 
 
     /** Note: puts groups before ungrouped options */
-    private static ConfigCategory category(String key, List<Option<?>> options, OptionGroup... groups) {
+    private static ConfigCategory category(String key, ObjectList<Option<?>> options, OptionGroup... groups) {
         ConfigCategory.Builder builder = ConfigCategory.createBuilder()
             .name( Text.translatable("text.chatpatches.category." + key) );
 
@@ -301,7 +303,7 @@ public class YACLConfig extends Config {
         return builder.build();
     }
 
-    private static OptionGroup group(String key, List<Option<?>> options, Style descriptionStyle) {
+    private static OptionGroup group(String key, ObjectList<Option<?>> options, Style descriptionStyle) {
         return OptionGroup.createBuilder()
             .name( Text.translatable("text.chatpatches.category." + key) )
             .description(OptionDescription.of(

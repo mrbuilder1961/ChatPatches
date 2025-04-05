@@ -2,6 +2,8 @@ package obro1961.chatpatches.util;
 
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
@@ -17,7 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.msgData;
@@ -338,7 +343,7 @@ public class ChatUtils {
 		if(!config.counter || messages.isEmpty())
 			return incoming;
 
-		List<Text> siblings = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
+		ObjectList<Text> siblings = new ObjectArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
 		List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
 		int attemptDistance =
 			switch(config.counterCompact ? config.counterCompactDistance : 1) {

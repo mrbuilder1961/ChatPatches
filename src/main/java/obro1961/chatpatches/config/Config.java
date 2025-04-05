@@ -6,6 +6,8 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.authlib.GameProfile;
 import dev.isxander.yacl3.api.Option;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
@@ -33,9 +35,7 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -158,7 +158,7 @@ public class Config {
             Style hoverStyle = new OtherClientPlayerEntity(mc.world, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
                 .withParent(style); // fills in the color with chatNameColor if not specified by the team
             String[] configFormat = chatNameFormat.split("\\$");
-            List<Text> components = new ArrayList<>(team != null ? 5 : 3);
+            ObjectList<Text> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
 
             components.add(text( configFormat[0] ));                   // config prefix
@@ -295,8 +295,8 @@ public class Config {
 	}
 
 
-    public List<Setting<?>> getOptions() {
-        List<Setting<?>> options = new ArrayList<>( getClass().getFields().length );
+    public ObjectList<Setting<?>> getOptions() {
+        ObjectList<Setting<?>> options = new ObjectArrayList<>( getClass().getFields().length );
 
         try {
             for(Field f : getClass().getFields())
