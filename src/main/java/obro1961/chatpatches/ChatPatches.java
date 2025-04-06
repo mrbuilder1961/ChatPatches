@@ -12,7 +12,6 @@ import net.minecraft.util.Identifier;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.ChatUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +21,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches");
 
 	public static Config config = Config.create();
-	/** Contains the sender and timestamp data of the last received chat message. */
-	public static ChatUtils.MessageData msgData = ChatUtils.NIL_MSG_DATA;
 
-	/**
-	 * Returns a {@code chatpatches:${path}}
-	 * {@link Identifier}.
-	 */
 	public static Identifier id(String path) {
 		// unfortunately this method in 1.20.6 is method_43902
 		// but in 1.21 it's method_60655, making it incompatible

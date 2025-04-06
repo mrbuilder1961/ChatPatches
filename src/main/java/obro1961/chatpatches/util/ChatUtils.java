@@ -14,6 +14,7 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
+import obro1961.chatpatches.mixin.listener.MessageHandlerMixin;
 import org.apache.logging.log4j.core.util.Integers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.ChatPatches.msgData;
 import static obro1961.chatpatches.util.TextUtils.withoutContent;
 
 /**
@@ -34,6 +34,7 @@ import static obro1961.chatpatches.util.TextUtils.withoutContent;
 public class ChatUtils {
 	public static final UUID NIL_UUID = new UUID(0, 0);
 	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
+
 	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
 							MESSAGE_INDEX = 1,     // contains the actual chat message
 							DUPE_INDEX = 2;        // contains the duplicate counter (can be empty)
@@ -42,6 +43,14 @@ public class ChatUtils {
 							MSG_CONTENT_INDEX = 2; // contains the content of the sender's message
 
 	public static final int MAX_MESSAGE_LENGTH = 256; // pulled from chatField's max length
+
+	/**
+	 * Contains the sender and timestamp data of the last received chat message.
+	 *
+	 * @see #modifyMessage(Text)
+	 * @see MessageHandlerMixin
+	 */
+	public static MessageData msgData = NIL_MSG_DATA;
 
 	/**
 	 * Matches only an entire vanilla player message.
@@ -193,7 +202,7 @@ public class ChatUtils {
 	 * 	 <li>Assemble the message, despite any/all changes and add a duplicate counter
 	 * 	 according to {@link #tryCondenseDupes(Text)}.</li>
 	 * 	 <li>Log the modified message in the {@link ChatLog}.</li>
-	 * 	 <li>Reset the {@link ChatPatches#msgData} to prevent a rare bug.</li>
+	 * 	 <li>Reset the {@link ChatUtils#msgData} to prevent a rare bug.</li>
 	 * 	 <li>Return the message, regardless of if it was actually modified or not.</li>
 	 * </ol>
 	 */
