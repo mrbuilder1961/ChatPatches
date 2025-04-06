@@ -1,6 +1,8 @@
 package obro1961.chatpatches.util;
 
 import com.mojang.serialization.Codec;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.text.*;
@@ -8,9 +10,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 import net.minecraft.util.dynamic.Codecs;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,11 +20,11 @@ import java.util.regex.Pattern;
 public class TextUtils {
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
-	public static final Map<Integer, Formatting> COLOR_TO_FORMATTING = Util.make(() -> {
-		Map<Integer, Formatting> map = new HashMap<>();
+	public static final Int2ObjectMap<Formatting> COLOR_TO_FORMATTING = Util.make(() -> {
+		Int2ObjectMap<Formatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever
 		for(Formatting f : Formatting.values()) {
 			if(f.isColor())
-				map.put(f.getColorValue(), f);
+				map.put(f.getColorValue().intValue(), f);
 		}
 		return map;
 	});
