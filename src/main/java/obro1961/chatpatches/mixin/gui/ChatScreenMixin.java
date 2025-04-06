@@ -217,7 +217,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
 
-				//noinspection DataFlowIssue: DARK_RED is a color. READ THE FIELD ToT
 				context.drawTextWithShadow(textRenderer, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), Formatting.DARK_RED.getColorValue());
 			}
 		}
@@ -485,7 +484,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * and field coloring.
 	 */
 	@Unique
-	@SuppressWarnings("DataFlowIssue") // every used formatting has a color!
 	private void onSearchFieldUpdate(String text, boolean refresh) {
 		if(text.equals(searchDraft) && !refresh)
 			return; // prevent useless updates
