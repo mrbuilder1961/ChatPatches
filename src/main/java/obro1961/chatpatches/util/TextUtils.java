@@ -3,16 +3,12 @@ package obro1961.chatpatches.util;
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 import net.minecraft.util.dynamic.Codecs;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * A class containing various string and {@link Text} related utilities.
@@ -45,22 +41,6 @@ public class TextUtils {
 	 */
 	public static String fillVars(String str, String variable) {
 		return str.replaceAll("\\$", variable).replaceAll("\\\\n", "\n");
-	}
-
-	/**
-	 * Returns a list of web URL links captured from {@code str}.
-	 * Returns an empty list if none are found.
-	 */
-	public static ObjectList<String> getLinks(String str) {
-		// slightly modified from https://stackoverflow.com/a/163398 to not include file links
-		final String urlRegex = "\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
-		final Matcher matcher = Pattern.compile(urlRegex).matcher(str);
-		ObjectList<String> urls = new ObjectArrayList<>();
-
-		while(matcher.find())
-			urls.add(matcher.group());
-
-		return urls;
 	}
 
 	/**
