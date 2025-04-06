@@ -81,10 +81,10 @@
   "text.chatpatches.desc.hideSearchButton": "Le bouton de recherche doit-il être masqué ? Notez que cela désactive toutes les fonctionnalités de recherche.",
   "text.chatpatches.desc.vanillaClearing": "Doit-on effacer les messages de discussion après avoir quitté un monde/serveur comme en Vanilla ? Notez que cela supprime complètement à la fois le chat et le journal du chat.",
 
-  "text.chatpatches.copyReplyFormat": "Format de texte de réponse",
-  "text.chatpatches.copyColor": "Couleur de sélection du message",
-  "text.chatpatches.desc.copyReplyFormat": "Le texte qui est inséré dans la zone de chat après avoir cliqué avec le bouton droit sur un message du chat et cliqué sur le bouton 'Répondre' dans le menu de copie. Le symbole '$' est requis et sera remplacé par le nom de l'expéditeur du message.",
-  "text.chatpatches.desc.copyColor": "La couleur de la boîte de sélection qui s'affiche après un clic droit sur un message du chat.",
+  "text.chatpatches.contextReplyFormat": "Format de texte de réponse",
+  "text.chatpatches.contextColor": "Couleur de sélection du message",
+  "text.chatpatches.desc.contextReplyFormat": "Le texte qui est inséré dans la zone de chat après avoir cliqué avec le bouton droit sur un message du chat et cliqué sur le bouton 'Répondre' dans le menu de copie. Le symbole '$' est requis et sera remplacé par le nom de l'expéditeur du message.",
+  "text.chatpatches.desc.contextColor": "La couleur de la boîte de sélection qui s'affiche après un clic droit sur un message du chat.",
 
 
   "text.chatpatches.search.suggestion": "Rechercher...",

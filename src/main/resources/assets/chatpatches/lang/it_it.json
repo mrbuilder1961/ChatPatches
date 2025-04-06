@@ -90,10 +90,10 @@
     "text.chatpatches.search.formatting": "Formattazione",
 
 
-    "text.chatpatches.copyReplyFormat": "Formato testo di risposta",
-    "text.chatpatches.copyColor": "Colore di selezione del messaggio",
-    "text.chatpatches.desc.copyReplyFormat": "Il testo che viene inserito nella casella della chat dopo aver fatto clic con il pulsante destro del mouse su un messaggio di chat e aver fatto clic sul pulsante 'Rispondi' nel menu di copia. '$' è obbligatorio e verrà compilato con il nome del mittente del messaggio.",
-    "text.chatpatches.desc.copyColor": "Il colore della casella di selezione che viene visualizzata dopo aver fatto clic con il pulsante destro del mouse su un messaggio della chat.",
+    "text.chatpatches.contextReplyFormat": "Formato testo di risposta",
+    "text.chatpatches.contextColor": "Colore di selezione del messaggio",
+    "text.chatpatches.desc.contextReplyFormat": "Il testo che viene inserito nella casella della chat dopo aver fatto clic con il pulsante destro del mouse su un messaggio di chat e aver fatto clic sul pulsante 'Rispondi' nel menu di copia. '$' è obbligatorio e verrà compilato con il nome del mittente del messaggio.",
+    "text.chatpatches.desc.contextColor": "Il colore della casella di selezione che viene visualizzata dopo aver fatto clic con il pulsante destro del mouse su un messaggio della chat.",
 
     "text.chatpatches.copy.copied": "Componente del messaggio copiato: \"%s\"!",
     "text.chatpatches.copy.copyText": "Copia testo >",

@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches");
-	//public static final RegistryWrapper.WrapperLookup LOOKUP = BuiltinRegistries.createWrapperLookup();
 
 	public static Config config = Config.create();
 	/** Contains the sender and timestamp data of the last received chat message. */

@@ -419,7 +419,7 @@ public class ContextMenu implements Element {
 				registerCopyOnlyButton(NAME, Text.of(messageSender.getName()), 0);
 				registerCopyOnlyButton(UUID, Text.of(messageSender.getId().toString()), 1);
 			registerButton(MENU_REPLY, null, me ->
-				((ChatScreenAccessor) screen).chatpatches$getChatField().setText( TextUtils.fillVars(config.copyReplyFormat, messageSender.getName()) )
+				((ChatScreenAccessor) screen).chatpatches$getChatField().setText( TextUtils.fillVars(config.contextReplyFormat, messageSender.getName()) )
 			, 0, 0, (context, mX, mY, delta, me, supEr) -> {
 					supEr.render(context, mX, mY, delta);
 					PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16);
@@ -483,7 +483,7 @@ public class ContextMenu implements Element {
 
 		// cuts off any of the selection rect that goes past the chat hud
 		drawContext.enableScissor(0, scissorY1, borderW, scissorY2);
-		drawContext.drawBorder(0, selectionY1, borderW, selectionH, config.copyColor + 0xff000000);
+		drawContext.drawBorder(0, selectionY1, borderW, selectionH, config.contextColor + 0xFF000000);
 		drawContext.disableScissor();
 
 		drawContext.getMatrices().pop();

@@ -13,10 +13,12 @@ import net.minecraft.text.ClickEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
+import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.awt.*;
@@ -70,7 +72,7 @@ public class YACLConfig extends Config {
 
                     @Override
                     public void set(Object value) {
-                        super.set( ((Color)value).getRGB() - 0xff000000 );
+                        super.set( ((Color)value).getRGB() - 0xFF000000 );
                     }
                 };
             }
@@ -148,7 +150,7 @@ public class YACLConfig extends Config {
                     "debug",
                     ObjectList.of(
                         ButtonOption.createBuilder()
-                            .name( Text.literal("Print GitHub Option table") )
+                            .name( Text.of("Print GitHub Option table") )
                             .action((screen, option) -> {
                                 StringBuilder str = new StringBuilder();
 
@@ -157,7 +159,8 @@ public class YACLConfig extends Config {
                                         I18n.translate("text.chatpatches." + opt.key),
 
                                         ( opt.getType().equals(Integer.class) && opt.key.contains("Color") )
-                                            ? "`0x%06x`".formatted( (int)opt.def )
+                                            ? "`0x%06X`".formatted( (int)opt.def )
+                                                + (TextUtils.COLOR_TO_FORMATTING.get((int)opt.def) instanceof Formatting f ? " ("+f.getName().toLowerCase(Locale.ROOT)+")" : "")
                                             : (opt.getType().equals(String.class))
                                                 ? "`\"" + opt.def + "\"`"
                                                 : "`" + opt.def + "`",
@@ -167,7 +170,7 @@ public class YACLConfig extends Config {
                                     ))
                                 );
 
-                                ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables]" + str);
+                                ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables] {}", str);
                             })
                             .build()
                     )

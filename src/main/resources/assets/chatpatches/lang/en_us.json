@@ -133,10 +133,10 @@
     "text.chatpatches.search.desc.regex": "Should the search query be used as a §2reg§rular §2ex§rpression?\n\nTo learn how to use regex, see the help section in the config.\n§l§oNOTE:§r Java regex §nrequires a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end.",
 
 
-    "text.chatpatches.copyReplyFormat": "Reply text format",
-    "text.chatpatches.copyColor": "Message selection color",
-    "text.chatpatches.desc.copyReplyFormat": "The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the copy menu. '$' is required and will be filled with the message sender's name.",
-    "text.chatpatches.desc.copyColor": "The color of the selection box that's shown after right-clicking on a chat message.",
+    "text.chatpatches.contextReplyFormat": "Reply text format",
+    "text.chatpatches.contextColor": "Message selection color",
+    "text.chatpatches.desc.contextReplyFormat": "The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the copy menu. '$' is required and will be filled with the message sender's name.",
+    "text.chatpatches.desc.contextColor": "The color of the selection box that's shown after right-clicking on a chat message.",
 
     "text.chatpatches.copy.copied": "§aSuccessfully copied to clipboard!",
     "text.chatpatches.copy.copyText": "Copy Text >",

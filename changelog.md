@@ -169,7 +169,7 @@
 - Completely revamped the method to copy messages! Instead of the old and clunky `/copymessage` command, you just right-click on a message and a menu will
   appear with a multitude of options to access data contained within the message. For example, you can copy the raw message, a json representation, or
   even any links within the message! ([#77](https://www.github.com/mrbuilder1961/ChatPatches/issues/77), [#87](https://www.github.com/mrbuilder1961/ChatPatches/issues/87))
-- There are two config options associated with the new copy menu: `copyColor` and `copyReplyFormat` which control the color of the selection box around the
+- There are two config options associated with the new copy menu: `contextColor` and `contextReplyFormat` which control the color of the selection box around the
   clicked message, and the text that is put into the chat box when clicking on "Reply", respectively
 - All messages now store their time received in the timestamp's insertion text, which just means if you shift-left click on the timestamp text, it will insert
   the unix timestamp of the received message into the chat box

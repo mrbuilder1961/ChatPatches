@@ -63,7 +63,7 @@ public class Config {
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
     public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = 0xFFFFFF;
     public int chatShift = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix = false;
-    public int copyColor = 0x55FFFF; public String copyReplyFormat = "/msg $ ";
+    public int contextColor = 0x55FFFF; public String contextReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
 
     /**
@@ -150,7 +150,6 @@ public class Config {
      * player entity and have both a valid name and UUID. Additionally,
      * the {@linkplain MinecraftClient#world client world} must exist.
      */
-    @SuppressWarnings("DataFlowIssue") // getDisplayName() is never null, same with Formatting.RESET and getColor()
     public MutableText formatPlayername(GameProfile profile) {
         Style style = Style.EMPTY.withColor(chatNameColor); // defaults to the config-specified color
         try {
@@ -211,7 +210,6 @@ public class Config {
             return;
 
         ChatHudAccessor chat = (ChatHudAccessor) mc.inGameHud.getChatHud();
-		//noinspection DataFlowIssue: see next line
 		String current = mc.isIntegratedServerRunning() // this check prevents NPEs for both if branches
             ? "C_" + mc.getServer().getSaveProperties().getLevelName()
             : mc.getCurrentServerEntry() instanceof ServerInfo entry

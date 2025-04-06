@@ -85,10 +85,10 @@
 	"text.chatpatches.desc.hideSearchButton": "検索ボタンを非表示にするかどうか．非表示にした場合，すべての検索機能が無効になることに注意してください．",
 	"text.chatpatches.desc.vanillaClearing": "バニラ同様に，ワールド/サーバーを退出したときにチャットを消去するかどうか．これにより，チャットとチャットログの両方が完全に消去されることに注意してください．",
 
-	"text.chatpatches.copyReplyFormat": "返信テキスト形式",
-	"text.chatpatches.copyColor": "選択ボックスの色",
-	"text.chatpatches.desc.copyReplyFormat": "メッセージを右クリックしてコピーメニューの'返信'ボタンをクリックしたとき，チャットの入力欄に書き込まれるテキスト．'$'は必須で，メッセージ送信者の名前が入ります．",
-	"text.chatpatches.desc.copyColor": "メッセージを右クリックしたときに表示される選択ボックスの色．",
+	"text.chatpatches.contextReplyFormat": "返信テキスト形式",
+	"text.chatpatches.contextColor": "選択ボックスの色",
+	"text.chatpatches.desc.contextReplyFormat": "メッセージを右クリックしてコピーメニューの'返信'ボタンをクリックしたとき，チャットの入力欄に書き込まれるテキスト．'$'は必須で，メッセージ送信者の名前が入ります．",
+	"text.chatpatches.desc.contextColor": "メッセージを右クリックしたときに表示される選択ボックスの色．",
 
 
 	"text.chatpatches.search.suggestion": "検索...",
