@@ -174,7 +174,7 @@ public class ContextMenu implements Element {
 		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityContent ec
 			? new GameProfile(ec.uuid, Objects.requireNonNullElse(ec.name, UNKNOWN.apply(Text.of("Sender " + ec.uuid))).getString())
-			: NIL_MSG_DATA.sender();
+			: NIL_MESSAGE_DATA.sender();
 	}
 
 
@@ -412,7 +412,7 @@ public class ContextMenu implements Element {
 		}
 
 		// sender buttons - conditional
-		if( !messageSender.equals(NIL_MSG_DATA.sender()) ) {
+		if( !messageSender.equals(NIL_MESSAGE_DATA.sender()) ) {
 			SkinTextures playerSkin = mc.getSkinProvider().getSkinTextures(messageSender);
 
 			registerProxyActionButton(MENU_SENDER, NAME, 0, 0, null);

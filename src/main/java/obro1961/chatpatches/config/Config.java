@@ -20,6 +20,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -38,6 +39,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
+import static net.minecraft.util.Formatting.AQUA;
+import static net.minecraft.util.Formatting.WHITE;
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.RenderUtils.BLANK_STYLE;
@@ -55,15 +58,15 @@ public class Config {
     private static String lastWorld = "";
 
 	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy, search
-    public boolean time = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = 0xFF55FF;
-    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = 0xFFFFFF;
-    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = 0xFFFF55; public boolean counterCheckStyle = false;
+    public boolean time = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = Formatting.LIGHT_PURPLE.getColorValue();
+    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = WHITE.getColorValue();
+    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = Formatting.YELLOW.getColorValue(); public boolean counterCheckStyle = false;
     public boolean counterCompact = false; public int counterCompactDistance = 0;
-    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55FFFF;
+    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA.getColorValue();
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
-    public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = 0xFFFFFF;
+    public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = WHITE.getColorValue();
     public int chatShift = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix = false;
-    public int contextColor = 0x55FFFF; public String contextReplyFormat = "/msg $ ";
+    public int contextColor = AQUA.getColorValue(); public String contextReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
 
     /**

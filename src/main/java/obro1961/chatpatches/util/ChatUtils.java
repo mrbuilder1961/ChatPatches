@@ -33,7 +33,7 @@ import static obro1961.chatpatches.util.TextUtils.withoutContent;
  */
 public class ChatUtils {
 	public static final UUID NIL_UUID = new UUID(0, 0);
-	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
+	public static final MessageData NIL_MESSAGE_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 
 	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
 							MESSAGE_INDEX = 1,     // contains the actual chat message
@@ -50,7 +50,7 @@ public class ChatUtils {
 	 * @see #modifyMessage(Text)
 	 * @see MessageHandlerMixin
 	 */
-	public static MessageData msgData = NIL_MSG_DATA;
+	public static MessageData messageData = NIL_MESSAGE_DATA;
 
 	/**
 	 * Matches only an entire vanilla player message.
@@ -202,7 +202,7 @@ public class ChatUtils {
 	 * 	 <li>Assemble the message, despite any/all changes and add a duplicate counter
 	 * 	 according to {@link #tryCondenseDupes(Text)}.</li>
 	 * 	 <li>Log the modified message in the {@link ChatLog}.</li>
-	 * 	 <li>Reset the {@link ChatUtils#msgData} to prevent a rare bug.</li>
+	 * 	 <li>Reset the {@link ChatUtils#messageData} to prevent a rare bug.</li>
 	 * 	 <li>Return the message, regardless of if it was actually modified or not.</li>
 	 * </ol>
 	 */
@@ -210,8 +210,8 @@ public class ChatUtils {
 		if(ChatLog.isSuspended())
 			return m; // cancel modifications when loading the chat log
 
-		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
-		Date now = lastEmpty ? new Date() : msgData.timestamp;
+		boolean lastEmpty = messageData.equals(ChatUtils.NIL_MESSAGE_DATA);
+		Date now = lastEmpty ? new Date() : messageData.timestamp;
 		Style style = m.getStyle();
 
 		MutableText timestamp = null;
@@ -222,9 +222,9 @@ public class ChatUtils {
 			// prepub if option that disables timestamps on system messages is true, dont add timestamps
 
 			// reconstruct the player message if it's in the vanilla format and it should be reformatted
-			// the msgData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
+			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(config.chatName && !lastEmpty && msgData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
+			if(config.chatName && !lastEmpty && messageData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
 				content = Text.empty().setStyle(style);
 
 				// if the message is translatable, then we know exactly where everything is
@@ -244,7 +244,7 @@ public class ChatUtils {
 					content.append(teamPart); // adds the team part or nothing to keep MSG_TEAM_INDEX constant
 
 					// adds the formatted playername and content for all message types
-					content.append( config.formatPlayername(msgData.sender) );
+					content.append( config.formatPlayername(messageData.sender) );
 					content.append( getArg(ttc, team ? MSG_CONTENT_INDEX : MESSAGE_INDEX) );
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
 					MutableText realContent = Text.empty();
@@ -271,7 +271,7 @@ public class ChatUtils {
 					for(int i = parts.indexOf(firstPart) + 1; i < parts.size(); i++)
 						realContent.append(parts.get(i));
 
-					content.append(config.formatPlayername(msgData.sender)); // sender data is already known
+					content.append(config.formatPlayername(messageData.sender)); // sender data is already known
 					content.append(realContent); // adds the reconstructed message content
 				}
 			}
@@ -286,7 +286,7 @@ public class ChatUtils {
 		// assembles constructed message and adds a duplicate counter according to the #addCounter method
 		Text modified = tryCondenseDupes( buildMessage(style, timestamp, content, null) );
 		ChatLog.addMessage(modified);
-		msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
+		messageData = ChatUtils.NIL_MESSAGE_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
 	}
 

@@ -42,9 +42,9 @@ public abstract class MessageHandlerMixin {
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         // only logs the metadata if it was a player-sent message (otherwise tries to format some commands like /msg and /me)
-        ChatUtils.msgData = params.type().chat().translationKey().matches(ChatUtils.PARSEABLE_MESSAGE_KEYS)
+        ChatUtils.messageData = params.type().chat().translationKey().matches(ChatUtils.PARSEABLE_MESSAGE_KEYS)
             ? new ChatUtils.MessageData(sender, Date.from(message.getTimestamp()), isVanilla(params.applyChatDecoration(message.getContent())))
-            : ChatUtils.NIL_MSG_DATA;
+            : ChatUtils.NIL_MESSAGE_DATA;
     }
 
     /**
@@ -56,9 +56,9 @@ public abstract class MessageHandlerMixin {
         String name = StringUtils.substringBetween(TextVisitFactory.removeFormattingCodes(message), "<", ">");
         UUID id = extractSender(message);
 
-        ChatUtils.msgData = !id.equals(Util.NIL_UUID)
+        ChatUtils.messageData = !id.equals(Util.NIL_UUID)
             ? new ChatUtils.MessageData(new GameProfile(id, name), new Date(), isVanilla(message))
-            : ChatUtils.NIL_MSG_DATA;
+            : ChatUtils.NIL_MESSAGE_DATA;
     }
 
 
