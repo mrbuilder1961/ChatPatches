@@ -62,7 +62,7 @@ public class Config {
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55FFFF;
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
     public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = 0xFFFFFF;
-    public int shiftChat = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix = false;
+    public int chatShift = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix = false;
     public int copyColor = 0x55FFFF; public String copyReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
 

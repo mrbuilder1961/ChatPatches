@@ -424,7 +424,7 @@ public class ContextMenu implements Element {
 					supEr.render(context, mX, mY, delta);
 					PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16);
 				}
-			); // prepub: reevaluate which buttons need the skin renderer, as both make sense but lowkey maybe we should ditch it or add icons for all? it feels out of place
+			); // prepub: reevaluate which buttons need the skin renderer - see discord poll results
 		}
 
 		grid.updateButtonPositions();
@@ -468,7 +468,7 @@ public class ContextMenu implements Element {
 		final int lH = chat.chatpatches$getLineHeight();
 		final int sW = MathHelper.ceil(chatHud.getWidth() / s); // scaled width
 		final int sH = MathHelper.floor((mc.getWindow().getScaledHeight() - 40) / s); // scaled height
-		int shift = MathHelper.floor(config.shiftChat / s);
+		int shift = MathHelper.floor(config.chatShift / s);
 		int i = visibles.indexOf( selectedVisibles.getLast() ) - chat.chatpatches$getScrolledLines();
 		int hoveredY = sH - (i * lH) - shift;
 
@@ -708,7 +708,7 @@ public class ContextMenu implements Element {
 	 * combined with some logic to determine the entire message from only the hovered
 	 * (visible) message.
 	 * Automatically adjusts the parameters {@code mX} and {@code mY} to be accurate values,
-	 * including any shifts according to {@link Config#shiftChat}. If either {@code mX} or
+	 * including any shifts according to {@link Config#chatShift}. If either {@code mX} or
 	 * {@code mY} are equal to {@code -1}, then an empty List is returned.
 	 *
 	 * @implNote

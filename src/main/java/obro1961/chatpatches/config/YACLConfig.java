@@ -256,7 +256,7 @@ public class YACLConfig extends Config {
         if(min) {
             return switch(key) {
                 case "counterCompactDistance" -> -1;
-                case "chatWidth", "chatMaxMessages", "shiftChat", "chatlogSaveInterval" -> 0;
+                case "chatWidth", "chatMaxMessages", "chatShift", "chatlogSaveInterval" -> 0;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No minimum value specified for option '" + key + "'"));
                     yield 0;
@@ -269,7 +269,7 @@ public class YACLConfig extends Config {
                 // only issue w ^^^ is if the window is resized while the config screen is open the max value will be incorrect
                 case "chatlogSaveInterval" -> 180;
                 case "counterCompactDistance" -> mc.inGameHud.getChatHud() instanceof ChatHud chatHud ? chatHud.getVisibleLineCount() : 50;
-                case "shiftChat" -> 100;
+                case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
                     yield 100;
