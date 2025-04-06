@@ -23,8 +23,9 @@ import net.minecraft.client.gui.widget.GridWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.util.SkinTextures;
+import net.minecraft.nbt.NbtHelper;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.*;
-import net.minecraft.util.JsonHelper;
 import net.minecraft.util.StringHelper;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
@@ -357,12 +358,10 @@ public class ContextMenu implements Element {
 			if(duped)
 				registerCopyOnlyButton(NO_DUPE_TEXT, TextUtils.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX)), strRow++); // timestamped ? 3 : 2
 			registerCopyOnlyButton(JSON_STR,
-				textCodec().encodeStart(ChatPatches.jsonOps(), text)
+				textCodec().encodeStart(NbtOps.INSTANCE, text)
 					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
-					.map(JsonHelper::toSortedString)
-					.map(Text::of)
+					.map(NbtHelper::toPrettyPrintedText)
 					.orElse(UNKNOWN.apply(JSON_STR)),
-					//NbtHelper.toPrettyPrintedText(...) //prepub: make the format fancy by somehow converting to nbt (ops?), formatting, lowercasing, and adding quotes
 			strRow); // timestamped && duped ? 4 : timestamped || duped ? 3 : 2
 
 		// timestamp buttons - conditional (not on boundary lines)
@@ -389,7 +388,7 @@ public class ContextMenu implements Element {
 		}, 0, 0);
 
 		// link buttons - conditional
-		ObjectList<String> webLinks = TextUtils.getLinks(text.getString());
+		ObjectList<String> webLinks = TextUtils.getLinks(text.getString()); // prepub: I LITERALLY FUCKING DELETED THIS AND MOVED THE FUNCTINOALITY HERE? WHERE DID IT GO?? CHECK LAPTOP OTHERWISE GONNA KMS
 		ObjectList<String> fileLinks = new ObjectArrayList<>();
 		text.visit((style, str) -> {
 			if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
