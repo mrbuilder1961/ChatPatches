@@ -24,6 +24,7 @@ import net.minecraft.client.util.SkinTextures;
 import net.minecraft.text.*;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.StringHelper;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import oshi.util.Memoizer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,8 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static net.minecraft.screen.ScreenTexts.EMPTY;
 import static obro1961.chatpatches.ChatPatches.config;
@@ -65,8 +69,10 @@ public class ContextMenu implements Element {
 	public static final int MAX_COLUMNS = 2;
 
 	// normal variables
-	private static final MinecraftClient mc = MinecraftClient.getInstance();
 	private static final int buttonPadding = 4;
+	private static final MinecraftClient mc = MinecraftClient.getInstance();
+	//* slightly modified from https://stackoverflow.com/a/163398 to not include file links */
+	private static final Supplier<Pattern> urlPattern = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
 	// region text constants
 	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable("text.chatpatches.copy.unknownData", id);
@@ -149,6 +155,8 @@ public class ContextMenu implements Element {
 		this.screen = noOp ? ((ChatScreen) mc.currentScreen) : screen;
 
 		this.selectedVisibles = getFullMessageAt(mX, mY);
+		//todo: make this method call return the selectedLine instead, and then deducing the visibles is much easier after (ChatMessages#breakRendered..)
+		// so that we can delete reorder and make a better toFormattingString method instead
 
 		// disables the menu if it was passed invalid values or if it's disabled in the config
 		if(!noOp && selectedVisibles.isEmpty())
@@ -388,18 +396,21 @@ public class ContextMenu implements Element {
 		}, 0, 0);
 
 		// link buttons - conditional
-		List<String> webLinks = TextUtils.getLinks(text.getString());
-		List<String> fileLinks = new ArrayList<>();
-		text.visit((style, str) -> {
+		ObjectList<String> webLinks = Util.make(new ObjectArrayList<>(), l -> {
+			Matcher matcher = urlPattern.get().matcher(text.getString());
+			while(matcher.find())
+				l.add(matcher.group());
+		});
+		ObjectList<String> fileLinks = Util.make(new ObjectArrayList<>(), l ->
+			text.visit((style, str) -> {
 			if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
 				if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v))
 					webLinks.add(v);
-				else if(ce.getAction() == ClickEvent.Action.OPEN_FILE && !fileLinks.contains(v))
-					fileLinks.add(v);
+				else if(ce.getAction() == ClickEvent.Action.OPEN_FILE && !l.contains(v))
+					l.add(v);
 			}
 			return Optional.empty();
-		}, Style.EMPTY);
-
+		}, Style.EMPTY));
 		if(!webLinks.isEmpty() || !fileLinks.isEmpty()) {
 			registerProxyButton(MENU_LINKS, LINK_N.apply(1));
 
@@ -732,7 +743,7 @@ public class ContextMenu implements Element {
 	 *	 <li>Returns the full message as a {@link List} of {@link ChatHudLine.Visible}s</li>
 	 * </ol>
 	 */
-	private static @NotNull List<ChatHudLine.Visible> getFullMessageAt(double mX, double mY) {
+	private static List<ChatHudLine.Visible> getFullMessageAt(double mX, double mY) {
 		if(!config.contextMenu || mX < 0 || mY < 0)
 			return new ArrayList<>(0);
 
