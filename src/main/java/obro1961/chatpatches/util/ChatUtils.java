@@ -389,7 +389,7 @@ public class ChatUtils {
 
 		// update the incoming message with the new dupe counter
 		if(dupeCount > 1)
-			siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // warning: this will throw errors if DUPE_INDEX doesn't exist!
+			siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // this will throw errors if DUPE_INDEX doesn't exist!
 
 		return TextUtils.newText(incoming.getContent(), siblings, incoming.getStyle());
 	}

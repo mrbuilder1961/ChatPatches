@@ -115,7 +115,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * @implNote Since Minecraft 1.20.2, the vanilla method is also called
      * {@linkplain MinecraftClient#enterReconfiguration(Screen) in between
      * switching worlds}, so this method also prevents unwanted chat clearing then too.
-     */ // prepub: i closed (#147) as completed bc it seems like this already covers that issue case but idk.
+     */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
     private void clear(boolean clearHistory, CallbackInfo ci) {
         if(!config.vanillaClearing) {
