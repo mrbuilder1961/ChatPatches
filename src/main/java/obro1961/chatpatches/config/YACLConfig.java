@@ -16,16 +16,25 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
+import net.minecraft.util.Uuids;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static obro1961.chatpatches.ChatPatches.config;
 
@@ -172,6 +181,47 @@ public class YACLConfig extends Config {
 
                                 ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables] {}", str);
                             })
+                            .build(),
+
+                        ButtonOption.createBuilder()
+                            .name(Text.of("Convert id arrays to strings"))
+                            .text(Text.of("??"))
+                            .action((screen, option) -> Arrays.stream(
+								FabricLoader.getInstance().getGameDir()
+								.resolve("logs")
+								.toFile()
+								.listFiles(f -> f.getName().endsWith(".json")) // get all log files
+							)
+								.sorted(Comparator.comparingLong(File::lastModified)) // most recent
+								.skip(1) // current chat log is always the most recent
+								.findFirst() // most recent
+								.ifPresentOrElse(
+									f -> {
+										// all the "\\s*" substrings allow matching prettified chat logs
+										// without whitespace matches: `"id":[(-?\\d+),(-?\\d+),(-?\\d+),(-?\\d+)]`
+										Pattern regex = Pattern.compile("\"id\"\\s*:\\s*\\[\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*]");
+										try {
+											int n = 0;
+											String content = Files.readString(f.toPath());
+											Matcher m = regex.matcher(content);
+
+											while(m.find()) {
+												n++;
+												// map each of the 4 groups to an int, then to a uuid array
+												int[] bits = Stream.of(m.group(1), m.group(2), m.group(3), m.group(4)).mapToInt(Integer::parseInt).toArray();
+
+												// actually replace the dashed array with the dashed uuid
+												content = content.replace( m.group(), "\"id\":\"" + Uuids.toUuid(bits) + "\"" );
+											}
+											Files.writeString(f.toPath(), content);
+
+											ChatPatches.LOGGER.info("[YACLConfig.revertIdArrays] Reverted {} id arrays in '{}'", n, f.getAbsolutePath());
+										} catch(IOException e) {
+											ChatPatches.LOGGER.warn("[YACLConfig.revertIdArrays] An error occurred reading '{}'.. good luck with this guy:", f.getAbsolutePath(), e);
+										}
+									},
+									() -> ChatPatches.LOGGER.warn("[YACLConfig.revertIdArrays] No log files found")
+								))
                             .build()
                     )
                 )
