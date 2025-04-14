@@ -18,6 +18,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 // will be delete:d! but not until ContextMenu is fully functioning to get the MAX benefit >:)
+@Deprecated(forRemoval = true)
 public class MenuButtonWidget {
 	/** The mouse position to anchor all menu buttons to, used here rather than {@link ChatScreenMixin} because of mixin accessing limitations. */
 	public static RenderUtils.MousePos anchor = RenderUtils.MousePos.of(-1, -1); // the "origin" of all menu buttons

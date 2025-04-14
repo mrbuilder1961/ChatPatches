@@ -2,6 +2,7 @@ package obro1961.chatpatches.accessor;
 
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 
 import java.util.List;
 
@@ -15,17 +16,15 @@ public interface ChatHudAccessor {
     /** {@link ChatHud#scrolledLines} */
     int chatpatches$getScrolledLines();
 
-
-    // proxy methods for accessing the originals in ChatHud
-    /** {@link ChatHud#getMessageLineIndex(double, double)} */
-    int chatpatches$getMessageLineIndex(double x, double y);
-
-    /** {@link ChatHud#toChatLineX(double)} */
-    double chatpatches$toChatLineX(double x);
-
-    /** {@link ChatHud#toChatLineY(double)} */
-    double chatpatches$toChatLineY(double y);
-
     /** {@link ChatHud#getLineHeight()} */
     int chatpatches$getLineHeight();
+
+
+    // unique methods
+
+    /** {@link ChatHudMixin#getChatHudLineIndex(double, double)} */
+    int getChatHudLineIndex(double mouseX, double mouseY);
+
+    /** {@link ChatHudMixin#getEoEIndex(double, double)} */
+    int getEoEIndex(double mouseX, double mouseY);
 }

@@ -32,7 +32,6 @@ import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.accessor.ChatScreenAccessor;
-import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.accessor.GridWidgetAccessor;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtils;
@@ -66,15 +65,18 @@ import static obro1961.chatpatches.util.TextUtils.textCodec;
  * logic for utilizing, processing, and copying data from the selected message.
  */
 public class ContextMenu implements Element {
-	// based on the total amount of buttons that currently exist, excluding link buttons
-	public static final int MAX_ROWS = 6;
+	// based on the total amount of buttons that currently exist
+	public static final int MAX_ROWS = 7;
 	public static final int MAX_COLUMNS = 2;
 
-	// normal variables
-	private static final int buttonPadding = 4;
+	private static final int BUTTON_PADDING = 4;
+	/**
+	 * Slightly modified from <a href="https://stackoverflow.com/a/163398">StackOverflow</a>
+	 * to not include file links. Memoized to avoid recompiling the regex every time, and so
+	 * it's only compiled once when it's needed.
+	 */
+	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
-	//* slightly modified from https://stackoverflow.com/a/163398 to not include file links */
-	private static final Supplier<Pattern> urlPattern = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
 	// region text constants
 	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable("text.chatpatches.copy.unknownData", id);
@@ -111,11 +113,7 @@ public class ContextMenu implements Element {
 	 */
 	private final Grid grid;
 
-	// variables derived from selected message
-	public final RenderUtils.MousePos clickPos;
-	private final ChatHudLine selectedLine;
-	private final ObjectList<ChatHudLine.Visible> selectedVisibles;
-	private final GameProfile messageSender;
+	// reference variables kept primarily for rendering and elegance
 	/**
 	 * The ChatScreen this menu is contained within.
 	 * If {@link #noOp} is {@code false}, this field
@@ -123,7 +121,27 @@ public class ContextMenu implements Element {
 	 * {@link #noOp} is {@code true}, this field may
 	 * or may not be null.
 	 */
+	@Nullable
 	private final ChatScreen screen;
+	private final ChatHud hud;
+	private final ChatHudAccessor access;
+
+	// variables derived from selected message
+	public final RenderUtils.MousePos clickPos;
+	private final ChatHudLine selectedLine;
+	private final GameProfile messageSender;
+	/**
+	 * The index of the visible message in {@link ChatHud#visibleMessages}
+	 * that is also {@linkplain ChatHudLine.Visible#endOfEntry EoE}. Used
+	 * for simplifying and optimizing {@link #renderSelectionOutline(DrawContext)}
+	 * and for calculating {@link #visibleLines}.
+	 */
+	private final int visibleMessageIndex;
+	/**
+	 * The number of visible lines in the selected message. Used for
+	 * simplifying and optimizing the {@link #renderSelectionOutline(DrawContext)}.
+	 */
+	private final int visibleLines;
 
 	/**
 	 * If true, effectively disables this context menu, meaning
@@ -135,12 +153,11 @@ public class ContextMenu implements Element {
 	 */
 	private boolean noOp = false;
 
-
 	/**
 	 * Creates a new context menu at the specified mouse position.
 	 * Returns a {@linkplain #noOp non-operational} menu if either
-	 * coordinate is negative, the selected message lines are empty
-	 * or invalid, or if the context menu is disabled in the config.
+	 * coordinate is negative, the selected message is invalid, or
+	 * if the context menu is disabled in the config.
 	 *
 	 * <p>Not to be confused with {@link #init(Consumer)}, which
 	 * populates, configures, and positions the button widgets.
@@ -152,32 +169,35 @@ public class ContextMenu implements Element {
 		if(!config.contextMenu || mX < 0 || mY < 0)
 			noOp = true;
 
+		// critical fields
 		this.clickPos = RenderUtils.MousePos.of(mX, mY);
 		this.grid = new Grid(MAX_ROWS, MAX_COLUMNS);
-		this.screen = noOp ? ((ChatScreen) mc.currentScreen) : screen;
 
-		this.selectedVisibles = getFullMessageAt(mX, mY);
-		//todo: make this method call return the selectedLine instead, and then deducing the visibles is much easier after (ChatMessages#breakRendered..)
-		// so that we can delete reorder and make a better toFormattingString method instead
+		// reference and optimization fields
+		this.hud = mc.inGameHud.getChatHud();
+		this.access = (ChatHudAccessor) hud;
+		this.screen = noOp ? null : screen;
 
-		// disables the menu if it was passed invalid values or if it's disabled in the config
-		if(!noOp && selectedVisibles.isEmpty())
-			noOp = true;
+		// selected fields
+		var messages = access.chatpatches$getMessages();
+		int messageIndex = noOp ? -1 : access.getChatHudLineIndex(mX, mY);
+		this.selectedLine = messageIndex >= 0 && messages.size() > messageIndex ? messages.get(messageIndex) : NIL_HUD_LINE;
+		//Iterables.get(messages, messageIndex, NIL_HUD_LINE); // would work if -1 didn't throw an exception >>>>:(
 
-		List<ChatHudLine> chatMessages = ((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getMessages();
-		String fH = noOp ? "\u0000" : TextUtils.reorder(selectedVisibles.getFirst().content(), false);
-		// find the first message that starts with the hovered message (aka the hovered message)
-		this.selectedLine = chatMessages.stream()
-			.filter(msg ->
-				!noOp && StringHelper.stripTextFormat(msg.content().getString())
-					// longer messages sometimes fail because extra spaces appear to be added,
-					// so it now uses startsWith() bc the first one never has extra spaces.
-					.startsWith(fH.isEmpty() ? "\n" : fH) // detects messages starting with newlines, along with regular messages
-			)
-			.findFirst().orElse(NIL_HUD_LINE);
+		this.visibleMessageIndex = noOp ? -1 : access.getEoEIndex(mX, mY); // returns the index of the EoE line at the mouse position
 
-		if(!noOp && (selectedLine == NIL_HUD_LINE || !chatMessages.contains(selectedLine)))
-			noOp = true;
+		this.visibleLines = Util.make(() -> {
+			var visibles = access.chatpatches$getVisibleMessages();
+
+			// if the line before (+) this visible message isn't EoE, we need to account for it(them?)
+			int l = 1; // minimum of one line
+			for(int j = visibleMessageIndex + 1; j < visibles.size() && !visibles.get(j).endOfEntry(); j++)
+				l++;
+
+			return l;
+		});
+		//todo: clean this up and make sure it works SO we can DELETE reorder and make a better toFormattingString method instead
+
 
 		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityContent ec
@@ -204,8 +224,8 @@ public class ContextMenu implements Element {
 	 */
 	private void registerButton(Text id, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction, int localRow, int col,
 								RenderUtils.Renderer<PressableWidget> renderer) {
-		int w = mc.textRenderer.getWidth(id) + 2 * buttonPadding;
-		int h = buttonPadding + 14;
+		int w = mc.textRenderer.getWidth(id) + 2 * BUTTON_PADDING;
+		int h = BUTTON_PADDING + 14;
 
 		PressableWidget button = ButtonWidget.builder(id, b -> {
 			if(noOp)
@@ -397,7 +417,7 @@ public class ContextMenu implements Element {
 
 		// link buttons - conditional
 		ObjectList<String> webLinks = Util.make(new ObjectArrayList<>(), l -> {
-			Matcher matcher = urlPattern.get().matcher(text.getString());
+			Matcher matcher = URL_PATTERN.get().matcher(text.getString());
 			while(matcher.find())
 				l.add(matcher.group());
 		});
@@ -465,29 +485,23 @@ public class ContextMenu implements Element {
 	 * in the chat, to indicate which message will be copied.
 	 */
 	private void renderSelectionOutline(DrawContext drawContext/*, int mX, int mY, float delta*/) {
-		if(selectedVisibles.isEmpty())
+		if(visibleLines == 0 || visibleMessageIndex == -1)
 			return;
 
-		ChatHud chatHud = mc.inGameHud.getChatHud();
-		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
-		List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
-
-
-		int hoveredParts = selectedVisibles.size();
-		// ChatHud#render variables, most of which are based on the hovered message
-		final double s = chatHud.getChatScale();
-		final int lH = chat.chatpatches$getLineHeight();
-		final int sW = MathHelper.ceil(chatHud.getWidth() / s); // scaled width
-		final int sH = MathHelper.floor((mc.getWindow().getScaledHeight() - 40) / s); // scaled height
+		int hoveredParts = visibleLines;
+		double s = hud.getChatScale();
+		int lH = access.chatpatches$getLineHeight();
+		int sW = MathHelper.ceil(hud.getWidth() / s); // scaled width
+		int sH = MathHelper.floor((mc.getWindow().getScaledHeight() - 40) / s); // scaled height
 		int shift = MathHelper.floor(config.chatShift / s);
-		int i = visibles.indexOf( selectedVisibles.getLast() ) - chat.chatpatches$getScrolledLines();
+		int i = visibleMessageIndex - access.chatpatches$getScrolledLines();
 		int hoveredY = sH - (i * lH) - shift;
 
 		drawContext.getMatrices().push();
 		drawContext.getMatrices().scale((float) s, (float) s, 1.0f);
 
 		int borderW = sW + 8;
-		int scissorY1 = MathHelper.floor((sH - (chatHud.getVisibleLineCount() * lH) - shift - 1) * s);
+		int scissorY1 = MathHelper.floor((sH - (hud.getVisibleLineCount() * lH) - shift - 1) * s);
 		int scissorY2 = MathHelper.floor((sH - shift + 1) * s);
 		int selectionY1 = hoveredY - (lH * hoveredParts);
 		int selectionH = (lH * hoveredParts) + 1;
@@ -712,83 +726,6 @@ public class ContextMenu implements Element {
 		return isMouseOver(mX, mY) ? screen.hoveredElement(mX, mY).map(e -> e instanceof PressableWidget p ? p : null) : Optional.empty();
 	}
 
-	/**
-	 * Returns the full chat message at the given coordinates, calculated using
-	 * the built-in {@link ChatHud#getMessageLineIndex(double, double)},
-	 * {@link ChatHud#toChatLineX(double)}, and {@link ChatHud#toChatLineY(double)} methods
-	 * combined with some logic to determine the entire message from only the hovered
-	 * (visible) message.
-	 * Automatically adjusts the parameters {@code mX} and {@code mY} to be accurate values,
-	 * including any shifts according to {@link Config#chatShift}. If either {@code mX} or
-	 * {@code mY} are equal to {@code -1}, then an empty List is returned.
-	 *
-	 * @implNote
-	 * <ol>
-	 *	 <li>Gets the hovered visible index from {@link ChatHud#getMessageLineIndex(double, double)}
-	 *	 with {@link ChatHud#toChatLineX(double)} and {@link ChatHud#toChatLineY(double)} as parameters</li>
-	 *	 <li>If the hovered index is -1 then return an empty string</li>
-	 *	 <li>If the hovered message <u>IS</u> end of entry (EoE):</li>
-	 *	 <ol>
-	 *	     <li>Starting at the hovered index +1, iterates up (+) through the visible message list until reaching another EoE message</li>
-	 *	     <li>Reduces the start index by one (-1) to refer to the first message rather than the end of another message</li>
-	 *	     <li>Saves the end index as the hovered index because we know it's EoE</li>
-	 *	 </ol>
-	 *	 <li>Otherwise when the hovered message <u>IS NOT</u> EoE:</li>
-	 *	 <ol>
-	 *	     <li>Starting at the hovered index, iterates up (+) through the visible message list until reaching another EoE message</li>
-	 *	     <li>Reduces the start index by one (-1) to refer to the first message rather than the end of another message</li>
-	 *		 <li>Then starting at the start index, iterates down (-) through the visible message list until reaching our EoE message </li>
-	 *	 </ol>
-	 *	 <li>Iterates through the range just determined from start to the end index, concatenating the message parts</li>
-	 *	 <li>Returns the full message as a {@link List} of {@link ChatHudLine.Visible}s</li>
-	 * </ol>
-	 */
-	private static ObjectList<ChatHudLine.Visible> getFullMessageAt(double mX, double mY) {
-		if(!config.contextMenu || mX < 0 || mY < 0)
-			return ObjectArrayList.of();
-
-		final ChatHudAccessor chat = (ChatHudAccessor) mc.inGameHud.getChatHud();
-		final List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
-		// using LineIndex instead of Index bc during testing they both returned the same value; LineIndex has less code
-		// above comment doesn't make sense but LineIndex should be used, Index is for regular ChatHudLine s
-		final int hoveredI = chat.chatpatches$getMessageLineIndex(chat.chatpatches$toChatLineX(mX), chat.chatpatches$toChatLineY(mY));
-
-		if(hoveredI == -1)
-			return ObjectArrayList.of();
-
-		int startI;
-		int endI;
-
-		if(visibles.get(hoveredI).endOfEntry()) {
-			startI = hoveredI + 1; // w/o the +1, the loop would exit immediately
-			while( startI < visibles.size() && !visibles.get(startI).endOfEntry() ) {
-				startI++;
-			}
-			startI--; // now startI is actually the start and not the end of another message
-
-			endI = hoveredI; // endI is the hovered index bc we know it's EoE
-		} else {
-			startI = hoveredI;
-			while( startI < visibles.size() && !visibles.get(startI).endOfEntry() ) {
-				startI++;
-			}
-			startI--;
-
-			endI = startI;
-			while( endI >= 0 && !visibles.get(endI).endOfEntry() ) {
-				endI--;
-			}
-			// we don't need to ++ endI bc it's already the end of the message
-		}
-
-		// note that the startI is always greater than the endI bc the newest message index = 0
-		ObjectList<ChatHudLine.Visible> messageParts = new ObjectArrayList<>(startI - endI);
-		for(int i = startI; i >= endI; i--)
-			messageParts.add( visibles.get(i) );
-
-		return messageParts;
-	}
-
 
 	/**
 	 * Associates every widget with its relevant
@@ -885,7 +822,7 @@ public class ContextMenu implements Element {
 				return (List<PressableWidget>) (Object) ((GridWidgetAccessor) widget).getChildren();
 			} catch(ClassCastException e) {
 				ChatPatches.logReportMsg(e);
-				return List.of();
+				return ObjectList.of();
 			}
 		}
 
@@ -906,7 +843,7 @@ public class ContextMenu implements Element {
 			int mainWidth = entries.stream()
 				.filter(e -> e.col == 0)
 				.mapToInt(e -> e.button.getWidth()).max()
-				.orElse(8 * buttonPadding);
+				.orElse(8 * BUTTON_PADDING);
 			entries.stream().filter(e -> e.col == 0).forEach(e -> e.button.setWidth(mainWidth));
 
 			// sync hover button widths
@@ -915,23 +852,30 @@ public class ContextMenu implements Element {
 					.mapToInt(g -> g.stream()
 						.skip(1) // avoid the main button
 						.mapToInt(e -> e.button.getWidth()).max()
-						.orElse(6 * buttonPadding)
+						.orElse(6 * BUTTON_PADDING)
 					)
 			);
-			groups.forEach(g -> g.subList(1, g.size()).forEach(b -> b.button.setWidth(groupWidths.getInt(groups.indexOf(g)))));
+			groups.forEach(g ->
+				g.subList(1, g.size())
+					.forEach(b ->
+						b.button.setWidth(
+							groupWidths.getInt(groups.indexOf(g))
+						)
+					)
+			);
 
 
 			// if the grid menu goes off the screen, shift it up
 			int y = widget.getY();
 			if(widget.getHeight() + y > mc.getWindow().getScaledHeight()) {
 				// moves the menu up by the amount it goes off the screen, plus a padding buffer
-				widget.setY(y - ((widget.getHeight() + y) - mc.getWindow().getScaledHeight()) - buttonPadding);
+				widget.setY(y - ((widget.getHeight() + y) - mc.getWindow().getScaledHeight()) - BUTTON_PADDING);
 			}
 			// if the grid menu goes off the screen, shift it left
 			int x = widget.getX();
 			if(widget.getWidth() + x > mc.getWindow().getScaledWidth()) {
 				// moves the menu left by the amount it goes off the screen, plus a padding buffer
-				widget.setX(x - ((widget.getWidth() + x) - mc.getWindow().getScaledWidth()) - buttonPadding);
+				widget.setX(x - ((widget.getWidth() + x) - mc.getWindow().getScaledWidth()) - BUTTON_PADDING);
 			}
 		}
 

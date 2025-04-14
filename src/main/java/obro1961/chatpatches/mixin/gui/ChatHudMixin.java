@@ -29,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import static obro1961.chatpatches.ChatPatches.config;
 
@@ -48,20 +49,60 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow @Final private List<?> removalQueue;
     @Shadow private int scrolledLines;
 
+    @Shadow public abstract double getChatScale();
     @Shadow protected abstract double toChatLineX(double x);
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
-    @Shadow protected abstract int getMessageLineIndex(double x, double y);
-    @Shadow public abstract double getChatScale();
+    @Shadow protected abstract int getMessageIndex(double chatLineX, double chatLineY);
+    //prepub: sit down and compare all the different annotations for public mixin methods, and write a
+    // comment here explaining why the chosen one is used or just make an AW
 
     // ChatHudAccessor methods used outside this mixin
     @Intrinsic public List<ChatHudLine> chatpatches$getMessages() { return messages; }
     @Intrinsic public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }
     @Intrinsic public int chatpatches$getScrolledLines() { return scrolledLines; }
-    @Intrinsic public int chatpatches$getMessageLineIndex(double x, double y) { return getMessageLineIndex(x, y); }
-    @Intrinsic public double chatpatches$toChatLineX(double x) { return toChatLineX(x); }
-    @Intrinsic public double chatpatches$toChatLineY(double y) { return toChatLineY(y); }
     @Intrinsic public int chatpatches$getLineHeight() { return getLineHeight(); }
+
+
+    /**
+     * Returns the index of the chat line at the given mouse position.
+     *
+     * @implNote Unfortunately, Yarn's name choice for the {@link #getMessageIndex}
+     * method (called in {@link #getEoEIndex(double, double)}) is <b>extremely
+     * misleading and inaccurate, because it implies a return value corresponding
+     * to {@link ChatHud#messages}, which is not true</b>. In reality, the method
+     * returns the index of a {@linkplain ChatHudLine.Visible#endOfEntry EoE} line
+     * in {@link ChatHud#visibleMessages} at the given mouse position. But when
+     * used with {@code messages}, it will return inaccurate indices for all messages
+     * after the first multiline message (because the two message lists are no longer
+     * 1:1).
+     * <br>
+     * <i>To fix this, we subtract the number of non-EoE messages before the
+     * checked index from the index itself, to make it effectively 1:1 again.</i>
+     *
+     * @see #moveChat(int)
+     * @see #moveChatLineY(double)
+     */
+    @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+    public int getChatHudLineIndex(double mouseX, double mouseY) {
+        int i = getEoEIndex(mouseX, mouseY);
+        return i == -1 ? -1 : (int) (i - visibleMessages.subList(0, i).stream().filter(Predicate.not(ChatHudLine.Visible::endOfEntry)).count());
+    }
+
+    /**
+     * Simply calls {@link #getMessageIndex(double, double)} with
+     * {@link #toChatLineX(double)} and {@link #toChatLineY(double)} as
+     * arguments. Returns the {@link ChatHudLine.Visible} that is {@linkplain
+     * ChatHudLine.Visible#endOfEntry EoE} at the given mouse position. In
+     * other words, returns the index of the last line that makes up the
+     * visible message at the given mouse position. Automatically accounts
+     * for any {@link Config#chatShift} offsets with injectors
+     * {@link #moveChat(int)} and {@link #moveChatLineY(double)}.
+     */
+    @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+    public int getEoEIndex(double mouseX, double mouseY) {
+        return getMessageIndex(toChatLineX(mouseX), toChatLineY(mouseY));
+    }
 
 
     /**
