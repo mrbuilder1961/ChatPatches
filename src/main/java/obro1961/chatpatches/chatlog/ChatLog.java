@@ -1,23 +1,31 @@
 package obro1961.chatpatches.chatlog;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -25,7 +33,6 @@ import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -40,10 +47,22 @@ public class ChatLog {
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
 
-    public static boolean loaded = false;
-    public static int ticksUntilSave = config.chatlogSaveInterval * 60 * 20; // convert minutes to ticks
+    private static final MinecraftClient mc = MinecraftClient.getInstance();
 
-    private static boolean restoring = false;
+    public static boolean loaded = false;
+    public static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE; // convert minutes to ticks
+
+    /**
+     * Used to suspend the addition and restoration
+     * of new messages to the chat log, which
+     * prevents log spam of restored messages and
+     * concurrent modification exceptions.
+     *
+     * @see #restore()
+     * @see #serialize()
+     * @see ClickEvent$ActionMixin#validateAll(ClickEvent.Action, CallbackInfoReturnable)
+     */
+    private static boolean suspended = false;
     private static ChatLog.Data data = new Data();
     private static int lastHistoryCount = -1, lastMessageCount = -1;
 
@@ -59,19 +78,25 @@ public class ChatLog {
          * lists mutable.
          */
         public static final Codec<Data> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-            Codec.list(TextCodecs.CODEC).xmap(ArrayList::new, Function.identity()).fieldOf("messages").forGetter(data -> data.messages),
-            Codec.list(Codec.STRING).xmap(ArrayList::new, Function.identity()).fieldOf("history").forGetter(data -> data.history)
+            TextCodecs.CODEC.listOf()
+                .xmap(m -> ObjectLists.synchronize(new ObjectArrayList<>(m)), Function.identity())
+                .fieldOf("messages")
+                .forGetter(data -> data.messages),
+            Codec.STRING.listOf()
+                .xmap(h -> ObjectLists.synchronize(new ObjectArrayList<>(h)), Function.identity())
+                .fieldOf("history")
+                .forGetter(data -> data.history)
         ).apply(inst, (messages, history) -> Util.make(new Data(), data -> {
             data.messages = messages;
             data.history = history;
         })));
 
-        public ArrayList<Text> messages;
-        public ArrayList<String> history;
+        public ObjectList<Text> messages;
+        public ObjectList<String> history;
 
         private Data() {
-            messages = Lists.newArrayListWithExpectedSize(DEFAULT_SIZE);
-            history = Lists.newArrayListWithExpectedSize(DEFAULT_SIZE);
+            messages = new ObjectArrayList<>(DEFAULT_SIZE);
+            history = new ObjectArrayList<>(DEFAULT_SIZE);
         }
 
         private Data(boolean done) {
@@ -87,11 +112,10 @@ public class ChatLog {
      * @implNote
      * <ol>
      *   <li>Checks if the file at {@link #PATH} exists.</li>
-     *   <li>If it doesn't exist, sets {@link #data} to an empty object and returns.</li>
+     *   <li>If it doesn't exist, sets {@link #data} to a default object and returns.</li>
      *   <li>If it does exist, converts the ChatLog file to UTF-8 if necessary and loads it into {@code rawData}.</li>
-     *   <li>If {@code rawData} contains invalid data, resets {@link #data}.</li>
-     *   <li>Transforms any legacy UUID int arrays into a stringified format</li>
-     *   <li>Then uses {@link Data#CODEC} to parse {@code rawData} into a usable {@link Data} object.</li>
+     *   <li>If {@code rawData} contains invalid data, creates a default object and returns.</li>
+     *   <li>Uses {@link Data#CODEC} to parse {@code rawData} into a usable {@link Data} object.</li>
      *   <li>Removes any overflowing messages.</li>
      *   <li>If any errors are thrown, logs the issue and backs up the broken file just in case.</li>
      *   <li>Otherwise, logs a message noting how many entries were loaded.</li>
@@ -147,17 +171,19 @@ public class ChatLog {
         }
 
         try {
+            suspended = true; // prevents errors from CMEs and OPEN_FILE events
             JsonObject jsonData = JsonHelper.deserialize(rawData);
-            data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData).resultOrPartial(e -> {
-                throw new JsonSyntaxException(e);
-            }).orElseThrow();
+            data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData)
+                .resultOrPartial(e -> ChatPatches.logAndThrowReportMsg(new JsonParseException(e)))
+                .orElseThrow();
+            suspended = false;
 
             // the sublist indices make sure to only keep the newest data and remove the oldest
             // NOTE: the chat log system has the oldest messages at 0, but vanilla has the newest at 0
             if(messageCount() > config.chatMaxMessages)
-                data.messages = (ArrayList<Text>)data.messages.subList( messageCount() - config.chatMaxMessages, messageCount() );
+                data.messages = data.messages.subList( messageCount() - config.chatMaxMessages, messageCount() );
             if(historyCount() > config.chatMaxMessages)
-                data.history = (ArrayList<String>)data.history.subList( historyCount() - config.chatMaxMessages, historyCount() );
+                data.history = data.history.subList( historyCount() - config.chatMaxMessages, historyCount() );
 
             loaded = true;
         } catch(Exception e) {
@@ -167,6 +193,8 @@ public class ChatLog {
 
             data = new Data(true);
             return;
+        } finally {
+            suspended = false; // make sure to unsuspend the chat log if something went berserk; see ClickEvent$ActionMixin
         }
 
         LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}' in {} seconds",
@@ -197,15 +225,16 @@ public class ChatLog {
         try {
             registeredOps = ChatPatches.jsonOps();
         } catch(NullPointerException npe) {
-            ChatPatches.logReportMsg(npe);
             dumpData();
             return;
         }
 
         try {
+            suspended = true; // prevents errors from CMEs and OPEN_FILE events
             JsonElement json = Data.CODEC.encodeStart(registeredOps, data)
-                .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+                .resultOrPartial(e -> ChatPatches.logAndThrowReportMsg(new JsonParseException(e)))
                 .orElseThrow();
+            suspended = false;
 
             Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
@@ -214,13 +243,11 @@ public class ChatLog {
             LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}' in {} seconds",
                 messageCount(), historyCount(), PATH, (System.currentTimeMillis() - start) / 1000.0
             );
-
-            // temporarily removed the ugly ConcurrentModificationException catch block bc it's ugly and not a real solution:
-            // fixme!
-
         } catch(IOException | RuntimeException e) {
             LOGGER.error("[ChatLog.serialize] An I/O or unexpected runtime error occurred while trying to save the chat log:", e);
             dumpData();
+        } finally {
+            suspended = false; // make sure to unsuspend the chat log if something went berserk; see ClickEvent$ActionMixin
         }
     }
 
@@ -241,19 +268,39 @@ public class ChatLog {
         }
     }
 
-    /** Restores the chat log from {@link #data} into Minecraft. */
-    public static void restore(MinecraftClient client) {
-        restoring = true;
+    /**
+     * Restores the chat log from {@link #data} into
+     * the {@linkplain ChatHud chat hud}.
+     */
+    public static void restore() {
+        // extra safety check to prevent the suspended flag persisting as true; see ClickEvent$ActionMixin
+		if(!data.history.isEmpty() && !data.messages.isEmpty()) {
+			try {
+				suspended = true;
 
-        if(!data.history.isEmpty())
-            data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
+				data.history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
+				data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
+			} catch(RuntimeException e) {
+				ChatPatches.logReportMsg(e);
+			} finally {
+				suspended = false;
+			}
+		}
 
-        if(!data.messages.isEmpty())
-            data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
+		LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", messageCount(), historyCount(), PATH);
+    }
 
-        restoring = false;
-
-        LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", messageCount(), historyCount(), PATH);
+    /**
+     * Attempts to load the chat log from {@link #PATH}
+     * and restore it into the game. Only does so if
+     * the chat log is enabled in the config and hasn't
+     * been loaded yet.
+     */
+    public static void load() {
+        if(!loaded && config.chatlog) {
+            deserialize();
+            restore();
+        }
     }
 
     /**
@@ -275,7 +322,16 @@ public class ChatLog {
         ticksUntilSave--;
 
         if(ticksUntilSave < 0)
-            ticksUntilSave = config.chatlogSaveInterval * 60 * 20;
+            ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
+    }
+
+    /**
+     * Saves the chat log if the save interval is
+     * disabled and the game is paused.
+     */
+    public static void saveIfPaused(Screen screen) {
+        if(config.chatlogSaveInterval == 0 && (!mc.isWindowFocused() || screen instanceof GameMenuScreen))
+            serialize();
     }
 
     /**
@@ -290,7 +346,7 @@ public class ChatLog {
 
 
     public static void addMessage(Text msg) {
-        if(restoring)
+        if(suspended)
             return;
         if(messageCount() > config.chatMaxMessages)
             data.messages.removeFirst();
@@ -298,7 +354,7 @@ public class ChatLog {
         data.messages.add(msg);
     }
     public static void addHistory(String msg) {
-        if(restoring)
+        if(suspended)
             return;
         if(historyCount() > config.chatMaxMessages)
             data.history.removeFirst();
@@ -306,13 +362,8 @@ public class ChatLog {
         data.history.add(msg);
     }
 
-    /**
-     * Returns if the chat log is currently
-     * being restored into the chat. Used
-     * to prevent logging and modifying
-     * restored messages.
-     */
-    public static boolean isRestoring() { return restoring; }
+    /** @see #suspended */
+    public static boolean isSuspended() { return suspended; }
 
     public static void clearMessages() {
         data.messages.clear();

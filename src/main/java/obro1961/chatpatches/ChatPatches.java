@@ -56,19 +56,12 @@ public class ChatPatches implements ClientModInitializer {
 		// testing details (server=hypixel): normal disconnects work on both world and server, manual F3+C crash works on world but NOT server
 		// honestly I don't care if it fails on crashes, its fixable a) through the save interval or b) by fixing the crash's source
 		ClientPlayConnectionEvents.DISCONNECT.register((network, client) -> ChatLog.serialize());
-		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> {
-			// saves the chat log if [the save interval is disabled] AND [the pause menu is showing OR the game isn't focused]
-			if( config.chatlogSaveInterval == 0 && (screen instanceof GameMenuScreen || !client.isWindowFocused()) )
-				ChatLog.serialize();
-		});
-		ClientTickEvents.END_WORLD_TICK.register(world -> ChatLog.tickSaveCounter());
+		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> ChatLog.saveIfPaused(screen));
+		ClientTickEvents.END_WORLD_TICK.register(world -> ChatLog.tickSaveCounter()); // i dont think this works...
 
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
-			if(!ChatLog.loaded && config.chatlog) {
-				ChatLog.deserialize();
-				ChatLog.restore(client);
-			}
+			ChatLog.load();
 
 			//prepub move all this to Config or sm? feels out of place...
 			ChatHudAccessor chat = (ChatHudAccessor) client.inGameHud.getChatHud();
@@ -106,7 +99,6 @@ public class ChatPatches implements ClientModInitializer {
 	 * @param client A non-null MinecraftClient that must be in-game.
 	 * @return (C or S) + "_" + (current world name)
 	 */
-	@SuppressWarnings("DataFlowIssue") // getServer and getCurrentServerEntry are not null if isIntegratedServerRunning is true
 	public static String currentWorldName(@NotNull MinecraftClient client) {
 		Objects.requireNonNull(client, "MinecraftClient must exist to access client data:");
 		String entryName;

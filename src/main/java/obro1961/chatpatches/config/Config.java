@@ -40,15 +40,6 @@ import static obro1961.chatpatches.util.TextUtils.text;
 public class Config {
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
     public static final Config DEFAULTS = new Config();
-    /**
-     * List of mods installed that, in one way or another,
-     * cause modified messages to have an extra space in
-     * between the timestamp and message content. While
-     * I could open issues to deal with this issue, it's
-     * much easier to just remove the space, especially
-     * if it's unintentionally my fault.
-     */
-    //public static final Stream<String> EXTRA_SPACE_MODS = Stream.of("styledchat");
 
     private static final FabricLoader FABRIC = FabricLoader.getInstance();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -177,7 +168,7 @@ public class Config {
             ChatPatches.logReportMsg(e);
         }
 
-        return makeObject(chatNameFormat, profile.getName(), "", /*EXTRA_SPACE_MODS.anyMatch(FABRIC::isModLoaded) ? "" :*/ " ", style);
+        return makeObject(chatNameFormat, profile.getName(), "", " ", style);
     }
 
     public MutableText makeDupeCounter(int dupes) {

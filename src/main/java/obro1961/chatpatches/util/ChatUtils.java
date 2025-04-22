@@ -164,7 +164,7 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m, boolean refreshing) {
-		if( refreshing || ChatLog.isRestoring() )
+		if( refreshing || ChatLog.isSuspended() )
 			return m; // cancels modifications when loading the chatlog or regenerating visibles
 
 		boolean errorThrown = false;
@@ -244,7 +244,7 @@ public class ChatUtils {
 				// don't reformat if it isn't vanilla or needed
 				content = m.copy();
 			}
-		} catch(Exception e) {
+		} catch(RuntimeException e) {
 			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}', returning original:", m.getString());
 			LOGGER.debug("[ChatUtils.modifyMessage] \tOriginal message structure: {}", m);
 			LOGGER.debug("[ChatUtils.modifyMessage] \tModified message structure:");
