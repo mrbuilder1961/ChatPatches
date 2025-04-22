@@ -5,9 +5,9 @@ import java.util.function.Function
 import java.util.stream.Stream
 
 plugins {
-	id "fabric-loom" version "1.7-SNAPSHOT"
+	id "fabric-loom" version "1.10-SNAPSHOT"
 	id "maven-publish"
-	id "me.modmuss50.mod-publish-plugin" version "0.7.4"
+	id "me.modmuss50.mod-publish-plugin" version "0.8.4"
 }
 
 group = project.group
