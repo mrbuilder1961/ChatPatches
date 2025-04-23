@@ -208,7 +208,7 @@ public class YACLConfig extends Config {
                     ChatLog.clearHistory(); // if key is "ClearHistory" or "Clear"
             } else if(key.equals("chatlogLoad")) {
                 ChatLog.deserialize();
-                ChatLog.restore(MinecraftClient.getInstance());
+                ChatLog.restore();
             } else if(key.equals("chatlogSave")) {
                 ChatLog.serialize();
             } else if(key.equals("chatlogBackup")) {

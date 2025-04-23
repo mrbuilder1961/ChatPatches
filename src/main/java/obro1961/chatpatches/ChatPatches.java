@@ -9,7 +9,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryOps;
@@ -34,6 +33,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	public static final Supplier<String> TIME_FORMATTER = () -> new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
 
+	public static boolean usingUnsafeCodec = false;
 	public static Config config = Config.create();
 	/** Contains the sender and timestamp data of the last received chat message. */
 	public static ChatUtils.MessageData msgData = ChatUtils.NIL_MSG_DATA;
@@ -64,19 +64,12 @@ public class ChatPatches implements ClientModInitializer {
 		// testing details (server=hypixel): normal disconnects work on both world and server, manual F3+C crash works on world but NOT server
 		// honestly I don't care if it fails on crashes, its fixable a) through the save interval or b) by fixing the crash's source
 		ClientPlayConnectionEvents.DISCONNECT.register((network, client) -> ChatLog.serialize());
-		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> {
-			// saves the chat log if [the save interval is disabled] AND [the pause menu is showing OR the game isn't focused]
-			if( config.chatlogSaveInterval == 0 && (screen instanceof GameMenuScreen || !client.isWindowFocused()) )
-				ChatLog.serialize();
-		});
+		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> ChatLog.saveIfPaused(screen));
 		ClientTickEvents.END_WORLD_TICK.register(world -> ChatLog.tickSaveCounter());
 
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
-			if(config.chatlog && !ChatLog.loaded) {
-				ChatLog.deserialize();
-				ChatLog.restore(client);
-			}
+			ChatLog.load();
 
 			ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 			String current = currentWorldName(client);
@@ -113,7 +106,6 @@ public class ChatPatches implements ClientModInitializer {
 	 * @param client A non-null MinecraftClient that must be in-game.
 	 * @return (C or S) + "_" + (current world name)
 	 */
-	@SuppressWarnings("DataFlowIssue") // getServer and getCurrentServerEntry are not null if isIntegratedServerRunning is true
 	public static String currentWorldName(@NotNull MinecraftClient client) {
 		Objects.requireNonNull(client, "MinecraftClient must exist to access client data:");
 		String entryName;
