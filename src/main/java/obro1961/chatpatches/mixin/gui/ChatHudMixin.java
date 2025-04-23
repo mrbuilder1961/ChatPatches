@@ -16,7 +16,6 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
-import obro1961.chatpatches.util.Flags;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -141,7 +140,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     @Inject(method = "addToMessageHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/ArrayListDeque;size()I"))
     private void addHistory(String message, CallbackInfo ci) {
-        if( !Flags.LOADING_CHATLOG.isRaised() )
+        if(!ChatLog.isSuspended())
             ChatLog.addHistory(message);
     }
 
@@ -153,7 +152,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
 
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
     private void ignoreRestoredMessages(ChatHudLine hudLine, CallbackInfo ci) {
-        if( Flags.LOADING_CHATLOG.isRaised() && hudLine.indicator() != null )
+        if( ChatLog.isSuspended() && hudLine.indicator() != null )
             ci.cancel();
     }
 
@@ -218,10 +217,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
         } catch(IndexOutOfBoundsException e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] Couldn't add duplicate counter because message '{}' ({} parts) was not constructed properly.", incoming.getString(), incoming.getSiblings().size());
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] This could have also been caused by an issue with the new CompactChat dupe-condensing method. Either way,");
-            ChatPatches.logInfoReportMessage(e);
+            ChatPatches.logReportMsg(e);
         } catch(Exception e) {
             ChatPatches.LOGGER.error("[ChatHudMixin.addCounter] /!\\ Couldn't add duplicate counter because of an unexpected error! /!\\");
-            ChatPatches.logInfoReportMessage(e);
+            ChatPatches.logReportMsg(e);
         }
 
         return incoming;

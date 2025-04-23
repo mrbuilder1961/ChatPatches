@@ -147,7 +147,7 @@ public class Config {
             }
         } catch(Exception e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
-            ChatPatches.logInfoReportMessage(e);
+            ChatPatches.logReportMsg(e);
         }
 
         return makeObject(chatNameFormat, profile.getName(), "", " ", style);
@@ -247,7 +247,7 @@ public class Config {
             return new ConfigOption<>( (T)config.getClass().getField(key).get(config), (T)config.getClass().getField(key).get(DEFAULTS), key );
         } catch(IllegalAccessException | NoSuchFieldException e) {
             LOGGER.error("[Config.getOption({})] An error occurred while trying to get an option value!", key);
-            ChatPatches.logInfoReportMessage(e);
+            ChatPatches.logReportMsg(e);
 
             return new ConfigOption<>( (T)new Object(), (T)new Object(), key );
         }

@@ -1,5 +1,7 @@
 package obro1961.chatpatches;
 
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -7,7 +9,8 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.registry.RegistryOps;
 import net.minecraft.util.Identifier;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
@@ -32,6 +35,13 @@ public class ChatPatches implements ClientModInitializer {
 
 	private static String lastWorld = "";
 
+	public static Identifier id(String path) {
+		// unfortunately this method in 1.20.6 is method_43902
+		// but in 1.21 it's method_60655, making it incompatible
+		// this is grinding my gears bc the code is identical ToT
+		return Identifier.of(MOD_ID, path);
+	}
+
 	@Override
 	public void onInitializeClient() {
 		/*
@@ -39,22 +49,14 @@ public class ChatPatches implements ClientModInitializer {
 		* 	CLIENT_STOPPING - Always saves
 		* 	SCREEN_AFTER_INIT - Saves if there is no save interval AND if the screen is the OptionsScreen (paused)
 		* 	START_CLIENT_TICK - Ticks the save counter, saves if the counter is 0, resets if <0
-		* 	MinecraftClientMixin#saveChatlogOnCrash - Always saves
 		*/
-		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ChatLog.serialize(false));
-		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> {
-			// saves the chat log if [the save interval is 0] AND [the pause menu is showing OR the game isn't focused]
-			if( config.chatlogSaveInterval == 0 && (screen instanceof GameMenuScreen || !client.isWindowFocused()) )
-				ChatLog.serialize(false);
-		});
+		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ChatLog.serialize());
+		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> ChatLog.saveIfPaused(screen));
 		ClientTickEvents.START_CLIENT_TICK.register(client -> ChatLog.tickSaveCounter());
 
 		// registers the cached message file importer and boundary sender
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
-			if(config.chatlog && !ChatLog.loaded) {
-				ChatLog.deserialize();
-				ChatLog.restore(client);
-			}
+			ChatLog.load();
 
 			ChatHudAccessor chatHud = ChatHudAccessor.from(client);
 			String current = currentWorldName(client);
@@ -84,6 +86,26 @@ public class ChatPatches implements ClientModInitializer {
 
 
 	/**
+	 * Returns the current ClientWorld's name. For singleplayer,
+	 * returns the level name. For multiplayer, returns the
+	 * server entry name. Falls back on the IP if it was
+	 * direct-connect. Leads with "C_" or "S_" depending
+	 * on the source of the ClientWorld.
+	 * @param client A non-null MinecraftClient that must be in-game.
+	 * @return (C or S) + "_" + (current world name)
+	 */
+	public static String currentWorldName(@NotNull MinecraftClient client) {
+		Objects.requireNonNull(client, "MinecraftClient must exist to access client data:");
+		String entryName;
+
+		return client.isIntegratedServerRunning()
+			? "C_" + client.getServer().getSaveProperties().getLevelName()
+			: (entryName = client.getCurrentServerEntry().name) == null || entryName.isBlank() // check if null/empty then use IP
+			? "S_" + client.getCurrentServerEntry().address
+			: "S_" + client.getCurrentServerEntry().name;
+	}
+
+	/**
 	 * Logs an error-level message telling the user to report
 	 * the given error. The class and method of the caller is
 	 * provided from a {@link StackWalker}.
@@ -94,7 +116,7 @@ public class ChatPatches implements ClientModInitializer {
 	 * (error)
 	 * </pre>
 	 */
-	public static void logInfoReportMessage(Throwable error) {
+	public static void logReportMsg(Throwable error) {
 		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 		String clazz = walker.getCallerClass().getSimpleName();
 		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
@@ -103,33 +125,30 @@ public class ChatPatches implements ClientModInitializer {
 	}
 
 	/**
-	 * Creates a new Identifier using the ChatPatches mod ID.
+	 * Executes {@link #logReportMsg(Throwable)}
+	 * and throws the passed error.
 	 */
-	public static Identifier id(String path) {
-		// unfortunately this method in 1.20.6 is method_43902
-		// but in 1.21 it's method_60655, making it incompatible
-		// this is grinding my gears bc the code is identical 😭
-		return Identifier.of(MOD_ID, path);
+	public static <X extends Throwable> X logAndThrowReportMsg(@NotNull X error) throws X {
+		logReportMsg(error);
+		throw error;
 	}
 
 	/**
-	 * Returns the current ClientWorld's name. For singleplayer,
-	 * returns the level name. For multiplayer, returns the
-	 * server entry name. Falls back on the IP if it was
-	 * direct-connect. Leads with "C_" or "S_" depending
-	 * on the source of the ClientWorld.
-	 * @param client A non-null MinecraftClient that must be in-game.
-	 * @return (C or S) + "_" + (current world name)
+	 * Returns a {@link JsonOps#INSTANCE} wrapped by a {@link DynamicRegistryManager.Immutable}
+	 * (provided by the ClientWorld) to not throw crashes when using {@link Codec}s.
+	 *
+	 * <p>Fixes <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>.
+	 * Thanks to
+	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1278519812628156528">arkosammy12</a>
+	 * for help on the Fabric Discord!
+	 *
+	 * @since 1.20.5 introduced the necessity
+	 * of wrapping with the {@link RegistryWrapper.WrapperLookup}
 	 */
-	@SuppressWarnings("DataFlowIssue") // getServer and getCurrentServerEntry are not null if isIntegratedServerRunning is true
-	public static String currentWorldName(@NotNull MinecraftClient client) {
-		Objects.requireNonNull(client, "MinecraftClient must exist to access client data:");
-		String entryName;
-
-		return client.isIntegratedServerRunning()
-			? "C_" + client.getServer().getSaveProperties().getLevelName()
-			: (entryName = client.getCurrentServerEntry().name) == null || entryName.isBlank() // check if null/empty then use IP
-				? "S_" + client.getCurrentServerEntry().address
-				: "S_" + client.getCurrentServerEntry().name;
+	public static RegistryOps<JsonElement> jsonOps() throws NullPointerException {
+		if(MinecraftClient.getInstance().world instanceof ClientWorld world)
+			return world.getRegistryManager().getOps(JsonOps.INSTANCE);
+		else
+			throw logAndThrowReportMsg(new NullPointerException("[ChatPatches#jsonOps] Expected existing ClientWorld"));
 	}
 }

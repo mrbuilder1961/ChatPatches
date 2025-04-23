@@ -168,7 +168,7 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m, boolean refreshing) {
-		if( refreshing || Flags.LOADING_CHATLOG.isRaised() )
+		if( refreshing || ChatLog.isSuspended() )
 			return m; // cancels modifications when loading the chatlog or regenerating visibles
 
 		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
@@ -247,7 +247,7 @@ public class ChatUtils {
 			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \tModified message structure:");
 			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
 			ChatPatches.LOGGER.debug("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
-			ChatPatches.logInfoReportMessage(e);
+			ChatPatches.logReportMsg(e);
 		}
 
 		// assembles constructed message and adds a duplicate counter according to the #addCounter method

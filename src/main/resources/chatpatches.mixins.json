@@ -3,11 +3,9 @@
   "minVersion": "0.8",
   "package": "obro1961.chatpatches.mixin",
   "compatibilityLevel": "JAVA_21",
-  "verbose": true,
   "mixinPriority": 2000,
   "mixins": [],
   "client": [
-    "MinecraftClientMixin",
     "chat.MessageHandlerMixin",
     "gui.ChatHudMixin",
     "gui.ChatScreenMixin",

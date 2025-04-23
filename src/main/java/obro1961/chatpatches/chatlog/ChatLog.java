@@ -1,28 +1,31 @@
 package obro1961.chatpatches.chatlog;
 
-import com.google.common.collect.Lists;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.registry.BuiltinRegistries;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
-import net.minecraft.util.Uuids;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.Flags;
+import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -30,8 +33,6 @@ import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -46,11 +47,23 @@ public class ChatLog {
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
     public static final MessageIndicator RESTORED_TEXT = new MessageIndicator(0x382fb5, null, null, I18n.translate("text.chatpatches.restored"));
 
-    public static boolean loaded = false;
-    public static int ticksUntilSave = config.chatlogSaveInterval * 60 * 20; // convert minutes to ticks
+    private static final MinecraftClient mc = MinecraftClient.getInstance();
 
+    public static boolean loaded = false;
+    public static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE; // convert minutes to ticks
+
+    /**
+     * Used to suspend the addition and restoration
+     * of new messages to the chat log, which
+     * prevents log spam of restored messages and
+     * concurrent modification exceptions.
+     *
+     * @see #restore()
+     * @see #serialize()
+     * @see ClickEvent$ActionMixin#validateAll(ClickEvent.Action, CallbackInfoReturnable)
+     */
+    private static boolean suspended = false;
     private static ChatLog.Data data = new Data();
-    private static boolean savedAfterCrash = false;
     private static int lastHistoryCount = -1, lastMessageCount = -1;
 
 
@@ -65,19 +78,25 @@ public class ChatLog {
          * lists mutable.
          */
         public static final Codec<Data> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-            Codec.list(TextCodecs.CODEC).xmap(ArrayList::new, Function.identity()).fieldOf("messages").forGetter(data -> data.messages),
-            Codec.list(Codec.STRING).xmap(ArrayList::new, Function.identity()).fieldOf("history").forGetter(data -> data.history)
+            TextCodecs.CODEC.listOf()
+                .xmap(m -> ObjectLists.synchronize(new ObjectArrayList<>(m)), Function.identity())
+                .fieldOf("messages")
+                .forGetter(data -> data.messages),
+            Codec.STRING.listOf()
+                .xmap(h -> ObjectLists.synchronize(new ObjectArrayList<>(h)), Function.identity())
+                .fieldOf("history")
+                .forGetter(data -> data.history)
         ).apply(inst, (messages, history) -> Util.make(new Data(), data -> {
             data.messages = messages;
             data.history = history;
         })));
 
-        public ArrayList<Text> messages;
-        public ArrayList<String> history;
+        public ObjectList<Text> messages;
+        public ObjectList<String> history;
 
         private Data() {
-            messages = Lists.newArrayListWithExpectedSize(DEFAULT_SIZE);
-            history = Lists.newArrayListWithExpectedSize(DEFAULT_SIZE);
+            messages = new ObjectArrayList<>(DEFAULT_SIZE);
+            history = new ObjectArrayList<>(DEFAULT_SIZE);
         }
 
         private Data(boolean done) {
@@ -93,11 +112,10 @@ public class ChatLog {
      * @implNote
      * <ol>
      *   <li>Checks if the file at {@link #PATH} exists.</li>
-     *   <li>If it doesn't exist, sets {@link #data} to an empty object and returns.</li>
+     *   <li>If it doesn't exist, sets {@link #data} to a default object and returns.</li>
      *   <li>If it does exist, converts the ChatLog file to UTF-8 if necessary and loads it into {@code rawData}.</li>
-     *   <li>If {@code rawData} contains invalid data, resets {@link #data}.</li>
-     *   <li>Transforms any legacy UUID int arrays into a stringified format</li>
-     *   <li>Then uses {@link Data#CODEC} to parse {@code rawData} into a usable {@link Data} object.</li>
+     *   <li>If {@code rawData} contains invalid data, creates a default object and returns.</li>
+     *   <li>Uses {@link Data#CODEC} to parse {@code rawData} into a usable {@link Data} object.</li>
      *   <li>Removes any overflowing messages.</li>
      *   <li>If any errors are thrown, logs the issue and backs up the broken file just in case.</li>
      *   <li>Otherwise, logs a message noting how many entries were loaded.</li>
@@ -105,6 +123,9 @@ public class ChatLog {
      */
     public static void deserialize() {
         String rawData = Data.EMPTY_DATA;
+
+        long start = System.currentTimeMillis();
+        LOGGER.info("[ChatLog.deserialize] Reading...");
 
         if(Files.exists(PATH)) {
             try {
@@ -134,31 +155,35 @@ public class ChatLog {
                 rawData = Data.EMPTY_DATA; // just in case of corruption from failures
             }
         } else {
-            data = new Data(true);
-            return;
+            // intentionally creates invalid data to prompt the next if block to
+            // generate a blank one and log it, instead of it happening twice
+            rawData = "";
         }
 
 
         // ignore invalid files
         if( rawData.length() < 2 || !rawData.startsWith("{") ) {
             data = new Data(true);
+            LOGGER.info("[ChatLog.deserialize] No chat log found at '{}', generated a blank one for {} initial messages in {} seconds",
+                PATH, Data.DEFAULT_SIZE, (System.currentTimeMillis() - start) / 1000.0
+            );
             return;
         }
 
         try {
-            // transformUUIDArrays: (temporary?) method to fix old chat logs
-            JsonObject jsonData = JsonHelper.deserialize( transformUUIDArrays(rawData) );
-
-            data = Data.CODEC.parse(getRegistryOps(JsonOps.INSTANCE), jsonData).resultOrPartial(e -> {
-                throw new JsonSyntaxException(e);
-            }).orElseThrow();
+            suspended = true; // prevents errors from CMEs and OPEN_FILE events
+            JsonObject jsonData = JsonHelper.deserialize(rawData);
+            data = Data.CODEC.parse(ChatPatches.jsonOps(), jsonData)
+                .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+                .orElseThrow();
+            suspended = false;
 
             // the sublist indices make sure to only keep the newest data and remove the oldest
             // NOTE: the chat log system has the oldest messages at 0, but vanilla has the newest at 0
             if(messageCount() > config.chatMaxMessages)
-                data.messages = (ArrayList<Text>)data.messages.subList( messageCount() - config.chatMaxMessages, messageCount() );
+                data.messages = data.messages.subList( messageCount() - config.chatMaxMessages, messageCount() );
             if(historyCount() > config.chatMaxMessages)
-                data.history = (ArrayList<String>)data.history.subList( historyCount() - config.chatMaxMessages, historyCount() );
+                data.history = data.history.subList( historyCount() - config.chatMaxMessages, historyCount() );
 
             loaded = true;
         } catch(Exception e) {
@@ -168,49 +193,64 @@ public class ChatLog {
 
             data = new Data(true);
             return;
+        } finally {
+            suspended = false; // make sure to unsuspend the chat log if something went berserk; see ClickEvent$ActionMixin
         }
 
-        LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}'",
-            messageCount(), historyCount(),
-            PATH
+        LOGGER.info("[ChatLog.deserialize] Read the chat log containing {} messages and {} sent messages from '{}' in {} seconds",
+            messageCount(), historyCount(), PATH, (System.currentTimeMillis() - start) / 1000.0
         );
     }
 
     /**
-     * Saves the chat log to {@link #PATH}. Only saves if {@link Config#chatlog} is true,
-     * it isn't crashing again, and if there is *new* data to save.
-     *
-     * @param crashing If the game is crashing. If true, it will only save if {@link #savedAfterCrash}
-     * is false AND if {@link Config#chatlogSaveInterval} is 0.
+     * Saves the chat log to {@link #PATH}. Only saves if {@link Config#chatlog} is true
+     * and if there is *new* data to save. <i>As of 1.20.5, also requires the player to
+     * be in-game during the saving process, so the registry-synced TextCodec can be
+     * used (#180).</i>
      */
-    public static void serialize(boolean crashing) {
-        if(!config.chatlog || (crashing && savedAfterCrash))
+    public static void serialize() {
+        if(!config.chatlog)
             return;
         if(data.messages.isEmpty() && data.history.isEmpty())
             return; // don't overwrite the file with an empty one if there's nothing to save
         if(messageCount() == lastMessageCount && historyCount() == lastHistoryCount)
-            return; // don't save if there's no new data AND if the path is the default one (not a backup)
+            return; // don't save if there's no new data
+
+        long start = System.currentTimeMillis();
+        LOGGER.info("[ChatLog.serialize] Saving...");
+
+
+        // catch the NPE and cancel IF it's thrown
+        DynamicOps<JsonElement> registeredOps;
+        try {
+            registeredOps = ChatPatches.jsonOps();
+        } catch(NullPointerException npe) {
+            dumpData();
+            return;
+        }
 
         try {
-            String str = JsonHelper.toSortedString(
-                Data.CODEC.encodeStart(getRegistryOps(JsonOps.INSTANCE), data).resultOrPartial(e -> {
-                    throw new JsonSyntaxException(e);
-                }).orElseThrow()
-            );
+            suspended = true; // prevents errors from CMEs and OPEN_FILE events
+            JsonElement json = Data.CODEC.encodeStart(registeredOps, data)
+                .resultOrPartial(e -> ChatPatches.logAndThrowReportMsg(new JsonParseException(e)))
+                .orElseThrow();
+            suspended = false;
 
-            Files.writeString(PATH, str, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             lastHistoryCount = historyCount();
             lastMessageCount = messageCount();
-            LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}'", messageCount(), historyCount(), PATH);
-        } catch(IOException e) {
-            LOGGER.error("[ChatLog.serialize] An I/O error occurred while trying to save the chat log:", e);
-            LOGGER.debug("[ChatLog.serialize] Dumped data:\n{\"history\":{},\"messages\":{}}", data.history, data.messages);
+            LOGGER.info("[ChatLog.serialize] Saved the chat log containing {} messages and {} sent messages to '{}' in {} seconds",
+                messageCount(), historyCount(), PATH, (System.currentTimeMillis() - start) / 1000.0
+            );
+        } catch(IOException | RuntimeException e) {
+            LOGGER.error("[ChatLog.serialize] An I/O or unexpected runtime error occurred while trying to save the chat log:", e);
+            dumpData();
         } finally {
-            if(crashing)
-                savedAfterCrash = true;
+            suspended = false; // make sure to unsuspend the chat log if something went berserk; see ClickEvent$ActionMixin
         }
     }
+
 
     /**
      * Creates a backup of the current chat log file
@@ -222,45 +262,45 @@ public class ChatLog {
      */
     public static void backup() {
         try {
-            Files.copy(PATH, PATH.resolveSibling( "chatlog_" + ChatPatches.TIME_FORMATTER.get() + ".json" ));
+            Files.copy(PATH, PATH.resolveSibling( "chatlog_" + Util.getFormattedCurrentTime() + ".json" ));
         } catch(IOException e) {
             LOGGER.warn("[ChatLog.backup] Couldn't backup the chat log at '{}':", PATH, e);
         }
     }
 
-    /** Restores the chat log from {@link #data} into Minecraft. */
-    public static void restore(MinecraftClient client) {
-        Flags.LOADING_CHATLOG.raise();
+    /**
+     * Restores the chat log from {@link #data} into
+     * the {@linkplain ChatHud chat hud}.
+     */
+    public static void restore() {
+        // extra safety check to prevent the suspended flag persisting as true; see ClickEvent$ActionMixin
+        if(!data.history.isEmpty() && !data.messages.isEmpty()) {
+            try {
+                suspended = true;
 
-        if(!data.history.isEmpty())
-            data.history.forEach(client.inGameHud.getChatHud()::addToMessageHistory);
-
-        if(!data.messages.isEmpty())
-            data.messages.forEach(msg -> client.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
-
-        Flags.LOADING_CHATLOG.lower();
+                data.history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
+                data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_TEXT));
+            } catch(RuntimeException e) {
+                ChatPatches.logReportMsg(e);
+            } finally {
+                suspended = false;
+            }
+        }
 
         LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages from '{}' into Minecraft!", messageCount(), historyCount(), PATH);
     }
 
     /**
-     * Wraps the given {@link DynamicOps} object with
-     * a registry lookup context, either from the
-     * client's {@link ClientPlayNetworkHandler}
-     * or a from newly created one if not in-game.
-     *
-     * <p>Fixes <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>,
-     * where some classes aren't registered according to
-     * the plain {@code ops}  object. Or something like
-     * that, idfk.
-     *
-     * @since 1.21, but 1.20.5 introduces the necessity
-     * of the {@link RegistryWrapper.WrapperLookup},
-     * so this is included for compatibility anyway.
+     * Attempts to load the chat log from {@link #PATH}
+     * and restore it into the game. Only does so if
+     * the chat log is enabled in the config and hasn't
+     * been loaded yet.
      */
-    public static <T> RegistryOps<T> getRegistryOps(DynamicOps<T> ops) {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        return mc.getNetworkHandler() != null ? mc.getNetworkHandler().getRegistryManager().getOps(ops) : BuiltinRegistries.createWrapperLookup().getOps(ops);
+    public static void load() {
+        if(!loaded && config.chatlog) {
+            deserialize();
+            restore();
+        }
     }
 
     /**
@@ -277,52 +317,53 @@ public class ChatLog {
      */
     public static void tickSaveCounter() {
         if(config.chatlogSaveInterval > 0 && ticksUntilSave == 0)
-            serialize(false);
+            serialize();
 
         ticksUntilSave--;
 
         if(ticksUntilSave < 0)
-            ticksUntilSave = config.chatlogSaveInterval * 60 * 20;
+            ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
     }
 
     /**
-     * DFU-type method to update old chat logs and
-     * allow them to be deserialized in this post-Codec
-     * world. This method may be deleted at any time.
-     *
-     * @implNote Currently transforms old UUID arrays into
-     * stringified ones.
+     * Saves the chat log if the save interval is
+     * disabled and the game is paused.
      */
-    private static String transformUUIDArrays(String oldRawData) {
-        // all the "\\s*" substrings allow matching prettified chat logs
-        // without whitespace matches: `"id":[(-?\\d+),(-?\\d+),(-?\\d+),(-?\\d+)]`
-        String uuidArrayRegex = "\"id\"\\s*:\\s*\\[\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*,\\s*(-?\\d+)\\s*]";
-
-        String fixedData = oldRawData;
-        while( fixedData.matches(".*"+uuidArrayRegex+".*") ) {
-            // find the first instance and map the stringified array to a real int array
-            int[] bits = Arrays.stream(fixedData.replaceFirst(".*"+uuidArrayRegex+".*", "$1,$2,$3,$4").split(","))
-                .mapToInt(Integer::parseInt)
-                .toArray();
-            // actually replace the stringified array with the dashed uuid
-            fixedData = fixedData.replaceFirst( uuidArrayRegex, "\"id\":\"" + Uuids.toUuid(bits) + "\"" );
-        }
-
-        return fixedData;
+    public static void saveIfPaused(Screen screen) {
+        if(config.chatlogSaveInterval == 0 && (!mc.isWindowFocused() || screen instanceof GameMenuScreen))
+            serialize();
     }
 
+    /**
+     * Dumps chat log data into the debug log. Note:
+     * Assumes the Text codec is unusable, so instead
+     * maps each message using {@link Text#getString()}.
+     */
+    @SuppressWarnings("StringConcatenationArgumentToLogCall")
+    public static void dumpData() {
+        LOGGER.debug("[ChatLog.dumpData] " + Data.EMPTY_DATA.replaceAll("\\[]", "{}"), data.history, data.messages.stream().map(Text::getString).toList());
+    }
+
+
     public static void addMessage(Text msg) {
+        if(suspended)
+            return;
         if(messageCount() > config.chatMaxMessages)
             data.messages.removeFirst();
 
         data.messages.add(msg);
     }
     public static void addHistory(String msg) {
+        if(suspended)
+            return;
         if(historyCount() > config.chatMaxMessages)
             data.history.removeFirst();
 
         data.history.add(msg);
     }
+
+    /** @see #suspended */
+    public static boolean isSuspended() { return suspended; }
 
     public static void clearMessages() {
         data.messages.clear();
