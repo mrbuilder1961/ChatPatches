@@ -200,12 +200,16 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			hoverButtons.put(COPY_RAW_STRING, of(1, COPY_RAW_STRING, () -> Formatting.strip( selectedLine.content().getString() )));
 			hoverButtons.put(COPY_FORMATTED_STRING, of(1, COPY_FORMATTED_STRING, () -> TextUtils.reorder( selectedLine.content().asOrderedText(), true )));
 			hoverButtons.put(COPY_JSON_STRING, of(1, COPY_JSON_STRING,
-				() -> TextCodecs.CODEC.encodeStart(ChatPatches.jsonOps(), selectedLine.content())
-					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
-					.map(JsonHelper::toSortedString)
-					.orElse("/!\\ An error occurred! Please open an issue on the Chat Patches GitHub and attach your log file /!\\")
-				)
-			);
+				() -> {
+					ChatPatches.usingUnsafeCodec = true;
+					String json = TextCodecs.CODEC.encodeStart(ChatPatches.jsonOps(), selectedLine.content())
+						.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+						.map(JsonHelper::toSortedString)
+						.orElse("/!\\ An error occurred! Please open an issue on the Chat Patches GitHub and attach your log file /!\\");
+					ChatPatches.usingUnsafeCodec = false;
+					return json;
+				}
+			));
 			hoverButtons.put(COPY_LINK_N.apply(0), of(1, COPY_LINK_N.apply(0), () -> ""));
 			hoverButtons.put(COPY_TIMESTAMP_TEXT, of(1, COPY_TIMESTAMP_TEXT, () -> getPart(selectedLine.content(), TIMESTAMP_INDEX).getString()));
 			hoverButtons.put(COPY_TIMESTAMP_HOVER_TEXT, of(1, COPY_TIMESTAMP_HOVER_TEXT, () -> {
