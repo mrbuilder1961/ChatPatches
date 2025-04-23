@@ -29,6 +29,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("Chat Patches");
 	public static final String MOD_ID = "chatpatches";
 
+	public static boolean usingUnsafeCodec = false;
 	public static Config config = Config.create();
 	/** Contains the sender and timestamp data of the last received chat message. */
 	public static ChatUtils.MessageData msgData = ChatUtils.NIL_MSG_DATA;
@@ -101,8 +102,8 @@ public class ChatPatches implements ClientModInitializer {
 		return client.isIntegratedServerRunning()
 			? "C_" + client.getServer().getSaveProperties().getLevelName()
 			: (entryName = client.getCurrentServerEntry().name) == null || entryName.isBlank() // check if null/empty then use IP
-			? "S_" + client.getCurrentServerEntry().address
-			: "S_" + client.getCurrentServerEntry().name;
+				? "S_" + client.getCurrentServerEntry().address
+				: "S_" + client.getCurrentServerEntry().name;
 	}
 
 	/**
@@ -134,8 +135,8 @@ public class ChatPatches implements ClientModInitializer {
 	}
 
 	/**
-	 * Returns a {@link JsonOps#INSTANCE} wrapped by a {@link DynamicRegistryManager.Immutable}
-	 * (provided by the ClientWorld) to not throw crashes when using {@link Codec}s.
+	 * Returns a {@link JsonOps#INSTANCE} wrapped by a {@link net.minecraft.registry.DynamicRegistryManager.Immutable}
+	 * (provided by the ClientWorld) to not throw crashes when using {@link com.mojang.serialization.Codec}s.
 	 *
 	 * <p>Fixes <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>.
 	 * Thanks to
@@ -143,7 +144,7 @@ public class ChatPatches implements ClientModInitializer {
 	 * for help on the Fabric Discord!
 	 *
 	 * @since 1.20.5 introduced the necessity
-	 * of wrapping with the {@link RegistryWrapper.WrapperLookup}
+	 * of wrapping with the {@link net.minecraft.registry.RegistryWrapper.WrapperLookup}
 	 */
 	public static RegistryOps<JsonElement> jsonOps() throws NullPointerException {
 		if(MinecraftClient.getInstance().world instanceof ClientWorld world)
