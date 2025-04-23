@@ -7,6 +7,7 @@ import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -14,12 +15,15 @@ import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.registry.RegistryOps;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -46,7 +50,7 @@ public class ChatLog {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
     public static boolean loaded = false;
-    public static int ticksUntilSave = config.chatlogSaveInterval * 60 * 20; // convert minutes to ticks
+    public static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE; // convert minutes to ticks
 
     /**
      * Used to suspend the addition and restoration
@@ -56,6 +60,7 @@ public class ChatLog {
      *
      * @see #restore()
      * @see #serialize()
+     * @see ClickEvent$ActionMixin#allowDuringSerialization(ClickEvent.Action, CallbackInfoReturnable)
      */
     private static boolean suspended = false;
     private static ChatLog.Data data = new Data();
@@ -313,7 +318,7 @@ public class ChatLog {
         ticksUntilSave--;
 
         if(ticksUntilSave < 0)
-            ticksUntilSave = config.chatlogSaveInterval * 60 * 20;
+            ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
     }
 
     /**

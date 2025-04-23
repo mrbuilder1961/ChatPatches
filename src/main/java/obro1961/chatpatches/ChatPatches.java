@@ -26,6 +26,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+	public static boolean usingUnsafeCodec = false;
 	public static Config config = Config.create();
 	/** Contains the sender and timestamp data of the last received chat message. */
 	public static ChatUtils.MessageData msgData = ChatUtils.NIL_MSG_DATA;

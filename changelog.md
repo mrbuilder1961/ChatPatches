@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `215.6.14-secure` for Minecraft 1.21.5 on Fabric, Quilt
+- Fixed a security vulnerability
+
 ## Chat Patches `215.6.14` for Minecraft 1.21.5 on Fabric, Quilt
 - Updated to 1.21.5
 - Removed debug logs sending after every message (whoops!)
