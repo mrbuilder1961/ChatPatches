@@ -17,6 +17,7 @@ import obro1961.chatpatches.util.ChatUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -44,6 +45,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageLineIndex(double x, double y);
+
+    @Unique private int lastPos = 0, targetPos = 0, currentPos = targetPos;
+    @Unique private float startTime = 0, currentTime = 0;
+    @Unique private boolean moving;
 
     // ChatHudAccessor methods used outside this mixin
     public List<ChatHudLine> chatpatches$getMessages() { return messages; }

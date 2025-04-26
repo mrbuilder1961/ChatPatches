@@ -25,6 +25,7 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
+
 import org.spongepowered.asm.mixin.Unique;
 
 import java.io.EOFException;
@@ -53,6 +54,9 @@ public class Config {
     protected static final FabricLoader FABRIC = FabricLoader.getInstance();
     protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     protected static final MinecraftClient mc = MinecraftClient.getInstance();
+    protected int lastPos = 0, targetPos = 0, currentPos = targetPos;
+    protected float startTime = 0, currentTime = 0;
+    protected boolean moving, launched;
 
     /** @see #sendBoundaryLine() */
     protected static String lastWorld = "";
@@ -65,9 +69,10 @@ public class Config {
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = 0x55ffff;
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
     public boolean chatHidePacket = true; public int chatWidth = 0, chatHeight = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = 0xffffff;
-    public int chatShift = 0; public boolean dynamicChatShift = true, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
+    public int chatShift = 0; public float chatAnimTime = 0.3f; public boolean dynamicChatShift = true, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
+
 
     /**
      * Creates a new Config or YACLConfig, depending
@@ -252,25 +257,55 @@ public class Config {
         if(!config.dynamicChatShift || player == null)
             return chatShift;
 
-        // get player stats and standardize to scaled number of rows
+        // ? Get player stats and standardize to scaled number of rows
         int armor = player.getArmor();
         float absorption = player.getAbsorptionAmount();
         float health = player.getMaxHealth();
         double scale = mc.inGameHud.getChatHud().getChatScale();
+        
+        float smoothTime = chatAnimTime * 1000;
 
-        // calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
+        // INFO: calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
         int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
         int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
 
-        //float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f}; // contingency
-        // currently uses a third-degree polynomial regression to calculate the health scale (based on the above values)
+        // NOTE: float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f};
+        // NOTE: currently uses a third-degree polynomial regression to calculate the health scale (based on the above values)
+        // NOTE: The array above is a backup
+
         float healthScale = healthHeightMultiplier > 7
             ? 0.3f
             : 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
 
-        return (armorHeightMultiplier * MathHelper.floor(10 / scale))
+        targetPos = (armorHeightMultiplier * MathHelper.floor(10 / scale))
             + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / scale))
             + chatShift;
+
+        // ! The number of checks and nested if statements are all to avoid the most edge of edge cases, and to account for any and all
+        // ! rounding issues thanks to java, frame freezes, framerate, launching, and also stats changing mid-animation not sending the chat
+        // ! to space
+
+        // INFO: Once the game launches, do not lerp, immediately load at the target position - aka the stats the player left the world
+        // INFO: having last time
+        if (!launched) { launched = true; currentPos = targetPos; } 
+
+        else {
+            // ? Check if we have not reached our destination yet, checking the position makes sure we are checking the rounded value
+            if (currentPos != targetPos && smoothTime != 0) {
+                // ? moving is used to ensure the starttime is only measured once right before beginning the animation
+                if (!moving) { currentTime = 0; startTime = Util.getMeasuringTimeMs(); moving = true; }
+                else {
+                    currentTime = Util.getMeasuringTimeMs() - startTime;
+                    double t = currentTime / smoothTime;
+                    // ? Function used is SmootherStep
+                    currentPos = Math.round((float) MathHelper.lerp(t * t * t * (t * (6.0f * t - 15.0f) + 10.0f), lastPos, targetPos));
+                }
+            } // ? Putting the animation smooth time to 0 disables smooth chat shifting
+            else if (smoothTime == 0) return targetPos; 
+            else { moving = false; lastPos = currentPos; currentPos = targetPos; }
+        }
+
+        return currentPos;
     }
 
 

@@ -2,6 +2,7 @@ package obro1961.chatpatches.config;
 
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
+import dev.isxander.yacl3.config.v2.api.autogen.FloatSlider;
 import dev.isxander.yacl3.gui.YACLScreen;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
@@ -191,8 +192,14 @@ public class YACLConfig extends Config {
 
         else if( config.getOption(key).get() instanceof Integer ) // key is int but not color
             return (ControllerBuilder<T>) IntegerSliderControllerBuilder.create( (Option<Integer>)opt )
-                .range( getMinOrMax(key, true), getMinOrMax(key, false) )
-                .step( getInterval(key) );
+                .range( (int) getMinOrMax(key, true), (int) getMinOrMax(key, false) )
+                .step( (int) getInterval(key) );
+
+        else if ( config.getOption(key).get() instanceof Float ) {
+            return (ControllerBuilder<T>) FloatSliderControllerBuilder.create( (Option<Float>)opt )
+            .range( getMinOrMax(key, true), getMinOrMax(key, false) )
+            .step( getInterval(key));
+        }
 
         else
             return (ControllerBuilder<T>) BooleanControllerBuilder.create( (Option<Boolean>)opt ).coloured(true);
@@ -278,11 +285,12 @@ public class YACLConfig extends Config {
      * Returns the appropriate minimum or maximum value for the given key.
      * Used for upholding the disorganized yet clean look to this class.
      */
-    private static int getMinOrMax(String key, boolean min) {
+    private static float getMinOrMax(String key, boolean min) {
         if(min) {
             return switch(key) {
                 case "counterCompactDistance" -> -1;
                 case "chatShift" -> -50;
+                case "chatAnimTime" -> 0f;
                 default -> 0; // chatWidth, chatMaxMessages, chatlogSaveInterval
             };
         } else {
@@ -294,6 +302,7 @@ public class YACLConfig extends Config {
                 // only issue w ^^^ is if the window is resized while the config screen is open the max value will be incorrect
                 // other issue could be with the future config redo, as annotation constraints must be *constant*
                 case "chatMaxMessages" -> Short.MAX_VALUE;
+                case "chatAnimTime" -> 0.6f;
                 default -> 100; // chatShift
             };
         }
@@ -301,9 +310,10 @@ public class YACLConfig extends Config {
 
     /** Returns the appropriate interval for the given key. */
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
-	private static int getInterval(String key) {
+	private static float getInterval(String key) {
         return switch(key) {
             case "chatMaxMessages" -> 16;
+            case "chatAnimTime" -> 0.1f;
             default -> 1;
         };
     }
