@@ -122,11 +122,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private ButtonWidget formattingButton;
 	@Unique private ButtonWidget regexButton;
 
-	// Animation Util.
-	@Unique private int lastPos = 0, targetPos = 0, currentPos = targetPos;
-    @Unique private float startTime = 0, currentTime = 0;
-    @Unique private boolean moving;
-
 	@SuppressWarnings("MissingUnique") //@Shadow
 	@NotNull protected MinecraftClient client = MinecraftClient.getInstance(); // removes false NPE warnings
 	@Shadow	protected TextFieldWidget chatField;
