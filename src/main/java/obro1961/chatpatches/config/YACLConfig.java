@@ -198,7 +198,7 @@ public class YACLConfig extends Config {
         else if ( config.getOption(key).get() instanceof Float ) {
             return (ControllerBuilder<T>) FloatSliderControllerBuilder.create( (Option<Float>)opt )
             .range( getMinOrMax(key, true), getMinOrMax(key, false) )
-            .step( getInterval(key));
+            .step( getInterval(key) );
         }
 
         else
