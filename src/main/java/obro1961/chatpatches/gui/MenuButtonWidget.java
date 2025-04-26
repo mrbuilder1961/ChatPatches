@@ -49,7 +49,7 @@ public class MenuButtonWidget {
 				if(!string.isEmpty()) {
 					MinecraftClient.getInstance().keyboard.setClipboard(string);
 					MinecraftClient.getInstance().inGameHud.setOverlayMessage(
-						Text.translatable("text.chatpatches.copy.copied", string.replaceAll("§", "&"))
+						Text.translatable("text.chatpatches.copy.copied", string.replace('§', '&'))
 							.setStyle( Style.EMPTY.withColor(Formatting.GREEN) ),
 						false
 					);

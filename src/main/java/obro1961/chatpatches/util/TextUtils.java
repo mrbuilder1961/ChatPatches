@@ -40,7 +40,7 @@ public class TextUtils {
 	 * Also replaces intended newline characters with {@code \n} to fix (#36).
 	 */
 	public static String fillVars(String str, String variable) {
-		return str.replaceAll("\\$", variable).replaceAll("\\\\n", "\n");
+		return str.replace("$", variable).replaceAll("\\\\n", "\n");
 	}
 
 	/**

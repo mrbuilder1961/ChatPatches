@@ -243,7 +243,7 @@ public class ContextMenu implements Element {
 		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
 
 		if(tooltipCopyTextSupplier != null)
-			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replaceAll("§", "&") )
+			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace('§', '&') )
 
 		if(renderer != null) {
 			PressableWidget effectivelyFinalButton = button;
