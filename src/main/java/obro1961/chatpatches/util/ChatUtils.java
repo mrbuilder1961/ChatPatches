@@ -207,7 +207,7 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
-		if(ChatLog.isSuspended())
+		if(ChatLog.isRestoring())
 			return m; // cancel modifications when loading the chat log
 
 		boolean lastEmpty = messageData.equals(ChatUtils.NIL_MESSAGE_DATA);

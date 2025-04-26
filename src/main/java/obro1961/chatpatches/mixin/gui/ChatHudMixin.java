@@ -222,7 +222,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      */
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
     private void ignoreRestoredMessages(Text message, @Nullable MessageIndicator indicator, CallbackInfo ci) {
-        if(ChatLog.isSuspended() && indicator != null)
+        if(ChatLog.isRestoring() && indicator != null)
             ci.cancel();
     }
 }
