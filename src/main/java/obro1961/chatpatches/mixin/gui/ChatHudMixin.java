@@ -121,7 +121,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * <p>Target: {@code double d = this.client.getWindow().getScaledHeight() - y - 40.0;}
      */
     @ModifyVariable(method = "toChatLineY", at = @At("HEAD"), argsOnly = true)
-    private double moveChatLineY(double y) {
+    private double moveChatLineY(double y) { 
         return y + config.calcDynamicChatShift();
     }
 
