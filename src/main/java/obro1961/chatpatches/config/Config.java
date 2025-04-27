@@ -159,7 +159,7 @@ public class Config {
             Team team = mc.world.getScoreboard().getPlayerTeam(profile.getName());
             Style hoverStyle = new OtherClientPlayerEntity(mc.world, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
                 .withParent(style); // fills in the color with chatNameColor if not specified by the team
-            String[] configFormat = chatNameFormat.split("\\$");
+            String[] configFormat = chatNameFormat.equals("$") ? new String[] {"", ""} : chatNameFormat.split("\\$");
             ObjectList<Text> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
 
