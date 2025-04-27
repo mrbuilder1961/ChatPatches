@@ -3,6 +3,7 @@ package obro1961.chatpatches.chatlog;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -11,7 +12,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
@@ -42,12 +42,24 @@ import static obro1961.chatpatches.ChatPatches.config;
  * deserializing, accessing, modifying, and backing up the data.
  */
 public class ChatLog {
+    public static final Codec<Pair<ObjectList<Text>, ObjectList<String>>> PAIR_CODEC = Codec.pair(
+        TextUtils.textCodec()
+            .listOf()
+            .xmap(Data::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
+            .optionalFieldOf("messages", Data.newSyncedObjectList(null))
+            .codec(),
+        Codec.STRING
+            .listOf()
+            .xmap(Data::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
+            .optionalFieldOf("history", Data.newSyncedObjectList(null))
+            .codec()
+    );
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
     public static final MessageIndicator RESTORED_INDICATOR = new MessageIndicator(0x382FB5, null, Text.translatable("text.chatpatches.restored"), "Restored"); // prepub use an AW and put the icon to use
 
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
-    private static boolean deserialized = false;
+    private static boolean initComplete = false;
     /**
      * Used to suspend the addition of messages
      * and access to the chat log while restoring.
@@ -59,6 +71,9 @@ public class ChatLog {
     private static ChatLog.Data data = new Data();
     private static int lastHistoryCount = -1, lastMessageCount = -1;
     private static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
+
+    private static ObjectList<Text> messages;
+    private static ObjectList<String> history;
 
 
     private static class Data { //delete: this; just move the codec to the main class and it will work fine if the main class has the list fields
@@ -98,7 +113,7 @@ public class ChatLog {
 
         /**
          * @implNote Assumes the Text codec is unusable, so instead
-         *           maps each message using {@link Text#getString()}
+         * maps each message using {@link Text#getString()}.
          */
         @Override
         public String toString() {
@@ -106,6 +121,69 @@ public class ChatLog {
                 .replace("[]", history.toString())
                 .replace("[]", messages.stream().map(Text::getString).toList().toString());
         }
+    }
+
+    public static boolean isRestoring() {
+        return restoring;
+    }
+
+    public static void addMessage(Text message) {
+        if(restoring)
+            return;
+
+        ensureCapacity();
+        //data.messages.add(message);
+        messages.add(message);
+    }
+    public static void addHistory(String sentMessage) {
+        if(restoring)
+            return;
+
+        ensureCapacity();
+        //data.history.add(sentMessage);
+        history.add(sentMessage);
+    }
+
+    public static void clearMessages() {
+        //data.messages.clear();
+        messages.clear();
+    }
+    public static void clearHistory() {
+        //data.history.clear();
+        history.clear();
+    }
+
+    public static int messageCount() {
+        //return data.messages.size();
+        return messages.size();
+    }
+    public static int historyCount() {
+        //return data.history.size();
+        return history.size();
+    }
+
+    /**
+     * Ensures both {@link #messages} and {@link #history} are
+     * not larger than {@link Config#chatMaxMessages}. If they
+     * are, removes the oldest messages (from {@code 0} inclusive
+     * to <code>list.size() - {@link Config#chatMaxMessages}</code>
+     * exclusive).
+     *
+     * @implNote The chat log system has the oldest messages at 0,
+     * but vanilla has the newest at 0. I would switch them to be in
+     * the same order, but it would break existing chat logs.
+     */
+    private static void ensureCapacity() {
+        if(messageCount() > config.chatMaxMessages)
+            messages.removeElements(0, messageCount() - config.chatMaxMessages);
+
+        if(historyCount() > config.chatMaxMessages)
+            history.removeElements(0, historyCount() - config.chatMaxMessages);
+    }
+
+    private static void updateMessageCounts() {
+        lastMessageCount = messageCount();
+        lastHistoryCount = historyCount();
     }
 
 
@@ -124,7 +202,7 @@ public class ChatLog {
      *   otherwise resets {@code rawData}</li>
      *   <li>If {@code rawData} equals {@link Data#EMPTY_DATA}, saves a
      *   fresh instance of {@link Data} to avoid unnecessary parsing</li>
-     *   <li>Otherwise, uses {@link Data#CODEC} to parse {@code rawData},
+     *   <li>Otherwise, uses {@link #PAIR_CODEC} to parse {@code rawData},
      *   {@linkplain ChatPatches#logReportMsg(Throwable) logging an error}
      *   and creating a new copy if something went wrong</li>
      *   <li>Removes any overflowing messages</li>
@@ -139,6 +217,7 @@ public class ChatLog {
         String rawData = Data.EMPTY_DATA;
 
         LOGGER.info("[ChatLog.deserialize] Loading...");
+
         if(Files.exists(PATH)) {
 			try {
                 rawData = Files.readString(PATH); // chat log is always encoded with UTF-8
@@ -168,25 +247,31 @@ public class ChatLog {
                     Data.CODEC.parse(ChatPatches.jsonOps(), json)
                         .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
                         .orElseGet(Data::new);
+
+                var deserializedPair =
+                    PAIR_CODEC.parse(ChatPatches.jsonOps(), json)
+                        .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+                        .orElseGet(() -> Pair.of(Data.newSyncedObjectList(null), Data.newSyncedObjectList(null)));
+
+                messages = deserializedPair.getFirst();
+                history = deserializedPair.getSecond();
             }
 
-            // the sublist indices make sure to only keep the newest data and remove the oldest
-            // NOTE: the chat log system has the oldest messages at 0, but vanilla has the newest at 0
-            if(messageCount() > config.chatMaxMessages)
-                data.messages = data.messages.subList( messageCount() - config.chatMaxMessages, messageCount() );
-            if(historyCount() > config.chatMaxMessages)
-                data.history = data.history.subList( historyCount() - config.chatMaxMessages, historyCount() );
+            ensureCapacity();
+            updateMessageCounts();// prepub does this make sense here?
         } catch(RuntimeException e) {
             LOGGER.error("[ChatLog.deserialize] An unexpected error occurred while trying to parse '{}', backing it up and generating a new one:", PATH, e);
             backup();
 
             data = new Data();
+            messages = Data.newSyncedObjectList(null);
+            history = Data.newSyncedObjectList(null);
         } finally {
-            deserialized = true; // if successful, data is populated. if an error occurred, data is empty
+            initComplete = true; // if successful, data is populated. if an error occurred, data is empty
         }
 
         LOGGER.info("[ChatLog.deserialize] Parsed {} messages and {} sent messages in {} seconds",
-            messageCount(), historyCount(), (System.currentTimeMillis() - start) / 1000.0
+            messageCount(), historyCount(), (System.currentTimeMillis() - start) / 1000.0 // prepub:if we keep udateMessageCounts here, use the variables instead of the methods
         );
     }
 
@@ -202,29 +287,33 @@ public class ChatLog {
     public static void serialize() {
         if(!config.chatlog) //todo simplify these
             return;
-        if((messageCount() == lastMessageCount && historyCount() == lastHistoryCount) || (data.messages.isEmpty() && data.history.isEmpty()))
+        if((messageCount() == lastMessageCount && historyCount() == lastHistoryCount) || (messages.isEmpty() && history.isEmpty()))
             return; // don't write empty or old data
 
         long start = System.currentTimeMillis();
 
         LOGGER.info("[ChatLog.serialize] Saving...");
+
         try {
             JsonElement json = Data.CODEC.encodeStart(ChatPatches.jsonOps(), data)
+                .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+                .orElseThrow();
+
+            json = PAIR_CODEC.encodeStart(ChatPatches.jsonOps(), Pair.of(messages, history))
                 .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
                 .orElseThrow();
 
             // always in UTF-8
             Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-            lastMessageCount = messageCount();
-            lastHistoryCount = historyCount();
+            updateMessageCounts();
         } catch(IOException | RuntimeException e) {
             LOGGER.error("[ChatLog.serialize] An unexpected error occurred while trying to save:", e);
             LOGGER.warn("[ChatLog.serialize] Dumping data: {}", data.toString());
         }
 
         LOGGER.info("[ChatLog.serialize] Saved {} messages and {} sent messages to '{}' in {} seconds",
-            messageCount(), historyCount(), PATH, (System.currentTimeMillis() - start) / 1000.0
+            lastMessageCount, lastHistoryCount, PATH, (System.currentTimeMillis() - start) / 1000.0
         );
     }
 
@@ -245,15 +334,11 @@ public class ChatLog {
         }
     }
 
-    /**
-     * Restores the chat log from {@link #data} into
-     * the {@linkplain ChatHud chat hud}.
-     */
     public static void restore() {
         restoring = true;
         {
-            data.history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
-            data.messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_INDICATOR));
+            history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
+            messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_INDICATOR));
         }
         restoring = false;
 
@@ -267,7 +352,7 @@ public class ChatLog {
      * been deserialized yet.
      */
     public static void load() {
-        if(config.chatlog && !deserialized) {
+        if(config.chatlog && !initComplete) {
             deserialize();
             restore();
         }
@@ -303,42 +388,5 @@ public class ChatLog {
     public static void saveIfPaused(Screen screen) {
         if(config.chatlogSaveInterval == 0 && (!mc.isWindowFocused() || screen instanceof GameMenuScreen))
             serialize();
-    }
-
-
-
-    public static boolean isRestoring() {
-        return restoring;
-    }
-
-    public static void addMessage(Text msg) {
-        if(!restoring) {
-            if(messageCount() > config.chatMaxMessages)
-                data.messages.removeFirst();
-
-            data.messages.add(msg);
-        }
-    }
-    public static void addHistory(String msg) {
-        if(!restoring) {
-            if(historyCount() > config.chatMaxMessages)
-                data.history.removeFirst();
-
-            data.history.add(msg);
-        }
-    }
-
-    public static void clearMessages() {
-        data.messages.clear();
-    }
-    public static void clearHistory() {
-        data.history.clear();
-    }
-
-    public static int messageCount() {
-        return data.messages.size();
-    }
-    public static int historyCount() {
-        return data.history.size();
     }
 }
