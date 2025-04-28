@@ -232,7 +232,7 @@ public class ContextMenu implements Element {
 				return;
 
 			Text copyText = tooltipCopyTextSupplier != null ? tooltipCopyTextSupplier.get() : EMPTY;
-			String copyStr = StringHelper.stripTextFormat(copyText.getString()); //prepub: config opt to copy section signs, disabled by def..?
+			String copyStr = StringHelper.stripTextFormat(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc.keyboard.setClipboard(copyStr);
 				mc.getToastManager().add(new SystemToast( SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("text.chatpatches.copy.copied"), copyText ));
@@ -455,7 +455,7 @@ public class ContextMenu implements Element {
 					supEr.render(context, mX, mY, delta);
 					PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16);
 				}
-			); // prepub: reevaluate which buttons need the skin renderer - see discord poll results
+			); // prepub: the people want every button to have an icon! so... i'm thinking we gotta pass an ID or an ID string to get the button tex
 		}
 
 		grid.updateButtonPositions();
