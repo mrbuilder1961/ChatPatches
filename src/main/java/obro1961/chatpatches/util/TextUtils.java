@@ -40,7 +40,7 @@ public class TextUtils {
 	 * Also replaces intended newline characters with {@code \n} to fix (#36).
 	 */
 	public static String fillVars(String str, String variable) {
-		return str.replace("$", variable).replaceAll("\\\\n", "\n");
+		return str.replace("$", variable).replace("\\n", "\n");
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class TextUtils {
 		return Text.literal(
 			unformatted
 				.replaceAll(NO_BACKSLASH_AMPERSAND_REGEX, "§$1")
-				.replaceAll(AMPERSAND_REGEX, "&$2")
+				.replaceAll(AMPERSAND_REGEX, "&$2") // prepub does this work? shouldn't it be no backslash then those (optionally aka (\\\\)?) with backslashes???
 		);
 	}
 

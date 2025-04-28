@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -46,7 +45,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -149,28 +147,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(config.searchDrafting)
 			searchField.setText( searchDraft.length() > 1 ? searchDraft.substring(1) : "" ); // remove the null char from the draft
 
-		BiFunction<String, Integer, ButtonWidget> settingButtonFactory = (key, yOffset) -> {
-			Config.Setting<Boolean> setting = config.getOption(key);
-			Text name = Text.translatable("text.chatpatches.search." + key);
-			Text text = ScreenTexts.composeToggleText(name, setting.get());
-
-			return ButtonWidget.builder(text, me -> {
-				setting.set(!setting.get()); // toggle the setting
-				me.setMessage( ScreenTexts.composeToggleText(name, setting.get()) ); // update the button text
-				onSearchFieldUpdate(searchField.getText(), true); // update the search field color
-			})
-				.dimensions(
-					8,
-					(height + (MENU_Y_OFFSET / 2) - 51) + yOffset,
-					client.textRenderer.getWidth(text.getString()) + 10,
-					20
-				)
-				.tooltip(Tooltip.of( Text.translatable("text.chatpatches.search.desc." + key) ))
-				.build();
-		};
-		caseSensitiveButton = settingButtonFactory.apply("caseSensitive", 0);
-		formattingButton = settingButtonFactory.apply("formatting", 22);
-		regexButton = settingButtonFactory.apply("regex", 44);
+		caseSensitiveButton = makeSettingButton("caseSensitive", 0);
+		formattingButton = makeSettingButton("formatting", 22);
+		regexButton = makeSettingButton("regex", 44);
 
 		if(!config.hideSearchButton) {
 			addDrawableChild(searchButton); // simplifies rendering; it should be called automatically bc it's unconditionally shown or hidden
@@ -478,6 +457,25 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		return showSettingsMenu && (mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT);
 	}
 
+	@Unique
+	private ButtonWidget makeSettingButton(String key, int yOffset) {
+		Config.Setting<Boolean> setting = config.getOption(key);
+		Text name = Text.translatable("text.chatpatches.search." + key);
+		Text text = ScreenTexts.composeToggleText(name, setting.get());
+
+		return ButtonWidget.builder(text, me -> {
+				setting.set(!setting.get()); // toggle the setting
+				me.setMessage( ScreenTexts.composeToggleText(name, setting.get()) ); // update the button text
+				onSearchFieldUpdate(searchField.getText(), true); // update the search field color
+			})
+			.dimensions(
+				8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset,
+				client.textRenderer.getWidth(text.getString()) + 10, 20
+			)
+			.tooltip(Tooltip.of( Text.translatable("text.chatpatches.search.desc." + key) ))
+			.build();
+	}
+
 	/**
 	 * Called when the search field is updated, and
 	 * applies search settings, field suggestions,
@@ -548,7 +546,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		ChatHud chatHud = client.inGameHud.getChatHud();
 		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
-		List<ChatHudLine> messageSnapshot = new ObjectArrayList<>(chat.chatpatches$getMessages());
+		List<ChatHudLine> messageSnapshot = List.copyOf(chat.chatpatches$getMessages());
 
 		// filter messages by removing those that don't match the target
 		chat.chatpatches$getMessages().removeIf(msg -> {
