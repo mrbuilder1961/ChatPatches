@@ -165,8 +165,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchField.setDrawsBackground(false);
 		searchField.setSuggestion(SEARCH_SUGGESTION);
 		searchField.setChangedListener(newText -> onSearchFieldUpdate(newText, false));
-		if(config.searchDrafting)
-			searchField.setText( searchDraft.length() > 1 ? searchDraft.substring(1) : "" ); // remove the null char from the draft
+		if(config.searchDrafting) {
+			searchField.setText(!searchDraft.isEmpty() ? searchDraft : "" );
+			if (!searchDraft.isEmpty())
+				onSearchFieldUpdate(searchField.getText(), true);
+		}
 
 		BiFunction<String, Integer, ButtonWidget> settingButtonFactory = (key, yOffset) -> {
 			Config.Setting<Boolean> setting = config.getOption(key);
