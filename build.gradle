@@ -3,6 +3,7 @@ import groovy.json.JsonSlurper
 import java.util.function.BiFunction
 import java.util.function.Function
 import java.util.stream.Stream
+import java.lang.String
 
 plugins {
 	id "fabric-loom" version "1.10-SNAPSHOT"

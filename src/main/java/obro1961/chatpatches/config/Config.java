@@ -25,6 +25,7 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
+import obro1961.chatpatches.util.FunctionalUtils;
 
 import org.spongepowered.asm.mixin.Unique;
 
@@ -54,9 +55,6 @@ public class Config {
     protected static final FabricLoader FABRIC = FabricLoader.getInstance();
     protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     protected static final MinecraftClient mc = MinecraftClient.getInstance();
-    protected int lastPos = 0, targetPos = 0, currentPos = targetPos;
-    protected float startTime = 0, currentTime = 0;
-    protected boolean moving, launched;
 
     /** @see #sendBoundaryLine() */
     protected static String lastWorld = "";
@@ -252,7 +250,7 @@ public class Config {
      * <a href="https://github.com/mrbuilder1961/ChatPatches/pull/224">#224</a>.
      */
     @Unique
-    public int calcDynamicChatShift() {
+    public int calcDynamicChatShift(FunctionalUtils funcUtils) {
         PlayerEntity player = mc.player;
         if(!config.dynamicChatShift || player == null)
             return chatShift;
@@ -277,33 +275,11 @@ public class Config {
             ? 0.3f
             : 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
 
-        targetPos = (armorHeightMultiplier * MathHelper.floor(10 / scale))
+        int targetPos = (armorHeightMultiplier * MathHelper.floor(10 / scale))
             + (healthHeightMultiplier * MathHelper.floor(10 * healthScale / scale))
             + chatShift;
 
-        // ! The number of checks and nested if statements are all to avoid the most edge of edge cases, and to account for any and all
-        // ! rounding issues thanks to java, frame freezes, framerate, launching, and also stats changing mid-animation not sending the chat
-        // ! to space
-
-        // INFO: Once the game launches, do not lerp, immediately load at the target position - aka the stats the player left the world
-        // INFO: having last time
-        if (!launched) { launched = true; currentPos = targetPos; } 
-
-        else {
-            // ? Check if we have not reached our destination yet, checking the position makes sure we are checking the rounded value
-            if (currentPos != targetPos && smoothTime != 0) {
-                // ? moving is used to ensure the starttime is only measured once right before beginning the animation
-                if (!moving) { currentTime = 0; startTime = Util.getMeasuringTimeMs(); moving = true; }
-                else {
-                    currentTime = Util.getMeasuringTimeMs() - startTime;
-                    double t = currentTime / smoothTime;
-                    // ? Function used is SmootherStep
-                    currentPos = Math.round((float) MathHelper.lerp(t * t * t * (t * (6.0f * t - 15.0f) + 10.0f), lastPos, targetPos));
-                }
-            } // ? Putting the animation smooth time to 0 disables smooth chat shifting
-            else if (smoothTime == 0) return targetPos; 
-            else { moving = false; lastPos = currentPos; currentPos = targetPos; }
-        }
+        int currentPos = funcUtils.getTimeLerpedQuantity(targetPos, smoothTime);
 
         return currentPos;
     }

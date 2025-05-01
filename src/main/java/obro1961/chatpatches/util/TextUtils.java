@@ -10,7 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A class containing various string and {@link Text} related utilities.
+ * A class containing various string- and {@link Text}-related utilities.
  */
 public class TextUtils {
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";

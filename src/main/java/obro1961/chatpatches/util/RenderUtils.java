@@ -4,6 +4,9 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
+/**
+ * A class containing various render-related utilities
+ */
 public class RenderUtils {
 	public static final ChatHudLine NIL_HUD_LINE = new ChatHudLine(0, Text.empty(), null, null);
 	/**

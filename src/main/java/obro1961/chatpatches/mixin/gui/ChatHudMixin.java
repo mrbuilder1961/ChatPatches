@@ -14,9 +14,13 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
+import obro1961.chatpatches.util.FunctionalUtils;
+
+import org.lwjgl.system.Callback;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -45,6 +49,8 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageLineIndex(double x, double y);
 
+    @Unique private FunctionalUtils funcUtils = new FunctionalUtils();
+
     // ChatHudAccessor methods used outside this mixin
     public List<ChatHudLine> chatpatches$getMessages() { return messages; }
     public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }
@@ -53,8 +59,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     public double chatpatches$toChatLineX(double x) { return toChatLineX(x); }
     public double chatpatches$toChatLineY(double y) { return toChatLineY(y); }
     public int chatpatches$getLineHeight() { return getLineHeight(); }
-
-
+    
     /** Prevents the game from actually clearing chat history */
     @Inject(method = "clear", at = @At("HEAD"), cancellable = true)
     private void clear(boolean clearHistory, CallbackInfo ci) {
@@ -103,7 +108,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      */
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
     private int moveChat(int m) {
-        return m - config.calcDynamicChatShift();
+        return m - config.calcDynamicChatShift(funcUtils);
     }
 
     /**
@@ -117,7 +122,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      */
     @ModifyVariable(method = "toChatLineY", at = @At("HEAD"), argsOnly = true)
     private double moveChatLineY(double y) {
-        return y + config.calcDynamicChatShift();
+        return y + config.calcDynamicChatShift(funcUtils);
     }
 
     /**

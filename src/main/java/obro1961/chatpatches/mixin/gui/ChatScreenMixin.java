@@ -38,6 +38,7 @@ import obro1961.chatpatches.gui.SearchButtonWidget;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.TextUtils;
+import obro1961.chatpatches.util.FunctionalUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -74,6 +75,8 @@ import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin extends Screen implements ChatScreenAccessor {
+	// Functional Util class
+	@Unique private FunctionalUtils funcUtils = new FunctionalUtils();
 	// search text
 	@Unique private static final String SEARCH_SUGGESTION = Text.translatable("text.chatpatches.search.suggestion").getString();
 	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
@@ -321,7 +324,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			final int lH = chat.chatpatches$getLineHeight();
 			final int sW = MathHelper.ceil(chatHud.getWidth() / s); // scaled width
 			final int sH = MathHelper.floor((client.getWindow().getScaledHeight() - 40) / s); // scaled height
-			int shift = MathHelper.floor(config.calcDynamicChatShift() / s);
+			int shift = MathHelper.floor(config.calcDynamicChatShift(funcUtils) / s);
 			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.chatpatches$getScrolledLines();
 			int hoveredY = sH - (i * lH) - shift;
 

@@ -23,7 +23,7 @@ import static obro1961.chatpatches.ChatPatches.msgData;
 import static obro1961.chatpatches.util.TextUtils.copyWithoutContent;
 
 /**
- * Utility methods relating directly to the chat.
+ * A class containing various chat-related utilities
  */
 public class ChatUtils {
 	public static final UUID NIL_UUID = new UUID(0, 0);
