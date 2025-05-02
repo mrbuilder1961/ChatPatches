@@ -36,6 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
@@ -159,27 +160,32 @@ public class YACLConfig extends Config {
                     "debug",
                     ObjectList.of(
                         ButtonOption.createBuilder()
-                            .name( Text.of("Print GitHub Option table") )
+                            .name( Text.of("Print and Copy option table") )
                             .action((screen, option) -> {
                                 StringBuilder str = new StringBuilder();
 
-                                config.getOptions().forEach(opt ->
+                                config.getOptions().forEach(opt -> {
+                                    String k = opt.key;
+                                    Object d = opt.def;
+                                    boolean search = I18n.hasTranslation("text.chatpatches.search." + k);
                                     str.append("\n| %s | %s | %s | `text.chatpatches.%s` |".formatted(
-                                        I18n.translate("text.chatpatches." + opt.key),
+                                        I18n.translate("text.chatpatches." + (search ? "search." : "") + k),
 
-                                        ( opt.getType().equals(Integer.class) && opt.key.contains("Color") )
-                                            ? "`0x%06X`".formatted( (int)opt.def )
-                                                + (TextUtils.COLOR_TO_FORMATTING.get((int)opt.def) instanceof Formatting f ? " ("+f.getName().toLowerCase(Locale.ROOT)+")" : "")
+                                        ( d instanceof Integer i && k.contains("Color") )
+                                            ? "`0x%06X`".formatted(i)
+                                                + (TextUtils.COLOR_TO_FORMATTING.get(i.intValue()) instanceof Formatting f ? " ("+f.getName().toLowerCase(Locale.ROOT)+")" : "")
                                             : (opt.getType().equals(String.class))
-                                                ? "`\"" + opt.def + "\"`"
-                                                : "`" + opt.def + "`",
+                                                ? "`\"" + d + "\"`"
+                                                : "`" + d + "`",
 
-                                        I18n.translate("text.chatpatches.desc." + opt.key),
-                                        opt.key
-                                    ))
-                                );
+                                        I18n.translate("text.chatpatches." + (search ? "search." : "") + "desc." + k)
+                                            .replace("\n", " "),
+                                        (search ? "search." : "") + k
+									));
+                                });
 
-                                ChatPatches.LOGGER.warn("[YACLConfig.printGithubTables] {}", str);
+                                mc.keyboard.setClipboard(str.toString());
+                                LOGGER.warn("[YACLConfig.exportGithubTables] {}", str);
                             })
                             .build(),
 
@@ -215,12 +221,12 @@ public class YACLConfig extends Config {
 											}
 											Files.writeString(f.toPath(), content);
 
-											ChatPatches.LOGGER.info("[YACLConfig.revertIdArrays] Reverted {} id arrays in '{}'", n, f.getAbsolutePath());
+											LOGGER.info("[YACLConfig.revertIdArrays] Reverted {} id arrays in '{}'", n, f.getAbsolutePath());
 										} catch(IOException e) {
-											ChatPatches.LOGGER.warn("[YACLConfig.revertIdArrays] An error occurred reading '{}'.. good luck with this guy:", f.getAbsolutePath(), e);
+											LOGGER.warn("[YACLConfig.revertIdArrays] An error occurred reading '{}'.. good luck with this guy:", f.getAbsolutePath(), e);
 										}
 									},
-									() -> ChatPatches.LOGGER.warn("[YACLConfig.revertIdArrays] No log files found")
+									() -> LOGGER.warn("[YACLConfig.revertIdArrays] No log files found")
 								))
                             .build()
                     )
@@ -283,7 +289,7 @@ public class YACLConfig extends Config {
                     new SimpleDateFormat( inc.toString() );
                     o.set( inc );
                 } catch(IllegalArgumentException e) {
-                    ChatPatches.LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
+                    LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
                 }
             });
 
@@ -390,18 +396,17 @@ public class YACLConfig extends Config {
     private static OptionDescription desc(Setting<?> opt) {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
 
-        String ext = "webp";
         // using Locale.ROOT fixes turkish locale causing file mismatch
-        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT) + "." + ext;
+        String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT) + ".webp";
         Identifier id = ChatPatches.id(image);
 
         try {
             if( mc.getResourceManager().getResource(id).isPresent() )
                 builder.webpImage(id);
             else
-                ChatPatches.LOGGER.debug("[YACLConfig.desc] Couldn't find '{}'", image);
+                LOGGER.debug("[YACLConfig.desc] Couldn't find '{}'", image);
         } catch(Throwable e) {
-            ChatPatches.LOGGER.error("[YACLConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
+            LOGGER.error("[YACLConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
         }
 
         return builder.build();

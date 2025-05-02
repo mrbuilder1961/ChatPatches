@@ -14,6 +14,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.toast.SystemToast;
 import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
@@ -79,8 +80,8 @@ public class ChatLog {
     private static int lastHistoryCount = -1, lastMessageCount = -1;
     private static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
 
-    private static ObjectList<Text> messages;
-    private static ObjectList<String> history;
+    private static ObjectList<Text> messages = newSyncedObjectList(null);
+    private static ObjectList<String> history = newSyncedObjectList(null);
 
     /**
      * @return If {@code source} is null, returns a new synchronized object
