@@ -86,6 +86,7 @@
 
     "text.chatpatches.chatHidePacket": "Ignore hide message packet",
     "text.chatpatches.chatWidth": "Override chat width",
+    "text.chatpatches.chatHeight": "Override chat height",
     "text.chatpatches.chatMaxMessages": "Maximum chat messages",
     "text.chatpatches.chatName": "Playername text toggle",
     "text.chatpatches.chatNameFormat": "Playername text",
@@ -101,6 +102,7 @@
     "text.chatpatches.contextMenu": "Context menu",
     "text.chatpatches.desc.chatHidePacket": "Should hide message packets that delete chat messages be ignored?",
     "text.chatpatches.desc.chatWidth": "The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.",
+    "text.chatpatches.desc.chatHeight": "The height of the chat box. This overrides vanilla's default and allows for a much larger height. Set to 0 to use the vanilla setting and not override it.",
     "text.chatpatches.desc.chatMaxMessages": "The max amount of chat messages allowed to save. Vanilla caps it at 100, this mod can increase it up to 32,767. Keep in mind a higher max equals higher memory usage.",
     "text.chatpatches.desc.chatName": "Should the playername be modified in chat messages? Turning this off will make the playername appear as it does in vanilla, and disable both of the following options. Toggle this if you have conflicting plugins that modify the playername in chat.",
     "text.chatpatches.desc.chatNameFormat": "The text that replaces the playername in chat messages. Vanilla is '<$>', name only is '$'; where '$' is a placeholder for the playername. Only applies to player-sent messages.",

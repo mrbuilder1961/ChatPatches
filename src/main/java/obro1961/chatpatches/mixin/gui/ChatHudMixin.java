@@ -156,10 +156,10 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * {@link Config#chatHeight} value is configured to be greater
      * than 0, otherwise uses the default width option.
      */
-    /*@ModifyReturnValue(method = "getHeight()I", at = @At("RETURN"))
+    @ModifyReturnValue(method = "getHeight()I", at = @At("RETURN"))
     private int moreHeight(int defaultHeight) {
         return config.chatHeight > 0 ? config.chatHeight : defaultHeight;
-    }*/
+    }
 
     /**
      * These methods shift most of the chat hud by
