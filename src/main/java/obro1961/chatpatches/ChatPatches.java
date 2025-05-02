@@ -49,7 +49,7 @@ public class ChatPatches implements ClientModInitializer {
 			config.sendBoundaryLine();
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering (#42)
 			// only replaces messages that would render instantly to save performance on large chat logs
-			// no longer ran once per game, but once per join (#151) [no longer exists for some reason...?]
+			// no longer ran once per game, but once per join
 			int t = client.inGameHud.getTicks();
 			((ChatHudAccessor) client.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
 				.replaceAll(ln -> (t - ln.addedTime() < 200) ? new ChatHudLine.Visible(-200, ln.content(), ln.indicator(), ln.endOfEntry()) : ln);

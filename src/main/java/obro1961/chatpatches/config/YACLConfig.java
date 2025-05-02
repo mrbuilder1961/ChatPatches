@@ -315,7 +315,8 @@ public class YACLConfig extends Config {
         if(min) {
             return switch(key) {
                 case "counterCompactDistance" -> -1;
-                case "chatWidth", "chatMaxMessages", "chatShift", "chatlogSaveInterval" -> 0;
+                case "chatWidth", "chatMaxMessages", "chatlogSaveInterval" -> 0;
+                case "chatShift" -> -50;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No minimum value specified for option '" + key + "'"));
                     yield 0;

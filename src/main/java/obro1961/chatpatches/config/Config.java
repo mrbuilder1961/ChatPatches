@@ -15,6 +15,7 @@ import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.OtherClientPlayerEntity;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
@@ -22,6 +23,7 @@ import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
@@ -55,7 +57,7 @@ public class Config {
     protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     /** @see #sendBoundaryLine() */
-    private static String lastWorld = "";
+    protected static String lastWorld = "";
 
 	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy, search
     public boolean time = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = Formatting.LIGHT_PURPLE.getColorValue();
@@ -65,7 +67,8 @@ public class Config {
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA.getColorValue();
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
     public boolean chatHidePacket = true; public int chatWidth = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = WHITE.getColorValue();
-    public int chatShift = 10; public boolean contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, vanillaClearing = false, searchPrefix = false;
+    public int chatShift = 0; public boolean dynamicChatShift = true, contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false,
+		vanillaClearing = false, searchDrafting = true, searchPrefix = false;
     public int contextColor = AQUA.getColorValue(); public String contextReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
 
@@ -234,19 +237,61 @@ public class Config {
         }
     }
 
+	/**
+	 * Calculates the appropriate chat shifting offset to use if
+	 * {@link Config#dynamicChatShift} is enabled, which accounts
+	 * for the player's visible armor and health bars. If this
+	 * option is disabled or the player is null (shouldn't
+	 * ever happen), simply returns {@link Config#chatShift}.
+     * Doesn't dynamically shift if the player is in creative or
+     * spectator mode, as the health and armor bars are not visible.
+	 *
+	 * @author <a href="https://github.com/radioactive-exe">radioactive-exe</a>!
+	 * The majority of this code was contributed in
+	 * <a href="https://github.com/mrbuilder1961/ChatPatches/pull/224">#224</a>.
+	 */
+	public int calcDynamicChatShift() {
+		PlayerEntity player = mc.player;
+
+		if(!config.dynamicChatShift || player == null)
+			return chatShift;
+        // don't shift the chat if there are no hearts visible (not in survival or adventure)
+        // (also note that player is always non-null by this point)
+        if(mc.getNetworkHandler().getPlayerListEntry(player.getUuid()) instanceof PlayerListEntry entry && !entry.getGameMode().isSurvivalLike())
+            return chatShift;
+
+		// get player stats and standardize to scaled number of rows
+		int armor = player.getArmor();
+		float absorption = player.getAbsorptionAmount();
+		float health = player.getMaxHealth();
+		double scale = mc.inGameHud.getChatHud().getChatScale();
+
+		// calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
+		int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
+		int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
+
+		//float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f}; // contingency
+		// currently uses a third-degree polynomial regression to calculate the health scale
+		float healthScale = healthHeightMultiplier > 7
+			? 0.3f
+			: 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
+
+		return (armorHeightMultiplier * MathHelper.floor(10 / scale))
+			+ (healthHeightMultiplier * MathHelper.floor(10 * healthScale / scale))
+			+ chatShift;
+	}
+
 
     /**
      * Loads the config settings saved at {@link Config#PATH}
      * into {@link ChatPatches#config}.
      *
      * @implNote Changed recently to better match
-     *           {@link ChatLog#deserialize()} and to fix
-     *           <a href="https://github.com/mrbuilder1961/ChatPatches/issues/208">#208</a>,
-     *           which was caused by loading an invalid
-     *           config.
+     * {@link ChatLog#deserialize()} and to fix
+     * <a href="https://github.com/mrbuilder1961/ChatPatches/issues/208">#208</a>,
+     * which was caused by loading an invalid config.
      */
     public static void read() {
-        // modified recently, watch out for bugs!
         if(Files.exists(PATH)) {
             try {
                 String rawData = Files.readString(PATH);

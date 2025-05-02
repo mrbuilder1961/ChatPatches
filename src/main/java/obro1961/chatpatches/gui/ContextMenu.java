@@ -493,7 +493,7 @@ public class ContextMenu implements Element {
 		int lH = access.chatpatches$getLineHeight();
 		int sW = MathHelper.ceil(hud.getWidth() / s); // scaled width
 		int sH = MathHelper.floor((mc.getWindow().getScaledHeight() - 40) / s); // scaled height
-		int shift = MathHelper.floor(config.chatShift / s);
+		int shift = MathHelper.floor(config.calcDynamicChatShift() / s);
 		int i = visibleMessageIndex - access.chatpatches$getScrolledLines();
 		int hoveredY = sH - (i * lH) - shift;
 

@@ -13,7 +13,6 @@ import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.CommandHistoryManager;
 import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
@@ -49,7 +48,6 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow @Final private List<?> removalQueue;
     @Shadow private int scrolledLines;
 
-    @Shadow public abstract double getChatScale();
     @Shadow protected abstract double toChatLineX(double x);
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
@@ -154,15 +152,27 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     }
 
     /**
+     * Allows for a chat height taller than 180px. Only used if the
+     * {@link Config#chatHeight} value is configured to be greater
+     * than 0, otherwise uses the default width option.
+     */
+    /*@ModifyReturnValue(method = "getHeight()I", at = @At("RETURN"))
+    private int moreHeight(int defaultHeight) {
+        return config.chatHeight > 0 ? config.chatHeight : defaultHeight;
+    }*/
+
+    /**
      * These methods shift most of the chat hud by
      * {@link Config#chatShift}, including the text
      * and scroll bar, by shifting the y position of the chat.
      *
      * <p>Target: {@code int m = MathHelper.floor((float)(l - 40) / f);}
+     *
+     * @see Config#calcDynamicChatShift()
      */
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
     private int moveChat(int m) {
-        return m - MathHelper.floor(config.chatShift / getChatScale());
+        return m - config.calcDynamicChatShift();
     }
 
     /**
@@ -173,10 +183,12 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
      * needed in the shifted position.
      *
      * <p>Target: {@code double d = this.client.getWindow().getScaledHeight() - y - 40.0;}
+     *
+     * @see Config#calcDynamicChatShift()
      */
     @ModifyVariable(method = "toChatLineY", argsOnly = true, at = @At("HEAD"))
     private double moveChatLineY(double y) {
-        return y + config.chatShift;
+        return y + config.calcDynamicChatShift();
     }
 
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Chat Patches `202.7.0` for Minecraft 1.20.2, 1.??.? on Fabric, Quilt
+## Chat Patches `202.8.0` for Minecraft 1.20.2, 1.??.? on Fabric, Quilt
 - Completely restructured the internals of the mod to use a more modular system to better support future features and optimizations, particularly 
   Architectury API (Forge) support!
 - Java 21 is now required for all future versions of Chat Patches, even for older Minecraft versions. 1.20.5+ also has this requirement, so it 
@@ -17,6 +17,7 @@
   - Replaced usages of Google's GSON library with Mojang's Codec system, which works better long-term and is slightly less error-prone
   - Make references to the chat log consistent throughout the codebase ("chat log" generally, and "ChatLog" for specific internals)
   - TODO: FILL THIS OUT LATERRRR PREPUB PUBLISH
+    -ALSO MAKE SURE THE CONTRIBUTORS ARE ALL LISTED IN FMJ
 
 ## Chat Patches `202.6.5` for Minecraft 1.20.2 on Fabric, Quilt
 - Added the `searchPrefix` config option, which controls whether to filter previously sent messages based on the text behind the cursor, to speed up 
