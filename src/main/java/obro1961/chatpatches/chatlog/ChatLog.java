@@ -53,12 +53,12 @@ public class ChatLog {
         TextUtils.textCodec()
             .listOf()
             .xmap(ChatLog::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
-            .optionalFieldOf("messages", newSyncedObjectList(null))
+            .fieldOf("messages") // with a default value, errors are silently ignored
             .codec(),
         Codec.STRING
             .listOf()
             .xmap(ChatLog::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
-            .optionalFieldOf("history", newSyncedObjectList(null))
+            .fieldOf("history") // with a default value, errors are silently ignored
             .codec()
     );
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
@@ -140,6 +140,17 @@ public class ChatLog {
     }
 
 
+    private static void pushErrorToast(String header, String desc, String... vars) {
+        final int MAX_LEN = 60; // minimizes errors going off-screen
+        String d = desc.replace("{}", "%s").formatted((Object[]) vars);
+
+        mc.getToastManager().add(new SystemToast(
+            SystemToast.Type.PACK_LOAD_FAILURE,
+            Text.of(header.length() > MAX_LEN ? header.substring(0, MAX_LEN - 3) + "..." : header),
+            Text.of(d.length() > MAX_LEN ? d.substring(0, MAX_LEN - 3) + "..." : d)
+        ));
+    }
+
     /**
      * Deserializes the chat log from {@link #PATH}.
      *
@@ -183,10 +194,14 @@ public class ChatLog {
 				} catch(IOException e) {
                     LOGGER.error("[ChatLog.deserialize] Couldn't parse '{}' in UTF-8 or '{}', generating a new one:", PATH, def.name(), e);
                     rawJson = EMPTY_JSON;
+                    pushErrorToast("Chat log encoding error", "Expected UTF-8 or '{}'", def.name());
+                    backup();
                 }
             } catch(IOException e) {
                 LOGGER.error("[ChatLog.deserialize] Something went wrong accessing '{}':", PATH, e);
                 rawJson = EMPTY_JSON;
+                pushErrorToast("Chat log I/O error", e.getLocalizedMessage());
+                backup();
             }
         }
 
@@ -199,7 +214,11 @@ public class ChatLog {
                 JsonObject json = JsonHelper.deserialize(rawJson);
                 var deserializedPair =
                     CODEC.parse(ChatPatches.jsonOps(), json)
-                        .resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+                        .resultOrPartial(e -> {
+                            ChatPatches.logReportMsg(new JsonParseException(e));
+                            pushErrorToast("Chat log parse error", e);
+                            backup();
+                        })
                         .orElseGet(() -> Pair.of(newSyncedObjectList(null), newSyncedObjectList(null)));
 
                 messages = deserializedPair.getFirst();
@@ -210,6 +229,7 @@ public class ChatLog {
             updateMessageCounts();
         } catch(RuntimeException e) {
             LOGGER.error("[ChatLog.deserialize] An unexpected error occurred while trying to parse '{}', backing it up and generating a new one:", PATH, e);
+            pushErrorToast("Chat log deserialization error", e.getLocalizedMessage());
             backup();
 
             messages = newSyncedObjectList(null);
@@ -254,6 +274,7 @@ public class ChatLog {
             updateMessageCounts();
         } catch(IOException | RuntimeException e) {
             LOGGER.error("[ChatLog.serialize] An unexpected error occurred while trying to save:", e);
+            pushErrorToast("Chat log serialization error", e.getLocalizedMessage());
             LOGGER.warn("[ChatLog.serialize] Dumping data: {}",
                 EMPTY_JSON // assumes the Text codec is unusable, so instead uses #getString()
                     .replace("[]", messages.stream().map(Text::getString).toList().toString())
@@ -280,6 +301,7 @@ public class ChatLog {
             Files.copy(PATH, PATH.resolveSibling( "chatlog_" + Util.getFormattedCurrentTime() + ".json" ));
         } catch(IOException e) {
             LOGGER.warn("[ChatLog.backup] Couldn't backup '{}':", PATH, e);
+            pushErrorToast("Chat log backup error", e.getLocalizedMessage());
         }
     }
 
