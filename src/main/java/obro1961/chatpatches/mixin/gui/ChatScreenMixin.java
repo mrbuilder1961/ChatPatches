@@ -144,8 +144,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchField.setDrawsBackground(false);
 		searchField.setSuggestion(SEARCH_SUGGESTION);
 		searchField.setChangedListener(newText -> onSearchFieldUpdate(newText, false));
-		if(config.searchDrafting)
-			searchField.setText( searchDraft.length() > 1 ? searchDraft.substring(1) : "" ); // remove the null char from the draft
+		if(config.searchDrafting) {
+			searchField.setText(searchDraft);
+			// (#229)
+			// if necessary, forces the colors to switch + removes suggestion text
+			// normally this would be ignored because the field text = searchDraft
+			if(!searchDraft.isEmpty())
+				onSearchFieldUpdate(searchField.getText(), true);
+		}
 
 		caseSensitiveButton = makeSettingButton("caseSensitive", 0);
 		formattingButton = makeSettingButton("formatting", 22);
@@ -236,11 +242,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "removed", at = @At("TAIL"))
 	public void onScreenClose(CallbackInfo ci) {
-		messageDraft = config.messageDrafting ? chatField.getText() : "";
+		// we always save the drafts here, we can decide to use them according to the config
+		messageDraft = chatField.getText();
+		searchDraft = searchField.getText();
 
-		if(config.searchDrafting)
-			searchDraft = '\u0000' + searchField.getText(); // lead with a null char to remove it later and trigger the search field update
-		else if(!searchField.getText().isEmpty())
+		if(!searchField.getText().isEmpty())
 			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
 
 		contextMenu.close(this::remove);
