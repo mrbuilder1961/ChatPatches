@@ -315,7 +315,7 @@ public class YACLConfig extends Config {
         if(min) {
             return switch(key) {
                 case "counterCompactDistance" -> -1;
-                case "chatWidth", "chatMaxMessages", "chatlogSaveInterval" -> 0;
+                case "chatWidth", "chatHeight", "chatMaxMessages", "chatlogSaveInterval" -> 0;
                 case "chatShift" -> -50;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No minimum value specified for option '" + key + "'"));
@@ -325,9 +325,9 @@ public class YACLConfig extends Config {
         } else {
             return switch(key) {
                 case "chatMaxMessages" -> Short.MAX_VALUE;
-                case "chatWidth" -> mc.getWindow().getScaledWidth() - 12; // offset length calc'd from ChatHud#render aka magic #
-                // only issue w ^^^ is if the window is resized while the config screen is open the max value will be incorrect
-                case "chatlogSaveInterval" -> 180;
+                case "chatWidth" -> mc.getWindow().getScaledWidth();
+                case "chatHeight" -> mc.getWindow().getScaledHeight();
+                case "chatlogSaveInterval" -> 180; // 3 hours
                 case "counterCompactDistance" -> mc.inGameHud.getChatHud() instanceof ChatHud chatHud ? chatHud.getVisibleLineCount() : 50;
                 case "chatShift" -> 100;
                 default -> {
