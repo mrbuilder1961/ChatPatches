@@ -1,10 +1,9 @@
 # Changelog
 
-## Chat Patches `x.8.0` for Minecraft 1.20.2, 1.??.? on Fabric, Quilt
-- Completely refactored almost everything to better support future features and optimizations, particularly for multiple loaders (Architectury) and multiple 
-  versions (Stonecutter)! This will make future releases hopefully EFFORTLESS to publish quickly!
-- Java 21 is **now required going forward**, including for older Minecraft versions
-- Renamed many config options; you will likely need to manually reconfigure your config (they're mostly swapped words): //prepub- add DFU?
+## Chat Patches `202.8.0` for Minecraft 1.20.2, 1.??.? on Fabric, Quilt
+- Completely refactored basically the entire codebase to support future features and fixes, on multiple loaders and versions!
+- Java 21 is **now required going forward** despite the Minecraft version used
+- Renamed many config options; you will likely need to manually reconfigure your config (they're mostly swapped words): //prepub DFU?
   - `counterCompact` => `compactChat`
   - `counterCompactDistance` => `compactDistance`
   - `shiftChat` => `chatShift`
@@ -13,14 +12,15 @@
   - `chatNameColor` => `nameColor`
   - `contextColor` => `contextOutlineColor`
   - `hideSearchButton` => `search` (invert your previous value to keep your preference)
-- The config file will now only serialize changed options, rather than all of them!
+- The config file will now only save changed options, rather than all of them
 - Overhauled the copy menu, which is now known as the Context Menu! It now has more features, including a toggle, main buttons copying their first 
-  sub-button, and even more message parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), (maybe [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166)?), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
-- Fatal chat log saving errors will now try and dump all the data to the debug log, as a last-ditch effort to save it
+  sub-button, and even more message parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
+- Fatal chat log saving errors will now try and dump all the data to the debug log
 - Fixed team names and related components not formatting properly
+- [Changed all config and chat log saving events to run on the IO thread, which should prevent any potential freezing or lag spikes]
 - Random misc changes, dependency updates, rewordings, etc.
 - **Dev notes:**
-  - Simplified `fabric.mod.json` thanks to Loom's new features (this causes illegal JSON, but is ultimately fixed when built)
+  - Simplified `fabric.mod.json` thanks to Loom's new features (looks like illegal JSON, but is ultimately fixed when built)
   - Replaced usages of GSON with Mojang's `DataFixerUpper` (Codec) library, which is now used going forward
   - Made chat log references consistent throughout the codebase ("chat log" most commonly, and "ChatLog" in select code locations)
   - TODO

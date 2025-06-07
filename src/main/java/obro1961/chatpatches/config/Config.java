@@ -5,7 +5,6 @@ import com.google.gson.stream.JsonWriter;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.*;
 import dev.isxander.yacl3.api.Option;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
@@ -29,7 +28,6 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
-import oshi.util.Memoizer;
 
 import java.io.EOFException;
 import java.io.FileWriter;
@@ -42,11 +40,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static net.minecraft.util.Formatting.*;
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -250,7 +245,7 @@ public class Config {
                 config.time = false; // disables the time so the boundary line doesn't have a timestamp
                 mc.inGameHud.getChatHud().addMessage( makeBoundaryLine(levelName) );
                 config.time = time; // re-enables the time accordingly
-            } catch(Exception e) {
+            } catch(RuntimeException e) {
                 LOGGER.warn("[Config.sendBoundaryLine] An error occurred while adding the boundary line:", e);
             }
         }
@@ -338,7 +333,7 @@ public class Config {
         try(FileWriter fw = new FileWriter(PATH.toFile())) {
             GSON.toJson(config, config.getClass(), fw);
             LOGGER.info("[Config.write] Saved config info to '{}'!", PATH);
-        } catch(Exception e) {
+        } catch(IOException | JsonIOException e) {
             LOGGER.error("[Config.write] An error occurred while trying to save the config to '{}':", PATH, e);
         }
     }
@@ -360,15 +355,42 @@ public class Config {
 	}
 
 
-    /** @see #SETTINGS_SUPPLIER */
-    public List<Setting<?>> getOptions() {
-        return SETTINGS_SUPPLIER.get();
+    public ObjectList<Setting<?>> getOptions() { // todo?: getAll
+        Field[] fields = Config.class.getFields();
+        ObjectList<Setting<?>> options = new ObjectArrayList<>( fields.length );
+
+        try {
+            for(Field f : fields)
+                if(!Modifier.isStatic(f.getModifiers()))
+                    options.add(new Setting<>( f.get(config), f.get(DEFAULTS), f.getName() ));
+        } catch(IllegalAccessException e) {
+            ChatPatches.logReportMsg(e);
+        }
+
+        return options;
     }
 
-    /** @see #KEY_TO_SETTING_SUPPLIER */
+    /**
+     * Returns a {@link Setting} representing the option with the given name,
+     * or one populated with blank objects and the given key if an error
+     * occurred. Note that the returned Setting's value is sourced from the
+     * value in {@link ChatPatches#config}, and as a result may not be accurate
+     * forever.
+     *
+     * @param key The name of the Setting to get, as defined in {@linkplain
+     * Config this class}
+     */
     @SuppressWarnings("unchecked")
-    public <T> Setting<T> getOption(String key) {
-        return (Setting<T>) KEY_TO_SETTING_SUPPLIER.get().get(key);
+    public <T> Setting<T> getOption(String key) { //todo?: get
+        return (Setting<T>)
+            getOptions()
+            .stream()
+            .filter(opt -> opt.key.equals(key))
+            .findFirst()
+            .orElseGet(() -> {
+                ChatPatches.logReportMsg(new IllegalArgumentException("No such option: " + key));
+                return new Setting<>(new Object(), new Object(), key);
+            });
     }
 
 
@@ -383,11 +405,11 @@ public class Config {
     public <R, T> DataResult<R> encodeStart(DynamicOps<R> ops) {
         RecordBuilder<R> builder = ops.mapBuilder();
 
-        for(Setting<?> opt : SETTINGS_SUPPLIER.get()) {
+        for(Setting<?> opt : getOptions()) {
             T val = (T) opt.val;
-            MapCodec<T> optCodec = (MapCodec<T>) opt.getSettingCodec();
+            MapCodec<T> optCodec = (MapCodec<T>) opt.getCodec();
 
-            // note: currently uses optionalFieldOf as specified in #getSettingCodec; could in theory silently ignore missing fields
+            // note: currently uses optionalFieldOf as specified in #getCodec; could in theory silently ignore missing fields
             builder = optCodec.encode(val, ops, builder);
         }
         // error: saving colors in the menu fails and logs 'Option value mismatch after applying! Reset to binding's getter.'
@@ -406,8 +428,8 @@ public class Config {
      */
     @SuppressWarnings("unchecked")
     public <S, T> DataResult<Config> parse(DynamicOps<S> ops, S encoded) {
-        for(Setting<?> opt : SETTINGS_SUPPLIER.get()) {
-            MapCodec<T> optCodec = (MapCodec<T>) opt.getSettingCodec();
+        for(Setting<?> opt : getOptions()) {
+            MapCodec<T> optCodec = (MapCodec<T>) opt.getCodec();
             DataResult<T> result = optCodec.decoder().parse(ops, encoded);
 
             if(result.error().isPresent() || result.result().isEmpty()) {
