@@ -182,10 +182,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *     		<li>The settings menu background</li>
 	 *     		<li>The setting buttons themselves</li>
 	 *     </ol>
-	 *     <li>If the copy menu has been loaded and should show:</li>
+	 *     <li>If the context menu has been loaded and should show:</li>
 	 *     <ol>
 	 *     		<li>The outline around the selected chat message</li>
-	 *     		<li>The copy menu buttons (the menu itself)</li>
+	 *     		<li>The context menu buttons (the menu itself)</li>
 	 *     </ol>
 	 * </ol>
 	 */

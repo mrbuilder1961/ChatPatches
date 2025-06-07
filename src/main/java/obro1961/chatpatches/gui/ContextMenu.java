@@ -68,6 +68,7 @@ public class ContextMenu implements Element {
 	// based on the total amount of buttons that currently exist
 	public static final int MAX_ROWS = 7;
 	public static final int MAX_COLUMNS = 2;
+	public static final String LANG_PREFIX = "text.chatpatches.context.";
 
 	private static final int BUTTON_PADDING = 4;
 	/**
@@ -79,26 +80,26 @@ public class ContextMenu implements Element {
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
 
 	// region text constants
-	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable("text.chatpatches.copy.unknownData", id);
-	static final Text MENU_STRING = Text.translatable("text.chatpatches.copy.copyText");
-	static final Text RAW_TEXT = Text.translatable("text.chatpatches.copy.rawText");
-	static final Text FORMATTED_STR = Text.translatable("text.chatpatches.copy.formattedString");
-	static final Text NO_TIMESTAMP_TEXT = Text.translatable("text.chatpatches.copy.noTimestampText");
-	static final Text NO_DUPE_TEXT = Text.translatable("text.chatpatches.copy.noCounterText");
-	static final Text JSON_STR = Text.translatable("text.chatpatches.copy.jsonString");
-	static final Text MENU_TIMESTAMP = Text.translatable("text.chatpatches.copy.timestamp");
-	static final Text TIMESTAMP = Text.translatable("text.chatpatches.copy.timestampText");
-	static final Text TIMESTAMP_HOVER = Text.translatable("text.chatpatches.copy.timestampHoverText");
-	static final Text MENU_DUPE_COUNTER = Text.translatable("text.chatpatches.copy.counter");
-	static final Text COUNTER_TEXT = Text.translatable("text.chatpatches.copy.counterText");
-	static final Text COUNTER_VALUE = Text.translatable("text.chatpatches.copy.counterValue");
-	static final Text MENU_UNIX = Text.translatable("text.chatpatches.copy.unix");
-	static final Text MENU_LINKS = Text.translatable("text.chatpatches.copy.links");
-	static final Int2ObjectFunction<Text> LINK_N = (n) -> Text.translatable("text.chatpatches.copy.linkN", n);
-	static final Text MENU_SENDER = Text.translatable("text.chatpatches.copy.sender");
-	static final Text NAME = Text.translatable("text.chatpatches.copy.name");
-	static final Text UUID = Text.translatable("text.chatpatches.copy.uuid");
-	static final Text MENU_REPLY = Text.translatable("text.chatpatches.copy.reply");
+	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable(LANG_PREFIX + "unknownData", id);
+	static final Text MENU_STRING = Text.translatable(LANG_PREFIX + "copyText");
+	static final Text RAW_TEXT = Text.translatable(LANG_PREFIX + "rawText");
+	static final Text FORMATTED_STR = Text.translatable(LANG_PREFIX + "formattedString");
+	static final Text NO_TIMESTAMP_TEXT = Text.translatable(LANG_PREFIX + "noTimestampText");
+	static final Text NO_DUPE_TEXT = Text.translatable(LANG_PREFIX + "noCounterText");
+	static final Text JSON_STR = Text.translatable(LANG_PREFIX + "jsonString");
+	static final Text MENU_TIMESTAMP = Text.translatable(LANG_PREFIX + "timestamp");
+	static final Text TIMESTAMP = Text.translatable(LANG_PREFIX + "timestampText");
+	static final Text TIMESTAMP_HOVER = Text.translatable(LANG_PREFIX + "timestampHoverText");
+	static final Text MENU_DUPE_COUNTER = Text.translatable(LANG_PREFIX + "counter");
+	static final Text COUNTER_TEXT = Text.translatable(LANG_PREFIX + "counterText");
+	static final Text COUNTER_VALUE = Text.translatable(LANG_PREFIX + "counterValue");
+	static final Text MENU_UNIX = Text.translatable(LANG_PREFIX + "unix");
+	static final Text MENU_LINKS = Text.translatable(LANG_PREFIX + "links");
+	static final Int2ObjectFunction<Text> LINK_N = (n) -> Text.translatable(LANG_PREFIX + "linkN", n);
+	static final Text MENU_SENDER = Text.translatable(LANG_PREFIX + "sender");
+	static final Text NAME = Text.translatable(LANG_PREFIX + "name");
+	static final Text UUID = Text.translatable(LANG_PREFIX + "uuid");
+	static final Text MENU_REPLY = Text.translatable(LANG_PREFIX + "reply");
 	// endregion
 
 	/**
@@ -196,7 +197,6 @@ public class ContextMenu implements Element {
 
 			return l;
 		});
-		//todo: clean this up and make sure it works SO we can DELETE reorder and make a better toFormattingString method instead
 
 
 		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
@@ -235,7 +235,7 @@ public class ContextMenu implements Element {
 			String copyStr = StringHelper.stripTextFormat(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc.keyboard.setClipboard(copyStr);
-				mc.getToastManager().add(new SystemToast( SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("text.chatpatches.copy.copied"), copyText ));
+				mc.getToastManager().add(new SystemToast( SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable(LANG_PREFIX + "copied"), copyText ));
 			}
 
 			if(pressAction != null)
