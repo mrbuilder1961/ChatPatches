@@ -168,9 +168,9 @@ public class ChatUtils {
 	 * <ol>
 	 *   <li>Return {@code m} early if the chat log is suspended to not cause
 	 *   other issues.</li>
-	 * 	 <li>Reconstruct the message if {@linkplain Config#chatName allowed},
-	 * 	 it has player message data, and is in the vanilla format as specified
-	 * 	 {@linkplain #VANILLA_FORMAT here}:
+	 * 	 <li>Reconstruct the message if {@linkplain Config#name allowed},
+	 * 	 it has player message data, and is {@linkplain #VANILLA_FORMAT in
+	 * 	 the vanilla format}:
 	 *     	 <ol>
 	 *     	     <li>If the message is {@linkplain TranslatableTextContent
 	 *     	     translatable} and in a {@linkplain #PARSEABLE_MESSAGE_KEYS
@@ -224,7 +224,7 @@ public class ChatUtils {
 			// reconstruct the player message if it's in the vanilla format and it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(config.chatName && !lastEmpty && messageData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
+			if(config.name && !lastEmpty && messageData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
 				content = Text.empty().setStyle(style);
 
 				// if the message is translatable, then we know exactly where everything is
@@ -306,9 +306,9 @@ public class ChatUtils {
 	 *     <li>Calculate the attempt distance for condensing
 	 *     the incoming message with:</li>
 	 *     <ol>
-	 *         <li>If {@linkplain Config#counterCompact
+	 *         <li>If {@linkplain Config#compactChat
 	 *         CompactChat} is enabled, parses
-	 *         {@link Config#counterCompactDistance} from
+	 *         {@link Config#compactDistance} from
 	 *         {@code -1} to {@code messages.size()},
 	 *         {@code 0} to
 	 *         {@code chatHud.getVisibleLineCount()},
@@ -355,11 +355,11 @@ public class ChatUtils {
 		ObjectList<Text> siblings = new ObjectArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
 		List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
 		int attemptDistance =
-			switch(config.counterCompact ? config.counterCompactDistance : 1) {
+			switch(config.compactChat ? config.compactDistance : 1) {
 				case -1 -> messages.size();
 				case 0 -> chathud.getVisibleLineCount();
 				case 1 -> 1; // only check more messages if compact chat is enabled
-				default -> Math.min(config.counterCompactDistance, messages.size()); // max checked = # of messages in chat, else config option
+				default -> Math.min(config.compactDistance, messages.size()); // max checked = # of messages in chat, else config option
 			};
 
 		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates

@@ -1,11 +1,11 @@
 package obro1961.chatpatches.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
+import com.google.gson.stream.JsonWriter;
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.*;
 import dev.isxander.yacl3.api.Option;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
@@ -21,6 +21,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
@@ -28,17 +29,24 @@ import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
+import oshi.util.Memoizer;
 
 import java.io.EOFException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static net.minecraft.util.Formatting.*;
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -57,18 +65,31 @@ public class Config {
     /** @see #sendBoundaryLine() */
     protected static String lastWorld = "";
 
-	// categories: time, hover, counter, counter.compact, boundary, chatlog, chat.hud, chat.screen, copy, search
+
+    // prepub #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
+    // current system, so maybe just like a Map<Str, List<Str>> with field names as keys and the list of aliases as strings contained in the list value?
+    // ->> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
+// prepub: impl `timestampedSystemMessages`
+//todo: import ~~dynamicShift PR~~ + commits from 1.21.4/5
+//prepub #INT_LIMIT: regen (and while ur at it test!) the option table
+//prepub #INT_LIMIT+1: make colors serialize as strings (name else hex else int)
+    // tab categories: message, boundary, chatlog, chat
+	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
     public boolean time = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColorValue();
     public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = WHITE.getColorValue();
     public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = YELLOW.getColorValue(); public boolean counterCheckStyle = false;
-    public boolean counterCompact = false; public int counterCompactDistance = 0;
+    public boolean compactChat = false; public int compactDistance = 0;
+
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA.getColorValue();
+
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
-    public boolean chatHidePacket = true; public int chatWidth = 0, chatHeight = 0, chatMaxMessages = 16384; public boolean chatName = true;  public String chatNameFormat = "<$>"; public int chatNameColor = WHITE.getColorValue();
-    public int chatShift = 0; public boolean dynamicChatShift = true, contextMenu = true, hideSearchButton = false, messageDrafting = false, onlyInvasiveDrafting = false,
-		vanillaClearing = false, searchDrafting = true, searchPrefix = false;
-    public int contextColor = AQUA.getColorValue(); public String contextReplyFormat = "/msg $ ";
-    public boolean caseSensitive = true, formatting = false, regex = false;
+
+    public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColorValue();
+    public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean vanillaClearing = false, chatHidePacket = true, dynamicChatShift = true, messageDrafting = false,
+        onlyInvasiveDrafting = false;
+    public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColorValue(); public String contextReplyFormat = "/msg $ ";
+    public boolean search = true, searchDrafting = true, searchPrefix = false,
+        caseSensitive = true, formatting = false, regex = false;
 
     /**
      * Creates a new Config or YACLConfig, depending
@@ -144,9 +165,9 @@ public class Config {
     }
 
     /**
-     * Formats the provided playername, using {@link #chatNameFormat},
-     * {@link #chatNameColor}, and the player's team properties. Uses
-     * the player's team color if set, otherwise {@link #chatNameColor}.
+     * Formats the provided playername, using {@link #nameFormat},
+     * {@link #nameColor}, and the player's team properties. Uses
+     * the player's team color if set, otherwise {@link #nameColor}.
      * Hover and click events are sourced from the style of
      * {@link PlayerEntity#getDisplayName()}.
      *
@@ -155,12 +176,12 @@ public class Config {
      * the {@linkplain MinecraftClient#world client world} must exist.
      */
     public MutableText formatPlayername(GameProfile profile) {
-        Style style = Style.EMPTY.withColor(chatNameColor); // defaults to the config-specified color
+        Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
         try {
             Team team = mc.world.getScoreboard().getPlayerTeam(profile.getName());
             Style hoverStyle = new OtherClientPlayerEntity(mc.world, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
-                .withParent(style); // fills in the color with chatNameColor if not specified by the team
-            String[] configFormat = chatNameFormat.equals("$") ? new String[] {"", ""} : chatNameFormat.split("\\$");
+                .withParent(style); // fills in the color with nameColor if not specified by the team
+            String[] configFormat = nameFormat.equals("$") ? new String[] {"", ""} : nameFormat.split("\\$"); // a singular $ results in an empty array
             ObjectList<Text> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
 
@@ -183,7 +204,7 @@ public class Config {
             ChatPatches.logReportMsg(e);
         }
 
-        return makeObject(chatNameFormat, profile.getName(), "", /*EXTRA_SPACE_MODS.anyMatch(FABRIC::isModLoaded) ? "" :*/ " ", style);
+        return makeObject(nameFormat, profile.getName(), "", " ", style);
     }
 
     public MutableText makeDupeCounter(int dupes) {
@@ -210,7 +231,7 @@ public class Config {
      * boundary line was sent.
      */
     public void sendBoundaryLine() {
-        if(!config.boundary || config.vanillaClearing)
+        if(!boundary || vanillaClearing)
             return;
 
         ChatHudAccessor chat = (ChatHudAccessor) mc.inGameHud.getChatHud();
@@ -227,7 +248,7 @@ public class Config {
                 boolean time = config.time;
 
                 config.time = false; // disables the time so the boundary line doesn't have a timestamp
-                mc.inGameHud.getChatHud().addMessage( config.makeBoundaryLine(levelName) );
+                mc.inGameHud.getChatHud().addMessage( makeBoundaryLine(levelName) );
                 config.time = time; // re-enables the time accordingly
             } catch(Exception e) {
                 LOGGER.warn("[Config.sendBoundaryLine] An error occurred while adding the boundary line:", e);
@@ -254,7 +275,7 @@ public class Config {
 		if(!config.dynamicChatShift || player == null)
 			return chatShift;
         // don't shift the chat if there are no hearts visible (not in survival or adventure)
-        // (also note that player is always non-null by this point)
+        // also note that player is always non-null by this point
         if(mc.getNetworkHandler().getPlayerListEntry(player.getUuid()) instanceof PlayerListEntry entry && !entry.getGameMode().isSurvivalLike())
             return chatShift;
 
@@ -339,38 +360,66 @@ public class Config {
 	}
 
 
-    public ObjectList<Setting<?>> getOptions() {
-        ObjectList<Setting<?>> options = new ObjectArrayList<>( getClass().getFields().length );
+    /** @see #SETTINGS_SUPPLIER */
+    public List<Setting<?>> getOptions() {
+        return SETTINGS_SUPPLIER.get();
+    }
 
-        try {
-            for(Field f : getClass().getFields())
-                if(!Modifier.isStatic( f.getModifiers() ))
-                    options.add( new Setting<>(f.get(config), f.get(DEFAULTS), f.getName()) );
-        } catch(IllegalAccessException e) {
-            ChatPatches.logReportMsg(e);
+    /** @see #KEY_TO_SETTING_SUPPLIER */
+    @SuppressWarnings("unchecked")
+    public <T> Setting<T> getOption(String key) {
+        return (Setting<T>) KEY_TO_SETTING_SUPPLIER.get().get(key);
+    }
+
+
+    /**
+     * Encodes this {@link Config} instance into a {@link DataResult}
+     * dynamically based on its fields.
+     *
+     * @return A {@link DataResult} containing the encoded {@link
+     * ChatPatches#config}, otherwise one with an error message.
+     */
+    @SuppressWarnings("unchecked")
+    public <R, T> DataResult<R> encodeStart(DynamicOps<R> ops) {
+        RecordBuilder<R> builder = ops.mapBuilder();
+
+        for(Setting<?> opt : SETTINGS_SUPPLIER.get()) {
+            T val = (T) opt.val;
+            MapCodec<T> optCodec = (MapCodec<T>) opt.getSettingCodec();
+
+            // note: currently uses optionalFieldOf as specified in #getSettingCodec; could in theory silently ignore missing fields
+            builder = optCodec.encode(val, ops, builder);
         }
+        // error: saving colors in the menu fails and logs 'Option value mismatch after applying! Reset to binding's getter.'
 
-        return options;
+        return builder.build(ops.empty());
     }
 
     /**
-     * Returns a {@link Setting} representing the
-     * option with the given name, or a Setting
-     * populated with blank {@link Object}s and
-     * the given key if an error occurred / the
-     * field doesn't exist.
+     * Parses the {@link S}(ource) parameter {@code encoded} into
+     * {@code this}, or more specifically {@link ChatPatches#config}.
      *
-     * @param key The name of the Setting
-     *            to get, as defined in
-     *            {@linkplain Config this class}
+     * @return A {@link DataResult} containing the {@link Config}
+     * stored in {@link ChatPatches#config} if successful, otherwise
+     * an error message. Said message will be printed to the log before
+     * returning.
      */
     @SuppressWarnings("unchecked")
-    public <T> Setting<T> getOption(String key) {
-        return (Setting<T>) getOptions()
-            .stream()
-            .filter(opt -> opt.key.equals(key))
-            .findFirst()
-            .orElse( new Setting<>(new Object(), new Object(), key) );
+    public <S, T> DataResult<Config> parse(DynamicOps<S> ops, S encoded) {
+        for(Setting<?> opt : SETTINGS_SUPPLIER.get()) {
+            MapCodec<T> optCodec = (MapCodec<T>) opt.getSettingCodec();
+            DataResult<T> result = optCodec.decoder().parse(ops, encoded);
+
+            if(result.error().isPresent() || result.result().isEmpty()) {
+                String message = "[Config.parse] Failed to parse field '" + opt.key + "' : " + result.error().map(DataResult.PartialResult::message).orElse("<unknown>");
+                ChatPatches.logReportMsg(new IllegalStateException(message));
+                return DataResult.error(() -> message);
+            }
+
+            opt.set( result.result().get() );
+        }
+
+        return DataResult.success(this);
     }
 
     /**
@@ -395,7 +444,7 @@ public class Config {
          * The default value of this setting option.
          */
         public final T def;
-        private T val;
+        protected T val;
 
         public Setting(T val, T def, String key) {
             this.val = Objects.requireNonNull(val, "Cannot create a setting option without a value");

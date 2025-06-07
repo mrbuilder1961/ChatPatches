@@ -508,7 +508,7 @@ public class ContextMenu implements Element {
 
 		// cuts off any of the selection rect that goes past the chat hud
 		drawContext.enableScissor(0, scissorY1, borderW, scissorY2);
-		drawContext.drawBorder(0, selectionY1, borderW, selectionH, config.contextColor + 0xFF000000);
+		drawContext.drawBorder(0, selectionY1, borderW, selectionH, config.contextOutlineColor + 0xFF000000); //fixme: is there a Color.opaque(rgb) ?
 		drawContext.disableScissor();
 
 		drawContext.getMatrices().pop();

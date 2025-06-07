@@ -130,8 +130,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *     <li>Initializes the search button</li>
 	 *     <li>Initializes the search field</li>
 	 *     <li>Initializes the setting options</li>
-	 *     <li>If {@link Config#hideSearchButton} is true,
-	 *     hides the search widgets</li>
+	 *     <li>If {@link Config#search} is true,
+	 *     initializes the search widgets</li>
 	 * </ol>
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
@@ -157,7 +157,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		formattingButton = makeSettingButton("formatting", 22);
 		regexButton = makeSettingButton("regex", 44);
 
-		if(!config.hideSearchButton) {
+		if(config.search) {
 			addDrawableChild(searchButton); // simplifies rendering; it should be called automatically bc it's unconditionally shown or hidden
 			addSelectableChild(searchField);
 		}
@@ -194,7 +194,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		context.getMatrices().push();
 		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 
-		if(showSearch && !config.hideSearchButton) {
+		if(showSearch && config.search) {
 			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(context, mX, mY, delta);
 
@@ -207,7 +207,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		}
 
 		// renders the bg and the buttons for the settings menu
-		if(showSettingsMenu && !config.hideSearchButton) {
+		if(showSettingsMenu && config.search) {
 			context.drawTexture(
 				id("textures/gui/search_settings_panel.png"),
 				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
@@ -280,13 +280,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * when the search field is visible. Seems counterintuitive,
 	 * but it works.
 	 *
-	 * @return {@code (showSearch && !config.hideSearchButton) ?
+	 * @return {@code (showSearch && config.search) ?
 	 * false : chatField.mouseClicked(x, y, button)}
 	 */
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
 	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
 		// return false (not clicked) if the search field is showing, otherwise delegate to chatField
-		return (config.hideSearchButton || !showSearch) && mouseClicked.call(chatField, mX, mY, button);
+		return (!config.search || !showSearch) && mouseClicked.call(chatField, mX, mY, button);
 	}
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;mouseClicked(DD)Z"))
 	private boolean fixMenuClickthroughClick(ChatHud chatHud, double mX, double mY, Operation<Boolean> mouseClicked) {

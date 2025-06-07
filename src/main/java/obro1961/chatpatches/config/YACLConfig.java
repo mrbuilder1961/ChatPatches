@@ -62,7 +62,7 @@ public class YACLConfig extends Config {
                         chatlogOpts = new ObjectArrayList<>(),
                         chatlogActions = new ObjectArrayList<>(),
                         chatOpts = new ObjectArrayList<>(),
-                        chatnameOpts = new ObjectArrayList<>(),
+                        nameOpts = new ObjectArrayList<>(),
                         contextMenuOpts = new ObjectArrayList<>(),
                         searchOpts = new ObjectArrayList<>();
 
@@ -117,10 +117,10 @@ public class YACLConfig extends Config {
 
                 case "chatlog" -> chatlogOpts.add(yaclOpt);
 
-                case "chatname" -> chatnameOpts.add(yaclOpt);
+                case "name" -> nameOpts.add(yaclOpt);
                 case "context" -> contextMenuOpts.add(yaclOpt);
                 case "search" -> searchOpts.add(yaclOpt);
-				/*chat*/default -> chatOpts.add(yaclOpt);
+                default -> chatOpts.add(yaclOpt);
             }
         });
 
@@ -146,7 +146,7 @@ public class YACLConfig extends Config {
                 subGroup("chatlog.actions", chatlogActions, null)
             ))
             .category( tabCat("chat", chatOpts,
-                subGroup("chatname", chatnameOpts, null),
+                subGroup("name", nameOpts, null),
                 subGroup("context", contextMenuOpts, null),
                 subGroup("search", searchOpts, null)
             ))

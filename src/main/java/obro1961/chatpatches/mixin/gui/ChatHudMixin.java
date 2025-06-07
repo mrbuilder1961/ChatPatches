@@ -52,10 +52,9 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow protected abstract double toChatLineY(double y);
     @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageIndex(double chatLineX, double chatLineY);
-    //prepub: sit down and compare all the different annotations for public mixin methods, and write a
-    // comment here explaining why the chosen one is used or just make an AW
 
     // ChatHudAccessor methods used outside this mixin
+    // @Intrinsic > @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
     @Intrinsic public List<ChatHudLine> chatpatches$getMessages() { return messages; }
     @Intrinsic public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }
     @Intrinsic public int chatpatches$getScrolledLines() { return scrolledLines; }

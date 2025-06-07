@@ -38,10 +38,10 @@
 
     "text.chatpatches.chatlog": "Alternar registro de bate-papo",
     "text.chatpatches.chatMaxMessages": "Máximo de mensagens de bate-papo",
-    "text.chatpatches.chatNameFormat": "Texto do nome do jogador",
+    "text.chatpatches.nameFormat": "Texto do nome do jogador",
     "text.chatpatches.chatShift": "Interface de bate-papo de turno",
     "text.chatpatches.desc.chatlog": "O bate-papo deve ser salvo em um log para que possa ser adicionado novamente ao bate-papo em outra sessão de jogo?",
     "text.chatpatches.desc.chatMaxMessages": "A quantidade máxima de mensagens de chat permitidas para processar. Vanilla tem esse conjunto como 100, o máximo permitido é 32.767. Tenha em mente que quanto maior o valor, mais memória o chat requer.",
-    "text.chatpatches.desc.chatNameFormat": "O texto que substitui o nome do jogador nas mensagens de bate-papo. Vanilla é <$>, sem colchetes é $; onde $ representa o nome do jogador. Aplica-se apenas a mensagens do jogador.",
+    "text.chatpatches.desc.nameFormat": "O texto que substitui o nome do jogador nas mensagens de bate-papo. Vanilla é <$>, sem colchetes é $; onde $ representa o nome do jogador. Aplica-se apenas a mensagens do jogador.",
     "text.chatpatches.desc.chatShift": "Essa interface de bate-papo deve ser aumentada em cerca de 10 pixels para não obstruir a barra de blindagem?"
 }

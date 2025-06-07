@@ -32,7 +32,7 @@ public class ChatPatches implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		//todo arch api: put all these callbacks in another class for splitting by loader.. unless i can just use arch callbacks
+		//stonecutter: arch api - put all these callbacks in another class for splitting by loader.. unless i can just use arch callbacks
 
 		// -- chat log saving events --
 		// according to my testing, this event works as needed when the game disconnects and on crashes if the game is functional at that point

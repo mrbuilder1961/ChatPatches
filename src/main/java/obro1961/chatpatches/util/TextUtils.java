@@ -15,6 +15,10 @@ import java.util.List;
  */
 public class TextUtils {
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
+	/**
+	 * {@link #AMPERSAND_REGEX} that explicitly does not match any
+	 * formatting codes following backslashes
+	 */
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
 	public static final Int2ObjectMap<Formatting> COLOR_TO_FORMATTING = Util.make(() -> {
 		Int2ObjectMap<Formatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever
@@ -27,8 +31,9 @@ public class TextUtils {
 
 	/**
 	 * Returns a {@link Codec} for {@link Text} objects.
-	 * Used for the omnivers system so different
-	 * versions can all access the correct codec.
+	 * Used for the stonecutter system so different
+	 * versions can all access the correct codec in a
+	 * simple and short way.
 	 */
 	public static Codec<Text> textCodec() {
 		return Codecs.TEXT;
@@ -76,14 +81,18 @@ public class TextUtils {
 
 	/**
 	 * Formats a String with {@code &} formatting codes into a {@link Text}.
-	 * Uses the same base algorithm as {@link Text#of(String)}.
-	 * Doesn't support hex colors.
+	 * First replaces all {@code &<?>} codes with a section symbol ({@code §}),
+	 * then deletes the backslash from all {@code \&<?>} instances. Doesn't
+	 * support hex colors.
+	 *
+	 * @apiNote Hex colors could be supported with the Placeholder API, but using
+	 * an entire library just for this one feature seems excessive.
 	 */
 	public static MutableText text(String unformatted) {
 		return Text.literal(
 			unformatted
 				.replaceAll(NO_BACKSLASH_AMPERSAND_REGEX, "§$1")
-				.replaceAll(AMPERSAND_REGEX, "&$2") // prepub does this work? shouldn't it be no backslash then those (optionally aka (\\\\)?) with backslashes???
+				.replaceAll(AMPERSAND_REGEX, "&$2")
 		);
 	}
 
