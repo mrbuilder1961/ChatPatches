@@ -20,7 +20,6 @@ import net.minecraft.util.Uuids;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.TextUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.awt.*;
 import java.io.File;
@@ -40,41 +39,44 @@ import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
- * The YetAnotherConfigLib config class.
- * @see Config
- * @apiNote This is the 2nd edition of a config menu using external libraries.
+ * @apiNote This is the second edition of a config menu using external
+ * libraries; the first was with Cloth Config.
  */
 public class YACLConfig extends Config {
+    public static final String LANG_PREFIX = "text.chatpatches.";
+    public static final String DESCRIPTION_KEY = "desc.";
+    public static final String DESCRIPTION_PREFIX = LANG_PREFIX + DESCRIPTION_KEY;
+    public static final String CATEGORY_PREFIX = LANG_PREFIX + "category.";
+    public static final String CATEGORY_DESC_PREFIX = CATEGORY_PREFIX + DESCRIPTION_KEY;
+    public static final String HELP_PREFIX = LANG_PREFIX + "help.";
+    public static final String SEARCH_PREFIX = LANG_PREFIX + "search.";
+
 
     @Override
     public Screen getConfigScreen(Screen parent) {
         ObjectList<Option<?>> timeOpts = new ObjectArrayList<>(),
                         hoverOpts = new ObjectArrayList<>(),
                         counterOpts = new ObjectArrayList<>(),
-                        compactChatOpts = new ObjectArrayList<>(),
+                        compactOpts = new ObjectArrayList<>(),
                         boundaryOpts = new ObjectArrayList<>(),
                         chatlogOpts = new ObjectArrayList<>(),
                         chatlogActions = new ObjectArrayList<>(),
-                        chatNameOpts = new ObjectArrayList<>(),
-                        chatHudOpts = new ObjectArrayList<>(),
-                        chatScreenOpts = new ObjectArrayList<>(),
-                        copyMenuOpts = new ObjectArrayList<>();
+                        chatOpts = new ObjectArrayList<>(),
+                        chatnameOpts = new ObjectArrayList<>(),
+                        contextMenuOpts = new ObjectArrayList<>(),
+                        searchOpts = new ObjectArrayList<>();
 
         config.getOptions().forEach(opt -> {
             String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
 
-            if(key.matches("caseSensitive|formatting|regex")) // search settings are edited in the chat screen
-                return;
-            else if( key.contains("counterCompact") )
-                cat = "compact";
-            else if( !I18n.hasTranslation("text.chatpatches.category." + cat) )
-                cat = "screen";
-            else if( key.contains("Name") )
-                cat = "name";
+            if(I18n.hasTranslation(SEARCH_PREFIX + key))
+                cat = "_"; // chat search filters are configurable in the chat screen, not here, where they won't render nicely
+            else if(!I18n.hasTranslation(CATEGORY_PREFIX + cat))
+                cat = "chat"; // default to chat if the category is invalid
 
-            if(key.contains("Color")) {
-                opt = new Setting<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), key) {
+            if(key.endsWith("Color")) {
+                opt = new Setting<>(new Color( (int)opt.val ), new Color( (int)opt.def ), key) {
                     @Override
                     public Color get() {
                         return new Color( (int)getOption(key).get() );
@@ -89,12 +91,15 @@ public class YACLConfig extends Config {
 
             Option<?> yaclOpt =
                 Option.createBuilder()
-                    .name(Text.translatable("text.chatpatches." + key))
+                    .name(Text.translatable(LANG_PREFIX + key))
                     .description(desc(opt))
                     .controller(me -> getController(me, key))
                     .binding(getBinding(opt))
                     .flag(
-                        StringUtils.containsIgnoreCase(key, "chat")
+                        // prepub: tryCondenseDupes doesn't do anything here bc modifyMessage doesn't run on refresh=true. to get around this we'd
+                        //  need to like make a who;e new method or something that only updates the message components on refresh, which is plausible
+                        //  but is not an effortless change. (ex. take timestamp and regen time text, take player regen name, etc) not on chatlog#restore
+                        cat.equals("counter") || cat.equals("compact")
                             ? new OptionFlag[] { client -> client.inGameHud.getChatHud().reset() }
                             : new OptionFlag[0]
                     )
@@ -102,16 +107,20 @@ public class YACLConfig extends Config {
 
 
             switch(cat) {
+				case "_" -> {}
+
                 case "time" -> timeOpts.add(yaclOpt);
                 case "hover" -> hoverOpts.add(yaclOpt);
                 case "counter" -> counterOpts.add(yaclOpt);
-                case "compact" -> compactChatOpts.add(yaclOpt);
+                case "compact" -> compactOpts.add(yaclOpt);
                 case "boundary" -> boundaryOpts.add(yaclOpt);
+
                 case "chatlog" -> chatlogOpts.add(yaclOpt);
-                case "name" -> chatNameOpts.add(yaclOpt);
-                case "chat" -> chatHudOpts.add(yaclOpt);
-                case "screen" -> chatScreenOpts.add(yaclOpt);
-                case "copy" -> copyMenuOpts.add(yaclOpt);
+
+                case "chatname" -> chatnameOpts.add(yaclOpt);
+                case "context" -> contextMenuOpts.add(yaclOpt);
+                case "search" -> searchOpts.add(yaclOpt);
+				/*chat*/default -> chatOpts.add(yaclOpt);
             }
         });
 
@@ -125,38 +134,42 @@ public class YACLConfig extends Config {
         }
 
 
-        YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder()
-            .title(Text.translatable("text.chatpatches.title"))
-                .category( category("time", timeOpts) )
-                .category( category("hover", hoverOpts) )
-                .category( category("counter", counterOpts, group(
-                    "counter.compact", compactChatOpts, Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modrinth.com/mod/compact-chat"))
-                )) )
-                .category( category("boundary", boundaryOpts) )
-                .category( category("chatlog", chatlogOpts, group("chatlog.actions", chatlogActions, null)) )
-                .category( category("chat", ObjectList.of(),
-                    group("chat.name", chatNameOpts, null), group("chat.hud", chatHudOpts, null), group("chat.screen", chatScreenOpts, null)) )
-                .category( category("copy", copyMenuOpts) )
+        YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder().title(Text.translatable( LANG_PREFIX + "title"))
+            .category( tabCat("message", ObjectList.of(),
+                subGroup("time", timeOpts, null),
+                subGroup("hover", hoverOpts, null),
+                subGroup("counter", counterOpts, null),
+                subGroup("compact", compactOpts, Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modrinth.com/mod/compact-chat")))
+            ))
+            .category( tabCat("boundary", boundaryOpts) )
+            .category( tabCat("chatlog", chatlogOpts,
+                subGroup("chatlog.actions", chatlogActions, null)
+            ))
+            .category( tabCat("chat", chatOpts,
+                subGroup("chatname", chatnameOpts, null),
+                subGroup("context", contextMenuOpts, null),
+                subGroup("search", searchOpts, null)
+            ))
 
-                .category(
-                    category(
-                    "help",
-                        ObjectList.of(
-                            action("help.reloadConfig", -1),
-                            label( Text.translatable("text.chatpatches.help.dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
-                            label( Text.translatable("text.chatpatches.help.formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
-                            label( Text.translatable("text.chatpatches.help.faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
-                            label( Text.translatable("text.chatpatches.help.regex"), "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
-                            label( Text.translatable("text.chatpatches.help.regexTester"), "https://regex101.com/" )
-                        )
+            .category(
+                tabCat(
+                "help",
+                    ObjectList.of(
+                        action("help.reloadConfig", -1),
+                        label( Text.translatable(HELP_PREFIX + "dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
+                        label( Text.translatable(HELP_PREFIX + "formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
+                        label( Text.translatable(HELP_PREFIX + "faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
+                        label( Text.translatable(HELP_PREFIX + "regex"), "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
+                        label( Text.translatable(HELP_PREFIX + "regexTester"), "https://regex101.com/" )
                     )
                 )
-                .save(Config::write);
+            )
+            .save(Config::write);
 
         // debug options
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
             builder.category(
-                category(
+                tabCat(
                     "debug",
                     ObjectList.of(
                         ButtonOption.createBuilder()
@@ -167,9 +180,10 @@ public class YACLConfig extends Config {
                                 config.getOptions().forEach(opt -> {
                                     String k = opt.key;
                                     Object d = opt.def;
-                                    boolean search = I18n.hasTranslation("text.chatpatches.search." + k);
-                                    str.append("\n| %s | %s | %s | `text.chatpatches.%s` |".formatted(
-                                        I18n.translate("text.chatpatches." + (search ? "search." : "") + k),
+                                    boolean search = I18n.hasTranslation(SEARCH_PREFIX + k);
+                                    String prefix = search ? SEARCH_PREFIX : LANG_PREFIX;
+                                    str.append("\n| %s | %s | %s | `%s` |".formatted(
+                                        I18n.translate(prefix + k),
 
                                         ( d instanceof Integer i && k.contains("Color") )
                                             ? "`0x%06X`".formatted(i)
@@ -178,10 +192,10 @@ public class YACLConfig extends Config {
                                                 ? "`\"" + d + "\"`"
                                                 : "`" + d + "`",
 
-                                        I18n.translate("text.chatpatches." + (search ? "search." : "") + "desc." + k)
-                                            .replace("\n", " "),
-                                        (search ? "search." : "") + k
-									));
+                                        I18n.translate(prefix + DESCRIPTION_KEY + k)
+                                            .replace("\n", " "), // todo selectively replace section signs somehow
+                                        prefix + k
+									));//prepub test this guy against the current readme table
                                 });
 
                                 mc.keyboard.setClipboard(str.toString());
@@ -191,7 +205,6 @@ public class YACLConfig extends Config {
 
                         ButtonOption.createBuilder()
                             .name(Text.of("Convert id arrays to strings"))
-                            .text(Text.of("??"))
                             .action((screen, option) -> Arrays.stream(
 								FabricLoader.getInstance().getGameDir()
 								.resolve("logs")
@@ -309,14 +322,13 @@ public class YACLConfig extends Config {
 
     /**
      * Returns the appropriate minimum or maximum value for the given key.
-     * Used for upholding the disorganized yet clean look to this class.
      */
     private static int getMinOrMax(String key, boolean min) {
         if(min) {
             return switch(key) {
-                case "counterCompactDistance" -> -1;
-                case "chatWidth", "chatHeight", "chatMaxMessages", "chatlogSaveInterval" -> 0;
-                case "chatShift" -> -50;
+                case "compactDistance" -> -1;
+                case "chatHeight", "chatWidth", "chatShift", "chatlogSaveInterval" -> 0;
+				case "chatMaxMessages" -> 1;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No minimum value specified for option '" + key + "'"));
                     yield 0;
@@ -328,7 +340,7 @@ public class YACLConfig extends Config {
                 case "chatWidth" -> mc.getWindow().getScaledWidth();
                 case "chatHeight" -> mc.getWindow().getScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
-                case "counterCompactDistance" -> mc.inGameHud.getChatHud() instanceof ChatHud chatHud ? chatHud.getVisibleLineCount() : 50;
+                case "compactDistance" -> mc.inGameHud.getChatHud() instanceof ChatHud chatHud ? chatHud.getVisibleLineCount() : 50;
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
@@ -338,23 +350,27 @@ public class YACLConfig extends Config {
         }
     }
 
-    /** Returns the appropriate interval for the given key. */
-    @SuppressWarnings("SwitchStatementWithTooFewBranches")
-	private static int getInterval(String key) {
+    private static int getInterval(String key) {
         return switch(key) {
             case "chatMaxMessages" -> 16;
+            case "chatlogSaveInterval" -> 5;
             default -> 1;
         };
     }
 
 
-    /** Note: puts groups before ungrouped options */
-    private static ConfigCategory category(String key, ObjectList<Option<?>> options, OptionGroup... groups) {
-        ConfigCategory.Builder builder = ConfigCategory.createBuilder()
-            .name( Text.translatable("text.chatpatches.category." + key) );
+    /**
+     * Creates a tab-category with the passed parameters.
+     *
+     * @apiNote Puts groups before ungrouped options
+     */
+    private static ConfigCategory tabCat(String key, ObjectList<Option<?>> options, OptionGroup... groups) {
+        ConfigCategory.Builder builder = ConfigCategory.createBuilder().name( Text.translatable(CATEGORY_PREFIX + key) );
 
-        if( I18n.hasTranslation("text.chatpatches.category.desc." + key) )
-            builder.tooltip( Text.translatable("text.chatpatches.category.desc." + key) );
+        Text tooltip = Text.translatable(CATEGORY_DESC_PREFIX + key);
+        // use the tooltip if it translated properly
+        if( !tooltip.getString().equals(CATEGORY_DESC_PREFIX + key) )
+            builder.tooltip(tooltip);
         if( groups.length > 0 )
             builder.groups( List.of(groups) );
         if( !options.isEmpty() )
@@ -363,17 +379,22 @@ public class YACLConfig extends Config {
         return builder.build();
     }
 
-    private static OptionGroup group(String key, ObjectList<Option<?>> options, Style descriptionStyle) {
+    /**
+     * Creates a subgroup (inside a tab-category) with
+     * the passed parameters.
+     */
+    private static OptionGroup subGroup(String key, ObjectList<Option<?>> options, Style descStyle) {
         return OptionGroup.createBuilder()
-            .name( Text.translatable("text.chatpatches.category." + key) )
+            .name( Text.translatable(CATEGORY_PREFIX + key) )
             .description(OptionDescription.of(
-                Text.translatable("text.chatpatches.category.desc." + key).fillStyle(descriptionStyle != null ? descriptionStyle : Style.EMPTY)
+                Text.translatable(CATEGORY_DESC_PREFIX + key).fillStyle(descStyle != null ? descStyle : Style.EMPTY)
             ))
             .options( options )
             .build();
     }
 
-    /*@SuppressWarnings("unchecked") // currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues
+    //prepub currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues. not critical priority
+    /*@SuppressWarnings("unchecked")
     private static ValueFormatter<?> getValueFormatter(String key) {
         Class<?> type = config.getOption(key).getType();
         if(type == Integer.class) {
@@ -381,12 +402,12 @@ public class YACLConfig extends Config {
                 //for all the values like -1 or 0 for number guys
                 case "chatlogSaveInterval" -> (val -> Text.of("" + Formatting.GREEN + val + "§f ticks"));
                 case "chatWidth", "chatHeight", "chatShift" -> (val -> Text.of("" + Formatting.GREEN + val + "§f pixels"));
-                case "chatMaxMessages", "counterCompactDistance" -> (val -> Text.of("" + Formatting.GREEN + val + "§f messages"));
+                case "chatMaxMessages", "compactDistance" -> (val -> Text.of("" + Formatting.GREEN + val + "§f messages"));
                 default -> (ValueFormatter<Integer>) IntegerSliderController.DEFAULT_FORMATTER;
             };
         } else if(type == Boolean.class) {
             return switch(key) {
-                case "chatHidePacket", "hideSearchButton" -> (ValueFormatter<Boolean>) BooleanController.YES_NO_FORMATTER;
+                case "chatHidePacket", "search" -> (ValueFormatter<Boolean>) BooleanController.YES_NO_FORMATTER;
                 //case "tf" -> (ValueFormatter<Boolean>) BooleanController.TRUE_FALSE_FORMATTER;
                 default -> (ValueFormatter<Boolean>) BooleanController.ON_OFF_FORMATTER;
             };
@@ -395,9 +416,9 @@ public class YACLConfig extends Config {
     }*/
 
     private static OptionDescription desc(Setting<?> opt) {
-        OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable("text.chatpatches.desc." + opt.key) );
+        OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable(DESCRIPTION_PREFIX + opt.key) );
 
-        // using Locale.ROOT fixes turkish locale causing file mismatch
+        // using Locale.ROOT fixes turkish locale causing file mismatch (https://discord.com/channels/1077285607375638529/1260175475708399616)
         String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT) + ".webp";
         Identifier id = ChatPatches.id(image);
 
@@ -420,7 +441,7 @@ public class YACLConfig extends Config {
     private static ButtonOption action(String key, Object... args) {
         Object o = new Object();
         return ButtonOption.createBuilder()
-            .name(Text.translatable( "text.chatpatches." + key, (args[0].equals(-1) ? new Object[0] : args) )) // args or nothing
+            .name(Text.translatable( LANG_PREFIX + key, (args[0].equals(-1) ? new Object[0] : args) )) // args or nothing
             .description(desc( new Setting<>(o, o, key) ))
             .action(getAction(key))
             .build();

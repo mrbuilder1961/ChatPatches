@@ -48,8 +48,8 @@ import static obro1961.chatpatches.util.TextUtils.fillVars;
 import static obro1961.chatpatches.util.TextUtils.text;
 
 public class Config {
-    public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
     public static final Config DEFAULTS = new Config();
+    public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
 
     protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     protected static final MinecraftClient mc = MinecraftClient.getInstance();
@@ -97,8 +97,8 @@ public class Config {
                 else
                     mc.setScreen(parent);
             },
-            Text.translatable("text.chatpatches.help.missing"),
-            Text.translatable("text.chatpatches.desc.help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
+            Text.translatable(YACLConfig.HELP_PREFIX + "missing"),
+            Text.translatable(YACLConfig.DESCRIPTION_PREFIX + "help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
             ScreenTexts.CONTINUE,
             ScreenTexts.BACK
         );
