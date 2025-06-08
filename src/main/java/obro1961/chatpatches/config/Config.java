@@ -87,13 +87,13 @@ public class Config {
         caseSensitive = true, formatting = false, regex = false;
 
     /**
-     * Creates a new Config or YACLConfig, depending
+     * Creates a new Config or YaclConfig, depending
      * on installed mods. Should only be called once.
      */
     public static Config create() {
         FabricLoader fbr = FabricLoader.getInstance();
 		boolean accessibleInGame = fbr.isModLoaded("modmenu") || (fbr.isModLoaded("catalogue") && fbr.isModLoaded("menulogue"));
-        config = accessibleInGame ? new YACLConfig() : DEFAULTS;
+        config = accessibleInGame ? new YaclConfig() : DEFAULTS;
 
         read();
         write();
@@ -113,8 +113,8 @@ public class Config {
                 else
                     mc.setScreen(parent);
             },
-            Text.translatable(YACLConfig.HELP_PREFIX + "missing"),
-            Text.translatable(YACLConfig.DESCRIPTION_PREFIX + "help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
+            Text.translatable(YaclConfig.HELP_PREFIX + "missing"),
+            Text.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
             ScreenTexts.CONTINUE,
             ScreenTexts.BACK
         );

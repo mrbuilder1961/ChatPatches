@@ -42,7 +42,7 @@ import static obro1961.chatpatches.ChatPatches.config;
  * @apiNote This is the second edition of a config menu using external
  * libraries; the first was with Cloth Config.
  */
-public class YACLConfig extends Config {
+public class YaclConfig extends Config {
     public static final String LANG_PREFIX = "text.chatpatches.";
     public static final String DESCRIPTION_KEY = "desc.";
     public static final String DESCRIPTION_PREFIX = LANG_PREFIX + DESCRIPTION_KEY;
@@ -199,7 +199,7 @@ public class YACLConfig extends Config {
                                 });
 
                                 mc.keyboard.setClipboard(str.toString());
-                                LOGGER.warn("[YACLConfig.exportGithubTables] {}", str);
+                                LOGGER.warn("[YaclConfig.exportGithubTables] {}", str);
                             })
                             .build(),
 
@@ -234,12 +234,12 @@ public class YACLConfig extends Config {
 											}
 											Files.writeString(f.toPath(), content);
 
-											LOGGER.info("[YACLConfig.revertIdArrays] Reverted {} id arrays in '{}'", n, f.getAbsolutePath());
+											LOGGER.info("[YaclConfig.revertIdArrays] Reverted {} id arrays in '{}'", n, f.getAbsolutePath());
 										} catch(IOException e) {
-											LOGGER.warn("[YACLConfig.revertIdArrays] An error occurred reading '{}'.. good luck with this guy:", f.getAbsolutePath(), e);
+											LOGGER.warn("[YaclConfig.revertIdArrays] An error occurred reading '{}'.. good luck with this guy:", f.getAbsolutePath(), e);
 										}
 									},
-									() -> LOGGER.warn("[YACLConfig.revertIdArrays] No log files found")
+									() -> LOGGER.warn("[YaclConfig.revertIdArrays] No log files found")
 								))
                             .build()
                     )
@@ -301,7 +301,7 @@ public class YACLConfig extends Config {
                     new SimpleDateFormat( inc.toString() );
                     o.set( inc );
                 } catch(IllegalArgumentException e) {
-                    LOGGER.error("[YACLConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
+                    LOGGER.error("[YaclConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
                 }
             });
 
@@ -425,9 +425,9 @@ public class YACLConfig extends Config {
             if( mc.getResourceManager().getResource(id).isPresent() )
                 builder.webpImage(id);
             else
-                LOGGER.debug("[YACLConfig.desc] Couldn't find '{}'", image);
+                LOGGER.debug("[YaclConfig.desc] Couldn't find '{}'", image);
         } catch(Throwable e) {
-            LOGGER.error("[YACLConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
+            LOGGER.error("[YaclConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
         }
 
         return builder.build();
