@@ -11,8 +11,7 @@ import net.minecraft.text.Style;
 public class RenderUtils {
 	public static final ChatHudLine NIL_HUD_LINE = new ChatHudLine(0, ScreenTexts.EMPTY, null, null);
 	public static final Style BLANK_STYLE = Style.EMPTY.withBold(false).withItalic(false).withStrikethrough(false).withUnderline(false).withObfuscated(false);
-	// prepub ^ can prob be deleted, w intended functionality replaced with the OptimizedStyle class
-
+	// todo ^ test if this is still necessary, perhaps after making some gametests that work and then removing it and seeing if all is well
 
 	public static class MousePos {
 		public double x, y;

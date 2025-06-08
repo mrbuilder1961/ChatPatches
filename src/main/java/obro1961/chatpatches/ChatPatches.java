@@ -74,7 +74,7 @@ public class ChatPatches implements ClientModInitializer {
 		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 		String clazz = walker.getCallerClass().getSimpleName();
 		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
-
+//prepub: test out walking back further if the error is thrown from a lambda/anon class, and keep going but then add a (lambda$12/33) or wtv it says to the class
 		if(method.isBlank())
 			method = error.getStackTrace()[0].getMethodName();
 

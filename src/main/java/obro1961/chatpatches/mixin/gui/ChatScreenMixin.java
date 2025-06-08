@@ -557,6 +557,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		// filter messages by removing those that don't match the target
 		chat.chatpatches$getMessages().removeIf(msg -> {
 			String text = config.formatting ? TextUtils.reorder(msg.content().asOrderedText(), true) : msg.content().getString();
+			//fixme: we all know this shit does NOT work (formatting).
 
 			// note that this NOTs the whole expression to simplify the complex nesting
 			// *removes* the message if it *doesn't* match AKA *keeps* those that *do* match
