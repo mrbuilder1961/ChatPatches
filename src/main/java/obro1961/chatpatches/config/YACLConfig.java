@@ -193,7 +193,7 @@ public class YACLConfig extends Config {
                                                 : "`" + d + "`",
 
                                         I18n.translate(prefix + DESCRIPTION_KEY + k)
-                                            .replace("\n", " "), // todo selectively replace section signs somehow
+                                            .replace("\n", ""), // todo selectively replace section signs somehow
                                         prefix + k
 									));//prepub test this guy against the current readme table
                                 });
@@ -276,8 +276,7 @@ public class YACLConfig extends Config {
                 if(!key.contains("Messages"))
                     ChatLog.clearHistory(); // if key is "ClearHistory" or "Clear"
             } else if(key.equals("chatlogLoad")) {
-                ChatLog.deserialize();
-                ChatLog.restore();
+                ChatLog.forceLoad(); // queues the deserialization and restoration tasks together
             } else if(key.equals("chatlogSave")) {
                 ChatLog.serialize();
             } else if(key.equals("chatlogBackup")) {

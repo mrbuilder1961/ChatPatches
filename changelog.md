@@ -17,7 +17,7 @@
   sub-button, and even more message parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
 - Fatal chat log saving errors will now try and dump all the data to the debug log
 - Fixed team names and related components not formatting properly
-- [Changed all config and chat log saving events to run on the IO thread, which should prevent any potential freezing or lag spikes]
+- Config and chat log I/O events are now executed on I/O threads, which should prevent any potential freezing (##227)
 - Random misc changes, dependency updates, rewordings, etc.
 - **Dev notes:**
   - Simplified `fabric.mod.json` thanks to Loom's new features (looks like illegal JSON, but is ultimately fixed when built)
