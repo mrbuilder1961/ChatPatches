@@ -310,9 +310,7 @@ public class Config {
      */
     public static void deserialize() {
 		ChatPatches.executeIoTimeout(() -> {
-			Path CODEC_PATH = PATH.resolveSibling("codec_chatpatches.json"); // todo: make this replace PATH
-
-			if(!Files.exists(PATH) && !Files.exists(CODEC_PATH)) {
+			if(!Files.exists(PATH)) {
 				config = DEFAULTS;
 				LOGGER.info("[Config.deserialize] No config file found; using default values");
 				return;
@@ -323,7 +321,7 @@ public class Config {
 
 			try {
 				// on different lines to make exception line numbers more useful
-				String raw = Files.readString(CODEC_PATH);
+				String raw = Files.readString(PATH);
 				JsonObject json = JsonHelper.deserialize(raw);
 
 				config = config.parse(ChatPatches.jsonOps(), json)
@@ -352,8 +350,6 @@ public class Config {
      */
     public static void serialize() {
 		ChatPatches.executeIoTimeout(() -> {
-			Path CODEC_PATH = PATH.resolveSibling("codec_chatpatches.json");
-
 			long start = System.currentTimeMillis();
 			LOGGER.info("[Config.serialize] Saving...");
 
@@ -365,7 +361,7 @@ public class Config {
 				// writes the json in the order of the fields' declaration
 				JsonHelper.writeSorted(new JsonWriter(sWriter), json, (a, b) -> 0);
 
-				Files.writeString(CODEC_PATH, sWriter.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				Files.writeString(PATH, sWriter.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
 				LOGGER.info("[Config.serialize] Saved config data to '{}'!", PATH);
 			} catch(IOException | NoSuchElementException e) {
