@@ -164,7 +164,7 @@ public class YaclConfig extends Config {
                     )
                 )
             )
-            .save(Config::write);
+            .save(Config::serialize);
 
         // debug options
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
@@ -283,8 +283,7 @@ public class YaclConfig extends Config {
             } else if(key.equals("chatlogOpenFolder")) {
                 Util.getOperatingSystem().open(ChatLog.PATH.getParent().toFile());
             } else if(key.equals("help.reloadConfig")) {
-                read();
-                write();
+                deserialize();
             }
         };
     }

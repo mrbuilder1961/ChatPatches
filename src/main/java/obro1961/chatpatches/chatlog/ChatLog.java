@@ -31,9 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
@@ -68,9 +65,7 @@ public class ChatLog {
     public static final MessageIndicator RESTORED_INDICATOR = new MessageIndicator(0x382FB5, null, Text.translatable("text.chatpatches.restored"), "Restored"); // prepub use an AW and put the icon to use
 
     private static final int DEFAULT_SIZE = 100;
-    /** In seconds */
-    private static final int IO_TIMEOUT = 15;
-    private static final String EMPTY_JSON = "{\"messages\":[],\"history\":[]}";
+	private static final String EMPTY_JSON = "{\"messages\":[],\"history\":[]}";
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
     private static boolean init = true;
@@ -239,6 +234,8 @@ public class ChatLog {
 
             ensureCapacity();
             updateMessageCounts();
+
+			LOGGER.info("[ChatLog.deserialize] Parsed {} messages and {} sent messages!", lastMessageCount, lastHistoryCount);
         } catch(RuntimeException e) {
             LOGGER.error("[ChatLog.deserialize] An unexpected error occurred while trying to parse '{}', backing it up and generating a new one:", PATH, e);
             pushErrorToast("Chat log deserialization error", e.getLocalizedMessage());
@@ -249,10 +246,7 @@ public class ChatLog {
         } finally {
             init = false; // messages and history are populated regardless of errors
         }
-
-        LOGGER.info("[ChatLog.deserialize] Parsed {} messages and {} sent messages in {} seconds",
-            lastMessageCount, lastHistoryCount, (System.currentTimeMillis() - start) / 1000.0
-        );
+		LOGGER.info("[ChatLog.deserialize] Took {} seconds", (System.currentTimeMillis() - start) / 1000.0);
     }
 
     /**
@@ -273,37 +267,31 @@ public class ChatLog {
         if((messages.size() == lastMessageCount && history.size() == lastHistoryCount) || (messages.isEmpty() && history.isEmpty()))
             return; // don't write empty or old data
 
-		try {
-			Util.getIoWorkerExecutor().submit(() -> {
-				long start = System.currentTimeMillis();
-				LOGGER.info("[ChatLog.serialize] Saving...");
+		ChatPatches.executeIoTimeout(() -> {
+			long start = System.currentTimeMillis();
+			LOGGER.info("[ChatLog.serialize] Saving...");
 
-				try {
-					JsonElement json = CODEC.encodeStart(ChatPatches.jsonOps(), Pair.of(messages, history))
-						.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
-						.orElseThrow();
+			try {
+				JsonElement json = CODEC.encodeStart(ChatPatches.jsonOps(), Pair.of(messages, history))
+					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+					.orElseThrow();
 
-					// always in UTF-8
-					Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				// always in UTF-8
+				Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				updateMessageCounts();
 
-					updateMessageCounts();
-				} catch(IOException | RuntimeException e) {
-					LOGGER.error("[ChatLog.serialize] An unexpected error occurred while trying to save:", e);
-					pushErrorToast("Chat log serialization error", e.getLocalizedMessage());
-					LOGGER.warn("[ChatLog.serialize] Dumping data: {}",
-						EMPTY_JSON // assumes the Text codec is unusable, so instead uses #getString()
-							.replace("[]", messages.stream().map(Text::getString).toList().toString())
-							.replace("[]", history.toString())
-					);
-				}
-
-				LOGGER.info("[ChatLog.serialize] Saved {} messages and {} sent messages to '{}' in {} seconds",
-					lastMessageCount, lastHistoryCount, PATH, (System.currentTimeMillis() - start) / 1000.0
+				LOGGER.info("[ChatLog.serialize] Saved {} messages and {} sent messages to '{}'!", lastMessageCount, lastHistoryCount, PATH);
+			} catch(IOException | RuntimeException e) {
+				LOGGER.error("[ChatLog.serialize] An unexpected error occurred while trying to save:", e);
+				LOGGER.warn("[ChatLog.serialize] Dumping data: {}",
+					EMPTY_JSON // assumes the Text codec is unusable, so instead uses #getString()
+						.replace("[]", messages.stream().map(Text::getString).toList().toString())
+						.replace("[]", history.toString())
 				);
-			}).get(IO_TIMEOUT, TimeUnit.SECONDS);
-		} catch(InterruptedException | ExecutionException | TimeoutException e) {
-			ChatPatches.logReportMsg(e);
-		}
+				pushErrorToast("Chat log serialization error", e.getLocalizedMessage());
+			}
+			LOGGER.info("[ChatLog.serialize] Took {} seconds", (System.currentTimeMillis() - start) / 1000.0);
+		});
 	}
 
 
@@ -315,20 +303,16 @@ public class ChatLog {
      * to avoid freezing the render thread.</b>
      */
     public static void backup() {
-		try {
-			Util.getIoWorkerExecutor().submit(() -> {
-				try {
-					Path backupPath = PATH.resolveSibling("chatlog_" + Util.getFormattedCurrentTime() + ".json");
-					Files.copy(PATH, backupPath);
-					LOGGER.info("[ChatLog.backup] Successfully backed up the current chat log to '{}':", backupPath);
-				} catch(IOException e) {
-					LOGGER.warn("[ChatLog.backup] Couldn't backup '{}':", PATH, e);
-					pushErrorToast("Chat log backup error", e.getLocalizedMessage());
-				}
-			}).get(IO_TIMEOUT, TimeUnit.SECONDS);
-		} catch(InterruptedException | TimeoutException | ExecutionException e) {
-			ChatPatches.logReportMsg(e);
-		}
+		ChatPatches.executeIoTimeout(() -> {
+			try {
+				Path backupPath = PATH.resolveSibling("chatlog_" + Util.getFormattedCurrentTime() + ".json");
+				Files.copy(PATH, backupPath);
+				LOGGER.info("[ChatLog.backup] Successfully backed up the current chat log to '{}':", backupPath);
+			} catch(IOException e) {
+				LOGGER.warn("[ChatLog.backup] Couldn't backup '{}':", PATH, e);
+				pushErrorToast("Chat log backup error", e.getLocalizedMessage());
+			}
+		});
 	}
 
     public static void restore() {
@@ -352,14 +336,10 @@ public class ChatLog {
      */
     public static void load() {
         if(config.chatlog && init) {
-			try {
-                // submits the deserialization task and waits at most #IO_TIMEOUT seconds for it to complete
-				Util.getIoWorkerExecutor().submit(ChatLog::deserialize).get(IO_TIMEOUT, TimeUnit.SECONDS); //sigh... prepub config option?
-                ChatLog.restore(); // restoring requires deserialization, but is also not an I/O task
-			} catch(TimeoutException | InterruptedException | ExecutionException e) {
-                ChatPatches.logReportMsg(e);
-                // i'm not re-implementing more error shit here, in this case >15s load time *is* the catastrophic issue
-            }
+			ChatPatches.executeIoTimeout(() -> {
+				deserialize();
+				restore(); // doesn't need to be executed on the I/O thread but requires sequential execution
+			});
         }
     }
 

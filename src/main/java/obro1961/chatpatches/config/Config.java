@@ -1,6 +1,8 @@
 package obro1961.chatpatches.config;
 
-import com.google.gson.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.stream.JsonWriter;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.*;
@@ -29,8 +31,6 @@ import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
 
-import java.io.EOFException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -40,12 +40,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
 
 import static net.minecraft.util.Formatting.*;
-import static obro1961.chatpatches.ChatPatches.LOGGER;
-import static obro1961.chatpatches.ChatPatches.config;
+import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.RenderUtils.BLANK_STYLE;
 import static obro1961.chatpatches.util.TextUtils.fillVars;
 import static obro1961.chatpatches.util.TextUtils.text;
@@ -54,7 +54,6 @@ public class Config {
     public static final Config DEFAULTS = new Config();
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
 
-    protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     /** @see #sendBoundaryLine() */
@@ -66,7 +65,6 @@ public class Config {
     // ->> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
 // prepub: impl `timestampedSystemMessages`
 //todo: import ~~dynamicShift PR~~ + commits from 1.21.4/5
-//prepub #INT_LIMIT: regen (and while ur at it test!) the option table
 //prepub #INT_LIMIT+1: make colors serialize as strings (name else hex else int)
     // tab categories: message, boundary, chatlog, chat
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
@@ -87,22 +85,25 @@ public class Config {
         caseSensitive = true, formatting = false, regex = false;
 
     /**
-     * Creates a new Config or YaclConfig, depending
-     * on installed mods. Should only be called once.
+     * Creates a new {@link Config} or {@link YaclConfig}, depending on installed
+	 * mods. Because of how {@linkplain ChatPatches#executeIoTimeout(Runnable)
+	 * deferred execution} works, keep in mind that the returned {@link Config}
+	 * instance will likely be modified and populated <b><i>after</i></b> this
+	 * method returns. <b>This method should only be called once.</b>
      */
     public static Config create() {
         FabricLoader fbr = FabricLoader.getInstance();
 		boolean accessibleInGame = fbr.isModLoaded("modmenu") || (fbr.isModLoaded("catalogue") && fbr.isModLoaded("menulogue"));
-        config = accessibleInGame ? new YaclConfig() : DEFAULTS;
 
-        read();
-        write();
+		config = accessibleInGame ? new YaclConfig() : DEFAULTS; // ensures yacl config is used if available
+        deserialize(); //urgent: for some reason this *specifically* is taking the entire timeout time but then executes (taking TIMEOUT s + <=.100 ms)
 
         return config;
     }
 
 
     public Screen getConfigScreen(Screen parent) {
+		//stonecutter: will fix this silly protocol version access :D
         boolean suggestYACL = SharedConstants.getProtocolVersion() >= 759; // 1.19 or higher
         String link = "https://modrinth.com/mod/" + (suggestYACL ? "yacl" : "cloth-config");
 
@@ -196,7 +197,7 @@ public class Config {
             if(mc.world == null)
                 e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
 
-            ChatPatches.logReportMsg(e);
+            logReportMsg(e);
         }
 
         return makeObject(nameFormat, profile.getName(), "", " ", style);
@@ -297,65 +298,105 @@ public class Config {
 
 
     /**
-     * Loads the config settings saved at {@link Config#PATH}
-     * into {@link ChatPatches#config}.
+     * Reads the config settings saved at {@link Config#PATH} and puts them into
+     * {@link ChatPatches#config}. <b>Executed on an {@linkplain
+	 * Util#getIoWorkerExecutor() I/O worker thread} to avoid freezing the render
+	 * thread.</b>
      *
      * @implNote Changed recently to better match
      * {@link ChatLog#deserialize()} and to fix
      * <a href="https://github.com/mrbuilder1961/ChatPatches/issues/208">#208</a>,
      * which was caused by loading an invalid config.
      */
-    public static void read() {
-        if(Files.exists(PATH)) {
-            try {
-                String rawData = Files.readString(PATH);
-                if(rawData.length() < 2 || !rawData.startsWith("{") || !rawData.endsWith("}"))
-                    throw new EOFException("ChatPatches config file is empty or corrupted");
+    public static void deserialize() {
+		ChatPatches.executeIoTimeout(() -> {
+			Path CODEC_PATH = PATH.resolveSibling("codec_chatpatches.json"); // todo: make this replace PATH
 
-                config = GSON.fromJson(rawData, config.getClass());
-                LOGGER.info("[Config.read] Loaded config info from '{}'!", PATH);
-            } catch(JsonIOException | JsonSyntaxException | EOFException e) {
-                LOGGER.info("[Config.read] The config couldn't be loaded; backing up and resetting:", e);
-                writeCopy();
-                config = DEFAULTS;
-            } catch(IOException e) {
-                LOGGER.error("[Config.read] An error occurred while trying to load config data from '{}'; resetting:", PATH, e);
-                config = DEFAULTS;
-            }
-        } else {
-            // config already has default values
-            LOGGER.info("[Config.read] No config file found; using default values");
-        }
-    }
+			if(!Files.exists(PATH) && !Files.exists(CODEC_PATH)) {
+				config = DEFAULTS;
+				LOGGER.info("[Config.deserialize] No config file found; using default values");
+				return;
+			}
 
-    /** Saves the {@code ChatPatches.config} instance to {@link Config#PATH} */
-    public static void write() {
-        try(FileWriter fw = new FileWriter(PATH.toFile())) {
-            GSON.toJson(config, config.getClass(), fw);
-            LOGGER.info("[Config.write] Saved config info to '{}'!", PATH);
-        } catch(IOException | JsonIOException e) {
-            LOGGER.error("[Config.write] An error occurred while trying to save the config to '{}':", PATH, e);
-        }
-    }
+			long start = System.currentTimeMillis();
+			LOGGER.info("[Config.deserialize] Reading...");
+
+			try {
+				// on different lines to make exception line numbers more useful
+				String raw = Files.readString(CODEC_PATH);
+				JsonObject json = JsonHelper.deserialize(raw);
+
+				config = config.parse(ChatPatches.jsonOps(), json)
+					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
+					.orElseThrow();
+
+				LOGGER.info("[Config.deserialize] Read config data from '{}'!", PATH);
+			} catch(IOException | NoSuchElementException e) {
+				config = DEFAULTS;
+				String action = e instanceof NoSuchElementException ? "decode" : "read";
+				LOGGER.error("[Config.deserialize] An error occurred while trying to {} config data from '{}', backing up and using default settings:", action, PATH, e);
+				backup();
+			} catch(RuntimeException e) {
+				config = DEFAULTS;
+				LOGGER.error("[Config.deserialize] An unexpected error occurred, using default settings");
+				logReportMsg(e);
+			}
+			LOGGER.info("[Config.deserialize] Took {} seconds", (System.currentTimeMillis() - start) / 1000.0);
+		});
+	}
 
     /**
-     * Creates a backup of the current config file
-     * located at {@link #PATH} and saves it
-     * as "config_" + current time + ".json" in the
-     * same directory as the original file.
-     * If an error occurs, a warning will be logged.
-     * Doesn't modify the current config.
+     * Saves {@link ChatPatches#config} to {@link #PATH}. <b>Executed on an
+	 * {@linkplain Util#getIoWorkerExecutor() I/O worker thread} to avoid freezing
+	 * the render thread.</b>
      */
-    public static void writeCopy() {
-		try {
-			Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + Util.getFormattedCurrentTime() + ".json" ));
-		} catch(IOException e) {
-            LOGGER.warn("[Config.writeCopy] An error occurred trying to write a copy of the original config file:", e);
-		}
+    public static void serialize() {
+		ChatPatches.executeIoTimeout(() -> {
+			Path CODEC_PATH = PATH.resolveSibling("codec_chatpatches.json");
+
+			long start = System.currentTimeMillis();
+			LOGGER.info("[Config.serialize] Saving...");
+
+			try( StringWriter sWriter = new StringWriter() ) { // required for ordered config fields
+				JsonElement json = config.encodeStart(ChatPatches.jsonOps())
+					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
+					.orElseThrow();
+
+				// writes the json in the order of the fields' declaration
+				JsonHelper.writeSorted(new JsonWriter(sWriter), json, (a, b) -> 0);
+
+				Files.writeString(CODEC_PATH, sWriter.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+				LOGGER.info("[Config.serialize] Saved config data to '{}'!", PATH);
+			} catch(IOException | NoSuchElementException e) {
+				String action = e instanceof NoSuchElementException ? "encode" : "save";
+
+				LOGGER.error("[Config.serialize] An error occurred while trying to {} config data to '{}'", action, PATH);
+				logReportMsg(e);
+			}
+			LOGGER.info("[Config.serialize] Took {} seconds", (System.currentTimeMillis() - start) / 1000.0);
+		});
+	}
+
+    /**
+     * Creates a copy of the current config file located at {@link #PATH} and
+     * saves it to {@code chatpatches_${now}.json} in the same directory as the
+     * original. If an error occurs, a warning will be logged. Doesn't modify
+     * the current config. <b>Executed on an {@linkplain Util#getIoWorkerExecutor()
+     * I/O worker thread} to avoid freezing the render thread.</b>
+     */
+    public static void backup() {
+		ChatPatches.executeIoTimeout(() -> {
+			try {
+				Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + Util.getFormattedCurrentTime() + ".json" ));
+			} catch(IOException e) {
+				LOGGER.warn("[Config.backup] An error occurred trying to back up the original config file:", e);
+			}
+		});
 	}
 
 
-    public ObjectList<Setting<?>> getOptions() { // todo?: getAll
+    public ObjectList<Setting<?>> getOptions() {
         Field[] fields = Config.class.getFields();
         ObjectList<Setting<?>> options = new ObjectArrayList<>( fields.length );
 
@@ -364,7 +405,7 @@ public class Config {
                 if(!Modifier.isStatic(f.getModifiers()))
                     options.add(new Setting<>( f.get(config), f.get(DEFAULTS), f.getName() ));
         } catch(IllegalAccessException e) {
-            ChatPatches.logReportMsg(e);
+            logReportMsg(e);
         }
 
         return options;
@@ -388,19 +429,23 @@ public class Config {
             .filter(opt -> opt.key.equals(key))
             .findFirst()
             .orElseGet(() -> {
-                ChatPatches.logReportMsg(new IllegalArgumentException("No such option: " + key));
+                logReportMsg(new IllegalArgumentException("No such option: " + key));
                 return new Setting<>(new Object(), new Object(), key);
             });
     }
 
 
     /**
-     * Encodes this {@link Config} instance into a {@link DataResult}
-     * dynamically based on its fields.
-     *
-     * @return A {@link DataResult} containing the encoded {@link
-     * ChatPatches#config}, otherwise one with an error message.
-     */
+	 * Encodes this {@link Config} instance into a {@link DataResult}
+	 * dynamically based on its fields.
+	 *
+	 * @return A {@link DataResult} containing the encoded {@link
+	 * ChatPatches#config}, otherwise one with an error message.
+	 *
+	 * @implNote Largely based on
+     * <a href="https://github.com/isXander/YetAnotherConfigLib/blob/multiversion/dev/src/main/java/dev/isxander/yacl3/config/v3/CodecConfig.java">
+     * YACL's built-in <code>CodecConfig</code> class</a>!
+	 */
     @SuppressWarnings("unchecked")
     public <R, T> DataResult<R> encodeStart(DynamicOps<R> ops) {
         RecordBuilder<R> builder = ops.mapBuilder();
@@ -425,6 +470,10 @@ public class Config {
      * stored in {@link ChatPatches#config} if successful, otherwise
      * an error message. Said message will be printed to the log before
      * returning.
+     *
+     * @implNote Largely based on
+     * <a href="https://github.com/isXander/YetAnotherConfigLib/blob/multiversion/dev/src/main/java/dev/isxander/yacl3/config/v3/CodecConfig.java">
+     * YACL's built-in <code>CodecConfig</code> class</a>!
      */
     @SuppressWarnings("unchecked")
     public <S, T> DataResult<Config> parse(DynamicOps<S> ops, S encoded) {
@@ -434,7 +483,7 @@ public class Config {
 
             if(result.error().isPresent() || result.result().isEmpty()) {
                 String message = "[Config.parse] Failed to parse field '" + opt.key + "' : " + result.error().map(DataResult.PartialResult::message).orElse("<unknown>");
-                ChatPatches.logReportMsg(new IllegalStateException(message));
+                logReportMsg(new IllegalStateException(message));
                 return DataResult.error(() -> message);
             }
 
@@ -498,8 +547,51 @@ public class Config {
                 }
             } catch(NoSuchFieldException | IllegalAccessException | ClassCastException e) {
                 LOGGER.error("[Setting.set({})] An error occurred trying to change config option '{}'", obj, key);
-                ChatPatches.logReportMsg(e);
+                logReportMsg(e);
             }
+        }
+
+
+        /**
+         * @return The {@link Codec} for this setting's option value wrapped as an
+         * {@linkplain Codec#optionalFieldOf(String, Object) optional field}
+         * {@link MapCodec}, per this Setting's {@link #key} and {@linkplain #def
+         * default value}. Provides minimal serialization checks, particularly for
+         * {@link String}s and {@link TextColor}s; however, no int range checks are
+         * performed.
+         */
+        @SuppressWarnings({"unchecked", "unused"}) // from pattern variables
+        public MapCodec<T> getCodec() {
+			Codec<T> codec = (Codec<T>) switch(def) {
+                case Boolean b -> Codec.BOOL;
+                //case Integer i when key.contains("Color") -> Codec.either(Codec.INT, TextColor.CODEC);
+                // error: ^^ results in an ExceptionInInitializerError bc the actual int codec is passed instead of the result somehow? idk
+                case Integer i -> Codec.INT;
+                case String s when key.contains("Format") -> Codec.STRING.comapFlatMap(
+                    raw -> raw.contains("$")
+                        ? DataResult.success(raw)
+                        : DataResult.error(() -> "[Config$Setting#getCodec] Format string '" + raw + "' for option '" + key + "' is missing a '$'"),
+                    Function.identity()
+                );
+                case String s when key.contains("Date") -> Codec.STRING.comapFlatMap(
+                    raw -> {
+						try {
+                            new SimpleDateFormat(raw);
+							return DataResult.success(raw);
+						} catch(IllegalArgumentException e) {
+							return DataResult.error(() -> "[Config$Setting#getCodec] Date string '" + raw + "' for option '" + key + "' is not a valid SimpleDateFormat");
+						}
+					},
+                    Function.identity()
+                );
+                case String s -> Codec.STRING;
+                default -> {
+                    logReportMsg(new IllegalStateException("Option '" + key + "' is not a valid type for serialization"));
+                    yield Codec.STRING;
+                }
+            };
+
+            return codec.optionalFieldOf(key, def);
         }
     }
 }

@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
@@ -16,9 +17,15 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches");
+	/** @see #executeIoTimeout(Runnable) */
+	public static final int IO_TIMEOUT = 15; // sigh.. prepub config option?
 
 	public static Config config = Config.create();
 
@@ -89,6 +96,21 @@ public class ChatPatches implements ClientModInitializer {
 	public static <X extends Throwable> X logAndThrowReportMsg(@NotNull X error) throws X {
 		logReportMsg(error);
 		throw error;
+	}
+
+	/**
+	 * Submits the given task to an {@linkplain Util#getIoWorkerExecutor() I/O worker
+	 * thread} and gives it {@value #IO_TIMEOUT} seconds to finish. If an exception is
+	 * thrown while waiting for the task to finish, it is logged according to {@link
+	 * #logReportMsg(Throwable)}.
+	 */
+	public static void executeIoTimeout(Runnable task) {
+		try {
+			Util.getIoWorkerExecutor().submit(task).get(IO_TIMEOUT, TimeUnit.SECONDS);
+		} catch(InterruptedException | TimeoutException | ExecutionException e) {
+			//todo: make the stackwalker go back one more frame to get the caller of this method
+			ChatPatches.logReportMsg(e);
+		}
 	}
 
 	// 1.20.5+ needs the RegistryOps instance
