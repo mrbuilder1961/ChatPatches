@@ -192,8 +192,7 @@ public class YaclConfig extends Config {
                                                 ? "`\"" + d + "\"`"
                                                 : "`" + d + "`",
 
-                                        I18n.translate(prefix + DESCRIPTION_KEY + k)
-                                            .replace("\n", ""), // todo selectively replace section signs somehow
+                                        I18n.translate(prefix + DESCRIPTION_KEY + k).replace("\n", ""),
                                         prefix + k
 									));//prepub test this guy against the current readme table
                                 });
@@ -383,11 +382,15 @@ public class YaclConfig extends Config {
      * the passed parameters.
      */
     private static OptionGroup subGroup(String key, ObjectList<Option<?>> options, Style descStyle) {
+        MutableText desc = Text.translatable(CATEGORY_DESC_PREFIX + key);
         return OptionGroup.createBuilder()
             .name( Text.translatable(CATEGORY_PREFIX + key) )
-            .description(OptionDescription.of(
-                Text.translatable(CATEGORY_DESC_PREFIX + key).fillStyle(descStyle != null ? descStyle : Style.EMPTY)
-            ))
+            .description(
+                // does this subgroup actually have a description?
+                desc.getString().equals(CATEGORY_DESC_PREFIX + key)
+                    ? OptionDescription.EMPTY // if no don't use one
+                    : OptionDescription.of(desc.fillStyle(descStyle != null ? descStyle : Style.EMPTY))
+            )
             .options( options )
             .build();
     }
