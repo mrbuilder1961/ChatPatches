@@ -79,14 +79,6 @@ public class ChatPatches implements ClientModInitializer {
 	}
 
 	/**
-	 * Executes {@link #logReportMsg(Throwable)} and throws the passed error.
-	 */
-	public static <X extends Throwable> X logAndThrowReportMsg(@NotNull X error) throws X {
-		logReportMsg(error);
-		throw error; // prepub delete this later if possible
-	}
-
-	/**
 	 * Logs how long the caller took to execute, according to {@code start} and the
 	 * {@linkplain System#currentTimeMillis() current time}. If the duration is less
 	 * than the given {@code threshold}, an info message is logged. Otherwise, logs a

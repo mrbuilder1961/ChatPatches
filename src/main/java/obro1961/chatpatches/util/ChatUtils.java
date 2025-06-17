@@ -9,6 +9,7 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
@@ -255,9 +256,11 @@ public class ChatUtils {
 					Text firstPart = parts.stream()
 						.filter(p -> p.getString().contains(">"))
 						.findFirst()
-						.orElseThrow(() -> ChatPatches.logAndThrowReportMsg(
-							new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "'!")
-						));
+						.orElseGet(() -> {
+							String error = "No closing angle bracket found in vanilla message '" + m.getString() + "'!";
+							ChatPatches.logReportMsg(new IllegalStateException(error));
+							return Text.literal("ERROR: " + error).formatted(Formatting.RED);
+						});
 
 					String[] split = firstPart.getString().split(">"); // fixes (#156)
 					String afterEndBracket = split.length > 1 ? split[1] : ""; // only get the part after the closing bracket
