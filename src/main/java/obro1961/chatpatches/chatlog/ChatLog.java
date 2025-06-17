@@ -220,9 +220,11 @@ public class ChatLog {
         }
 
         try {
+            ChatPatches.usingUnsafeCodec = true; // allow the OPEN_FILE click event to serialize
             JsonElement json = Data.CODEC.encodeStart(registeredOps, data)
                 .resultOrPartial(e -> ChatPatches.logAndThrowReportMsg(new JsonParseException(e)))
                 .orElseThrow();
+            ChatPatches.usingUnsafeCodec = false;
 
             Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
