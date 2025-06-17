@@ -47,15 +47,8 @@ public class ChatPatches implements ClientModInitializer {
 
 		// -- chat log loader and boundary sender --
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
-			ChatLog.load();
-
+			ChatLog.load(false);
 			config.sendBoundaryLine();
-
-			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering (#42)
-			// only replaces messages that would render instantly to save performance on large chat logs
-			int t = client.inGameHud.getTicks();
-			((ChatHudAccessor) client.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
-				.replaceAll(ln -> (t - ln.addedTime() < 200) ? new ChatHudLine.Visible(-200, ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
 		});
 
 		LOGGER.info("[ChatPatches()] Finished setup!");

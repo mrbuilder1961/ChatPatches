@@ -11,6 +11,8 @@ import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHud;
+import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
@@ -19,6 +21,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.TextUtils;
 import org.jetbrains.annotations.Nullable;
@@ -65,10 +68,11 @@ public class ChatLog {
     public static final MessageIndicator RESTORED_INDICATOR = new MessageIndicator(0x382FB5, null, Text.translatable("text.chatpatches.restored"), "Restored"); // prepub use an AW and put the icon to use
 
     private static final int DEFAULT_SIZE = 100;
+	private static final int IO_THRESHOLD_SUGGESTION = 1000;
 	private static final String EMPTY_JSON = "{\"messages\":[],\"history\":[]}";
+	private static final ObjectList<?> EMPTY_LIST = newSyncedObjectList(null); // used for determining if the chat log has been deserialized yet
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
-    private static boolean init = true;
     /**
      * Used to suspend the addition of messages
      * and access to the chat log while restoring.
@@ -80,8 +84,10 @@ public class ChatLog {
     private static int lastHistoryCount = -1, lastMessageCount = -1;
     private static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
 
-    private static ObjectList<Text> messages = newSyncedObjectList(null);
-    private static ObjectList<String> history = newSyncedObjectList(null);
+    @SuppressWarnings("unchecked")
+	private static ObjectList<Text> messages = (ObjectList<Text>) EMPTY_LIST;
+    @SuppressWarnings("unchecked")
+    private static ObjectList<String> history = (ObjectList<String>) EMPTY_LIST;
 
     /**
      * @return If {@code source} is null, returns a new synchronized object
@@ -243,8 +249,6 @@ public class ChatLog {
 
             messages = newSyncedObjectList(null);
             history = newSyncedObjectList(null);
-        } finally {
-            init = false; // messages and history are populated regardless of errors
         }
 		ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
     }
@@ -317,39 +321,42 @@ public class ChatLog {
 
     public static void restore() {
         if(messageCount() > 0 && historyCount() > 0) {
-            restoring = true;
-            history.forEach(mc.inGameHud.getChatHud()::addToMessageHistory);
-            messages.forEach(msg -> mc.inGameHud.getChatHud().addMessage(msg, null, RESTORED_INDICATOR));
+            ChatHud hud = mc.inGameHud.getChatHud();
+			int ticks = mc.inGameHud.getTicks();
+
+			restoring = true;
+            history.forEach(hud::addToMessageHistory);
+            messages.forEach(msg -> hud.addMessage(msg, null, RESTORED_INDICATOR));
             restoring = false;
+
+			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering (#42)
+			// only replaces messages that would render instantly to save performance on large chat logs
+			// now adds the message's addedTime to account for any extra offsets from the deserialization unsyncing from the main game thread
+			((ChatHudAccessor) hud).chatpatches$getVisibleMessages()
+				.replaceAll(ln ->
+					(ticks - ln.addedTime() < 200) ? new ChatHudLine.Visible(-(200 + ln.addedTime()), ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
         }
 
         LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages!", messageCount(), historyCount());
     }
 
     /**
-     * Attempts to load the chat log from {@link #PATH}
-     * and restore it into the game. Only does so if
-     * the chat log is enabled in the config and hasn't
-     * been deserialized yet. <b>Executed on an {@linkplain
-     * Util#getIoWorkerExecutor() I/O worker thread} to
-     * avoid freezing the render thread.</b>
+     * Attempts to load the chat log from {@link #PATH} and restore it into the game.
+	 * Only does so if the chat log is {@linkplain Config#chatlog enabled in the config}
+	 * and hasn't been deserialized yet (when {@link #messages} and {@link #history}
+	 * are both still equal to {@link #EMPTY_LIST}). <b>Executed on an {@linkplain
+     * Util#getIoWorkerExecutor() I/O worker thread} to avoid freezing the render
+	 * thread.</b>
+	 *
+	 * @param force {@code true} to force loading the chat log even if it's been
+	 * loaded in the current session, {@code false} otherwise.
      */
-    public static void load() {
-        if(config.chatlog && init) {
+    public static void load(boolean force) {
+        if(config.chatlog && ((messages == EMPTY_LIST && history == EMPTY_LIST) || force)) {
 			ChatPatches.executeIoTask(() -> {
 				deserialize();
 				restore(); // doesn't need to be executed on the I/O thread but requires sequential execution
 			});
-        }
-    }
-
-    public static void forceLoad() {
-        if(config.chatlog) {
-            LOGGER.info("[ChatLog.forceLoad] Force loading the chat log...");
-
-            init = true; // allows #load to execute
-            load();
-            init = false;
         }
     }
 
