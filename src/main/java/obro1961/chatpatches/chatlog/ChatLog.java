@@ -246,7 +246,7 @@ public class ChatLog {
         } finally {
             init = false; // messages and history are populated regardless of errors
         }
-		LOGGER.info("[ChatLog.deserialize] Took {} seconds", (System.currentTimeMillis() - start) / 1000.0);
+		ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
     }
 
     /**
@@ -267,7 +267,7 @@ public class ChatLog {
         if((messages.size() == lastMessageCount && history.size() == lastHistoryCount) || (messages.isEmpty() && history.isEmpty()))
             return; // don't write empty or old data
 
-		ChatPatches.executeIoTimeout(() -> {
+		ChatPatches.executeIoTask(() -> {
 			long start = System.currentTimeMillis();
 			LOGGER.info("[ChatLog.serialize] Saving...");
 
@@ -290,7 +290,7 @@ public class ChatLog {
 				);
 				pushErrorToast("Chat log serialization error", e.getLocalizedMessage());
 			}
-			LOGGER.info("[ChatLog.serialize] Took {} seconds", (System.currentTimeMillis() - start) / 1000.0);
+			ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
 		});
 	}
 
@@ -303,7 +303,7 @@ public class ChatLog {
      * to avoid freezing the render thread.</b>
      */
     public static void backup() {
-		ChatPatches.executeIoTimeout(() -> {
+		ChatPatches.executeIoTask(() -> {
 			try {
 				Path backupPath = PATH.resolveSibling("chatlog_" + Util.getFormattedCurrentTime() + ".json");
 				Files.copy(PATH, backupPath);
@@ -336,7 +336,7 @@ public class ChatLog {
      */
     public static void load() {
         if(config.chatlog && init) {
-			ChatPatches.executeIoTimeout(() -> {
+			ChatPatches.executeIoTask(() -> {
 				deserialize();
 				restore(); // doesn't need to be executed on the I/O thread but requires sequential execution
 			});

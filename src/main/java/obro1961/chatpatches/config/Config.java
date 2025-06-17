@@ -54,6 +54,7 @@ public class Config {
     public static final Config DEFAULTS = new Config();
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
 
+	protected static final int IO_THRESHOLD_SUGGESTION = 500;
     protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     /** @see #sendBoundaryLine() */
@@ -62,7 +63,7 @@ public class Config {
 
     // prepub #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
     // current system, so maybe just like a Map<Str, List<Str>> with field names as keys and the list of aliases as strings contained in the list value?
-    // ->> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
+    // >> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
 // prepub: impl `timestampedSystemMessages`
 //todo: import ~~dynamicShift PR~~ + commits from 1.21.4/5
 //prepub #INT_LIMIT+1: make colors serialize as strings (name else hex else int)
@@ -85,20 +86,22 @@ public class Config {
         caseSensitive = true, formatting = false, regex = false;
 
     /**
-     * Creates a new {@link Config} or {@link YaclConfig}, depending on installed
-	 * mods. Because of how {@linkplain ChatPatches#executeIoTimeout(Runnable)
-	 * deferred execution} works, keep in mind that the returned {@link Config}
-	 * instance will likely be modified and populated <b><i>after</i></b> this
-	 * method returns. <b>This method should only be called once.</b>
+     * Initializes {@linkplain ChatPatches#config the config} according to installed
+	 * mods ({@link YaclConfig} if relevant, else Config) and populates its values
+	 * according to {@link #deserialize()}.
+	 *
+	 * @apiNote Should only be called once.
      */
-    public static Config create() {
-        FabricLoader fbr = FabricLoader.getInstance();
-		boolean accessibleInGame = fbr.isModLoaded("modmenu") || (fbr.isModLoaded("catalogue") && fbr.isModLoaded("menulogue"));
+    public static Config initialize() {
+        FabricLoader f = FabricLoader.getInstance();
+		boolean accessibleInGame = f.isModLoaded("modmenu") || (f.isModLoaded("catalogue") && f.isModLoaded("menulogue"));
 
-		config = accessibleInGame ? new YaclConfig() : DEFAULTS; // ensures yacl config is used if available
-        deserialize(); //urgent: for some reason this *specifically* is taking the entire timeout time but then executes (taking TIMEOUT s + <=.100 ms)
+		// ensures yacl config is used if available
+		config = accessibleInGame ? new YaclConfig() : DEFAULTS;
 
-        return config;
+        deserialize();
+
+		return config;
     }
 
 
@@ -299,48 +302,47 @@ public class Config {
 
     /**
      * Reads the config settings saved at {@link Config#PATH} and puts them into
-     * {@link ChatPatches#config}. <b>Executed on an {@linkplain
-	 * Util#getIoWorkerExecutor() I/O worker thread} to avoid freezing the render
-	 * thread.</b>
+     * {@link ChatPatches#config}. <b>Cannot be executed on an I/O worker thread</b>
+	 * because the ModMenu screen factory doesn't initialize properly when the
+	 * config isn't ready right away. However, if there are any I/O issues with the
+	 * config file specifically, they probably have to do with the user and not the
+	 * mod.
      *
-     * @implNote Changed recently to better match
-     * {@link ChatLog#deserialize()} and to fix
-     * <a href="https://github.com/mrbuilder1961/ChatPatches/issues/208">#208</a>,
-     * which was caused by loading an invalid config.
+     * @implNote Changed recently to better match {@link ChatLog#deserialize()} and
+	 * to fix <a href="https://github.com/mrbuilder1961/ChatPatches/issues/208">#208</a>,
+     * which was caused by loading an invalid (or empty) config.
      */
     public static void deserialize() {
-		ChatPatches.executeIoTimeout(() -> {
-			if(!Files.exists(PATH)) {
-				config = DEFAULTS;
-				LOGGER.info("[Config.deserialize] No config file found; using default values");
-				return;
-			}
+		long start = System.currentTimeMillis();
+		LOGGER.info("[Config.deserialize] Reading...");
 
-			long start = System.currentTimeMillis();
-			LOGGER.info("[Config.deserialize] Reading...");
+		if(!Files.exists(PATH)) {
+			config = DEFAULTS;
+			LOGGER.info("[Config.deserialize] No config file found; using default values");
+			return;
+		}
 
-			try {
-				// on different lines to make exception line numbers more useful
-				String raw = Files.readString(PATH);
-				JsonObject json = JsonHelper.deserialize(raw);
+		try {
+			// on different lines to make exception line numbers more useful
+			String raw = Files.readString(PATH);
+			JsonObject json = JsonHelper.deserialize(raw);
 
-				config = config.parse(ChatPatches.jsonOps(), json)
-					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
-					.orElseThrow();
+			config = config.parse(jsonOps(), json)
+				.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
+				.orElseThrow();
 
-				LOGGER.info("[Config.deserialize] Read config data from '{}'!", PATH);
-			} catch(IOException | NoSuchElementException e) {
-				config = DEFAULTS;
-				String action = e instanceof NoSuchElementException ? "decode" : "read";
-				LOGGER.error("[Config.deserialize] An error occurred while trying to {} config data from '{}', backing up and using default settings:", action, PATH, e);
-				backup();
-			} catch(RuntimeException e) {
-				config = DEFAULTS;
-				LOGGER.error("[Config.deserialize] An unexpected error occurred, using default settings");
-				logReportMsg(e);
-			}
-			LOGGER.info("[Config.deserialize] Took {} seconds", (System.currentTimeMillis() - start) / 1000.0);
-		});
+			LOGGER.info("[Config.deserialize] Read config data from '{}'!", PATH);
+		} catch(IOException | NoSuchElementException e) {
+			config = DEFAULTS;
+			String action = e instanceof NoSuchElementException ? "decode" : "read";
+			LOGGER.error("[Config.deserialize] An error occurred while trying to {} config data from '{}', backing up and using default settings:", action, PATH, e);
+			backup();
+		} catch(RuntimeException e) {
+			config = DEFAULTS;
+			LOGGER.error("[Config.deserialize] An unexpected error occurred, using default settings");
+			logReportMsg(e);
+		}
+		ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
 	}
 
     /**
@@ -349,7 +351,7 @@ public class Config {
 	 * the render thread.</b>
      */
     public static void serialize() {
-		ChatPatches.executeIoTimeout(() -> {
+		ChatPatches.executeIoTask(() -> {
 			long start = System.currentTimeMillis();
 			LOGGER.info("[Config.serialize] Saving...");
 
@@ -370,7 +372,7 @@ public class Config {
 				LOGGER.error("[Config.serialize] An error occurred while trying to {} config data to '{}'", action, PATH);
 				logReportMsg(e);
 			}
-			LOGGER.info("[Config.serialize] Took {} seconds", (System.currentTimeMillis() - start) / 1000.0);
+			ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
 		});
 	}
 
@@ -382,7 +384,7 @@ public class Config {
      * I/O worker thread} to avoid freezing the render thread.</b>
      */
     public static void backup() {
-		ChatPatches.executeIoTimeout(() -> {
+		ChatPatches.executeIoTask(() -> {
 			try {
 				Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + Util.getFormattedCurrentTime() + ".json" ));
 			} catch(IOException e) {
