@@ -166,8 +166,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchField.setSuggestion(SEARCH_SUGGESTION);
 		searchField.setChangedListener(newText -> onSearchFieldUpdate(newText, false));
 		if(config.searchDrafting) {
+			// if necessary, forces the colors to switch + removes suggestion text
+			// normally this would be ignored because the field text = searchDraft
+			// see (#229)/(#230)
 			searchField.setText(searchDraft);
-			if (!searchDraft.isEmpty())
+			if(!searchDraft.isEmpty())
 				onSearchFieldUpdate(searchField.getText(), true);
 		}
 

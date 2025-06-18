@@ -8,13 +8,11 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryOps;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.Identifier;
-import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
@@ -55,16 +53,9 @@ public class ChatPatches implements ClientModInitializer {
 
 		// -- chat log loader and boundary sender --
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
-			ChatLog.load();
-
+			ChatLog.load(false);
 			config.sendBoundaryLine();
-
-			// sets all messages (restored and boundary line) to an addedTime of 0 to prevent instant rendering (#42)
-			// only replaces messages that would render instantly to save performance on large chat logs
-			// no longer ran once per game, but once per join
-			int t = client.inGameHud.getTicks();
-			((ChatHudAccessor) client.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
-				.replaceAll(ln -> (t - ln.addedTime() < 200) ? new ChatHudLine.Visible(-200, ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
+			ChatLog.hideRecentMessages();
 		});
 
 		LOGGER.info("[ChatPatches()] Finished setting up!");
@@ -101,6 +92,35 @@ public class ChatPatches implements ClientModInitializer {
 	public static <X extends Throwable> X logAndThrowReportMsg(@NotNull X error) throws X {
 		logReportMsg(error);
 		throw error;
+	}
+
+	/**
+	 * Logs how long the caller took to execute, according to {@code start} and the
+	 * {@linkplain System#currentTimeMillis() current time}. If the duration is less
+	 * than the given {@code threshold}, an info message is logged. Otherwise, logs a
+	 * warning message noting the excessive duration and suggesting the user report
+	 * it. In both cases the duration is converted to a {@code double} and logged in
+	 * seconds.
+	 *
+	 * @param start The time, in milliseconds, when the caller started execution.
+	 * Should be a previously recorded value from {@link System#currentTimeMillis()}.
+	 * @param threshold The maximum duration, in milliseconds, that the caller should
+	 * take to execute.
+	 */
+	public static void logDuration(long start, long threshold) {
+		// store and convert to seconds
+		double duration = (double) (System.currentTimeMillis() - start) / 1000;
+		double max = (double) threshold / 1000;
+
+		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+		String clazz = walker.getCallerClass().getSimpleName();
+		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
+
+		if(duration >= max) {
+			LOGGER.warn("[{}.{}] Took {} seconds, but should've taken less than {}s. Consider reporting this to the GitHub or Discord", clazz, method, duration, max);
+		} else {
+			LOGGER.info("[{}.{}] Took {} seconds", clazz, method, duration);
+		}
 	}
 
 	/**
