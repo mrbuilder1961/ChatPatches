@@ -49,6 +49,7 @@ public class ChatPatches implements ClientModInitializer {
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
 			ChatLog.load(false);
 			config.sendBoundaryLine();
+			ChatLog.hideRecentMessages();
 		});
 
 		LOGGER.info("[ChatPatches()] Finished setup!");

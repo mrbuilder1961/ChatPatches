@@ -193,7 +193,7 @@ public class ChatLog {
         String rawJson = EMPTY_JSON;
 
         long start = System.currentTimeMillis();
-        LOGGER.info("[ChatLog.deserialize] Loading...");
+        LOGGER.info("[ChatLog.deserialize] Reading...");
 
         if(Files.exists(PATH)) {
 			try {
@@ -321,24 +321,31 @@ public class ChatLog {
 
     public static void restore() {
         if(messageCount() > 0 && historyCount() > 0) {
-            ChatHud hud = mc.inGameHud.getChatHud();
-			int ticks = mc.inGameHud.getTicks();
+			ChatHud chat = mc.inGameHud.getChatHud();
 
 			restoring = true;
-            history.forEach(hud::addToMessageHistory);
-            messages.forEach(msg -> hud.addMessage(msg, null, RESTORED_INDICATOR));
-            restoring = false;
+			history.forEach(chat::addToMessageHistory);
+			messages.forEach(msg -> chat.addMessage(msg, null, RESTORED_INDICATOR));
+			restoring = false;
+
+			hideRecentMessages();
+		}
+
+		LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages!", messageCount(), historyCount());
+	}
+
+	public static void hideRecentMessages() {
+		if(messageCount() > 0 && historyCount() > 0) {
+			final int ticks = mc.inGameHud.getTicks();
 
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering (#42)
 			// only replaces messages that would render instantly to save performance on large chat logs
 			// now adds the message's addedTime to account for any extra offsets from the deserialization unsyncing from the main game thread
-			((ChatHudAccessor) hud).chatpatches$getVisibleMessages()
+			((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
 				.replaceAll(ln ->
 					(ticks - ln.addedTime() < 200) ? new ChatHudLine.Visible(-(200 + ln.addedTime()), ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
-        }
-
-        LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages!", messageCount(), historyCount());
-    }
+		}
+	}
 
     /**
      * Attempts to load the chat log from {@link #PATH} and restore it into the game.
