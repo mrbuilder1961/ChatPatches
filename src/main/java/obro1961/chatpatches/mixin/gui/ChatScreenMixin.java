@@ -9,6 +9,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
@@ -19,7 +20,6 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.HoverEvent;
@@ -268,7 +268,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *     </ol>
 	 * </ol>
 	 */
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V"))
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatInputSuggestor;render(Lnet/minecraft/client/gui/DrawContext;II)V"))
 	private void renderSearchButtonAndBar(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
 		if(showSearch && !config.hideSearchButton) {
 			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
@@ -297,14 +297,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *     </ol>
 	 * </ol>
 	 */
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;pop()V"))
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatInputSuggestor;render(Lnet/minecraft/client/gui/DrawContext;II)V", shift = At.Shift.AFTER))
 	public void renderSearchSettingsAndCopyMenu(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && !config.hideSearchButton) {
 			context.drawTexture(
-				RenderLayer::getGuiTextured,
+				RenderPipelines.GUI_TEXTURED,
 				id("textures/gui/search_settings_panel.png"),
-				MENU_X,  height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
+				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
 
 			caseSensitiveButton.render(context, mX, mY, delta);
@@ -329,8 +329,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			int i = visibles.indexOf( hoveredVisibles.get(hoveredParts - 1) ) - chat.chatpatches$getScrolledLines();
 			int hoveredY = sH - (i * lH) - shift;
 
-			context.getMatrices().push();
-			context.getMatrices().scale((float) s, (float) s, 1.0f);
+			context.getMatrices().pushMatrix();
+			context.getMatrices().scale((float) s, (float) s);
 
 			int borderW = sW + 8;
 			int scissorY1 = MathHelper.floor((sH - (chatHud.getVisibleLineCount() * lH) - shift - 1) * s);
@@ -343,7 +343,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			context.drawBorder(0, selectionY1, borderW, selectionH, config.copyColor + 0xff000000);
 			context.disableScissor();
 
-			context.getMatrices().pop();
+			context.getMatrices().popMatrix();
 
 
 			mainButtons.values().forEach(menuButton -> menuButton.render(context, mX, mY, delta));

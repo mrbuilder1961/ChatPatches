@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `216.6.15` for Minecraft 1.21.6 on Fabric, Quilt
+- Updated to 1.21.6
+
 ## Chat Patches `215.6.15` for Minecraft 1.21.5 on Fabric, Quilt
 - Fixed the first letter of the search draft being removed when closing chat ([#229](https://www.github.com/mrbuilder1961/ChatPatches/issues/229)-30)
 - Updated the chat log again to fix [#231](https://www.github.com/mrbuilder1961/ChatPatches/issues/231) going forward
