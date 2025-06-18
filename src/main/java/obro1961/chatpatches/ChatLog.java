@@ -1,4 +1,4 @@
-package obro1961.chatpatches.chatlog;
+package obro1961.chatpatches;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,7 +20,6 @@ import net.minecraft.client.toast.SystemToast;
 import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
-import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.TextUtils;

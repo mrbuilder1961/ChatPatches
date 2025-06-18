@@ -17,8 +17,8 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.Uuids;
+import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.util.TextUtils;
 
 import java.awt.*;
