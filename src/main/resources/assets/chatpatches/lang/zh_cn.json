@@ -64,7 +64,7 @@
     "text.chatpatches.chatShift": "聊天上移",
     "text.chatpatches.messageDrafting": "聊天草稿切换",
     "text.chatpatches.searchDrafting": "搜索草稿切换",
-    "text.chatpatches.search": "隐藏搜索按钮",
+    "text.chatpatches.search": "搜索按钮",
     "text.chatpatches.vanillaClearing": "原版聊天清除",
     "text.chatpatches.searchPrefix": "搜索前缀",
     "text.chatpatches.desc.chatlog": "是否保存聊天记录，以便在另一个游戏会话中重新添加到聊天中？",
@@ -74,7 +74,7 @@
     "text.chatpatches.desc.chatShift": "将聊天界面上移，以不遮挡装备栏和/或生命值。默认值为10，设置为0以取消上移。",
     "text.chatpatches.desc.messageDrafting": "是否在关闭并重新打开聊天后保留聊天框内的文本？",
     "text.chatpatches.desc.searchDrafting": "是否在关闭并重新打开聊天后保留搜索框内的文本？",
-    "text.chatpatches.desc.search": "是否隐藏搜索按钮？注意，这将禁用所有搜索功能。",
+    "text.chatpatches.desc.search": "是否应显示搜索按钮？注意，这将禁用所有搜索功能。",
     "text.chatpatches.desc.vanillaClearing": "是否像原版那样在离开一个世界/服务器后清除聊天消息？注意，这将完全清除聊天和聊天记录。",
     "text.chatpatches.desc.searchPrefix": "是否在按了上或下按键后，将聊天框内文字设为前缀和光标前的字符相同的聊天记录？原版会设为相邻的消息。",
 

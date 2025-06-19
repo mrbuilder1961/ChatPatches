@@ -64,11 +64,11 @@
     "text.chatpatches.messageDrafting": "Attiva/Disattiva la modalità bozza della chat",
     "text.chatpatches.onlyInvasiveDrafting": "Only invasive drafting toggle",
     "text.chatpatches.searchDrafting": "Search drafting toggle",
-    "text.chatpatches.search": "Nascondi il pulsante di ricerca",
+    "text.chatpatches.search": "Pulsante di ricerca",
     "text.chatpatches.vanillaClearing": "Vanilla chat clearing",
     "text.chatpatches.desc.chatHidePacket": "I pacchetti di messaggi nascosti che eliminano i messaggi di chat dovrebbero essere ignorati?",
     "text.chatpatches.desc.searchDrafting": "Qualsiasi testo nel campo di ricerca dovrebbe persistere dopo aver chiuso e riaperto la chat?",
-    "text.chatpatches.desc.search": "Il pulsante di ricerca dovrebbe essere nascosto? Tieni presente che questa operazione disabilita tutte le funzionalità di ricerca.",
+    "text.chatpatches.desc.search": "Il pulsante di ricerca dovrebbe essere visualizzato? Tieni presente che questa operazione disabilita tutte le funzionalità di ricerca.",
     "text.chatpatches.desc.vanillaClearing": "I messaggi di chat dovrebbero cancellarsi dopo aver lasciato un mondo/server come vanilla? Nota che questo cancella completamente sia la chat che il registro della chat.",
 
     "text.chatpatches.help.dateFormat": "Per informazioni sulla formattazione di data e ora, clicca qui!",

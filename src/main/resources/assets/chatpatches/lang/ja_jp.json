@@ -67,7 +67,7 @@
 	"text.chatpatches.chatShift": "チャット欄の移動",
 	"text.chatpatches.messageDrafting": "チャットの下書き",
 	"text.chatpatches.searchDrafting": "検索の下書き",
-	"text.chatpatches.search": "検索ボタン非表示",
+	"text.chatpatches.search": "検索ボタン",
 	"text.chatpatches.vanillaClearing": "バニラのチャット消去",
 	"text.chatpatches.desc.chatlog": "チャットをログに保存し，別のゲームセッションで復元できるようにするかどうか．",
 	"text.chatpatches.desc.chatHidePacket": "メッセージを削除するメッセージ非表示パケットを無視するかどうか．",
@@ -77,7 +77,7 @@
 	"text.chatpatches.desc.chatShift": "防具や体力のゲージに重ならないようにチャット欄を上にずらします．デフォルトは10，ずらさない場合は'0'にします．",
 	"text.chatpatches.desc.messageDrafting": "チャットを閉じ，再度開いた際にチャットの入力欄の文字を保持するかどうか．",
 	"text.chatpatches.desc.searchDrafting": "チャットを閉じ，再度開いた際に検索バーの文字を保持するかどうか．",
-	"text.chatpatches.desc.search": "検索ボタンを非表示にするかどうか．非表示にした場合，すべての検索機能が無効になることに注意してください．",
+	"text.chatpatches.desc.search": "検索ボタンを表示するかどうか。非表示にすると、すべての検索機能が無効になることに注意してください。．",
 	"text.chatpatches.desc.vanillaClearing": "バニラ同様に，ワールド/サーバーを退出したときにチャットを消去するかどうか．これにより，チャットとチャットログの両方が完全に消去されることに注意してください．",
 
 	"text.chatpatches.contextReplyFormat": "返信テキスト形式",
