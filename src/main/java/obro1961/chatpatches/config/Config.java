@@ -238,7 +238,7 @@ public class Config {
             ? "C_" + mc.getServer().getSaveProperties().getLevelName()
             : mc.getCurrentServerEntry() instanceof ServerInfo entry
                 ? "S_" + (entry.name.isBlank() ? entry.address : entry.name) // if the name is blank, uses the address instead
-                : "";
+                : "?_?"; // prevents weird game states from throwing IOOBEs from the substring below
 
         // continues if messages in chat and if the last and current worlds were servers, that they aren't the same
         if( !chat.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
