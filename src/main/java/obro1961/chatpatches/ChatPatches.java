@@ -115,7 +115,7 @@ public class ChatPatches implements ClientModInitializer {
             		? "C_" + client.getServer().getSaveProperties().getLevelName()
             		: client.getCurrentServerEntry() instanceof ServerInfo entry
                			? "S_" + (entry.name.isBlank() ? entry.address : entry.name) // if the name is blank, uses the address instead
-                		: "";
+                		: "?_?";
 	}
 
 	/**
