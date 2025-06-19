@@ -110,12 +110,11 @@ public class ChatPatches implements ClientModInitializer {
 		Objects.requireNonNull(client, "MinecraftClient must exist to access client data:");
 		String entryName;
 
-		return client.isIntegratedServerRunning()
-			? "C_" + client.getServer().getSaveProperties().getLevelName()
-			: (entryName = client.getCurrentServerEntry().name) == null || entryName.isBlank() // check if null/empty then use IP
-				? "S_" + client.getCurrentServerEntry().address
-				: "S_" + client.getCurrentServerEntry().name
-		;
+        	return client.isIntegratedServerRunning() // this check prevents NPEs for both if branches
+            		? "C_" + client.getServer().getSaveProperties().getLevelName()
+            		: client.getCurrentServerEntry() instanceof ServerInfo entry
+               			? "S_" + (entry.name.isBlank() ? entry.address : entry.name) // if the name is blank, uses the address instead
+                		: "";
 	}
 
 	/**
