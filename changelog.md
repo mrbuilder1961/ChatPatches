@@ -3,7 +3,7 @@
 ## Chat Patches `202.8.0` for Minecraft 1.20.2, 1.??.? on Fabric, Quilt
 - Completely refactored basically the entire codebase to support future features and fixes, on multiple loaders and versions!
 - Java 21 is **now required going forward** despite the Minecraft version used
-- Renamed many config options; you will likely need to manually reconfigure your config (they're mostly swapped words): //prepub DFU?
+- Renamed many config options; you will need to manually rename these options: //prepub DFU?
   - `counterCompact` => `compactChat`
   - `counterCompactDistance` => `compactDistance`
   - `shiftChat` => `chatShift`
@@ -17,14 +17,13 @@
   sub-button, and even more message parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
 - Fatal chat log saving errors will now try and dump all the data to the debug log
 - Fixed team names and related components not formatting properly
-- Config and chat log I/O events are now executed on I/O threads, which should prevent any potential freezing ([#227](https://www.github.com/mrbuilder1961/ChatPatches/issues/227))
-- Random misc changes, dependency updates, rewordings, etc.
+- Config saving and all chat log I/O events are now executed on I/O threads, which should prevent any potential freezing ([#227](https://www.github.com/mrbuilder1961/ChatPatches/issues/227))
+- An infinite amount of misc changes, like rewordings
 - **Dev notes:**
   - Simplified `fabric.mod.json` thanks to Loom's new features (looks like illegal JSON, but is ultimately fixed when built)
   - Replaced usages of GSON with Mojang's `DataFixerUpper` (Codec) library, which is now used going forward
   - Made chat log references consistent throughout the codebase ("chat log" most commonly, and "ChatLog" in select code locations)
   - TODO
-    -ALSO MAKE SURE THE CONTRIBUTORS ARE ALL LISTED IN FMJ
 
 ## Chat Patches `202.6.5` for Minecraft 1.20.2 on Fabric, Quilt
 - Added the `searchPrefix` config option, which controls whether to filter previously sent messages based on the text behind the cursor, to speed up 

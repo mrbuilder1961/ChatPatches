@@ -339,8 +339,9 @@ public class Config {
 			backup();
 		} catch(RuntimeException e) {
 			config = DEFAULTS;
-			LOGGER.error("[Config.deserialize] An unexpected error occurred, using default settings");
+			LOGGER.error("[Config.deserialize] An unexpected error occurred, backing up and using default settings");
 			logReportMsg(e);
+			backup();
 		}
 		ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
 	}
@@ -379,14 +380,14 @@ public class Config {
     /**
      * Creates a copy of the current config file located at {@link #PATH} and
      * saves it to {@code chatpatches_${now}.json} in the same directory as the
-     * original. If an error occurs, a warning will be logged. Doesn't modify
-     * the current config. <b>Executed on an {@linkplain Util#getIoWorkerExecutor()
+     * original. If an error occurs, a warning will be logged. Doesn't modify the
+     * current config. <b>Executed on an {@linkplain Util#getIoWorkerExecutor()
      * I/O worker thread} to avoid freezing the render thread.</b>
      */
     public static void backup() {
 		ChatPatches.executeIoTask(() -> {
 			try {
-				Files.copy(PATH, PATH.resolveSibling( "chatpatches_" + Util.getFormattedCurrentTime() + ".json" ));
+				Files.copy(PATH, PATH.resolveSibling(MOD_ID + "_" + Util.getFormattedCurrentTime() + ".json"));
 			} catch(IOException e) {
 				LOGGER.warn("[Config.backup] An error occurred trying to back up the original config file:", e);
 			}
