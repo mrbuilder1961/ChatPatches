@@ -457,7 +457,6 @@ public class Config {
             // note: currently uses optionalFieldOf as specified in #getTypeCodec; could in theory silently ignore missing fields
             builder = optCodec.encode(val, ops, builder);
         }
-        // error: saving colors in the menu fails and logs 'Option value mismatch after applying! Reset to binding's getter.'
 
         return builder.build(ops.empty());
     }
