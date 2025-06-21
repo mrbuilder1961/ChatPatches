@@ -71,6 +71,7 @@ public class ContextMenu implements Element {
 	public static final String LANG_PREFIX = "text.chatpatches.context.";
 
 	private static final int BUTTON_PADDING = 4;
+	private static final int BUTTON_HEIGHT = 14;
 	/**
 	 * Slightly modified from <a href="https://stackoverflow.com/a/163398">StackOverflow</a>
 	 * to not include file links. Memoized to avoid recompiling the regex every time, and so
@@ -80,7 +81,7 @@ public class ContextMenu implements Element {
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
 
 	// region text constants
-	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable(LANG_PREFIX + "unknownData", id);
+	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable(LANG_PREFIX + "unknown", id);
 	static final Text MENU_STRING = Text.translatable(LANG_PREFIX + "copyText");
 	static final Text RAW_TEXT = Text.translatable(LANG_PREFIX + "rawText");
 	static final Text FORMATTED_STR = Text.translatable(LANG_PREFIX + "formattedString");
@@ -140,7 +141,7 @@ public class ContextMenu implements Element {
 	private final int visibleMessageIndex;
 	/**
 	 * The number of visible lines in the selected message. Used for
-	 * simplifying and optimizing the {@link #renderSelectionOutline(DrawContext)}.
+	 * simplifying and optimizing {@link #renderSelectionOutline(DrawContext)}.
 	 */
 	private final int visibleLines;
 
@@ -185,9 +186,12 @@ public class ContextMenu implements Element {
 		this.selectedLine = messageIndex >= 0 && messages.size() > messageIndex ? messages.get(messageIndex) : NIL_HUD_LINE;
 		//Iterables.get(messages, messageIndex, NIL_HUD_LINE); // would work if -1 didn't throw an exception >>>>:(
 
+		if(messageIndex == -1)
+			noOp = true;
+
 		this.visibleMessageIndex = noOp ? -1 : access.getEoEIndex(mX, mY); // returns the index of the EoE line at the mouse position
 
-		this.visibleLines = Util.make(() -> {
+		this.visibleLines = noOp ? 0 : Util.make(() -> {
 			var visibles = access.chatpatches$getVisibleMessages();
 
 			// if the line before (+) this visible message isn't EoE, we need to account for it(them?)
@@ -225,7 +229,7 @@ public class ContextMenu implements Element {
 	private void registerButton(Text id, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction, int localRow, int col,
 								RenderUtils.Renderer<PressableWidget> renderer) {
 		int w = mc.textRenderer.getWidth(id) + 2 * BUTTON_PADDING;
-		int h = BUTTON_PADDING + 14;
+		int h = BUTTON_HEIGHT + BUTTON_PADDING;
 
 		PressableWidget button = ButtonWidget.builder(id, b -> {
 			if(noOp)
@@ -842,8 +846,8 @@ public class ContextMenu implements Element {
 			// sync main button widths
 			int mainWidth = entries.stream()
 				.filter(e -> e.col == 0)
-				.mapToInt(e -> e.button.getWidth()).max()
-				.orElse(8 * BUTTON_PADDING);
+				.mapToInt(e -> e.button.getWidth())
+				.max().orElse(8 * BUTTON_PADDING);
 			entries.stream().filter(e -> e.col == 0).forEach(e -> e.button.setWidth(mainWidth));
 
 			// sync hover button widths

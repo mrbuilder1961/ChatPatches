@@ -160,7 +160,7 @@
     "text.chatpatches.context.name": "Username",
     "text.chatpatches.context.uuid": "UUID",
     "text.chatpatches.context.reply": "Reply",
-    "text.chatpatches.context.unknownData": "§c/§e!§c\\ §r§7Unknown data for '§6%s§7', please report this issue!",
+    "text.chatpatches.context.unknown": "§c/§e!§c\\ §r§7Unknown data for '§6%s§7', please report this issue!",
 
     "text.chatpatches.restored": "Restored message"
 }
