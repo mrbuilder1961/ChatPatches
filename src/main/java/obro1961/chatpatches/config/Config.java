@@ -24,6 +24,7 @@ import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
+import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
@@ -451,9 +452,9 @@ public class Config {
 
         for(Setting<?> opt : getOptions()) {
             T val = (T) opt.val;
-            MapCodec<T> optCodec = (MapCodec<T>) opt.getCodec();
+            MapCodec<T> optCodec = (MapCodec<T>) opt.getTypeCodec();
 
-            // note: currently uses optionalFieldOf as specified in #getCodec; could in theory silently ignore missing fields
+            // note: currently uses optionalFieldOf as specified in #getTypeCodec; could in theory silently ignore missing fields
             builder = optCodec.encode(val, ops, builder);
         }
         // error: saving colors in the menu fails and logs 'Option value mismatch after applying! Reset to binding's getter.'
@@ -477,7 +478,7 @@ public class Config {
     @SuppressWarnings("unchecked")
     public <S, T> DataResult<Config> parse(DynamicOps<S> ops, S encoded) {
         for(Setting<?> opt : getOptions()) {
-            MapCodec<T> optCodec = (MapCodec<T>) opt.getCodec();
+            MapCodec<T> optCodec = (MapCodec<T>) opt.getTypeCodec();
             DataResult<T> result = optCodec.decoder().parse(ops, encoded);
 
             if(result.error().isPresent() || result.result().isEmpty()) {
@@ -555,21 +556,20 @@ public class Config {
          * @return The {@link Codec} for this setting's option value wrapped as an
          * {@linkplain Codec#optionalFieldOf(String, Object) optional field}
          * {@link MapCodec}, per this Setting's {@link #key} and {@linkplain #def
-         * default value}. Provides minimal serialization checks, particularly for
-         * {@link String}s and {@link TextColor}s; however, no int range checks are
-         * performed.
+         * default value}. Provides required serialization checks, particularly for
+         * {@link String}s and {@link Integer}s ({@link TextColor}s); however, no int
+		 * range checks are performed.
          */
         @SuppressWarnings({"unchecked", "unused"}) // from pattern variables
-        public MapCodec<T> getCodec() {
+        public MapCodec<T> getTypeCodec() {
 			Codec<T> codec = (Codec<T>) switch(def) {
-                case Boolean b -> Codec.BOOL;
-                //case Integer i when key.contains("Color") -> Codec.either(Codec.INT, TextColor.CODEC);
-                // error: ^^ results in an ExceptionInInitializerError bc the actual int codec is passed instead of the result somehow? idk
-                case Integer i -> Codec.INT;
+				// this monstrosity allows parsing int -> TextColor (migration) and String <-> TextColor (default) while the final result is always an int
+				// much love to TheWhyEvenHow for the solution: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
+                case Object o when key.contains("Color") -> Codecs.alternatively(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getRgb)).xmap(TextColor::getRgb, TextColor::fromRgb); // expands the
                 case String s when key.contains("Format") -> Codec.STRING.comapFlatMap(
                     raw -> raw.contains("$")
                         ? DataResult.success(raw)
-                        : DataResult.error(() -> "[Config$Setting#getCodec] Format string '" + raw + "' for option '" + key + "' is missing a '$'"),
+                        : DataResult.error(() -> "[Config$Setting#getTypeCodec] Format string '" + raw + "' for option '" + key + "' is missing a '$'"),
                     Function.identity()
                 );
                 case String s when key.contains("Date") -> Codec.STRING.comapFlatMap(
@@ -578,12 +578,14 @@ public class Config {
                             new SimpleDateFormat(raw);
 							return DataResult.success(raw);
 						} catch(IllegalArgumentException e) {
-							return DataResult.error(() -> "[Config$Setting#getCodec] Date string '" + raw + "' for option '" + key + "' is not a valid SimpleDateFormat");
+							return DataResult.error(() -> "[Config$Setting#getTypeCodec] Date string '" + raw + "' for option '" + key + "' is not a valid SimpleDateFormat");
 						}
 					},
                     Function.identity()
                 );
                 case String s -> Codec.STRING;
+				case Integer i -> Codec.INT;
+				case Boolean b -> Codec.BOOL;
                 default -> {
                     logReportMsg(new IllegalStateException("Option '" + key + "' is not a valid type for serialization"));
                     yield Codec.STRING;
