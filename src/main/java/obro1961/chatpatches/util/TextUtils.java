@@ -9,17 +9,24 @@ import net.minecraft.util.Util;
 import net.minecraft.util.dynamic.Codecs;
 
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A class containing various string and {@link Text} related utilities.
  */
 public class TextUtils {
+	/**
+	 * @see Formatting#FORMATTING_CODE_PATTERN
+	 */
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
 	/**
 	 * {@link #AMPERSAND_REGEX} that explicitly does not match any
 	 * formatting codes following backslashes
 	 */
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
+	/** <a href="https://regex101.com/r/D9x2yv/1">Examples</a>*/
+	public static final String DUPLICATE_COLOR_AMPERSAND_REGEX = "(?im)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])";
 	public static final Int2ObjectMap<Formatting> COLOR_TO_FORMATTING = Util.make(() -> {
 		Int2ObjectMap<Formatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever
 		for(Formatting f : Formatting.values()) {
@@ -99,65 +106,86 @@ public class TextUtils {
 	/**
 	 * Converts an {@link OrderedText} into a {@link String} with {@code &<?>}
 	 * codes. Strips any complex style data, including hover events, fonts,
-	 * insertion text, etc. If {@code includeStyles} is true, then the
-	 * returned string will not include any formatting codes.
+	 * insertions, etc. If {@code includeStyles} is true, then the returned
+	 * string will not include any formatting codes. Hex colors are
+	 * represented in the format {@code &#RRGGBB}.
 	 *
-	 * @apiNote Intended for use with general and regex comparisons, and not
-	 * for actually obtaining a complete Text object.
-	 * @implNote Visits the OrderedText by each character, and accounts for
-	 * Formatting style data by adding {@code &<?>} codes when the style changes.
+	 * @apiNote Intended for use with comparisons, and not for actually obtaining
+	 * a complete string representation of the Text object.
+	 *
+	 * @see TextColor#getHexCode()
 	 */
-	public static String reorder(OrderedText renderable, boolean includeStyles) {
-		StringBuilder reordered = new StringBuilder(); // required for the lambda expression
-		Style[] last = {null}; // ensures that the first equality check returns false
+	public static String toCodedString(OrderedText text, boolean includeStyles) { // take a Text and then convert to ordered text?
+		StringBuilder builder = new StringBuilder(); // required for the lambda expression
+		AtomicReference<Style> lastStyle = new AtomicReference<>(Style.EMPTY); // ensures that the first equality check returns false
 
-		renderable.accept((index, style, codepoint) -> {
-
+		text.accept((index, style, codepoint) -> {
 			// if style is different from last, add any formatting codes
-			if(includeStyles && !style.equals(last[0]))
-				reordered.append( getFormattingCodes(last[0] = style) );
+			if(includeStyles && !style.equals(lastStyle.get())) {
+				builder.append(Formatting.AQUA); // adds a pop of color to the codes to make them more visible
+				builder.append(getFormattingCodes(style, lastStyle.get()));
+				builder.append(Formatting.RESET); // warning: if we do this color pop thing, it breaks intended functionality of DUPE_COLOR_AMPERSAND_REGEX
+				lastStyle.set(style);
+			}
 
-			reordered.append( Character.toChars(codepoint) );
+			builder.append(Character.toChars(codepoint));
 
 			return true;
 		});
 
-		// trusting this for now...
-		return reordered.toString().replaceAll("^(&r)+|(&r)+$", ""); // strips any redundant reset codes
+		if(includeStyles) {
+			while(builder.toString().startsWith("&r")) // removes any leading reset codes
+				builder.delete(0, 2);
+
+			while(builder.toString().endsWith("&r&r")) // removes duplicate trailing reset codes (leaves one if it exists just in case it's intended)
+				builder.setLength(builder.length() - 4);
+		}
+
+		// removes the redundant code in a pair of color codes, optionally separated by whitespace, even including hex codes
+		// ex. '&a&9' -> '&9', '&b   &4' -> '   &4', '&c&#123ABC' -> '&#123ABC', '&#00FF22\t&f' -> '\t&f'
+		return includeStyles ? builder.toString().replaceAll(DUPLICATE_COLOR_AMPERSAND_REGEX, "$1&$2") : builder.toString();
 	}
 
+	// todo: alright here is the deal. this method is always gfonna have some issue bc its hard and lots of edge cases and etc etc.
+	//  so we're switching to quicktext and if players want the old style, i'll just convert the QT to the old style
+	//  aka strip complex styles, convert hex colors to ampersand codes, and convert the formatting codes to ampersand ones
 	/**
-	 * Takes a {@link Style} and returns a string of {@code &<?>}
-	 * codes based upon the style's formatting data. Additionally,
-	 * if the color is a hex code, it will be converted to a
-	 * formatting code if possible, otherwise translated in the
-	 * format {@code &#RRGGBB}.
+	 * Returns the formatting codes of the {@link Style} provided, excluding any already
+	 * applied ones according to {@code last}. Returns an empty string if the style is
+	 * empty or is {@linkplain RenderUtils#BLANK_STYLE blank}. If any hex colors are
+	 * specified, they will be returned in the format {@code &#RRGGBB}. Additionally,
+	 * any color that exists as a formatting code (ex. {@code #55FF55} for {@link
+	 * Formatting#GREEN}) will return as the formatting code (ex. {@code &a}).
 	 */
-	public static String getFormattingCodes(Style style) {
-		String codes = "";
+	public static String getFormattingCodes(Style style, Style last) {
+		// soooo this is really inefficient, as seen by using `&ll&oo&nn&mm&kk &r$ &7|` for the playername format and then seeing the format string. lets just use placeholder
+		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
 		TextColor color = style.getColor();
-		Formatting formatting = color instanceof TextColor ? Formatting.byName(color.getName()) : Formatting.RESET;
+		Formatting formatting = color != null ? Formatting.byName(color.getName()) : Formatting.RESET;
 
-		if(formatting != null)
-			codes += ("&" + formatting.getCode()); // handles default colors and reset codes
-		else if(style.getColor() instanceof TextColor c)
-			codes += ("&" + c.getHexCode()); // handles hex colors
+		// only add the color code if one was explicitly specified (reset is not a color ^) and if it's different from the last color
+		if(formatting != Formatting.RESET && (last.getColor() == null || color.getRgb() != last.getColor().getRgb())) {
+			if(formatting != null)
+				joiner.add("" + formatting.getCode()); // default colors and reset codes
+			else if( COLOR_TO_FORMATTING.containsKey(color.getRgb()) )
+				joiner.add("" + COLOR_TO_FORMATTING.get(color.getRgb()).getCode()); // hex colors that exist as formatting codes
+			else
+				joiner.add(color.getHexCode()); // custom hex colors
+		} else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY)) { // can't use isEmpty() bc it's a reference check -_-
+			return "&r"; // if the current style is empty and the last style wasn't, we've reset!
+		}
 
-		if(style.isBold())
-			codes += "&l";
-		if(style.isItalic())
-			codes += "&o";
-		if(style.isUnderlined())
-			codes += "&n";
-		if(style.isStrikethrough())
-			codes += "&m";
-		if(style.isObfuscated())
-			codes += "&k";
+		if(style.isBold() && !last.isBold())
+			joiner.add("l");
+		if(style.isItalic() && !last.isItalic())
+			joiner.add("o");
+		if(style.isUnderlined() && !last.isUnderlined())
+			joiner.add("n");
+		if(style.isStrikethrough() && !last.isStrikethrough())
+			joiner.add("m");
+		if(style.isObfuscated() && !last.isObfuscated())
+			joiner.add("k");
 
-		// remove hex codes when they are present and matching codes exist
-		if(color != null && color.getName().startsWith("#") && COLOR_TO_FORMATTING.containsKey(color.getRgb()))
-			codes = codes.replace(color.getHexCode(), "" + COLOR_TO_FORMATTING.get(color.getRgb()).getCode());
-
-		return codes;
+		return joiner.toString();
 	}
 }

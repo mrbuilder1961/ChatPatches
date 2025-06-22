@@ -66,8 +66,6 @@ public class Config {
     // current system, so maybe just like a Map<Str, List<Str>> with field names as keys and the list of aliases as strings contained in the list value?
     // >> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
 // prepub: impl `timestampedSystemMessages`
-//todo: import ~~dynamicShift PR~~ + commits from 1.21.4/5
-//prepub #INT_LIMIT+1: make colors serialize as strings (name else hex else int)
     // tab categories: message, boundary, chatlog, chat
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
     public boolean time = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColorValue();
