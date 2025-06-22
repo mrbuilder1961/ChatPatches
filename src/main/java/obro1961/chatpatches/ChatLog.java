@@ -20,7 +20,7 @@ import net.minecraft.client.toast.SystemToast;
 import net.minecraft.text.Text;
 import net.minecraft.util.JsonHelper;
 import net.minecraft.util.Util;
-import obro1961.chatpatches.accessor.ChatHudAccessor;
+import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.TextUtils;
 import org.jetbrains.annotations.Nullable;
@@ -340,7 +340,7 @@ public class ChatLog {
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering (#42)
 			// only replaces messages that would render instantly to save performance on large chat logs
 			// now adds the message's addedTime to account for any extra offsets from the deserialization unsyncing from the main game thread
-			((ChatHudAccessor) mc.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
+			((ChatHudAccess) mc.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
 				.replaceAll(ln ->
 					(ticks - ln.addedTime() < 200) ? new ChatHudLine.Visible(-(200 + ln.addedTime()), ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
 		}

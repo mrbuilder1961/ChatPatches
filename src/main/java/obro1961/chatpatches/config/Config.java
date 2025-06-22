@@ -28,7 +28,7 @@ import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.accessor.ChatHudAccessor;
+import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
 
@@ -234,7 +234,7 @@ public class Config {
         if(!boundary || vanillaClearing)
             return;
 
-        ChatHudAccessor chat = (ChatHudAccessor) mc.inGameHud.getChatHud();
+        ChatHudAccess chat = (ChatHudAccess) mc.inGameHud.getChatHud();
 		String current = mc.isIntegratedServerRunning() // this check prevents NPEs for both if branches
             ? "C_" + mc.getServer().getSaveProperties().getLevelName()
             : mc.getCurrentServerEntry() instanceof ServerInfo entry

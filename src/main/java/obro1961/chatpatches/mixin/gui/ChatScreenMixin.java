@@ -26,8 +26,8 @@ import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import obro1961.chatpatches.accessor.ChatHudAccessor;
-import obro1961.chatpatches.accessor.ChatScreenAccessor;
+import obro1961.chatpatches.accessor.ChatHudAccess;
+import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
@@ -55,12 +55,12 @@ import static obro1961.chatpatches.ChatPatches.id;
 /**
  * The main entrypoint mixin for chat GUI modifications,
  * notably search and context menu functionality.
- * Implements {@link ChatScreenAccessor} to widen access to
+ * Implements {@link ChatScreenAccess} to widen access to
  * critical fields and methods used elsewhere.
  */
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
-public abstract class ChatScreenMixin extends Screen implements ChatScreenAccessor {
+public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess {
 	// search text
 	@Unique private static final String SEARCH_SUGGESTION = I18n.translate("text.chatpatches.search.suggestion");
 	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
@@ -551,7 +551,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			return ObjectList.of();
 
 		ChatHud chatHud = client.inGameHud.getChatHud();
-		ChatHudAccessor chat = (ChatHudAccessor) chatHud;
+		ChatHudAccess chat = (ChatHudAccess) chatHud;
 		List<ChatHudLine> messageSnapshot = List.copyOf(chat.chatpatches$getMessages());
 
 		// filter messages by removing those that don't match the target

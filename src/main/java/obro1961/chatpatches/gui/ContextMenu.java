@@ -33,8 +33,8 @@ import net.minecraft.util.StringHelper;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.accessor.ChatHudAccessor;
-import obro1961.chatpatches.accessor.ChatScreenAccessor;
+import obro1961.chatpatches.accessor.ChatHudAccess;
+import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.mixin.accessor.GridWidgetAccessor;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtils;
@@ -129,7 +129,7 @@ public class ContextMenu implements Element {
 	@Nullable
 	private final ChatScreen screen;
 	private final ChatHud hud;
-	private final ChatHudAccessor access;
+	private final ChatHudAccess access;
 
 	// variables derived from selected message
 	public final RenderUtils.MousePos clickPos;
@@ -180,7 +180,7 @@ public class ContextMenu implements Element {
 
 		// reference and optimization fields
 		this.hud = mc.inGameHud.getChatHud();
-		this.access = (ChatHudAccessor) hud;
+		this.access = (ChatHudAccess) hud;
 		this.screen = noOp ? null : screen;
 
 		// selected fields
@@ -472,7 +472,7 @@ public class ContextMenu implements Element {
 				MENU_REPLY,
 				0, 0,
 				null,
-				me -> ((ChatScreenAccessor) screen).chatpatches$getChatField().setText(TextUtils.fillVars(config.contextReplyFormat, messageSender.getName())),
+				me -> ((ChatScreenAccess) screen).chatpatches$getChatField().setText(TextUtils.fillVars(config.contextReplyFormat, messageSender.getName())),
 				mc.getSkinProvider().getSkinTextures(messageSender)
 			);
 		}
@@ -631,7 +631,7 @@ public class ContextMenu implements Element {
 		noOp = true;
 		grid.buttons().forEach(remove);
 		grid.clear();
-		screen.setFocused( ((ChatScreenAccessor) screen).chatpatches$getChatField() );
+		screen.setFocused( ((ChatScreenAccess) screen).chatpatches$getChatField() );
 	}
 
 	/**

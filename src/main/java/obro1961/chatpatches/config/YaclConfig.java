@@ -194,7 +194,7 @@ public class YaclConfig extends Config {
 
                                         I18n.translate(prefix + DESCRIPTION_KEY + k).replace("\n", ""),
                                         prefix + k
-									));//prepub test this guy against the current readme table
+									));
                                 });
 
                                 mc.keyboard.setClipboard(str.toString());

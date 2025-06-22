@@ -14,7 +14,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.CommandHistoryManager;
 import net.minecraft.text.Text;
 import obro1961.chatpatches.ChatLog;
-import obro1961.chatpatches.accessor.ChatHudAccessor;
+import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
 import org.jetbrains.annotations.Nullable;
@@ -36,12 +36,12 @@ import static obro1961.chatpatches.ChatPatches.config;
  * The main entrypoint mixin for technical chat modifications,
  * notably expansive and complex changes to the way messages
  * are stored, logged, and modified in the chat.
- * Implements {@link ChatHudAccessor} to widen access to
+ * Implements {@link ChatHudAccess} to widen access to
  * extra fields and methods used elsewhere.
  */
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatHud.class, priority = 500)
-public abstract class ChatHudMixin implements ChatHudAccessor {
+public abstract class ChatHudMixin implements ChatHudAccess {
     @Shadow @Final private MinecraftClient client;
     @Shadow @Final private List<ChatHudLine> messages;
     @Shadow @Final private List<ChatHudLine.Visible> visibleMessages;
@@ -53,7 +53,7 @@ public abstract class ChatHudMixin implements ChatHudAccessor {
     @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageIndex(double chatLineX, double chatLineY);
 
-    // ChatHudAccessor methods used outside this mixin
+    // ChatHudAccess methods used outside this mixin
     // @Intrinsic > @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
     @Intrinsic public List<ChatHudLine> chatpatches$getMessages() { return messages; }
     @Intrinsic public List<ChatHudLine.Visible> chatpatches$getVisibleMessages() { return visibleMessages; }

@@ -6,7 +6,7 @@ import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 
 import java.util.List;
 
-public interface ChatHudAccessor {
+public interface ChatHudAccess {
     /** {@link ChatHud#messages} */
     List<ChatHudLine> chatpatches$getMessages();
 

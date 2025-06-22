@@ -12,7 +12,7 @@ import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.accessor.ChatHudAccessor;
+import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import obro1961.chatpatches.mixin.listener.MessageHandlerMixin;
@@ -349,7 +349,7 @@ public class ChatUtils {
 	 */
 	private static Text tryCondenseDupes(Text incoming) {
 		ChatHud chathud = MinecraftClient.getInstance().inGameHud.getChatHud();
-		ChatHudAccessor chat = (ChatHudAccessor) chathud;
+		ChatHudAccess chat = (ChatHudAccess) chathud;
 		List<ChatHudLine> messages = chat.chatpatches$getMessages();
 
 		if(!config.counter || messages.isEmpty())
