@@ -1,5 +1,6 @@
 package obro1961.chatpatches.gui;
 
+import com.google.common.collect.Iterables;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
@@ -23,6 +24,8 @@ import net.minecraft.client.gui.widget.GridWidget;
 import net.minecraft.client.gui.widget.PressableWidget;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.util.SkinTextures;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.*;
@@ -183,14 +186,12 @@ public class ContextMenu implements Element {
 		// selected fields
 		var messages = access.chatpatches$getMessages();
 		int messageIndex = noOp ? -1 : access.getChatHudLineIndex(mX, mY);
-		this.selectedLine = messageIndex >= 0 && messages.size() > messageIndex ? messages.get(messageIndex) : NIL_HUD_LINE;
-		//Iterables.get(messages, messageIndex, NIL_HUD_LINE); // would work if -1 didn't throw an exception >>>>:(
 
 		if(messageIndex == -1)
 			noOp = true;
 
+		this.selectedLine = noOp ? NIL_HUD_LINE : Iterables.get(messages, messageIndex, NIL_HUD_LINE);
 		this.visibleMessageIndex = noOp ? -1 : access.getEoEIndex(mX, mY); // returns the index of the EoE line at the mouse position
-
 		this.visibleLines = noOp ? 0 : Util.make(() -> {
 			var visibles = access.chatpatches$getVisibleMessages();
 
@@ -214,7 +215,7 @@ public class ContextMenu implements Element {
 	 * Registers a button in the {@linkplain Grid#widget button grid} and
 	 * {@linkplain #grid associated data lookup manager}. This is done
 	 * by creating a new {@link ButtonWidget} (or similarly-implemented
-	 * {@link PressableWidget} if {@code renderer} is specified)
+	 * {@link PressableWidget} if {@code renderObject} is specified)
 	 * according to the passed id, copy text supplier, press action, and
 	 * coordinates (the local row and absolute column).
 	 *
@@ -222,12 +223,14 @@ public class ContextMenu implements Element {
 	 *                 specified by the last main button added. The
 	 *                 absolute row is automatically calculated and
 	 *                 {@linkplain Grid#currentRow kept track of}.
-	 * @param col The column in the grid menu where the button should be
-	 *            placed. Main buttons are always in column 0, and hover
-	 *            buttons are in columns ≥1.
+	 * @param col      The column in the grid menu where the button should be
+	 *                 placed. Main buttons are always in column 0, and hover
+	 *                 buttons are in columns ≥1.
+	 * @param renderObject An {@link Item} or {@link SkinTextures} object to
+	 *                     render over the leftmost button area, or {@code null}
+	 *                     to not render anything extra.
 	 */
-	private void registerButton(Text id, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction, int localRow, int col,
-								RenderUtils.Renderer<PressableWidget> renderer) {
+	private void registerButton(Text id, int localRow, int col, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction, Object renderObject) {
 		int w = mc.textRenderer.getWidth(id) + 2 * BUTTON_PADDING;
 		int h = BUTTON_HEIGHT + BUTTON_PADDING;
 
@@ -239,31 +242,43 @@ public class ContextMenu implements Element {
 			String copyStr = StringHelper.stripTextFormat(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc.keyboard.setClipboard(copyStr);
-				mc.getToastManager().add(new SystemToast( SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable(LANG_PREFIX + "copied"), copyText ));
+				mc.getToastManager().add(new SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable(LANG_PREFIX + "copied"), copyText));
 			}
 
 			if(pressAction != null)
 				pressAction.onPress(b);
-		}).dimensions((int)clickPos.x, (int)clickPos.y, w, h).build();
+		}).dimensions((int) clickPos.x, (int) clickPos.y, w, h).build();
 
 		if(tooltipCopyTextSupplier != null)
-			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace('§', '&') )
+			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace(Formatting.FORMATTING_CODE_PREFIX, '&') )
 
-		if(renderer != null) {
-			PressableWidget effectivelyFinalButton = button;
-			button = new PressableWidget(button.getX(), button.getY(), button.getWidth(), button.getHeight(), id) {
+		if(renderObject != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
+			final PressableWidget src = button;
+			// accounts for the 16x16 icon on the left with the +16 and prefixed 4 spaces (each of width 4) in the id label
+			button = new PressableWidget(button.getX(), button.getY(), button.getWidth() + 16, button.getHeight(), Text.literal("    ").append(id)) {
 				final ButtonWidget.NarrationSupplier narrationSupplier = Supplier::get;
+
+				@Override public void onPress() { src.onPress(); }
 
 				@Override
 				protected void renderButton(DrawContext context, int mX, int mY, float delta) {
-					// renders the custom implementation, with the original method passed as a parameter to be called
-					renderer.render(context, mX, mY, delta, this, super::renderButton);
+					super.renderButton(context, mX, mY, delta);
+
+					if(renderObject instanceof Item icon)
+						context.drawItemWithoutEntity(icon.getDefaultStack(), this.getX() + 1, this.getY() + 1);
+					else if(renderObject instanceof SkinTextures playerSkin)
+						PlayerSkinDrawer.draw(context, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 				}
 
-				@Override public void onPress() { effectivelyFinalButton.onPress(); }
+				@Override
+				public String toString() {
+					// hopefully helps with debugging
+					return "ContextMenu.ButtonWidget[id=" + id.getString() + ", renderObject=" + renderObject + "]";
+				}
+
 				// pulled from ButtonWidget
-				@Override protected MutableText getNarrationMessage() { return narrationSupplier.createNarrationMessage(super::getNarrationMessage); }
-				@Override public void appendClickableNarrations(NarrationMessageBuilder builder) { appendDefaultNarrations(builder); }
+				@Override protected MutableText getNarrationMessage() {return narrationSupplier.createNarrationMessage(super::getNarrationMessage);}
+				@Override public void appendClickableNarrations(NarrationMessageBuilder builder) {appendDefaultNarrations(builder);}
 			};
 		}
 
@@ -274,33 +289,34 @@ public class ContextMenu implements Element {
 	 * Registers a <b>main</b> button that gets its copy text
 	 * from {@code proxyId}, does <b>not</b> perform an extra
 	 * press action, and <b>can</b> override this button's
-	 * renderer.
+	 * renderObject.
 	 *
-	 * @see #registerProxyButton(Text, Text)
-	 * @see #registerActionButton(Text, ButtonWidget.PressAction, int)
+	 * @see #registerProxyButton(Text, Text, Object)
+	 * @see #registerActionButton(Text, int, ButtonWidget.PressAction)
 	 * @see #MENU_SENDER
 	 */
-	private void registerProxyActionButton(Text id, Text proxyId, int localRow, int col, RenderUtils.Renderer<PressableWidget> renderer) {
+	private void registerProxyActionButton(Text id, Text proxyId, int localRow, int col, Object renderObject) {
 		if(id.equals(proxyId)) {
 			ChatPatches.logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
 			return;
 		}
 
 		// copies the proxy button's text by executing its press action instead
-		registerButton(id, null, me -> grid.get(proxyId).button.onPress(), localRow, col, renderer);
+		registerButton(id, localRow, col, null, me -> grid.get(proxyId).button.onPress(), renderObject);
 	}
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
 	 * from {@code proxyId} and does <b>not</b> perform an
-	 * extra press action.
+	 * extra press action. If provided, it draws the given object
+	 * over the leftmost button area.
 	 *
-	 * @see #registerProxyActionButton(Text, Text, int, int, RenderUtils.Renderer)
+	 * @see #registerProxyActionButton(Text, Text, int, int, Object)
 	 * @see #MENU_STRING
 	 * @see #MENU_TIMESTAMP
 	 * @see #MENU_LINKS
 	 */
-	private void registerProxyButton(Text id, Text proxyId) {
-		registerProxyActionButton(id, proxyId, 0, 0, null);
+	private void registerProxyButton(Text id, Text proxyId, Object renderObject) {
+		registerProxyActionButton(id, proxyId, 0, 0, renderObject);
 	}
 	/**
 	 * Registers a <b>main</b> button that <b>does</b> perform
@@ -308,30 +324,30 @@ public class ContextMenu implements Element {
 	 *
 	 * @see #MENU_REPLY
 	 */
-	private void registerActionButton(Text id, ButtonWidget.PressAction pressAction, int localRow) {
-		registerButton(id, null, pressAction, localRow, 0, null);
+	private void registerActionButton(Text id, int localRow, ButtonWidget.PressAction pressAction) {
+		registerButton(id, localRow, 0, null, pressAction, null);
 	}
 	/**
 	 * Registers a button that gets its copy text from
 	 * a <b>supplier</b> and does <b>not</b> perform an
-	 * extra press action.
+	 * extra press action. If provided, it draws the given
+	 * object over the leftmost button area.
 	 *
-	 * @see #registerCopyOnlyButton(Text, Text, int)
+	 * @see #registerCopyButton(Text, int, Text)
 	 * @see #TIMESTAMP_HOVER
 	 * @see #MENU_UNIX
 	 */
-	private void registerCopyOnlyButton(Text id, Supplier<Text> tooltipCopyTextSupplier, int localRow, int col) {
-		registerButton(id, tooltipCopyTextSupplier, null, localRow, col, null);
+	private void registerCopyButton(Text id, int localRow, int col, Supplier<Text> tooltipCopyTextSupplier, Object renderObject) {
+		registerButton(id, localRow, col, tooltipCopyTextSupplier, null, renderObject);
 	}
 	/**
 	 * Registers a <b>hover</b> button with <b>precalculated</b>
 	 * copy text that does <b>not</b> perform an extra press action.
 	 *
-	 * @see #registerCopyOnlyButton(Text, Supplier, int, int)
-	 * @see "Literally every other button not mentioned in the other <code>registerButton</code> methods."
+	 * @see #registerCopyButton(Text, int, int, Supplier, Object)
 	 */
-	private void registerCopyOnlyButton(Text id, Text tooltipCopyText, int localRow) {
-		registerButton(id, () -> tooltipCopyText, null, localRow, 1, null);
+	private void registerCopyButton(Text id, int localRow, Text tooltipCopyText) {
+		registerButton(id, localRow, 1, () -> tooltipCopyText, null, null);
 	}
 
 
@@ -382,42 +398,42 @@ public class ContextMenu implements Element {
 
 		// string buttons - unconditional
 		int strRow = 0; // current row for string and text buttons
-		registerProxyButton(MENU_STRING, RAW_TEXT);
-			registerCopyOnlyButton(RAW_TEXT, text, strRow++); // 0
-			registerCopyOnlyButton(FORMATTED_STR, Text.of(TextUtils.reorder(text.asOrderedText(), true)), strRow++); // 1
+		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
+			registerCopyButton(RAW_TEXT, strRow++, text); // 0
+			registerCopyButton(FORMATTED_STR, strRow++, Text.of(TextUtils.reorder(text.asOrderedText(), true))); // 1
 			if(timestamped)
-				registerCopyOnlyButton(NO_TIMESTAMP_TEXT, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size())), strRow++); // 2
+				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			if(duped)
-				registerCopyOnlyButton(NO_DUPE_TEXT, TextUtils.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX)), strRow++); // timestamped ? 3 : 2
-			registerCopyOnlyButton(JSON_STR,
-				textCodec().encodeStart(NbtOps.INSTANCE, text)
+				registerCopyButton(NO_DUPE_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
+			registerCopyButton(JSON_STR,
+				strRow, textCodec().encodeStart(NbtOps.INSTANCE, text)
 					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
 					.map(NbtHelper::toPrettyPrintedText)
-					.orElse(UNKNOWN.apply(JSON_STR)),
-			strRow); // timestamped && duped ? 4 : timestamped || duped ? 3 : 2
+					.orElse(UNKNOWN.apply(JSON_STR))
+			); // (timestamped && duped) ? 4 : (timestamped || duped) ? 3 : 2
 
 		// timestamp buttons - conditional (not on boundary lines)
 		if(timestamped) {
-			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP);
-				registerCopyOnlyButton(TIMESTAMP, timestamp, 0);
-				registerCopyOnlyButton(TIMESTAMP_HOVER, () -> {
+			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP, Items.CLOCK);
+				registerCopyButton(TIMESTAMP, 0, timestamp);
+				registerCopyButton(TIMESTAMP_HOVER, 1, 1, () -> {
 					HoverEvent hoverEvent = timestamp.getStyle().getHoverEvent();
 					return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : EMPTY;
-				}, 1, 1);
+				}, null);
 		}
 
 		// dupe counter buttons - conditional
 		if(duped) {
-			registerProxyButton(MENU_DUPE_COUNTER, COUNTER_TEXT);
-				registerCopyOnlyButton(COUNTER_TEXT, counter, 0);
-				registerCopyOnlyButton(COUNTER_VALUE, Text.of(counter.getString().replaceAll("(§\\d)|\\D", "").trim()), 1);
+			registerProxyButton(MENU_DUPE_COUNTER, COUNTER_TEXT, Items.MAP);
+				registerCopyButton(COUNTER_TEXT, 0, counter);
+				registerCopyButton(COUNTER_VALUE, 1, Text.of(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
 		}
 
 		// unix timestamp button - unconditional
-		registerCopyOnlyButton(MENU_UNIX, () -> {
+		registerCopyButton(MENU_UNIX, 0, 0, () -> {
 			String time = timestamp.getStyle().getInsertion();
 			return time != null && !time.isEmpty() ? Text.of(time) : UNKNOWN.apply(MENU_UNIX);
-		}, 0, 0);
+		}, Items.REDSTONE);
 
 		// link buttons - conditional
 		ObjectList<String> webLinks = Util.make(new ObjectArrayList<>(), l -> {
@@ -425,7 +441,7 @@ public class ContextMenu implements Element {
 			while(matcher.find())
 				l.add(matcher.group());
 		});
-		ObjectList<String> fileLinks = Util.make(new ObjectArrayList<>(), l ->
+		ObjectList<String> filePaths = Util.make(new ObjectArrayList<>(), l ->
 			text.visit((style, str) -> {
 				if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
 					if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v))
@@ -435,31 +451,30 @@ public class ContextMenu implements Element {
 				}
 				return Optional.empty();
 			}, Style.EMPTY));
-		if(!webLinks.isEmpty() || !fileLinks.isEmpty()) {
-			registerProxyButton(MENU_LINKS, LINK_N.apply(1));
+		if(!webLinks.isEmpty() || !filePaths.isEmpty()) {
+			registerProxyButton(MENU_LINKS, LINK_N.apply(1), Items.CHAIN);
 
-			for(int i = 0; i < fileLinks.size(); i++)
-				registerCopyOnlyButton(LINK_N.apply(i + 1), Text.of("§6§n" + fileLinks.get(i)), i);
+			for(int i = 0; i < filePaths.size(); i++)
+				registerCopyButton(LINK_N.apply(i + 1), i, Text.of("§6§n" + filePaths.get(i)));
 
-			for(int i = fileLinks.size(); i < webLinks.size() + fileLinks.size(); i++)
+			for(int i = filePaths.size(); i < webLinks.size() + filePaths.size(); i++)
 				// creates link buttons starting at link 1 up to link n, with ids following the same pattern (LINK_1 - LINK_N)
-				registerCopyOnlyButton(LINK_N.apply(i + 1), Text.of("§9§n" + webLinks.get(i)), i);
+				registerCopyButton(LINK_N.apply(i + 1), i, Text.of("§9§n" + webLinks.get(i)));
 		}
 
 		// sender buttons - conditional
 		if( !messageSender.equals(NIL_MESSAGE_DATA.sender()) ) {
-			SkinTextures playerSkin = mc.getSkinProvider().getSkinTextures(messageSender);
+			registerProxyActionButton(MENU_SENDER, NAME, 0, 0, Items.NAME_TAG);
+				registerCopyButton(NAME, 0, Text.of(messageSender.getName()));
+				registerCopyButton(UUID, 1, Text.of(messageSender.getId().toString()));
 
-			registerProxyActionButton(MENU_SENDER, NAME, 0, 0, null);
-				registerCopyOnlyButton(NAME, Text.of(messageSender.getName()), 0);
-				registerCopyOnlyButton(UUID, Text.of(messageSender.getId().toString()), 1);
-			registerButton(MENU_REPLY, null, me ->
-				((ChatScreenAccessor) screen).chatpatches$getChatField().setText( TextUtils.fillVars(config.contextReplyFormat, messageSender.getName()) )
-			, 0, 0, (context, mX, mY, delta, me, supEr) -> {
-					supEr.render(context, mX, mY, delta);
-					PlayerSkinDrawer.draw(context, playerSkin, me.getX() + 1, me.getY() + 1, 16);
-				}
-			); // prepub: the people want every button to have an icon! so... i'm thinking we gotta pass an ID or an ID string to get the button tex
+			registerButton(
+				MENU_REPLY,
+				0, 0,
+				null,
+				me -> ((ChatScreenAccessor) screen).chatpatches$getChatField().setText(TextUtils.fillVars(config.contextReplyFormat, messageSender.getName())),
+				mc.getSkinProvider().getSkinTextures(messageSender)
+			);
 		}
 
 		grid.updateButtonPositions();
@@ -817,7 +832,7 @@ public class ContextMenu implements Element {
 		 * Will log a {@link ClassCastException} and return an
 		 * empty list if any of the widgets are not of the correct
 		 * type. However, this should never happen, per the
-		 * {@linkplain #registerButton(Text, Supplier, ButtonWidget.PressAction, int, int, RenderUtils.Renderer)
+		 * {@linkplain ContextMenu#registerButton(Text, int, int, Supplier, ButtonWidget.PressAction, Object)
 		 * button registering methods}.
 		 */
 		@SuppressWarnings("unchecked")
