@@ -211,7 +211,8 @@ public class ChatUtils {
 		if(ChatLog.isRestoring())
 			return m; // cancel modifications when loading the chat log
 
-		boolean lastEmpty = messageData.equals(ChatUtils.NIL_MESSAGE_DATA);
+		boolean lastEmpty = messageData.equals(ChatUtils.NIL_MESSAGE_DATA); // also signifies that this is a system message
+		boolean timestampSystemCheck = config.timeSystemMessages || !lastEmpty; // config.timeSystemMessages ? true : !lastEmpty;
 		Date now = lastEmpty ? new Date() : messageData.timestamp;
 		Style style = m.getStyle();
 
@@ -219,10 +220,9 @@ public class ChatUtils {
 		MutableText content = m.copy(); // default to the original message
 
 		try {
-			timestamp = (config.time ? config.makeTimestamp(now) : Text.empty()).setStyle( config.makeHoverStyle(now) );
-			// prepub if option that disables timestamps on system messages is true, dont add timestamps
+			timestamp = (config.time && timestampSystemCheck ? config.makeTimestamp(now) : Text.empty()).setStyle(config.makeHoverStyle(now));
 
-			// reconstruct the player message if it's in the vanilla format and it should be reformatted
+			// reconstruct the player message if it's in the vanilla format & it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
 			if(config.name && !lastEmpty && messageData.vanilla && m.getString().matches(VANILLA_FORMAT)) {

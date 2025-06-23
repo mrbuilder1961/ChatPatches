@@ -65,10 +65,9 @@ public class Config {
     // prepub #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
     // current system, so maybe just like a Map<Str, List<Str>> with field names as keys and the list of aliases as strings contained in the list value?
     // >> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
-// prepub: impl `timestampedSystemMessages`
     // tab categories: message, boundary, chatlog, chat
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
-    public boolean time = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColorValue();
+    public boolean time = true, timeSystemMessages = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColorValue();
     public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = WHITE.getColorValue();
     public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = YELLOW.getColorValue(); public boolean counterCheckStyle = false;
     public boolean compactChat = false; public int compactDistance = 0;
@@ -434,7 +433,7 @@ public class Config {
 
 
     /**
-	 * Encodes this {@link Config} instance into a {@link DataResult}
+	 * Encodes this Config instance into a {@link DataResult}
 	 * dynamically based on its fields.
 	 *
 	 * @return A {@link DataResult} containing the encoded {@link
@@ -463,7 +462,7 @@ public class Config {
      * Parses the {@link S}(ource) parameter {@code encoded} into
      * {@code this}, or more specifically {@link ChatPatches#config}.
      *
-     * @return A {@link DataResult} containing the {@link Config}
+     * @return A {@link DataResult} containing the Config
      * stored in {@link ChatPatches#config} if successful, otherwise
      * an error message. Said message will be printed to the log before
      * returning.
