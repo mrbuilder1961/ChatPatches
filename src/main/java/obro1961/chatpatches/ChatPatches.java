@@ -26,8 +26,7 @@ public class ChatPatches implements ClientModInitializer {
 
 	public static Identifier id(String path) {
 		// unfortunately this method in 1.20.6 is method_43902
-		// but in 1.21 it's method_60655, making it incompatible
-		// this is grinding my gears bc the code is identical ToT
+		// but in 1.21 it's method_60655, making it incompatible ToT
 		return Identifier.of(MOD_ID, path);
 	}
 
@@ -57,24 +56,37 @@ public class ChatPatches implements ClientModInitializer {
 
 	/**
 	 * Logs an error-level message telling the user to report the given error. The
-	 * class and method of the caller is acquired from a {@link StackWalker}.
+	 * class and method of the caller is acquired from a {@link StackWalker}. Also
+	 * denotes lambda callers with {@code (->n)} (where {@code n} is the index of
+	 * the lambda as written in the calling class) to make debugging easier.
 	 *
 	 * <p>Outputs the following message:
 	 * <pre>
 	 * [$class.$method] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
 	 * $error
 	 * </pre>
+	 *
+	 * @implNote The lambda index is only added if the method name follows the pattern
+	 * {@code lambda$method$n} or {@code lambda$static$n}, where {@code n} is the index
+	 * of the lambda in the class. <b>This does not apply to mixin and/or nested
+	 * lambdas</b> due to their sheer complexity (ex.
+	 * {@code abcd6789$mod_id$lambda$method$n$m}) and rarity, so they are treated as
+	 * regular methods.
 	 */
 	public static void logReportMsg(@NotNull Throwable error) {
 		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 		String clazz = walker.getCallerClass().getSimpleName();
 		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
-		//prepub: test out walking back further if the error is thrown from a lambda/anon class, and keep going but then add a (lambda$12/33) or wtv it says to the class instead of just jargon
-		//walker.walk(frames -> frames.dropWhile(s -> s.getDeclaringClass().getSimpleName().startsWith("lambda$"))).toList();
-		if(method.isBlank())
-			method = error.getStackTrace()[0].getMethodName();
+		String lambda = method.startsWith("lambda$") ? ("(->" + method.substring(method.lastIndexOf("$") + 1) + ")") : "";
 
-		String message = String.format("[%s.%s] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\", clazz, method);
+		if(!lambda.isEmpty())
+			method = method.substring(7, method.lastIndexOf("$")); // removes the 'lambda$' (l=7) and the '$n' at the end to get the method name
+		else if(method.startsWith("lambda$static$"))
+			method = "<static_initializer>"; // not <static_init> bc that might imply the static block that runs on class load (wrong)
+		else if(method.isBlank())
+			method = "[" + error.getStackTrace()[0].getMethodName() + "?]"; // probably not helpful so add the ? to signal it was guessed
+
+		String message = String.format("[%s.%s%s] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\", clazz, method, lambda);
 		LOGGER.error(message, error);
 	}
 
