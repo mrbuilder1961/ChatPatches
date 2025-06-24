@@ -55,16 +55,17 @@ public class ChatPatches implements ClientModInitializer {
 
 
 	/**
-	 * Logs an error-level message telling the user to report the given error. The
-	 * class and method of the caller is acquired from a {@link StackWalker}. Also
-	 * denotes lambda callers with {@code (->n)} (where {@code n} is the index of
-	 * the lambda as written in the calling class) to make debugging easier.
-	 *
-	 * <p>Outputs the following message:
-	 * <pre>
-	 * [$class.$method] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
-	 * $error
-	 * </pre>
+	 * @return The class and method of the caller, acquired from a {@link
+	 * StackWalker}, formatted like {@code [$class.$method]}. Additionally, denotes
+	 * lambda callers after the method name with {@code (->n)}, where {@code n} is
+	 * the index of the lambda as written in the calling class, to make debugging
+	 * easier. If the calling class is anonymous, hidden, or unnamed, it will be
+	 * reflected in the output as its state surrounded by angle brackets (ex. {@code
+	 * <hidden>}). If the method is a static initializer, it will be reflected as
+	 * {@code <static_init>}; not to be confused with
+	 * <a href="https://stackoverflow.com/questions/2420389/static-initialization-blocks">
+	 * static initializer blocks</a>, which are automatically reflected as {@code
+	 * <clinit>}.
 	 *
 	 * @implNote The lambda index is only added if the method name follows the pattern
 	 * {@code lambda$method$n} or {@code lambda$static$n}, where {@code n} is the index
@@ -72,21 +73,51 @@ public class ChatPatches implements ClientModInitializer {
 	 * lambdas</b> due to their sheer complexity (ex.
 	 * {@code abcd6789$mod_id$lambda$method$n$m}) and rarity, so they are treated as
 	 * regular methods.
+	 *
+	 * @param skipExtraFrame If true, skips the first two frames of the stack trace
+	 *                       instead of just one. Intended for methods like {@link
+	 *                       #logReportMsg(Throwable)} and {@link #logDuration(long, long)}
+	 *                       that call this method themselves, so that the caller is
+	 *                       reflected accurately.
+	 */
+	public static String getBracedCaller(boolean skipExtraFrame) {
+		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+		StackWalker.StackFrame caller = walker.walk(frames -> frames.skip(skipExtraFrame ? 2 : 1).findFirst().orElseThrow());
+		String clazz = caller.getDeclaringClass().getSimpleName();
+		String method = caller.getMethodName();
+		String lambda = method.startsWith("lambda$") ? String.format("(->%s)", method.substring(method.lastIndexOf("$") + 1)) : "";
+
+		if(clazz.isEmpty()) {
+			Class<?> callingClass = caller.getDeclaringClass();
+			if(callingClass.isAnonymousClass())
+				clazz = "<anonymous>";
+			else if(callingClass.isHidden())
+				clazz = "<hidden>";
+			else
+				clazz = "<unnamed>"; // preview feature so it goes in the else
+		}
+
+		if(method.startsWith("lambda$static$")) // goes first so it doesn't get masked by the next check
+			method = "<static_init>";
+		else if(!lambda.isEmpty())
+			method = method.substring(7, method.lastIndexOf("$")); // removes the 'lambda$' (l=7) and the '$n' at the end to get the method name
+
+		return String.format("[%s.%s%s]", clazz, method, lambda);
+	}
+
+	/**
+	 * Logs an error-level message telling the user to report the given error.
+	 * Caller details provided by {@link #getBracedCaller(boolean)}.
+	 *
+	 * <p>Outputs the following message:
+	 * <pre>
+	 * [$caller] /!\ Please report this error on GitHub or Discord with the full log file attached! /!\
+	 * $error
+	 * </pre>
 	 */
 	public static void logReportMsg(@NotNull Throwable error) {
-		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
-		String clazz = walker.getCallerClass().getSimpleName();
-		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
-		String lambda = method.startsWith("lambda$") ? ("(->" + method.substring(method.lastIndexOf("$") + 1) + ")") : "";
-
-		if(!lambda.isEmpty())
-			method = method.substring(7, method.lastIndexOf("$")); // removes the 'lambda$' (l=7) and the '$n' at the end to get the method name
-		else if(method.startsWith("lambda$static$"))
-			method = "<static_initializer>"; // not <static_init> bc that might imply the static block that runs on class load (wrong)
-		else if(method.isBlank())
-			method = "[" + error.getStackTrace()[0].getMethodName() + "?]"; // probably not helpful so add the ? to signal it was guessed
-
-		String message = String.format("[%s.%s%s] /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\", clazz, method, lambda);
+		// logging the message regularly makes the logger treat the error like an Object and not a Throwable, so it doesn't print the stack trace -_-
+		String message = getBracedCaller(true) + " /!\\ Please report this error on GitHub or Discord with the full log file attached! /!\\";
 		LOGGER.error(message, error);
 	}
 
@@ -108,16 +139,11 @@ public class ChatPatches implements ClientModInitializer {
 		double duration = (double) (System.currentTimeMillis() - start) / 1000;
 		double max = (double) threshold / 1000;
 
-		StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
-		String clazz = walker.getCallerClass().getSimpleName();
-		//prepub: test out walking back further if the error is thrown from a lambda/anon class, and keep going but then add a (lambda$12/33) or wtv it says to the class instead of just jargon
-		//walker.walk(frames -> frames.dropWhile(s -> s.getDeclaringClass().getSimpleName().startsWith("lambda$"))).toList();
-		String method = walker.walk(frames -> frames.skip(1).findFirst().orElseThrow().getMethodName());
-
+		String caller = getBracedCaller(true);
 		if(duration >= max) {
-			LOGGER.warn("[{}.{}] Took {} seconds, but should've taken less than {}s. Consider reporting this to the GitHub or Discord", clazz, method, duration, max);
+			LOGGER.warn("{} Took {} seconds, but should've taken less than {}s. Consider reporting this to the GitHub or Discord", caller, duration, max);
 		} else {
-			LOGGER.info("[{}.{}] Took {} seconds", clazz, method, duration);
+			LOGGER.info("{} Took {} seconds", caller, duration);
 		}
 	}
 
