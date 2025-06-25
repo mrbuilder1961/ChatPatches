@@ -124,7 +124,7 @@ public class TextUtils {
 			if(includeStyles && !style.equals(lastStyle.get())) {
 				builder.append(Formatting.AQUA); // adds a pop of color to the codes to make them more visible
 				builder.append(getFormattingCodes(style, lastStyle.get()));
-				builder.append(Formatting.RESET); // warning: if we do this color pop thing, it breaks intended functionality of DUPE_COLOR_AMPERSAND_REGEX
+				builder.append(Formatting.RESET); // warning: adding colors breaks some (whitespace separated) functionality of DUPE_COLOR_AMPERSAND_REGEX
 				lastStyle.set(style);
 			}
 
@@ -158,7 +158,6 @@ public class TextUtils {
 	 * Formatting#GREEN}) will return as the formatting code (ex. {@code &a}).
 	 */
 	public static String getFormattingCodes(Style style, Style last) {
-		// soooo this is really inefficient, as seen by using `&ll&oo&nn&mm&kk &r$ &7|` for the playername format and then seeing the format string. lets just use placeholder
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
 		TextColor color = style.getColor();
 		Formatting formatting = color != null ? Formatting.byName(color.getName()) : Formatting.RESET;
