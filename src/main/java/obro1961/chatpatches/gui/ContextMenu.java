@@ -39,6 +39,7 @@ import obro1961.chatpatches.mixin.accessor.GridWidgetAccessor;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.TextUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,20 +69,23 @@ import static obro1961.chatpatches.util.TextUtils.textCodec;
  * logic for utilizing, processing, and copying data from the selected message.
  */
 public class ContextMenu implements Element {
-	// based on the total amount of buttons that currently exist
-	public static final int MAX_ROWS = 7;
-	public static final int MAX_COLUMNS = 2;
+	static {
+		MAX_ROWS = (int)FieldUtils.getAllFieldsList(ContextMenu.class).stream().filter(f -> f.getName().startsWith("MENU_") && f.getType().isInstance(EMPTY)).count();
+	}
+
+	public static final int MAX_ROWS;
+	public static final int MAX_COLUMNS = 2; // this will probably never change
 	public static final String LANG_PREFIX = "text.chatpatches.context.";
 
-	private static final int BUTTON_PADDING = 4;
 	private static final int BUTTON_HEIGHT = 14;
+	private static final int BUTTON_PADDING = 4;
 	/**
 	 * Slightly modified from <a href="https://stackoverflow.com/a/163398">StackOverflow</a>
 	 * to not include file links. Memoized to avoid recompiling the regex every time, and so
 	 * it's only compiled once when it's needed.
 	 */
-	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 	private static final MinecraftClient mc = MinecraftClient.getInstance();
+	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
 	// region text constants
 	static final UnaryOperator<Text> UNKNOWN = (id) -> Text.translatable(LANG_PREFIX + "unknown", id);
@@ -176,7 +180,7 @@ public class ContextMenu implements Element {
 
 		// critical fields
 		this.clickPos = RenderUtils.MousePos.of(mX, mY);
-		this.grid = new Grid(MAX_ROWS, MAX_COLUMNS);
+		this.grid = new Grid();
 
 		// reference and optimization fields
 		this.hud = mc.inGameHud.getChatHud();
@@ -776,10 +780,10 @@ public class ContextMenu implements Element {
 		private int currentRow = -1;
 		private int groupCount = 0;
 
-		public Grid(int maxRows, int maxCols) {
-			this.widget = new GridWidget((int) clickPos.x, (int) clickPos.y);
-			this.entries = new ObjectArrayList<>(maxRows * maxCols);
-			this.groups = new ObjectArrayList<>(maxRows);
+		public Grid() {
+			this.widget = new GridWidget( (int)clickPos.x, (int)clickPos.y );
+			this.entries = new ObjectArrayList<>(MAX_ROWS * MAX_COLUMNS);
+			this.groups = new ObjectArrayList<>(MAX_ROWS);
 		}
 
 		public void add(PressableWidget button, int localRow, int col, Supplier<Text> tooltipCopyTextSupplier, ButtonWidget.PressAction pressAction) {
