@@ -249,11 +249,10 @@ public class ContextMenu implements Element {
 				pressAction.onPress(b);
 		}).dimensions((int) clickPos.x, (int) clickPos.y, w, h).build();
 
-		if(tooltipCopyTextSupplier != null)
-			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace(Formatting.FORMATTING_CODE_PREFIX, '&') )
-
 		if(renderObject != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
 			final PressableWidget src = button;
+			// fixme: make the button *not* adjust the text if it doesnt need to (ex. reply button.. worst case scenario hardcode it)
+			//  that would be doable by checking `buttons.w::max - text.w > 16 + 2*PAD` but we need the max button width ._.
 			// accounts for the 16x16 icon on the left with the +16 and prefixed 4 spaces (each of width 4) in the id label
 			button = new PressableWidget(button.getX(), button.getY(), button.getWidth() + 16, button.getHeight(), Text.literal("    ").append(id)) {
 				final ButtonWidget.NarrationSupplier narrationSupplier = Supplier::get;
@@ -281,6 +280,10 @@ public class ContextMenu implements Element {
 				@Override public void appendClickableNarrations(NarrationMessageBuilder builder) {appendDefaultNarrations(builder);}
 			};
 		}
+
+		// set here so buttons with a renderObject don't have theirs deleted
+		if(tooltipCopyTextSupplier != null)
+			button.setTooltip(Tooltip.of( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace(Formatting.FORMATTING_CODE_PREFIX, '&') )
 
 		grid.add(button, localRow, col, tooltipCopyTextSupplier, pressAction);
 	}
