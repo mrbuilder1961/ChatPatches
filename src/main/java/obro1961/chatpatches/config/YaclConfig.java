@@ -17,6 +17,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.Uuids;
+import net.minecraft.util.math.ColorHelper;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.TextUtils;
@@ -84,7 +85,8 @@ public class YaclConfig extends Config {
 
                     @Override
                     public void set(Object value) {
-                        super.set( ((Color)value).getRGB() - 0xFF000000 );
+                        // the only class with a relevant method
+						super.set(ColorHelper.Abgr.withAlpha(0, ((Color)value).getRGB()));
                     }
                 };
             }
@@ -97,7 +99,7 @@ public class YaclConfig extends Config {
                     .binding(getBinding(opt))
                     .flag(
                         // prepub: tryCondenseDupes doesn't do anything here bc modifyMessage doesn't run on refresh=true. to get around this we'd
-                        //  need to like make a who;e new method or something that only updates the message components on refresh, which is plausible
+                        //  need to like make a whole new method or something that only updates the message components on refresh, which is plausible
                         //  but is not an effortless change. (ex. take timestamp and regen time text, take player regen name, etc) not on chatlog#restore
                         cat.equals("counter") || cat.equals("compact")
                             ? new OptionFlag[] { client -> client.inGameHud.getChatHud().reset() }

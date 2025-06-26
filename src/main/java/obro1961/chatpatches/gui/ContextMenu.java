@@ -31,6 +31,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.*;
 import net.minecraft.util.StringHelper;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
@@ -534,7 +535,7 @@ public class ContextMenu implements Element {
 
 		// cuts off any of the selection rect that goes past the chat hud
 		drawContext.enableScissor(0, scissorY1, borderW, scissorY2);
-		drawContext.drawBorder(0, selectionY1, borderW, selectionH, config.contextOutlineColor + 0xFF000000); //fixme: is there a Color.opaque(rgb) ?
+		drawContext.drawBorder(0, selectionY1, borderW, selectionH, ColorHelper.Abgr.toOpaque(config.contextOutlineColor)); // be wary: contextOutlineColor is ARGB
 		drawContext.disableScissor();
 
 		drawContext.getMatrices().pop();
@@ -804,14 +805,12 @@ public class ContextMenu implements Element {
 		}
 
 		/**
-		 * @return The {@link Entry} object associated with the given
-		 * {@link Text} id, otherwise {@code null} if none exists.
+		 * @return The {@link Entry} object associated with the given {@link Text}
+		 * id, otherwise {@code null} if none exists.
 		 *
-		 * @implNote While iterating, compares the results of calling
-		 * {@link Text#getString()} on the button's message with the
-		 * given id, because comparing directly caused very strange
-		 * errors and skipping over buttons that should have been
-		 * considered equal.
+		 * @implNote Compares using {@link Text#getString()} because direct equality
+		 * checks returned false negatives due to the styles occasionally being
+		 * different (typically from the underlined  button text).
 		 */
 		public Entry get(Text id) {
 			for(Entry e : entries)
