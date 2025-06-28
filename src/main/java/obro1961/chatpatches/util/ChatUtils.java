@@ -79,8 +79,8 @@ public class ChatUtils {
 	public static final String PARSEABLE_MESSAGE_KEYS = "chat.type.(text|team.(text|sent))";
 
 	/**
-	 * @return The message component at the given index; otherwise
-	 * {@link ScreenTexts#EMPTY} <u>(not the same as {@link Text#empty()})</u>
+	 * @return The message component at the given index; otherwise {@link
+	 * ScreenTexts#EMPTY} <b>(not the same as {@link Text#empty()})</b>
 	 * if it doesn't exist. This prevents {@code IndexOutOfBoundsException}
 	 * and {@code NullPointerException} errors.
 	 *

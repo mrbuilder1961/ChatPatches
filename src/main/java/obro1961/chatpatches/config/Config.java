@@ -62,9 +62,9 @@ public class Config {
     protected static String lastWorld = "";
 
 
-    // prepub #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
-    // current system, so maybe just like a Map<Str, List<Str>> with field names as keys and the list of aliases as strings contained in the list value?
-    // >> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
+    // todo #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
+    //  current system, so maybe just like a Map<Str, List<Str>> with field names as keys and the list of aliases as strings contained in the list value?
+    //  >> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
     // tab categories: message, boundary, chatlog, chat
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
     public boolean time = true, timeSystemMessages = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColorValue();
@@ -81,7 +81,7 @@ public class Config {
         onlyInvasiveDrafting = false;
     public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColorValue(); public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
-        caseSensitive = true, formatting = false, regex = false;
+        caseSensitive = true; @Deprecated public boolean formatting = false; public boolean regex = false;
 
     /**
      * Initializes {@linkplain ChatPatches#config the config} according to installed
@@ -419,7 +419,7 @@ public class Config {
      * Config this class}
      */
     @SuppressWarnings("unchecked")
-    public <T> Setting<T> getOption(String key) { //todo?: get
+    public <T> Setting<T> getOption(String key) {
         return (Setting<T>)
             getOptions()
             .stream()

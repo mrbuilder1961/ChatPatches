@@ -396,7 +396,7 @@ public class YaclConfig extends Config {
             .build();
     }
 
-    //prepub currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues. not critical priority
+    //prepub currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues. not critical priority. if its not possible -> scrap
     /*@SuppressWarnings("unchecked")
     private static ValueFormatter<?> getValueFormatter(String key) {
         Class<?> type = config.getOption(key).getType();

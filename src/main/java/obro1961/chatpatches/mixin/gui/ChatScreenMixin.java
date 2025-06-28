@@ -473,6 +473,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				setting.set(!setting.get()); // toggle the setting
 				me.setMessage( ScreenTexts.composeToggleText(name, setting.get()) ); // update the button text
 				onSearchFieldUpdate(searchField.getText(), true); // update the search field color
+				Config.serialize(); // save the setting
 			})
 			.dimensions(
 				8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset,
@@ -553,12 +554,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		ChatHud chatHud = client.inGameHud.getChatHud();
 		ChatHudAccess chat = (ChatHudAccess) chatHud;
 		List<ChatHudLine> messageSnapshot = List.copyOf(chat.chatpatches$getMessages());
-
+//fixme real issue: changing options removes the `Search...` suggestion for some reason??
 		// filter messages by removing those that don't match the target
 		chat.chatpatches$getMessages().removeIf(msg -> {
-			//fixme: we all know this shit does NOT work (formatting).
 			String text = config.formatting ? TextUtils.toCodedString(msg.content().asOrderedText(), true) : msg.content().getString();
 
+			//fixme: we all know this shit does NOT work (formatting). what if i just delete this bc who uses it
 			// note that this NOTs the whole expression to simplify the complex nesting
 			// *removes* the message if it *doesn't* match AKA *keeps* those that *do* match
 			return !(
