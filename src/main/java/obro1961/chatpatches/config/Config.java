@@ -190,8 +190,8 @@ public class Config {
     }
 
     public Text makeBoundaryLine(String levelName) {
-        // needs empty strings to avoid errors when comparing the dupe counter
-        return ChatUtils.buildMessage(null, null, makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor)), null);
+        // first -> MSG_TEAM_INDEX, second -> MSG_SENDER_INDEX, third -> MSG_CONTENT_INDEX
+        return ChatUtils.buildMessage(null, null, null, makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor)));
     }
 
     /**
