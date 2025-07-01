@@ -35,7 +35,6 @@ import obro1961.chatpatches.accessor.ChatScreenAccessor;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.MenuButtonWidget;
 import obro1961.chatpatches.gui.SearchButtonWidget;
-import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -678,10 +677,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// gets the skin texture from the player, then the profile, and finally the NIL profile if all else fails
 			SkinTextures skinTexture =
 				player == null
-					? client.getSkinProvider().getSkinTextures( ChatUtils.NIL_MSG_DATA.sender() )
+					? client.getSkinProvider().getSkinTextures( NIL_MESSAGE_DATA.sender() )
 					: player.getSkinTextures() != null && player.getSkinTextures().texture() != null
 						? player.getSkinTextures()
-						: client.getSkinProvider().getSkinTextures( player.getProfile() != null ? player.getProfile() : ChatUtils.NIL_MSG_DATA.sender() );
+						: client.getSkinProvider().getSkinTextures( player.getProfile() != null ? player.getProfile() : NIL_MESSAGE_DATA.sender() );
 
 			mainButtons.get(COPY_MENU_SENDER).setTexture(skinTexture).readyToRender(true);
 			mainButtons.get(COPY_MENU_REPLY).setTexture(skinTexture).readyToRender(true);

@@ -2,38 +2,56 @@ package obro1961.chatpatches.util;
 
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
+import obro1961.chatpatches.mixin.listener.MessageHandlerMixin;
 import org.apache.logging.log4j.core.util.Integers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 
+import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.ChatPatches.msgData;
 import static obro1961.chatpatches.util.TextUtils.copyWithoutContent;
 
 /**
  * Utility methods relating directly to the chat.
  */
 public class ChatUtils {
-	public static final UUID NIL_UUID = new UUID(0, 0);
-	public static final MessageData NIL_MSG_DATA = new MessageData(new GameProfile(ChatUtils.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
+	public static final MessageData NIL_MESSAGE_DATA = new MessageData(new GameProfile(Util.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
+
 	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
 							MESSAGE_INDEX = 1,     // contains the actual chat message
 							DUPE_INDEX = 2;        // contains the duplicate counter (can be empty)
 	public static final int MSG_TEAM_INDEX = 0,    // contains the sender's team's name; used for `chat.type.team.*` messages (can be empty)
 							MSG_SENDER_INDEX = 1,  // contains the sender's name
 							MSG_CONTENT_INDEX = 2; // contains the content of the sender's message
+
+	/**
+	 * Contains the sender and timestamp data of the last received chat message.
+	 *
+	 * @see #modifyMessage(Text)
+	 * @see MessageHandlerMixin
+	 */
+	public static MessageData messageData = NIL_MESSAGE_DATA;
+
 	/**
 	 * Matches only an entire vanilla player message.
 	 * By default, this is translated under the

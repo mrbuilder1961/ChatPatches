@@ -9,7 +9,6 @@ import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextVisitFactory;
 import net.minecraft.util.Util;
-import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 import obro1961.chatpatches.util.ChatUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -44,9 +43,9 @@ public abstract class MessageHandlerMixin {
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         // only logs the metadata if it was a player-sent message (otherwise tries to format some commands like /msg and /me)
-        ChatPatches.msgData = params.type().value().chat().translationKey().matches(ChatUtils.PARSEABLE_MESSAGE_KEYS)
+        ChatUtils.messageData = params.type().value().chat().translationKey().matches(ChatUtils.PARSEABLE_MESSAGE_KEYS)
             ? new ChatUtils.MessageData(sender, Date.from(message.getTimestamp()), isVanilla(params.applyChatDecoration(message.getContent())))
-            : ChatUtils.NIL_MSG_DATA;
+            : ChatUtils.NIL_MESSAGE_DATA;
     }
 
     /**
@@ -58,9 +57,9 @@ public abstract class MessageHandlerMixin {
         String name = StringUtils.substringBetween(TextVisitFactory.removeFormattingCodes(message), "<", ">");
         UUID id = extractSender(message);
 
-        ChatPatches.msgData = !id.equals(Util.NIL_UUID)
+        ChatUtils.messageData = !id.equals(Util.NIL_UUID)
             ? new ChatUtils.MessageData(new GameProfile(id, name), new Date(), isVanilla(message))
-            : ChatUtils.NIL_MSG_DATA;
+            : ChatUtils.NIL_MESSAGE_DATA;
     }
 
 
@@ -69,7 +68,7 @@ public abstract class MessageHandlerMixin {
      * as specified by {@link ChatUtils#VANILLA_FORMAT}.
      * This should be true for every message sent by a player,
      * which are the only messages that need to be heavily
-     * modified in {@link ChatUtils#modifyMessage(Text, boolean)}.
+     * modified in {@link ChatUtils#modifyMessage(Text)}.
      *
      * @apiNote When called in the chat message handler, the
      * message passed should be
