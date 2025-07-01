@@ -38,7 +38,7 @@ public class ChatUtils {
 	public static final MessageData NIL_MESSAGE_DATA = new MessageData(new GameProfile(Util.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 
 	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
-							MESSAGE_INDEX = 1,     // contains the actual chat message
+							MESSAGE_INDEX = 1,     // contains the actual chat message // prepub BODY_INDEX ? if change yes then fix comment in #buildMessage
 							DUPE_INDEX = 2;        // contains the duplicate counter (can be empty)
 	public static final int MSG_TEAM_INDEX = 0,    // contains the sender's team's name; used for `chat.type.team.*` messages (can be empty)
 							MSG_SENDER_INDEX = 1,  // contains the sender's name
@@ -61,42 +61,112 @@ public class ChatUtils {
 	 * respectively (assuming no resource
 	 * packs have modified them).
 	 *
+	 *
 	 * <p>*The first argument, the team name, is
 	 * typically surrounded in square brackets
 	 * ({@code []}). Additionally, the team key
 	 * ending in {@code sent} resolves with a
 	 * leading arrow ({@code -> }).
 	 *
+	 *
 	 * @implNote The vanilla player name alone
 	 * can only match {@code /<[a-z0-9_]{3,16}>/};
 	 * however, when factoring in team pre- and
 	 * suf-fixes, this limit becomes irrelevant.
 	 */
-	public static final String VANILLA_FORMAT = "(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$";
+	public static final String VANILLA_FORMAT = "(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$";//prepub make these Patterns so they are compiled once
 	public static final String PARSEABLE_MESSAGE_KEYS = "chat.type.(text|team.(text|sent))";
 
+
 	/**
-	 * Returns the message component at the given index;
-	 * returns an empty Text if it doesn't exist. This
-	 * prevents {@code IndexOutOfBoundsException} and
-	 * {@code NullPointerException} errors.
+	 * @return The index of the {@linkplain ChatHudLine.Visible#endOfEntry end-of-entry}
+	 * visible message that corresponds to the given message index, or {@code -1} if
+	 * the message index is invalid.
 	 *
-	 * @apiNote Intended to be used with the MAIN
-	 * indices specified in this class.
+	 * @param messageIndex The index of the message in {@link ChatHud#messages} to find
+	 * the corresponding visible for.
+	 *
+	 * @implNote Iterates through the minimum amount of {@linkplain ChatHud#visibleMessages
+	 * visibles} necessary to get the given index to equal the count of iterated EoE
+	 * messages, which signifies an effective 1:1 relationship between {@code messages}
+	 * and {@code visibleMessages}. Once reached, the loop's index is returned,
+	 * corresponding to the EoE message index.
+	 *
+	 * @see #tryCondenseDupes(Text)
+	 */
+	public static int message2Visible(int messageIndex) {
+		var visibles = ((ChatHudAccessor) MinecraftClient.getInstance().inGameHud.getChatHud()).chatpatches$getVisibleMessages();
+
+		if(messageIndex == -1)
+			return -1; // avoids iterating through the entire list
+
+		int EoEs = -1; // # of EoE messages counted so far
+		for(int j = 0; j < visibles.size(); j++) {
+			if(visibles.get(j).endOfEntry()) {
+				EoEs++;
+				if(EoEs == messageIndex) {
+					return j; // now the EoE message index that corresponds to the given message index
+				}
+			}
+		}
+
+		return -1;
+	}
+
+	/**
+	 * @return The message index that corresponds to the given {@linkplain
+	 * ChatHudLine.Visible#endOfEntry end-of-entry} visible message, or {@code -1}
+	 * if the visible message index is invalid.
+	 *
+	 * @param visibleIndex The index of the <b>EoE</b> visible message in {@link
+	 * ChatHud#visibleMessages} to find the corresponding message index of.
+	 *
+	 * @implNote After ensuring valid conditions, subtracts the number of non-EoE
+	 * messages before the given index from the index itself to get the corresponding
+	 * message index. Without this correction, the two message lists would not
+	 * correspond 1:1 after the first multiline message, which caused a myriad of
+	 * frustrating issues.
+	 *
+	 * @see ChatHudMixin#getChatHudLineIndex(double, double)
+	 */
+	public static int visible2Message(int visibleIndex) {
+		var visibles = ((ChatHudAccessor) MinecraftClient.getInstance().inGameHud.getChatHud()).chatpatches$getVisibleMessages();
+
+		if(visibleIndex == -1 || visibleIndex >= visibles.size())
+			return -1;
+
+		return (int)(visibleIndex - visibles.subList(0, visibleIndex).stream().filter(Predicate.not(ChatHudLine.Visible::endOfEntry)).count());
+	}
+
+	/**
+	 * @return The message component at the given index of the given text's siblings,
+	 * otherwise {@link ScreenTexts#EMPTY} <b>(not the same as {@link Text#empty()})</b>
+	 * if it doesn't exist. This prevents {@code IndexOutOfBoundsException} and
+	 * {@code NullPointerException} errors, in accordance with the intention of Chat
+	 * Patches to not brick the game if an error occurs.
+	 *
+	 * @apiNote Intended to be used with the MAIN indices specified in this class,
+	 * although any positive index can be used.
+	 *
 	 * @see #TIMESTAMP_INDEX
 	 * @see #MESSAGE_INDEX
 	 * @see #DUPE_INDEX
 	 */
 	public static Text getPart(Text message, int index) {
-		return message.getSiblings().size() > index ? message.getSiblings().get(index) : Text.empty();
+		return message.getSiblings().size() > index ? message.getSiblings().get(index) : ScreenTexts.EMPTY;
 	}
 
 	/**
-	 * Returns the message component at the given index of the
-	 * given message; returns an empty Text if it doesn't exist.
+	 * @return The message component at the given index of the given message's
+	 * siblings' siblings, otherwise {@link ScreenTexts#EMPTY} <b>(not the same as
+	 * {@link Text#empty()})</b> if it doesn't exist. In other words, returns {@code
+	 * message.getSiblings().get(MESSAGE_INDEX).getSiblings().get(index)} when
+	 * {@code index} is a valid index.
 	 *
-	 * @apiNote Intended to be used with the {@code MSG}
-	 * indices specified in this class.
+	 * @apiNote Intended to be used with the {@code MSG} indices specified in this
+	 * class, although any positive index can be used.
+	 *
+	 * @see #getPart(Text, int)
 	 * @see #MSG_TEAM_INDEX
 	 * @see #MSG_SENDER_INDEX
 	 * @see #MSG_CONTENT_INDEX
@@ -142,6 +212,7 @@ public class ChatUtils {
 	 *                  either the dupe counter or the message
 	 *                  content
 	 */
+	@NotNull
 	public static MutableText buildMessage(@Nullable Style rootStyle, @Nullable Text first, @Nullable Text second, @Nullable Text third) {
 		MutableText root = Text.empty();
 
@@ -155,6 +226,10 @@ public class ChatUtils {
 		return root.append(first).append(second).append(third);
 	}
 
+	private static String optimizeEmpties(Object o) {
+		return (o instanceof String str ? str : String.valueOf(o)).replace("literal{}", "empty").replace("[style={}]", "");
+	}
+
 	/**
 	 * Reformats the incoming message {@code m} according to configured
 	 * settings, message data, and at indices specified in this class.
@@ -166,8 +241,8 @@ public class ChatUtils {
 	 *   <li>Return {@code m} early if the chat log is suspended to not cause
 	 *   other issues.</li>
 	 * 	 <li>Reconstruct the message if {@linkplain Config#chatName allowed},
-	 * 	 it has player message data, and is in the vanilla format as specified
-	 * 	 {@linkplain #VANILLA_FORMAT here}:
+	 * 	 it has player message data, and is {@linkplain #VANILLA_FORMAT in
+	 * 	 the vanilla format}:
 	 *     	 <ol>
 	 *     	     <li>If the message is {@linkplain TranslatableTextContent
 	 *     	     translatable} and in a {@linkplain #PARSEABLE_MESSAGE_KEYS
@@ -199,28 +274,29 @@ public class ChatUtils {
 	 * 	 <li>Assemble the message, despite any/all changes and add a duplicate counter
 	 * 	 according to {@link #tryCondenseDupes(Text)}.</li>
 	 * 	 <li>Log the modified message in the {@link ChatLog}.</li>
-	 * 	 <li>Reset the {@link ChatPatches#msgData} to prevent a rare bug.</li>
+	 * 	 <li>Reset the {@link ChatUtils#messageData} to prevent a rare bug.</li>
 	 * 	 <li>Return the message, regardless of if it was actually modified or not.</li>
 	 * </ol>
 	 */
 	public static Text modifyMessage(@NotNull Text m) {
 		if(ChatLog.isRestoring())
-			return m; // cancel modifications when loading the chat log
+			return tryCondenseDupes(m); // cancel modifications when loading the chat log minus the minimal dupe counter
 
-		boolean lastEmpty = msgData.equals(ChatUtils.NIL_MSG_DATA);
-		Date now = lastEmpty ? new Date() : msgData.timestamp;
+		boolean lastEmpty = messageData.equals(ChatUtils.NIL_MESSAGE_DATA); // also signifies that this is a system message
+		//boolean timestampSystemCheck = config.timeSystemMessages || !lastEmpty; // config.timeSystemMessages ? true : !lastEmpty;
+		Date now = lastEmpty ? new Date() : messageData.timestamp;
 		Style style = m.getStyle();
 
 		MutableText timestamp = null;
 		MutableText content = m.copy(); // default to the original message
 
 		try {
-			timestamp = (config.time ? config.makeTimestamp(now) : Text.empty()).setStyle( config.makeHoverStyle(now) );
+			timestamp = (config.time /*&& timestampSystemCheck*/ ? config.makeTimestamp(now) : Text.empty()).setStyle(config.makeHoverStyle(now));
 
-			// reconstruct the player message if it's in the vanilla format and it should be reformatted
-			// the msgData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
+			// reconstruct the player message if it's in the vanilla format & it should be reformatted
+			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(config.chatName && !lastEmpty && msgData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
+			if(config.chatName && !lastEmpty && messageData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
 				content = Text.empty().setStyle(style);
 
 				// if the message is translatable, then we know exactly where everything is
@@ -240,8 +316,8 @@ public class ChatUtils {
 					content.append(teamPart); // adds the team part or nothing to keep MSG_TEAM_INDEX constant
 
 					// adds the formatted playername and content for all message types
-					content.append( config.formatPlayername(msgData.sender) );
-					content.append( getArg(ttc, team ? MSG_CONTENT_INDEX : MESSAGE_INDEX) );
+					content.append( config.formatPlayername(messageData.sender) );
+					content. append( getArg(ttc, team ? MSG_CONTENT_INDEX : MESSAGE_INDEX) );
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
 					MutableText realContent = Text.empty();
 					// collect all message parts into one list, including the root TextContent
@@ -251,9 +327,11 @@ public class ChatUtils {
 					Text firstPart = parts.stream()
 						.filter(p -> p.getString().contains(">"))
 						.findFirst()
-						.orElseThrow(() -> ChatPatches.logAndThrowReportMsg(
-							new IllegalStateException("No closing angle bracket found in vanilla message '" + m.getString() + "'!")
-						));
+						.orElseGet(() -> {
+							String error = "No closing angle bracket found in vanilla message '" + m.getString() + "'!";
+							ChatPatches.logReportMsg(new IllegalStateException(error));
+							return Text.literal("ERROR: " + error).formatted(Formatting.RED);
+						});
 
 					String[] split = firstPart.getString().split(">"); // fixes (#156)
 					String afterEndBracket = split.length > 1 ? split[1] : ""; // only get the part after the closing bracket
@@ -267,87 +345,95 @@ public class ChatUtils {
 					for(int i = parts.indexOf(firstPart) + 1; i < parts.size(); i++)
 						realContent.append(parts.get(i));
 
-					content.append(config.formatPlayername(msgData.sender)); // sender data is already known
+					content.append(Text.empty()); // keeps MSG_TEAM_INDEX constant
+					content.append(config.formatPlayername(messageData.sender)); // sender data is already known
 					content.append(realContent); // adds the reconstructed message content
 				}
 			}
-		} catch(RuntimeException e) {
-			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying message '{}':", m.getString());
-			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] \tModified message structure:");
-			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] \t\tTimestamp structure: {}", timestamp);
-			ChatPatches.LOGGER.error("[ChatUtils.modifyMessage] \t\tContent structure: {}", content);
-			ChatPatches.logReportMsg(e);
+
+			if(true)
+				throw new AssertionError("meow", null);
+		} catch(RuntimeException | AssertionError e) {
+			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying '{}'", m.getString());
+			LOGGER.error("[ChatUtils.modifyMessage] \tTimestamp: {}", optimizeEmpties(timestamp));
+			LOGGER.error("[ChatUtils.modifyMessage] \tBody:");
+
+			if(content.getSiblings().size() == 3) { // modified vanilla message
+				LOGGER.error("[ChatUtils.modifyMessage] \t\tTeam: {}", optimizeEmpties(getPart(content, MSG_TEAM_INDEX)));
+				LOGGER.error("[ChatUtils.modifyMessage] \t\tSender: {}", optimizeEmpties(getPart(content, MSG_SENDER_INDEX)));
+				LOGGER.error("[ChatUtils.modifyMessage] \t\tContent: {}", optimizeEmpties(getPart(content, MSG_CONTENT_INDEX)));
+			} else { // literally everything else
+				LOGGER.error("[ChatUtils.modifyMessage] \t\tRoot: {}", optimizeEmpties(content.getContent()));
+				for(int i = 0; i < content.getSiblings().size(); i++) {
+					LOGGER.error("[ChatUtils.modifyMessage] \t\tSibling {}: {}", i, optimizeEmpties(getPart(content, i)));
+				}
+			}
+
+			if(e instanceof RuntimeException)
+				ChatPatches.logReportMsg(e); // don't log forced errors
 		}
 
 		// assembles constructed message and adds a duplicate counter according to the #addCounter method
 		Text modified = tryCondenseDupes( buildMessage(style, timestamp, content, null) );
 		ChatLog.addMessage(modified);
-		msgData = ChatUtils.NIL_MSG_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
+		messageData = ChatUtils.NIL_MESSAGE_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
 	}
 
 	/**
-	 * Updated, more efficient version of the original
-	 * {@code addCounter} and {@code getCondensedMessage}
-	 * method combo. This method is used in conjunction
-	 * with (after) {@link #modifyMessage(Text)} to
-	 * add a duplicate counter and remove duplicate(s)
-	 * to the given message, if they exist and according
-	 * to the config.
+	 * Updated, more efficient version of the original {@code addCounter} and {@code
+	 * getCondensedMessage} method combo. This method is used in conjunction with
+	 * (after) {@link #modifyMessage(Text)} to add a duplicate counter and remove
+	 * duplicate(s) to the given message, if they exist and according to the config.
 	 *
 	 * @implNote
 	 * <ol>
-	 *     <li>Return the message if the dupe counter is
-	 *     disabled or there are no messages to check.</li>
-	 *     <li>Calculate the attempt distance for condensing
-	 *     the incoming message with:</li>
+	 *     <li>Returns the message if the dupe counter is disabled or there are no
+	 *     messages to check.</li>
+	 *     <li>Calculates the attempt distance for condensing the incoming message:</li>
 	 *     <ol>
-	 *         <li>If {@linkplain Config#counterCompact
-	 *         CompactChat} is enabled, parses
-	 *         {@link Config#counterCompactDistance} from
-	 *         {@code -1} to {@code messages.size()},
-	 *         {@code 0} to
-	 *         {@code chatHud.getVisibleLineCount()},
-	 *         otherwise to itself.</li>
-	 *         <li>Else 1, which is the default and
-	 *         corresponds to the most recent message
-	 *         only.</li>
+	 *         <li>If {@linkplain Config#counterCompact CompactChat} is enabled, takes
+	 *         {@link Config#counterCompactDistance} and parses {@code -1} as {@code
+	 *         messages.size()}, {@code 0} as {@code chatHud.getVisibleLineCount()},
+	 *         else its value as it is.</li>
+	 *         <li>Else uses 1, which is the default and corresponds to the most recent
+	 *         message only.</li>
 	 *     </ol>
-	 *     <li>Iterate through the last {@code attemptDistance}
-	 *     messages to find and condense (remove) any duplicates.</li>
+	 *     <li>Iterates through the last {@code attemptDistance} messages to find and
+	 *     condense (remove) any duplicates.</li>
 	 *     <ol>
-	 *         <li>If the incoming message is different from the
-	 *         iterated message, in terms of text or style data
-	 *         ({@linkplain Config#counterCheckStyle if we care about
-	 *         style data}) don't try to condense (delete) it.</li>
-	 *         <li>Remove all number formatting codes and non-digits
-	 *         from the iterated message's dupe counter, parse it with
-	 *         a fallback of 1 (no counter means 1 message), and add
-	 *         it to the total dupe count.</li>
-	 *         <li>Remove the message being condensed.</li>
-	 *         <li>Remove visible message(s), starting at the iterated
-	 *         index, until the next message (EoE) is reached.</li>
-	 *         <li>Decrement the index to prevent skipping the next message.</li>
-	 *         <li>Decrement the attempt distance to prevent checking
-	 *         extra messages.</li>
+	 *         <li>If the incoming message is different from the iterated message, in
+	 *         terms of text or {@linkplain Config#counterCheckStyle style data},
+	 *         doesn't try to condense it. Otherwise:</li>
+	 *         <li>Removes all number formatting codes and non-digits from the iterated
+	 *         message's dupe counter, parse it with a fallback of 1 (no counter means
+	 *         1 message), and add it to the total dupe count.</li>
+	 *         <li>Removes all visible message(s), starting at the iterated index (or,
+	 *         when CompactChat is enabled, the {@linkplain #message2Visible(int)
+	 *         corrected index}) until the next (EoE) message is reached.</li>
+	 *         <li>Removes the message being condensed. Done towards the end to ensure
+	 *         {@link #message2Visible(int)} returns an accurate value if necessary.</li>
+	 *         <li>Decrements the index to prevent skipping the next message.</li>
+	 * 	       <li>Decrements the attempt distance to prevent checking extra
+	 * 	       messages.</li>
 	 *     </ol>
-	 *     <li>Update the incoming message with the new dupe counter,
-	 *     if the total dupe count is greater than 1.</li>
-	 *     <li>Return the incoming message, regardless of if it was
-	 *     actually modified or not, reconstructed to avoid an
-	 *     {@link ArrayIndexOutOfBoundsException} in 1.20.3+
+	 *     <li>Updates the incoming message with the new dupe counter, if the total dupe
+	 *     count is greater than 1.</li>
+	 *     <li>Returns the incoming message, regardless of if it was actually modified
+	 *     or not, reconstructed to avoid an {@link ArrayIndexOutOfBoundsException}
+	 *     since 1.20.3+
 	 *     (<a href="https://github.com/mrbuilder1961/ChatPatches/issues/199">#199</a>)</li>
 	 * </ol>
 	 */
-	private static Text tryCondenseDupes(Text incoming) { //prepub: very inconsistently and oddly, the dupe counter will get roughly doubled? its easiest to see on the boundary lines
+	private static Text tryCondenseDupes(Text incoming) {
 		ChatHud chathud = MinecraftClient.getInstance().inGameHud.getChatHud();
 		ChatHudAccessor chat = (ChatHudAccessor) chathud;
 		List<ChatHudLine> messages = chat.chatpatches$getMessages();
-		List<Text> siblings = new ArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
 
 		if(!config.counter || messages.isEmpty())
 			return incoming;
 
+		ObjectList<Text> siblings = new ObjectArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
 		List<ChatHudLine.Visible> visibles = chat.chatpatches$getVisibleMessages();
 		int attemptDistance =
 			switch(config.counterCompact ? config.counterCompactDistance : 1) {
@@ -371,12 +457,14 @@ public class ChatUtils {
 			// finally add it to the total dupe count
 			dupeCount += Integers.parseInt( getPart(msg, DUPE_INDEX).getString().replaceAll("(§\\d)|\\D", "") , 1);
 
-			// remove the message being condensed
-			messages.remove(i);
+			// ensure that `i` correctly maps to its EoE visible
+			int v = config.counterCompact ? message2Visible(i) : i;
 
-			// remove the visible message(s) of the message being condensed
-			do visibles.remove(i);
-			while(i < visibles.size() && !visibles.get(i).endOfEntry()); // continue removing them until the next message (EoE) is reached
+			do visibles.remove(v); // remove the visible message(s) of the message being condensed, starting with its own EoE
+			while(v < visibles.size() && !visibles.get(v).endOfEntry()); // continue removing them until the next message (EoE) is reached
+
+			// remove the message being condensed; done last to ensure #message2Visible(.) works correctly
+			messages.remove(i);
 
 			i--;  // we removed the first message, but we don't want to skip the next one
 			attemptDistance--; // but we also don't want to check messages we shouldn't be checking
@@ -384,7 +472,7 @@ public class ChatUtils {
 
 		// update the incoming message with the new dupe counter
 		if(dupeCount > 1)
-			siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // warning: this will throw errors if DUPE_INDEX doesn't exist!
+			siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // this will throw errors if DUPE_INDEX doesn't exist!
 
 		return TextUtils.newText(incoming.getContent(), siblings, incoming.getStyle());
 	}
