@@ -3,6 +3,7 @@
 ## Chat Patches `215.6.16` for Minecraft 1.21.5 on Fabric, Quilt
 - Fixed the CompactChat dupe counter occasionally merging messages incorrectly ([#237](https://www.github.com/mrbuilder1961/ChatPatches/issues/237), [other issue](https://discord.com/channels/1077285607375638529/1389213059377004737))
 - Fixed the boundary line being constructed in the wrong order
+- Added a help/debug option to enable logging message structures to the log, which is disabled by default
 
 ## Chat Patches `215.6.15` for Minecraft 1.21.5 on Fabric, Quilt
 - Fixed the first letter of the search draft being removed when closing chat ([#229](https://www.github.com/mrbuilder1961/ChatPatches/issues/229)-30)

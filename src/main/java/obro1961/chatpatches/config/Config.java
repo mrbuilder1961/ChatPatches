@@ -68,6 +68,7 @@ public class Config {
     public int chatShift = 0; public boolean dynamicChatShift = true, messageDrafting = false, onlyInvasiveDrafting = false, searchDrafting = true, hideSearchButton = false, vanillaClearing = false;
     public int copyColor = 0x55ffff; public String copyReplyFormat = "/msg $ ";
     public boolean caseSensitive = true, formatting = false, regex = false;
+    public boolean helpLogMessageStructures = false;
 
     /**
      * Creates a new Config or YACLConfig, depending
