@@ -25,7 +25,6 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
@@ -129,14 +128,14 @@ public class ChatUtils {
 	 *
 	 * @see ChatHudMixin#getChatHudLineIndex(double, double)
 	 */
-	public static int visible2Message(int visibleIndex) {
+	/*public static int visible2Message(int visibleIndex) {
 		var visibles = ((ChatHudAccessor) MinecraftClient.getInstance().inGameHud.getChatHud()).chatpatches$getVisibleMessages();
 
 		if(visibleIndex == -1 || visibleIndex >= visibles.size())
 			return -1;
 
 		return (int)(visibleIndex - visibles.subList(0, visibleIndex).stream().filter(Predicate.not(ChatHudLine.Visible::endOfEntry)).count());
-	}
+	}*/
 
 	/**
 	 * @return The message component at the given index of the given text's siblings,
