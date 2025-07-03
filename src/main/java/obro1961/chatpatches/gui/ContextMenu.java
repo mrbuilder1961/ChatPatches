@@ -254,8 +254,7 @@ public class ContextMenu implements Element {
 
 		if(renderObject != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
 			final PressableWidget src = button;
-			// fixme: make the button *not* adjust the text if it doesnt need to (ex. reply button.. worst case scenario hardcode it)
-			//  that would be doable by checking `buttons.w::max - text.w > 16 + 2*PAD` but we need the max button width ._.
+			// fixme: make the button *not* adjust the text if it doesnt need to
 			// accounts for the 16x16 icon on the left with the +16 and prefixed 4 spaces (each of width 4) in the id label
 			button = new PressableWidget(button.getX(), button.getY(), button.getWidth() + 16, button.getHeight(), Text.literal("    ").append(id)) {
 				final ButtonWidget.NarrationSupplier narrationSupplier = Supplier::get;
@@ -406,7 +405,7 @@ public class ContextMenu implements Element {
 		int strRow = 0; // current row for string and text buttons
 		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
 			registerCopyButton(RAW_TEXT, strRow++, text); // 0
-			registerCopyButton(FORMATTED_STR, strRow++, Text.of(TextUtils.toCodedString(text.asOrderedText(), true))); // 1
+			registerCopyButton(FORMATTED_STR, strRow++, Text.of(TextUtils.toCodedString(text, true))); // 1
 			if(timestamped)
 				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			if(duped)

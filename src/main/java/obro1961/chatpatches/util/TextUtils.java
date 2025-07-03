@@ -9,6 +9,7 @@ import net.minecraft.util.Util;
 import net.minecraft.util.dynamic.Codecs;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -104,58 +105,56 @@ public class TextUtils {
 	}
 
 	/**
-	 * Converts an {@link OrderedText} into a {@link String} with {@code &<?>}
-	 * codes. Strips any complex style data, including hover events, fonts,
-	 * insertions, etc. If {@code includeStyles} is true, then the returned
-	 * string will not include any formatting codes. Hex colors are
-	 * represented in the format {@code &#RRGGBB}.
-	 *
-	 * @apiNote Intended for use with comparisons, and not for actually obtaining
-	 * a complete string representation of the Text object.
-	 *
-	 * @see TextColor#getHexCode()
+	 * Converts a {@link Text} into a {@link String} with {@code &<?>} codes.
+	 * Strips any complex style data, including hover events, fonts, insertions,
+	 * etc. Hex colors are represented in the format {@code &#RRGGBB}.
 	 */
-	public static String toCodedString(OrderedText text, boolean includeStyles) { // take a Text and then convert to ordered text?
+	public static String toCodedString(Text text, boolean fancyCodes) {
 		StringBuilder builder = new StringBuilder(); // required for the lambda expression
 		AtomicReference<Style> lastStyle = new AtomicReference<>(Style.EMPTY); // ensures that the first equality check returns false
 
-		text.accept((index, style, codepoint) -> {
+		text.visit((style, str) -> {
 			// if style is different from last, add any formatting codes
-			if(includeStyles && !style.equals(lastStyle.get())) {
-				builder.append(Formatting.AQUA); // adds a pop of color to the codes to make them more visible
+			if(!style.equals(lastStyle.get())) {
+				if(fancyCodes)
+					builder.append(Formatting.AQUA); // adds a pop of color to the codes to make them more visible
+
 				builder.append(getFormattingCodes(style, lastStyle.get()));
-				builder.append(Formatting.RESET); // warning: adding colors breaks some (whitespace separated) functionality of DUPE_COLOR_AMPERSAND_REGEX
+
+				if(fancyCodes)
+					builder.append(Formatting.RESET); // adding colors breaks some (whitespace separated) functionality of DUPE_COLOR_AMPERSAND_REGEX
+
 				lastStyle.set(style);
 			}
 
-			builder.append(Character.toChars(codepoint));
+			builder.append( str.replace(Formatting.FORMATTING_CODE_PREFIX, '&') ); // sometimes section signs leak and i want them out
 
-			return true;
-		});
+			return Optional.empty();
+		}, Style.EMPTY);
 
-		if(includeStyles) {
-			while(builder.toString().startsWith("&r")) // removes any leading reset codes
-				builder.delete(0, 2);
+		while(builder.toString().startsWith("&r")) // removes any leading reset codes
+			builder.delete(0, 2);
 
-			while(builder.toString().endsWith("&r&r")) // removes duplicate trailing reset codes (leaves one if it exists just in case it's intended)
-				builder.setLength(builder.length() - 4);
-		}
+		while(builder.toString().endsWith("&r&r")) // removes duplicate trailing reset codes (leaves one if it exists just in case it's intended)
+			builder.setLength(builder.length() - 4);
 
 		// removes the redundant code in a pair of color codes, optionally separated by whitespace, even including hex codes
 		// ex. '&a&9' -> '&9', '&b   &4' -> '   &4', '&c&#123ABC' -> '&#123ABC', '&#00FF22\t&f' -> '\t&f'
-		return includeStyles ? builder.toString().replaceAll(DUPLICATE_COLOR_AMPERSAND_REGEX, "$1&$2") : builder.toString();
+		return builder.toString().replaceAll(DUPLICATE_COLOR_AMPERSAND_REGEX, "$1&$2");
 	}
 
-	// todo: alright here is the deal. this method is always gfonna have some issue bc its hard and lots of edge cases and etc etc.
-	//  so we're switching to quicktext and if players want the old style, i'll just convert the QT to the old style
-	//  aka strip complex styles, convert hex colors to ampersand codes, and convert the formatting codes to ampersand ones
+	// prepub: alright here is the deal. this method is always gonna have some issue bc of lots of edge cases and etc etc.
+	//  so we're switching to QuickText/MiniMessage and if players want the old style, i'll just convert the QT to the old style
+	//  aka strip complex styles and convert hex & formatting colors to ampersand codes
 	/**
 	 * Returns the formatting codes of the {@link Style} provided, excluding any already
 	 * applied ones according to {@code last}. Returns an empty string if the style is
-	 * empty or is {@linkplain RenderUtils#BLANK_STYLE blank}. If any hex colors are
-	 * specified, they will be returned in the format {@code &#RRGGBB}. Additionally,
-	 * any color that exists as a formatting code (ex. {@code #55FF55} for {@link
-	 * Formatting#GREEN}) will return as the formatting code (ex. {@code &a}).
+	 * empty or blank. If any hex colors are specified, they will be returned in the
+	 * format {@code &#RRGGBB}. Additionally, any color that exists as a formatting code
+	 * (ex. {@code #55FF55} for {@link Formatting#GREEN}) will return as the formatting
+	 * code (ex. {@code &a}).
+	 *
+	 * @see TextColor#getHexCode()
 	 */
 	public static String getFormattingCodes(Style style, Style last) {
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
