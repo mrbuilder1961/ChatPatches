@@ -48,7 +48,6 @@ import java.util.function.Function;
 
 import static net.minecraft.util.Formatting.*;
 import static obro1961.chatpatches.ChatPatches.*;
-import static obro1961.chatpatches.util.RenderUtils.BLANK_STYLE;
 import static obro1961.chatpatches.util.TextUtils.fillVars;
 import static obro1961.chatpatches.util.TextUtils.text;
 
@@ -126,44 +125,38 @@ public class Config {
 
 
     /**
-     * Creates a new {@link MutableText} from {@code formatStr} with
-     * all '{@code $}'s replaced with {@code varStr}, and with the
-     * specified {@code prefix}, {@code suffix}, and {@code style}
-     * applied.
-     * <br> Util method for the other 'make' methods.
+     * Creates a new {@link MutableText} based on {@code formatStr} with all
+	 * instances of {@code $} replaced with {@code varStr}. {@code prefix}, {@code
+	 * suffix}, and {@code rgbColor} are then applied accordingly.
      */
-    private MutableText makeObject(String formatStr, String varStr, String prefix, String suffix, Style style) {
-        // style layering: override all BLANK_STYLE properties w text style, and override those w style
-        return text(prefix + fillVars(formatStr, varStr) + suffix).fillStyle(BLANK_STYLE.withParent(style));
+    private MutableText makeText(String formatStr, String varStr, String prefix, String suffix, int rgbColor) {
+        return text(prefix + fillVars(formatStr, varStr) + suffix).styled(s -> s.withColor(rgbColor));
     }
 
     /**
-     * Creates a MutableText with a timestamp; uses the {@link #timeFormat},
-     * {@link #timeDate}, and {@link #timeColor} config options. Note
-     * that this still creates a timestamp even if {@link #time} is false.
+	 * Creates a timestamp from the given time and formats it according to {@link
+	 * #timeFormat}, {@link #timeDate}, and {@link #timeColor}. If {@link
+	 * #timeSystemMessages} is false, only populates the timestamp if {@code system}
+	 * is false. The timestamp's style is specified by {@link #hoverFormat}, {@link
+	 * #hoverDate}, and {@link #hoverColor} (if {@link #hover} is true). An insertion
+	 * is always added with a string representation of the given time so the context
+	 * menu can always provide timestamp info.
      */
-    public MutableText makeTimestamp(Date when) {
-        return makeObject(timeFormat, new SimpleDateFormat(timeDate).format(when), "", " ", BLANK_STYLE.withColor(timeColor));
+    public MutableText makeTimestamp(Date when, boolean system) {
+		MutableText timestamp = time && (timeSystemMessages || !system)
+			? makeText(timeFormat, new SimpleDateFormat(timeDate).format(when), "", " ", timeColor)
+			: Text.empty();
+		MutableText hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), "", "", hoverColor);
+
+		return timestamp.styled(s ->
+			s.withHoverEvent( hover ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText) : null )
+			.withClickEvent( hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText.getString()) : null )
+			.withInsertion(String.valueOf( when.getTime() ))
+			.withColor(timeColor)
+		);
     }
 
-    /**
-     * Creates a text Style that contains extra timestamp information
-     * when hovered over in-game. Uses {@link #hoverFormat}, {@link #hoverDate},
-     * and {@link #hoverColor} to format the tooltip text. If {@link #hover} is
-     * false, this will return a Style with only {@link #timeColor} used.
-     */
-    public Style makeHoverStyle(Date when) {
-		MutableText hoverText = makeObject(hoverFormat, new SimpleDateFormat(hoverDate).format(when), "", "", BLANK_STYLE.withColor(hoverColor));
-
-        return BLANK_STYLE
-            .withHoverEvent( hover ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText) : null )
-            .withClickEvent( hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText.getString()) : null )
-            .withInsertion(String.valueOf( when.getTime() ))
-            .withColor(timeColor)
-        ;
-    }
-
-    /**
+	/**
      * Formats the provided playername, using {@link #nameFormat},
      * {@link #nameColor}, and the player's team properties. Uses
      * the player's team color if set, otherwise {@link #nameColor}.
@@ -203,11 +196,11 @@ public class Config {
             logReportMsg(e);
         }
 
-        return makeObject(nameFormat, profile.getName(), "", " ", style);
+        return makeText(nameFormat, profile.getName(), "", " ", style.getColor().getRgb()).fillStyle(style);
     }
 
     public MutableText makeDupeCounter(int dupes) {
-		return makeObject(counterFormat, Integer.toString(dupes), " ", "", BLANK_STYLE.withColor(counterColor));
+		return makeText(counterFormat, Integer.toString(dupes), " ", "", counterColor);
     }
 
     /**
@@ -234,7 +227,7 @@ public class Config {
             : mc.getCurrentServerEntry() instanceof ServerInfo entry
                 ? "S_" + (entry.name.isBlank() ? entry.address : entry.name) // if the name is blank, uses the address instead
                 : "?_?"; // prevents weird game states (ex. from ReplayMod) from throwing IOOBEs from the substring call below
-		Text boundary = ChatUtils.buildMessage(null, null, null, makeObject(boundaryFormat, world.substring(2), "", "", BLANK_STYLE.withColor(boundaryColor)));
+		Text boundary = ChatUtils.buildMessage(null, null, null, makeText(boundaryFormat, world.substring(2), "", "", boundaryColor));
 
 		// continues if chat isn't empty, the most recent message isn't a boundary line, and if the world is different from the last one (not including servers)
         if( !messages.isEmpty() && !messages.getFirst().content().getString().equals(boundary.getString()) && (!world.startsWith("S_") || !lastWorld.startsWith("S_") || !world.equals(lastWorld)) ) {

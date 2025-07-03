@@ -31,7 +31,6 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.text.*;
 import net.minecraft.util.StringHelper;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
@@ -61,7 +60,6 @@ import java.util.regex.Pattern;
 import static net.minecraft.screen.ScreenTexts.EMPTY;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.ChatUtils.*;
-import static obro1961.chatpatches.util.RenderUtils.NIL_HUD_LINE;
 import static obro1961.chatpatches.util.TextUtils.textCodec;
 
 /**
@@ -252,7 +250,7 @@ public class ContextMenu implements Element {
 
 			if(pressAction != null)
 				pressAction.onPress(b);
-		}).dimensions((int) clickPos.x, (int) clickPos.y, w, h).build();
+		}).dimensions(clickPos.xInt(), clickPos.yInt(), w, h).build();
 
 		if(renderObject != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
 			final PressableWidget src = button;
@@ -535,7 +533,7 @@ public class ContextMenu implements Element {
 
 		// cuts off any of the selection rect that goes past the chat hud
 		drawContext.enableScissor(0, scissorY1, borderW, scissorY2);
-		drawContext.drawBorder(0, selectionY1, borderW, selectionH, ColorHelper.Abgr.toOpaque(config.contextOutlineColor)); // be wary: contextOutlineColor is ARGB
+		drawContext.drawBorder(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));
 		drawContext.disableScissor();
 
 		drawContext.getMatrices().pop();
@@ -782,7 +780,7 @@ public class ContextMenu implements Element {
 		private int groupCount = 0;
 
 		public Grid() {
-			this.widget = new GridWidget( (int)clickPos.x, (int)clickPos.y );
+			this.widget = new GridWidget( clickPos.xInt(), clickPos.yInt() );
 			this.entries = new ObjectArrayList<>(MAX_ROWS * MAX_COLUMNS);
 			this.groups = new ObjectArrayList<>(MAX_ROWS);
 		}

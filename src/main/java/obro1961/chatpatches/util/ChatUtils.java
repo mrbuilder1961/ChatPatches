@@ -32,10 +32,8 @@ import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.TextUtils.withoutContent;
 
-/**
- * Utility methods relating directly to the chat.
- */
 public class ChatUtils {
+	public static final ChatHudLine NIL_HUD_LINE = new ChatHudLine(0, ScreenTexts.EMPTY, null, null);
 	public static final MessageData NIL_MESSAGE_DATA = new MessageData(new GameProfile(Util.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 
 	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
@@ -282,21 +280,20 @@ public class ChatUtils {
 		if(ChatLog.isRestoring())
 			return tryCondenseDupes(m); // cancel modifications when loading the chat log minus the minimal dupe counter
 
-		boolean lastEmpty = messageData.equals(ChatUtils.NIL_MESSAGE_DATA); // also signifies that this is a system message
-		boolean timestampSystemCheck = config.timeSystemMessages || !lastEmpty; // config.timeSystemMessages ? true : !lastEmpty;
+		boolean lastEmpty = messageData.equals(ChatUtils.NIL_MESSAGE_DATA); // also signifies that this is a system message (when true)
 		Date now = lastEmpty ? new Date() : messageData.timestamp;
 		Style style = m.getStyle();
 
 		MutableText timestamp = null;
 		MutableText content = m.copy(); // default to the original message
+		// dupe counter always empty at this stage
 
 		try {
-			timestamp = (config.time && timestampSystemCheck ? config.makeTimestamp(now) : Text.empty()).setStyle(config.makeHoverStyle(now));
+			timestamp = config.makeTimestamp(now, lastEmpty);
 
 			// reconstruct the player message if it's in the vanilla format & it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-
 			if(config.name && !lastEmpty && messageData.vanilla && VANILLA_FORMAT.matcher(m.getString()).matches()) {
 				content = Text.empty().setStyle(style);
 
@@ -374,8 +371,8 @@ public class ChatUtils {
 				ChatPatches.logReportMsg(e); // don't log forced errors
 		}
 
-		// assembles constructed message and adds a duplicate counter according to the #addCounter method
-		Text modified = tryCondenseDupes( buildMessage(style, timestamp, content, null) );
+		// assembles constructed message and tries to add a dupe counter
+		Text modified = tryCondenseDupes( buildMessage(null, timestamp, content, null) ); // style is null bc only the message content should take on the original style
 		ChatLog.addMessage(modified);
 		messageData = ChatUtils.NIL_MESSAGE_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;

@@ -1,13 +1,16 @@
 package obro1961.chatpatches.util;
 
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Style;
-
 public class RenderUtils {
-	public static final ChatHudLine NIL_HUD_LINE = new ChatHudLine(0, ScreenTexts.EMPTY, null, null);
-	public static final Style BLANK_STYLE = Style.EMPTY.withBold(false).withItalic(false).withStrikethrough(false).withUnderline(false).withObfuscated(false);
-	// todo ^ test if this is still necessary, perhaps after making some gametests that work and then removing it and seeing if all is well
+	/**
+	 * @return {@code rgb} with the alpha channel set to 255
+	 *
+	 * @param rgb A color in the format 0xAARRGGBB, where AA is the alpha channel.
+	 * Technically works with any format where the alpha channel corresponds to the
+	 * first two hex digits, but RGB is the most common.
+	 */
+	public static int opaque(int rgb) {
+		return rgb | 0xFF000000;
+	}
 
 	public static class MousePos {
 		public double x, y;
@@ -16,6 +19,9 @@ public class RenderUtils {
 			this.x = x;
 			this.y = y;
 		}
+
+		public int xInt() { return (int)x; }
+		public int yInt() { return (int)y; }
 
 		public static MousePos of(double x, double y) {
 			return new MousePos(x, y);
