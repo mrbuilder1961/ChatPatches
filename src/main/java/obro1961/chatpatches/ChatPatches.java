@@ -34,6 +34,7 @@ public class ChatPatches implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		//stonecutter: arch api - put all these callbacks in another class for splitting by loader.. unless i can just use arch callbacks
+		//also todo: gametests! somewhere somehow!
 
 		// -- chat log saving events --
 		// according to my testing, this event works as needed when the game disconnects and on crashes if the game is functional at that point
@@ -46,7 +47,8 @@ public class ChatPatches implements ClientModInitializer {
 		// -- chat log loader and boundary sender --
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
 			ChatLog.load(false);
-			config.sendBoundaryLine();
+			config.sendBoundaryLine(); // fixme: this first call is probably never going to run bc the chathud.messages.isEmpty will always be true bc of slightly delayed loading. soln:
+			//solutoin: also send the boundary line after restoring when the log is loaded, but add a check into the sender method to not send if the last one was also a boundary line
 			ChatLog.hideRecentMessages();
 		});
 

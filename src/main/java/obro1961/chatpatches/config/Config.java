@@ -208,11 +208,6 @@ public class Config {
 		return makeObject(counterFormat, Integer.toString(dupes), " ", "", BLANK_STYLE.withColor(counterColor));
     }
 
-    public Text makeBoundaryLine(String levelName) {
-        // needs empty strings to avoid errors when comparing the dupe counter
-        return ChatUtils.buildMessage(null, null, makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor)), null);
-    }
-
     /**
      * Sends a boundary line in chat when the player
      * switches worlds. This only runs if
@@ -245,7 +240,10 @@ public class Config {
                 boolean time = config.time;
 
                 config.time = false; // disables the time so the boundary line doesn't have a timestamp
-                mc.inGameHud.getChatHud().addMessage( makeBoundaryLine(levelName) );
+                mc.inGameHud.getChatHud().addMessage(
+					// first -> MSG_TEAM_INDEX, second -> MSG_SENDER_INDEX, third -> MSG_CONTENT_INDEX
+					ChatUtils.buildMessage(null, null, null, makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor)))
+				);
                 config.time = time; // re-enables the time accordingly
             } catch(RuntimeException e) {
                 LOGGER.warn("[Config.sendBoundaryLine] An error occurred while adding the boundary line:", e);

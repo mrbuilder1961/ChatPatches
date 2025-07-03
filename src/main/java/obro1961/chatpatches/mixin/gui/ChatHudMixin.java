@@ -28,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 import static obro1961.chatpatches.ChatPatches.config;
 
@@ -77,13 +76,13 @@ public abstract class ChatHudMixin implements ChatHudAccess {
      * <i>To fix this, we subtract the number of non-EoE messages before the
      * checked index from the index itself, to make it effectively 1:1 again.</i>
      *
+     * @see ChatUtils#visible2Message(int)
      * @see #moveChat(int)
      * @see #moveChatLineY(double)
      */
     @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
     public int getChatHudLineIndex(double mouseX, double mouseY) {
-        int i = getEoEIndex(mouseX, mouseY);
-        return i == -1 ? -1 : (int) (i - visibleMessages.subList(0, i).stream().filter(Predicate.not(ChatHudLine.Visible::endOfEntry)).count());
+        return ChatUtils.visible2Message(getEoEIndex(mouseX, mouseY));
     }
 
     /**
