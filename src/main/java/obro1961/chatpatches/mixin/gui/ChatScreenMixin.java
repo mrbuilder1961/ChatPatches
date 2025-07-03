@@ -28,6 +28,7 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.JsonHelper;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccessor;
@@ -738,7 +739,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * and field coloring.
 	 */
 	@Unique
-	@SuppressWarnings("DataFlowIssue") // all formattings have colors!
 	private void onSearchFieldUpdate(String text, boolean refresh) {
 		if(text.equals(searchDraft) && !refresh)
 			return; // prevent useless updates
@@ -753,7 +753,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					searchError = null;
 				} catch(PatternSyntaxException e) {
 					searchError = e;
-					searchField.setEditableColor(Formatting.RED.getColorValue()); // mark the text red if the regex is invalid
+					searchField.setEditableColor(ColorHelper.fullAlpha(Formatting.RED.getColorValue())); // mark the text red if the regex is invalid
 					client.inGameHud.getChatHud().reset();
 				}
 			} else {
@@ -762,17 +762,17 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 				if(results.isEmpty()) {
 					// mark the text yellow if there are no results
-					searchField.setEditableColor(Formatting.YELLOW.getColorValue());
+					searchField.setEditableColor(ColorHelper.fullAlpha(Formatting.YELLOW.getColorValue()));
 					client.inGameHud.getChatHud().reset();
 				} else {
 					// mark the text green if there are results
-					searchField.setEditableColor(Formatting.GREEN.getColorValue());
+					searchField.setEditableColor(ColorHelper.fullAlpha(Formatting.GREEN.getColorValue()));
 				}
 			}
 
 		} else {
 			searchError = null;
-			searchField.setEditableColor(0xE0E0E0); // default
+			searchField.setEditableColor(TextFieldWidget.DEFAULT_EDITABLE_COLOR);
 			searchField.setSuggestion(SEARCH_SUGGESTION);
 			client.inGameHud.getChatHud().reset();
 		}
