@@ -80,7 +80,7 @@ public class Config {
         onlyInvasiveDrafting = false;
     public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColorValue(); public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
-        caseSensitive = true; @Deprecated public boolean formatting = false; public boolean regex = false;
+        caseSensitive = true, regex = false;
 	public boolean logMessageStructures = false;
 
     /**

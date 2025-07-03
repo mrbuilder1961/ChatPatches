@@ -131,12 +131,10 @@
 
     "text.chatpatches.search.suggestion": "Search...",
     "text.chatpatches.search.caseSensitive": "Case sensitive",
-    "text.chatpatches.search.formatting": "Formatting",
     "text.chatpatches.search.regex": "Regex",
     "text.chatpatches.search.desc": "§bLeft click§r to toggle the search bar, or §dright click§r to toggle the settings menu.\n\n§aGreen§r means the search matched, §eyellow§r means nothing matched, and §cred§r means the search is invalid.",
     "text.chatpatches.search.desc.caseSensitive": "Should the search query only match text with the same capitalization?\n\n\"abc\" would match itself, \"Abc\", and \"ABC\"; case sensitive would only match \"abc\".",
-    "text.chatpatches.search.desc.formatting": "Should the search query allow matching text according to formatting codes?\n\n\"abc\" would match \"abc\" and \"§e§labc§r\"; with codes it would only match \"abc\" and not \"§e§labc§r\".\nHex colors can be matched in the format \"&#§cRR§aGG§9BB§r\", however §nthis doesn't work rn§f.",
-    "text.chatpatches.search.desc.regex": "Should the search query be used as a regular expression?\n\nTo learn how to use regex, see the help section in the config.\nNote that Java regex §nrequires a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end.",
+    "text.chatpatches.search.desc.regex": "Should the search query be used as a regular expression?\n\nTo learn how to use regexes, see the help section in the config.\nNote that Java regexes §nrequire a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end.",
 
 
     "text.chatpatches.contextReplyFormat": "Reply text format",

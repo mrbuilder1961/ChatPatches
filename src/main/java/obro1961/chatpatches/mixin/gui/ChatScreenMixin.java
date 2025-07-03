@@ -32,7 +32,6 @@ import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
 import obro1961.chatpatches.util.ChatUtils;
-import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -91,8 +90,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private boolean showSettingsMenu = false;
 	/** @see Config#caseSensitive */
 	@Unique private ButtonWidget caseSensitiveButton;
-	/** @see Config#formatting */
-	@Unique private ButtonWidget formattingButton;
 	/** @see Config#regex */
 	@Unique private ButtonWidget regexButton;
 
@@ -154,8 +151,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		}
 
 		caseSensitiveButton = makeSettingButton("caseSensitive", 0);
-		formattingButton = makeSettingButton("formatting", 22);
-		regexButton = makeSettingButton("regex", 44);
+		regexButton = makeSettingButton("regex", 22);
 
 		if(config.search) {
 			addDrawableChild(searchButton); // simplifies rendering; it should be called automatically bc it's unconditionally shown or hidden
@@ -214,7 +210,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			);
 
 			caseSensitiveButton.render(context, mX, mY, delta);
-			formattingButton.render(context, mX, mY, delta);
 			regexButton.render(context, mX, mY, delta);
 		}
 
@@ -329,7 +324,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * 		<ol>
 	 * 			<li>The {@linkplain #caseSensitiveButton case sensitive
 	 * 			button}</li>
-	 * 			<li>The {@linkplain #formattingButton formatting button}</li>
 	 * 			<li>The {@linkplain #regexButton regex button}</li>
 	 * 		</ol>
 	 * 		<li>Otherwise, anything encapsulated by the
@@ -355,8 +349,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		if(isMouseOverSettingsMenu(mX, mY)) {
 			if(caseSensitiveButton.mouseClicked(mX, mY, button))
-				cir.setReturnValue(true);
-			else if(formattingButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
 			else if(regexButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
@@ -554,20 +546,19 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		ChatHud chatHud = client.inGameHud.getChatHud();
 		ChatHudAccess chat = (ChatHudAccess) chatHud;
 		List<ChatHudLine> messageSnapshot = List.copyOf(chat.chatpatches$getMessages());
+
 //fixme real issue: changing options removes the `Search...` suggestion for some reason??
 		// filter messages by removing those that don't match the target
 		chat.chatpatches$getMessages().removeIf(msg -> {
-			String text = config.formatting ? TextUtils.toCodedString(msg.content().asOrderedText(), true) : msg.content().getString();
-
-			//fixme: we all know this shit does NOT work (formatting). what if i just delete this bc who uses it
-			// note that this NOTs the whole expression to simplify the complex nesting
-			// *removes* the message if it *doesn't* match AKA *keeps* those that *do* match
+			String text = msg.content().getString();
+			// *removes* the message if it *doesn't* match: *keeps* those that *do* match
 			return !(
 				config.regex
 					? text.matches( (config.caseSensitive ? "(?i)" : "") + target )
 					: (config.caseSensitive ? text.contains(target) : StringUtils.containsIgnoreCase(text, target))
 			);
 		});
+
 		// generate the visible messages from the filtered messages
 		chatHud.reset();
 		chat.chatpatches$getMessages().clear();
