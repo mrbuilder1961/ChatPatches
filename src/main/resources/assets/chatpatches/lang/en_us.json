@@ -113,6 +113,8 @@
     "text.chatpatches.desc.hideSearchButton": "Should the search button be hidden? Note that this disables all search functionality.",
     "text.chatpatches.desc.vanillaClearing": "Should chat messages clear after leaving a world/server like vanilla? Note this completely erases both the chat and chat log.",
 
+    "text.chatpatches.helpLogMessageStructures": "Log message structures",
+    "text.chatpatches.desc.helpLogMessageStructures": "When enabled, logs the structure of all modified messages. Useful for diagnosing chat issues, but quickly inflates the log size, so this is disabled by default.",
     "text.chatpatches.help.dateFormat": "For date and time formatting information, click me!",
     "text.chatpatches.help.formatCodes": "For formatting code characters and which ones do what, click me!",
     "text.chatpatches.help.faq": "For Frequently Asked Questions (FAQ), click me!",

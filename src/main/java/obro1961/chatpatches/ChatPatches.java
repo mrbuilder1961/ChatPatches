@@ -15,7 +15,6 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.Identifier;
 import obro1961.chatpatches.chatlog.ChatLog;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.ChatUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +25,6 @@ public class ChatPatches implements ClientModInitializer {
 
 	public static boolean usingUnsafeCodec = false;
 	public static Config config = Config.create();
-	/** Contains the sender and timestamp data of the last received chat message. */
-	public static ChatUtils.MessageData msgData = ChatUtils.NIL_MSG_DATA;
 
 	/**
 	 * Returns a {@code chatpatches:${path}}

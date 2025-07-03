@@ -46,7 +46,8 @@ public class YACLConfig extends Config {
                         chatNameOpts = new ArrayList<>(),
                         chatHudOpts = new ArrayList<>(),
                         chatScreenOpts = new ArrayList<>(),
-                        copyMenuOpts = new ArrayList<>();
+                        copyMenuOpts = new ArrayList<>(),
+        helpOpts = new ArrayList<>();
 
         config.getOptions().forEach(opt -> {
             String key = opt.key; // effectively final
@@ -61,6 +62,8 @@ public class YACLConfig extends Config {
                 cat = "screen";
             else if( key.contains("Name") )
                 cat = "name";
+            else if(key.startsWith("help"))
+                cat = "help";
 
             if(key.contains("Color")) {
                 opt = new Setting<>(new Color( (int)opt.get() ), new Color( (int)opt.def ), key) {
@@ -101,6 +104,7 @@ public class YACLConfig extends Config {
                 case "chat" -> chatHudOpts.add(yaclOpt);
                 case "screen" -> chatScreenOpts.add(yaclOpt);
                 case "copy" -> copyMenuOpts.add(yaclOpt);
+                case "help" -> helpOpts.add(yaclOpt);
             }
         });
 
@@ -134,6 +138,7 @@ public class YACLConfig extends Config {
                     "help",
                         List.of(
                             action("help.reloadConfig", -1),
+                            helpOpts.getFirst(),
                             label( Text.translatable("text.chatpatches.help.dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
                             label( Text.translatable("text.chatpatches.help.formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
                             label( Text.translatable("text.chatpatches.help.faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
