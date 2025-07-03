@@ -1,9 +1,9 @@
 package obro1961.chatpatches.config;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.stream.JsonWriter;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.*;
 import dev.isxander.yacl3.api.Option;
@@ -33,7 +33,6 @@ import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
@@ -353,15 +352,19 @@ public class Config {
 			long start = System.currentTimeMillis();
 			LOGGER.info("[Config.serialize] Saving...");
 
-			try( StringWriter sWriter = new StringWriter() ) { // required for ordered config fields
+			try {
 				JsonElement json = config.encodeStart(ChatPatches.jsonOps())
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.orElseThrow();
 
-				// writes the json in the order of the fields' declaration
-				JsonHelper.writeSorted(new JsonWriter(sWriter), json, (a, b) -> 0);
+				String pretty = new GsonBuilder()
+					.setPrettyPrinting()
+					.disableHtmlEscaping() // also disables non-ASCII characters becoming \\uXXXX codes
+					//.serializeNulls() // might be needed in the future, hopefully this can save a few days of agonizing debugging
+					.create()
+						.toJson(json); // automatically sorts the keys as declared in this class
 
-				Files.writeString(PATH, sWriter.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				Files.writeString(PATH, pretty, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
 				LOGGER.info("[Config.serialize] Saved config data to '{}'!", PATH);
 			} catch(IOException | NoSuchElementException e) {
