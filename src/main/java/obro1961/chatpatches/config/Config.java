@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.screen.ConfirmLinkScreen;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
@@ -40,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
@@ -226,25 +228,24 @@ public class Config {
         if(!boundary || vanillaClearing)
             return;
 
-        ChatHudAccess chat = (ChatHudAccess) mc.inGameHud.getChatHud();
-		String current = mc.isIntegratedServerRunning() // this check prevents NPEs for both if branches
+        List<ChatHudLine> messages = ((ChatHudAccess) mc.inGameHud.getChatHud()).chatpatches$getMessages();
+		String world = mc.isIntegratedServerRunning() // this check prevents NPEs for both if branches
             ? "C_" + mc.getServer().getSaveProperties().getLevelName()
             : mc.getCurrentServerEntry() instanceof ServerInfo entry
                 ? "S_" + (entry.name.isBlank() ? entry.address : entry.name) // if the name is blank, uses the address instead
-                : "?_?"; // prevents weird game states from throwing IOOBEs from the substring below
+                : "?_?"; // prevents weird game states (ex. from ReplayMod) from throwing IOOBEs from the substring call below
+		Text boundary = ChatUtils.buildMessage(null, null, null, makeObject(boundaryFormat, world.substring(2), "", "", BLANK_STYLE.withColor(boundaryColor)));
 
-        // continues if messages in chat and if the last and current worlds were servers, that they aren't the same
-        if( !chat.chatpatches$getMessages().isEmpty() && (!current.startsWith("S_") || !lastWorld.startsWith("S_") || !current.equals(lastWorld)) ) {
+		// continues if chat isn't empty, the most recent message isn't a boundary line, and if the world is different from the last one (not including servers)
+        if( !messages.isEmpty() && !messages.getFirst().content().getString().equals(boundary.getString()) && (!world.startsWith("S_") || !lastWorld.startsWith("S_") || !world.equals(lastWorld)) ) {
             try {
-                String levelName = (lastWorld = current).substring(2); // makes a variable to update lastWorld in a cleaner way
                 boolean time = config.time;
 
-                config.time = false; // disables the time so the boundary line doesn't have a timestamp
-                mc.inGameHud.getChatHud().addMessage(
-					// first -> MSG_TEAM_INDEX, second -> MSG_SENDER_INDEX, third -> MSG_CONTENT_INDEX
-					ChatUtils.buildMessage(null, null, null, makeObject(boundaryFormat, levelName, "", "", BLANK_STYLE.withColor(boundaryColor)))
-				);
-                config.time = time; // re-enables the time accordingly
+                lastWorld = world; // updates #lastWorld
+
+                config.time = false; // disables the timestamp just for the boundary line
+                mc.inGameHud.getChatHud().addMessage(boundary);
+                config.time = time;
             } catch(RuntimeException e) {
                 LOGGER.warn("[Config.sendBoundaryLine] An error occurred while adding the boundary line:", e);
             }

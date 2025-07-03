@@ -47,8 +47,7 @@ public class ChatPatches implements ClientModInitializer {
 		// -- chat log loader and boundary sender --
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
 			ChatLog.load(false);
-			config.sendBoundaryLine(); // fixme: this first call is probably never going to run bc the chathud.messages.isEmpty will always be true bc of slightly delayed loading. soln:
-			//solutoin: also send the boundary line after restoring when the log is loaded, but add a check into the sender method to not send if the last one was also a boundary line
+			config.sendBoundaryLine();
 			ChatLog.hideRecentMessages();
 		});
 

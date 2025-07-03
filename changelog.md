@@ -15,6 +15,7 @@
   - `contextColor` => `contextOutlineColor`
   - `hideSearchButton` => `search` (invert the previous value to keep your preference)
   - `timeSystemMessages` (new! [#162](https://www.github.com/mrbuilder1961/ChatPatches/issues/162))
+  - `formatting` => (removed: didn't work and was unused)
 - The config file will now only save changed options, rather than all of them
 - Config saving and all chat log I/O events are now executed on I/O threads, which should prevent any potential freezing ([#227](https://www.github.com/mrbuilder1961/ChatPatches/issues/227))
 - Fatal chat log saving errors will now try and dump all the data to the debug log

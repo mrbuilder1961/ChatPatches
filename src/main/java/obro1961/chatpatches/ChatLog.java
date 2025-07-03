@@ -368,6 +368,7 @@ public class ChatLog {
 			messages.forEach(msg -> chat.addMessage(msg, null, RESTORED_INDICATOR));
 			restoring = false;
 
+			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
 			hideRecentMessages();
 		}
 

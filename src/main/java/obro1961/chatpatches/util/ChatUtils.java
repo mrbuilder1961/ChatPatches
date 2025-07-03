@@ -207,13 +207,9 @@ public class ChatUtils {
 	 * is replaced with {@link Style#EMPTY}.
 	 *
 	 * @param rootStyle The style of the root Text component
-	 * @param first   The first component of the message,
-	 *                  either the timestamp or team name
-	 * @param second   The second component of the message,
-	 *                  either the message or the sender
-	 * @param third The third component of the message,
-	 *                  either the dupe counter or the message
-	 *                  content
+	 * @param first {@link #TIMESTAMP_INDEX} or {@link #MSG_TEAM_INDEX}
+	 * @param second {@link #MESSAGE_INDEX} or {@link #MSG_SENDER_INDEX}
+	 * @param third {@link #DUPE_INDEX} or {@link #MSG_CONTENT_INDEX}
 	 */
 	@NotNull
 	public static MutableText buildMessage(@Nullable Style rootStyle, @Nullable Text first, @Nullable Text second, @Nullable Text third) {
