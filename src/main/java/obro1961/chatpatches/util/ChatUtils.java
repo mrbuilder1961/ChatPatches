@@ -354,7 +354,7 @@ public class ChatUtils {
 				}
 			}
 
-			if(false)
+			if(config.logMessageStructures)
 				throw new AssertionError("meow", null);
 		} catch(RuntimeException | AssertionError e) {
 			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying '{}'", m.getString());

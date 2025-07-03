@@ -82,6 +82,7 @@ public class Config {
     public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColorValue(); public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
         caseSensitive = true; @Deprecated public boolean formatting = false; public boolean regex = false;
+	public boolean logMessageStructures = false;
 
     /**
      * Initializes {@linkplain ChatPatches#config the config} according to installed

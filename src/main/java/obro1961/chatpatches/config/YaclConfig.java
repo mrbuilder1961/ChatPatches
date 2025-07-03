@@ -65,7 +65,8 @@ public class YaclConfig extends Config {
                         chatOpts = new ObjectArrayList<>(),
                         nameOpts = new ObjectArrayList<>(),
                         contextMenuOpts = new ObjectArrayList<>(),
-                        searchOpts = new ObjectArrayList<>();
+                        searchOpts = new ObjectArrayList<>(),
+                        helpOpts = new ObjectArrayList<>();
 
         config.getOptions().forEach(opt -> {
             String key = opt.key; // effectively final
@@ -73,6 +74,8 @@ public class YaclConfig extends Config {
 
             if(I18n.hasTranslation(SEARCH_PREFIX + key))
                 cat = "_"; // chat search filters are configurable in the chat screen, not here, where they won't render nicely
+            else if(key.equals("logMessageStructures"))
+                cat = "help";
             else if(!I18n.hasTranslation(CATEGORY_PREFIX + cat))
                 cat = "chat"; // default to chat if the category is invalid
 
@@ -122,6 +125,7 @@ public class YaclConfig extends Config {
                 case "name" -> nameOpts.add(yaclOpt);
                 case "context" -> contextMenuOpts.add(yaclOpt);
                 case "search" -> searchOpts.add(yaclOpt);
+                case "help" -> helpOpts.add(yaclOpt);
                 default -> chatOpts.add(yaclOpt);
             }
         });
@@ -158,6 +162,7 @@ public class YaclConfig extends Config {
                 "help",
                     ObjectList.of(
                         action("help.reloadConfig", -1),
+                        helpOpts.getFirst(),
                         label( Text.translatable(HELP_PREFIX + "dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
                         label( Text.translatable(HELP_PREFIX + "formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
                         label( Text.translatable(HELP_PREFIX + "faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
