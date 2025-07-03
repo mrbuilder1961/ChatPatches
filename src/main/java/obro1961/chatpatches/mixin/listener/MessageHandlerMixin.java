@@ -22,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Date;
 import java.util.UUID;
 
+import static obro1961.chatpatches.util.ChatUtils.*;
+
 /**
  * A mixin used to cache the metadata of the most recent message
  * received by the client. This is used in
@@ -42,9 +44,9 @@ public abstract class MessageHandlerMixin {
     @Inject(method = "onChatMessage", at = @At("HEAD"))
     private void cacheChatData(SignedMessage message, GameProfile sender, MessageType.Parameters params, CallbackInfo ci) {
         // only logs the metadata if it was a player-sent message (otherwise tries to format some commands like /msg and /me)
-        ChatUtils.messageData = params.type().chat().translationKey().matches(ChatUtils.PARSEABLE_MESSAGE_KEYS)
+        ChatUtils.messageData = PARSEABLE_MESSAGE_KEYS.matcher( params.type().chat().translationKey() ).matches()
             ? new ChatUtils.MessageData(sender, Date.from(message.getTimestamp()), isVanilla(params.applyChatDecoration(message.getContent())))
-            : ChatUtils.NIL_MESSAGE_DATA;
+            : NIL_MESSAGE_DATA;
     }
 
     /**
@@ -58,7 +60,7 @@ public abstract class MessageHandlerMixin {
 
         ChatUtils.messageData = !id.equals(Util.NIL_UUID)
             ? new ChatUtils.MessageData(new GameProfile(id, name), new Date(), isVanilla(message))
-            : ChatUtils.NIL_MESSAGE_DATA;
+            : NIL_MESSAGE_DATA;
     }
 
 
@@ -76,6 +78,6 @@ public abstract class MessageHandlerMixin {
      */
     @Unique
     private boolean isVanilla(Text message) {
-        return message.getString().matches(ChatUtils.VANILLA_FORMAT);
+        return VANILLA_FORMAT.matcher(message.getString()).matches();
     }
 }

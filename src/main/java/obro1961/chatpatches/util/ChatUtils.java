@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
@@ -38,7 +39,7 @@ public class ChatUtils {
 	public static final MessageData NIL_MESSAGE_DATA = new MessageData(new GameProfile(Util.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 
 	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
-							MESSAGE_INDEX = 1,     // contains the actual chat message // prepub BODY_INDEX ? if change yes then fix comment in #buildMessage
+							MESSAGE_INDEX = 1,     // contains the actual chat message
 							DUPE_INDEX = 2;        // contains the duplicate counter (can be empty)
 	public static final int MSG_TEAM_INDEX = 0,    // contains the sender's team's name; used for `chat.type.team.*` messages (can be empty)
 							MSG_SENDER_INDEX = 1,  // contains the sender's name
@@ -76,8 +77,8 @@ public class ChatUtils {
 	 * however, when factoring in team pre- and
 	 * suf-fixes, this limit becomes irrelevant.
 	 */
-	public static final String VANILLA_FORMAT = "(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$";//prepub make these Patterns so they are compiled once
-	public static final String PARSEABLE_MESSAGE_KEYS = "chat.type.(text|team.(text|sent))";
+	public static final Pattern VANILLA_FORMAT = Pattern.compile("(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$");
+	public static final Pattern PARSEABLE_MESSAGE_KEYS = Pattern.compile("chat.type.(text|team.(text|sent))");
 
 
 	/**
@@ -299,11 +300,12 @@ public class ChatUtils {
 			// reconstruct the player message if it's in the vanilla format & it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(config.name && !lastEmpty && messageData.vanilla && m.getString().matches(VANILLA_FORMAT)) {
+
+			if(config.name && !lastEmpty && messageData.vanilla && VANILLA_FORMAT.matcher(m.getString()).matches()) {
 				content = Text.empty().setStyle(style);
 
 				// if the message is translatable, then we know exactly where everything is
-				if(m.getContent() instanceof TranslatableTextContent ttc && ttc.getKey().matches(PARSEABLE_MESSAGE_KEYS)) {
+				if(m.getContent() instanceof TranslatableTextContent ttc && PARSEABLE_MESSAGE_KEYS.matcher(ttc.getKey()).matches()) {
 					boolean team = ttc.getKey().contains("team");
 
 					// adds the team name for team messages
