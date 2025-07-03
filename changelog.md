@@ -1,6 +1,6 @@
 # Changelog
 
-## Chat Patches `217.6.16` for Minecraft 1.21.6, 1.21.7 on Fabric, Quilt
+## Chat Patches `217.6.16` for Minecraft 1.21.7 on Fabric, Quilt
 - Updated!
 
 ## Chat Patches `215.6.16` for Minecraft 1.21.5 on Fabric, Quilt
