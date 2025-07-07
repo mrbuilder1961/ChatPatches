@@ -6,20 +6,20 @@ import dev.isxander.yacl3.gui.YACLScreen;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-import net.minecraft.util.Uuids;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.TextUtils;
 
 import java.awt.*;
@@ -72,11 +72,11 @@ public class YaclConfig extends Config {
             String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
 
-            if(I18n.hasTranslation(SEARCH_PREFIX + key))
+            if(I18n.exists(SEARCH_PREFIX + key))
                 cat = "_"; // chat search filters are configurable in the chat screen, not here, where they won't render nicely
             else if(key.equals("logMessageStructures"))
                 cat = "help";
-            else if(!I18n.hasTranslation(CATEGORY_PREFIX + cat))
+            else if(!I18n.exists(CATEGORY_PREFIX + cat))
                 cat = "chat"; // default to chat if the category is invalid
 
             if(key.endsWith("Color")) {
@@ -88,15 +88,14 @@ public class YaclConfig extends Config {
 
                     @Override
                     public void set(Object value) {
-                        // the only class with a relevant method
-						super.set(ColorHelper.Abgr.withAlpha(0, ((Color)value).getRGB()));
+						super.set(RenderUtils.opaque(((Color)value).getRGB()));
                     }
                 };
             }
 
             Option<?> yaclOpt =
                 Option.createBuilder()
-                    .name(Text.translatable(LANG_PREFIX + key))
+                    .name(Component.translatable(LANG_PREFIX + key))
                     .description(desc(opt))
                     .controller(me -> getController(me, key))
                     .binding(getBinding(opt))
@@ -105,7 +104,7 @@ public class YaclConfig extends Config {
                         //  need to like make a whole new method or something that only updates the message components on refresh, which is plausible
                         //  but is not an effortless change. (ex. take timestamp and regen time text, take player regen name, etc) not on chatlog#restore
                         cat.equals("counter") || cat.equals("compact")
-                            ? new OptionFlag[] { client -> client.inGameHud.getChatHud().reset() }
+                            ? new OptionFlag[] { client -> client.gui.getChat().rescaleChat() }
                             : new OptionFlag[0]
                     )
                     .build();
@@ -140,7 +139,7 @@ public class YaclConfig extends Config {
         }
 
 
-        YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder().title(Text.translatable( LANG_PREFIX + "title"))
+        YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder().title(Component.translatable( LANG_PREFIX + "title"))
             .category( tabCat("message", ObjectList.of(),
                 subGroup("time", timeOpts, null),
                 subGroup("hover", hoverOpts, null),
@@ -163,11 +162,11 @@ public class YaclConfig extends Config {
                     ObjectList.of(
                         action("help.reloadConfig", -1),
                         helpOpts.getFirst(),
-                        label( Text.translatable(HELP_PREFIX + "dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
-                        label( Text.translatable(HELP_PREFIX + "formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
-                        label( Text.translatable(HELP_PREFIX + "faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
-                        label( Text.translatable(HELP_PREFIX + "regex"), "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
-                        label( Text.translatable(HELP_PREFIX + "regexTester"), "https://regex101.com/" )
+                        label( Component.translatable(HELP_PREFIX + "dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
+                        label( Component.translatable(HELP_PREFIX + "formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
+                        label( Component.translatable(HELP_PREFIX + "faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
+                        label( Component.translatable(HELP_PREFIX + "regex"), "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
+                        label( Component.translatable(HELP_PREFIX + "regexTester"), "https://regex101.com/" )
                     )
                 )
             )
@@ -180,37 +179,37 @@ public class YaclConfig extends Config {
                     "debug",
                     ObjectList.of(
                         ButtonOption.createBuilder()
-                            .name( Text.of("Print and Copy option table") )
+                            .name( Component.nullToEmpty("Print and Copy option table") )
                             .action((screen, option) -> {
                                 StringBuilder str = new StringBuilder();
 
                                 config.getOptions().forEach(opt -> {
                                     String k = opt.key;
                                     Object d = opt.def;
-                                    boolean search = I18n.hasTranslation(SEARCH_PREFIX + k);
+                                    boolean search = I18n.exists(SEARCH_PREFIX + k);
                                     String prefix = search ? SEARCH_PREFIX : LANG_PREFIX;
                                     str.append("\n| %s | %s | %s | `%s` |".formatted(
-                                        I18n.translate(prefix + k),
+                                        I18n.get(prefix + k),
 
                                         ( d instanceof Integer i && k.contains("Color") )
                                             ? "`0x%06X`".formatted(i)
-                                                + (TextUtils.COLOR_TO_FORMATTING.get(i.intValue()) instanceof Formatting f ? " ("+f.getName().toLowerCase(Locale.ROOT)+")" : "")
+                                                + (TextUtils.COLOR_TO_FORMATTING.get(i.intValue()) instanceof ChatFormatting f ? " ("+f.getName().toLowerCase(Locale.ROOT)+")" : "")
                                             : (opt.getType().equals(String.class))
                                                 ? "`\"" + d + "\"`"
                                                 : "`" + d + "`",
 
-                                        I18n.translate(prefix + DESCRIPTION_KEY + k).replace("\n", ""),
+                                        I18n.get(prefix + DESCRIPTION_KEY + k).replace("\n", ""),
                                         prefix + k
 									));
                                 });
 
-                                mc.keyboard.setClipboard(str.toString());
+                                mc.keyboardHandler.setClipboard(str.toString());
                                 LOGGER.warn("[YaclConfig.exportGithubTables] {}", str);
                             })
                             .build(),
 
                         ButtonOption.createBuilder()
-                            .name(Text.of("Convert id arrays to strings"))
+                            .name(Component.nullToEmpty("Convert id arrays to strings"))
                             .action((screen, option) -> Arrays.stream(
 								FabricLoader.getInstance().getGameDir()
 								.resolve("logs")
@@ -236,7 +235,7 @@ public class YaclConfig extends Config {
 												int[] bits = Stream.of(m.group(1), m.group(2), m.group(3), m.group(4)).mapToInt(Integer::parseInt).toArray();
 
 												// actually replace the dashed array with the dashed uuid
-												content = content.replace( m.group(), "\"id\":\"" + Uuids.toUuid(bits) + "\"" );
+												content = content.replace( m.group(), "\"id\":\"" + UUIDUtil.uuidFromIntArray(bits) + "\"" );
 											}
 											Files.writeString(f.toPath(), content);
 
@@ -288,7 +287,7 @@ public class YaclConfig extends Config {
             } else if(key.equals("chatlogBackup")) {
                 ChatLog.backup();
             } else if(key.equals("chatlogOpenFolder")) {
-                Util.getOperatingSystem().open(ChatLog.PATH.getParent().toFile());
+                Util.getPlatform().openFile(ChatLog.PATH.getParent().toFile());
             } else if(key.equals("help.reloadConfig")) {
                 deserialize();
             }
@@ -341,10 +340,10 @@ public class YaclConfig extends Config {
         } else {
             return switch(key) {
                 case "chatMaxMessages" -> Short.MAX_VALUE;
-                case "chatWidth" -> mc.getWindow().getScaledWidth();
-                case "chatHeight" -> mc.getWindow().getScaledHeight();
+                case "chatWidth" -> mc.getWindow().getGuiScaledWidth();
+                case "chatHeight" -> mc.getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
-                case "compactDistance" -> mc.inGameHud.getChatHud() instanceof ChatHud chatHud ? chatHud.getVisibleLineCount() : 50;
+                case "compactDistance" -> mc.gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 50;
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
@@ -369,9 +368,9 @@ public class YaclConfig extends Config {
      * @apiNote Puts groups before ungrouped options
      */
     private static ConfigCategory tabCat(String key, ObjectList<Option<?>> options, OptionGroup... groups) {
-        ConfigCategory.Builder builder = ConfigCategory.createBuilder().name( Text.translatable(CATEGORY_PREFIX + key) );
+        ConfigCategory.Builder builder = ConfigCategory.createBuilder().name( Component.translatable(CATEGORY_PREFIX + key) );
 
-        Text tooltip = Text.translatable(CATEGORY_DESC_PREFIX + key);
+        Component tooltip = Component.translatable(CATEGORY_DESC_PREFIX + key);
         // use the tooltip if it translated properly
         if( !tooltip.getString().equals(CATEGORY_DESC_PREFIX + key) )
             builder.tooltip(tooltip);
@@ -388,14 +387,14 @@ public class YaclConfig extends Config {
      * the passed parameters.
      */
     private static OptionGroup subGroup(String key, ObjectList<Option<?>> options, Style descStyle) {
-        MutableText desc = Text.translatable(CATEGORY_DESC_PREFIX + key);
+        MutableComponent desc = Component.translatable(CATEGORY_DESC_PREFIX + key);
         return OptionGroup.createBuilder()
-            .name( Text.translatable(CATEGORY_PREFIX + key) )
+            .name( Component.translatable(CATEGORY_PREFIX + key) )
             .description(
                 // does this subgroup actually have a description?
                 desc.getString().equals(CATEGORY_DESC_PREFIX + key)
                     ? OptionDescription.EMPTY // if no don't use one
-                    : OptionDescription.of(desc.fillStyle(descStyle != null ? descStyle : Style.EMPTY))
+                    : OptionDescription.of(desc.withStyle(descStyle != null ? descStyle : Style.EMPTY))
             )
             .options( options )
             .build();
@@ -424,11 +423,11 @@ public class YaclConfig extends Config {
     }*/
 
     private static OptionDescription desc(Setting<?> opt) {
-        OptionDescription.Builder builder = OptionDescription.createBuilder().text( Text.translatable(DESCRIPTION_PREFIX + opt.key) );
+        OptionDescription.Builder builder = OptionDescription.createBuilder().text( Component.translatable(DESCRIPTION_PREFIX + opt.key) );
 
         // using Locale.ROOT fixes turkish locale causing file mismatch (https://discord.com/channels/1077285607375638529/1260175475708399616)
         String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT) + ".webp";
-        Identifier id = ChatPatches.id(image);
+        ResourceLocation id = ChatPatches.id(image);
 
         try {
             if( mc.getResourceManager().getResource(id).isPresent() )
@@ -442,14 +441,14 @@ public class YaclConfig extends Config {
         return builder.build();
     }
 
-    private static Option<Text> label(MutableText labelText, String urlTooltip) {
-        return LabelOption.create( labelText.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, urlTooltip))) );
+    private static Option<Component> label(MutableComponent labelText, String urlTooltip) {
+        return LabelOption.create( labelText.withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, urlTooltip))) );
     }
 
     private static ButtonOption action(String key, Object... args) {
         Object o = new Object();
         return ButtonOption.createBuilder()
-            .name(Text.translatable( LANG_PREFIX + key, (args[0].equals(-1) ? new Object[0] : args) )) // args or nothing
+            .name(Component.translatable( LANG_PREFIX + key, (args[0].equals(-1) ? new Object[0] : args) )) // args or nothing
             .description(desc( new Setting<>(o, o, key) ))
             .action(getAction(key))
             .build();

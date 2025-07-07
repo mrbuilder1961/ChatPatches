@@ -8,24 +8,20 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.gui.screen.ChatInputSuggestor;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyCodes;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.navigation.CommonInputs;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
@@ -61,8 +57,8 @@ import static obro1961.chatpatches.ChatPatches.id;
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess {
 	// search text
-	@Unique private static final String SEARCH_SUGGESTION = I18n.translate("text.chatpatches.search.suggestion");
-	@Unique private static final Text SEARCH_TOOLTIP = Text.translatable("text.chatpatches.search.desc");
+	@Unique private static final String SEARCH_SUGGESTION = I18n.get("text.chatpatches.search.suggestion");
+	@Unique private static final Component SEARCH_TOOLTIP = Component.translatable("text.chatpatches.search.desc");
 	// coordinates and positioning
 	@Unique private static final int SEARCH_X = 22,
 									 SEARCH_Y_OFFSET = -31,
@@ -83,31 +79,31 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private static String messageDraft = "";
 
 	@Unique private boolean showSearch = true;
-	@Unique private TextFieldWidget searchField;
+	@Unique private EditBox searchField;
 	@Unique private SearchButton searchButton;
 	@Unique private PatternSyntaxException searchError;
 	// search settings
 	@Unique private boolean showSettingsMenu = false;
 	/** @see Config#caseSensitive */
-	@Unique private ButtonWidget caseSensitiveButton;
+	@Unique private Button caseSensitiveButton;
 	/** @see Config#regex */
-	@Unique private ButtonWidget regexButton;
+	@Unique private Button regexButton;
 
 	// ChatScreen fields
 	@SuppressWarnings("MissingUnique") //@Shadow
-	@NotNull protected MinecraftClient client = MinecraftClient.getInstance(); // removes NPE warnings
-	@Shadow	protected TextFieldWidget chatField;
-	@Shadow private String originalChatText;
-	@Shadow private int messageHistorySize;
+	@NotNull protected Minecraft minecraft = Minecraft.getInstance(); // removes NPE warnings
+	@Shadow	protected EditBox input;
+	@Shadow private String initial;
+	@Shadow private int historyPos;
 
 	/**
-	 * Allows access to {@link #chatField}. Notably used
+	 * Allows access to {@link #input}. Notably used
 	 * in {@link ContextMenu#init(Consumer)} for the
 	 * {@code #MENU_REPLY} action.
 	 */
-	public TextFieldWidget chatpatches$getChatField() { return chatField; }
+	public EditBox chatpatches$getChatField() { return input; }
 
-	protected ChatScreenMixin(Text title) { super(title); }
+	protected ChatScreenMixin(Component title) { super(title); }
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void chatScreenInit(String originalChatText, CallbackInfo ci) {
@@ -117,7 +113,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				messageDraft = originalChatText;
 			// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
 			else if(!originalChatText.equals("/"))
-				this.originalChatText = messageDraft;
+				this.initial = messageDraft;
 		}
 	}
 
@@ -134,28 +130,28 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Inject(method = "init", at = @At("TAIL"))
 	protected void initSearchWidgets(CallbackInfo ci) {
 		searchButton = new SearchButton(2, height - 35, me -> showSearch = !showSearch, me -> showSettingsMenu = !showSettingsMenu);
-		searchButton.setTooltip(Tooltip.of(SEARCH_TOOLTIP));
+		searchButton.setTooltip(Tooltip.create(SEARCH_TOOLTIP));
 
-		searchField = new TextFieldWidget(client.textRenderer, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Text.translatable("chat.editBox"));
+		searchField = new EditBox(minecraft.font, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Component.translatable("chat.editBox"));
 		searchField.setMaxLength(ChatUtils.MAX_MESSAGE_LENGTH);
-		searchField.setDrawsBackground(false);
+		searchField.setBordered(false);
 		searchField.setSuggestion(SEARCH_SUGGESTION);
-		searchField.setChangedListener(newText -> onSearchFieldUpdate(newText, false));
+		searchField.setResponder(newText -> onSearchFieldUpdate(newText, false));
 		if(config.searchDrafting) {
-			searchField.setText(searchDraft);
+			searchField.setValue(searchDraft);
 			// if necessary, forces the colors to switch + removes suggestion text
 			// normally this would be ignored because the field text = searchDraft
 			// see (#229)/(#230)
 			if(!searchDraft.isEmpty())
-				onSearchFieldUpdate(searchField.getText(), true);
+				onSearchFieldUpdate(searchField.getValue(), true);
 		}
 
 		caseSensitiveButton = makeSettingButton("caseSensitive", 0);
 		regexButton = makeSettingButton("regex", 22);
 
 		if(config.search) {
-			addDrawableChild(searchButton); // simplifies rendering; it should be called automatically bc it's unconditionally shown or hidden
-			addSelectableChild(searchField);
+			addRenderableWidget(searchButton); // simplifies rendering; it should be called automatically bc it's unconditionally shown or hidden
+			addWidget(searchField);
 		}
 	}
 
@@ -163,7 +159,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * @implNote In order, renders:
 	 * <ol>
 	 *     <li>(Everything shifted backwards on the Z-axis in
-	 *     order to render under the {@link ChatInputSuggestor}
+	 *     order to render under the {@link CommandSuggestions}
 	 *     and suggestion text, see <a href="https://github.com/mrbuilder1961/ChatPatches/issues/186">
 	 *     (#186)</a>)</li>
 	 *     <li>The {@link #searchButton}</li>
@@ -185,26 +181,26 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *     </ol>
 	 * </ol>
 	 */
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;render(Lnet/minecraft/client/gui/DrawContext;IIF)V"))
-	private void renderCustomWidgets(DrawContext context, int mX, int mY, float delta, CallbackInfo ci) {
-		context.getMatrices().push();
-		context.getMatrices().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
+	private void renderCustomWidgets(GuiGraphics context, int mX, int mY, float delta, CallbackInfo ci) {
+		context.pose().pushPose();
+		context.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 
 		if(showSearch && config.search) {
-			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, client.options.getTextBackgroundColor(Integer.MIN_VALUE));
+			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(context, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
 
-				context.drawTextWithShadow(textRenderer, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), Formatting.DARK_RED.getColorValue());
+				context.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), ChatFormatting.DARK_RED.getColor());
 			}
 		}
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && config.search) {
-			context.drawTexture(
+			context.blit(
 				id("textures/gui/search_settings_panel.png"),
 				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
@@ -213,7 +209,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			regexButton.render(context, mX, mY, delta);
 		}
 
-		context.getMatrices().pop(); // stop shifting before the context menu renders so the chat field doesn't cut it off
+		context.pose().popPose(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
 		contextMenu.render(context, mX, mY, delta);
 	}
@@ -224,8 +220,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * {@code true} if the mouse is NOT hovering over the <i>opened</i> settings
 	 * menu or the <i>shown</i> context menu.
 	 * */
-	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawHoverEvent(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Style;II)V"))
-	public boolean renderTooltipSmartly(DrawContext drawContext, TextRenderer textRenderer, Style style, int mX, int mY) {
+	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;renderComponentHoverEffect(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Style;II)V"))
+	public boolean renderTooltipSmartly(GuiGraphics drawContext, Font textRenderer, Style style, int mX, int mY) {
 		return !isMouseOverSettingsMenu(mX, mY) && !contextMenu.isMouseOver(mX, mY);
 	}
 
@@ -238,13 +234,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Inject(method = "removed", at = @At("TAIL"))
 	public void onScreenClose(CallbackInfo ci) {
 		// we always save the drafts here, we can decide to use them according to the config
-		messageDraft = chatField.getText();
-		searchDraft = searchField.getText();
+		messageDraft = input.getValue();
+		searchDraft = searchField.getValue();
 
-		if(!searchField.getText().isEmpty())
-			client.inGameHud.getChatHud().reset(); // reset the hud if it had anything in the field (#102)
+		if(!searchField.getValue().isEmpty())
+			minecraft.gui.getChat().rescaleChat(); // reset the hud if it had anything in the field (#102)
 
-		contextMenu.close(this::remove);
+		contextMenu.close(this::removeWidget);
 	}
 
 	/**
@@ -254,10 +250,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * key is an escape key, which is beaten out by the chat screen's redundant
 	 * functionality also provided.
 	 */
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;keyPressed(III)Z"))
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed(III)Z"))
 	private void emptyNonInvasiveDrafts(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
 		if(config.onlyInvasiveDrafting && keyCode == GLFW.GLFW_KEY_ESCAPE)
-			chatField.setText(""); // required to empty both the chat field and the messageDraft (later on in #onScreenClose)
+			input.setValue(""); // required to empty both the chat field and the messageDraft (later on in #onScreenClose)
 	}
 
 	/**
@@ -265,31 +261,31 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * (successfully) sent. Uses {@link At.Shift#AFTER} to ensure
 	 * we don't clear if an error occurs.
 	 */
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
+	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
 	private void onMessageSentEmptyDraft(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
 		messageDraft = "";
 	}
 
 	/**
-	 * Lets the {@link #chatField} widget be focused as intended
+	 * Lets the {@link #input} widget be focused as intended
 	 * when the search field is visible. Seems counterintuitive,
 	 * but it works.
 	 *
 	 * @return {@code (showSearch && config.search) ?
-	 * false : chatField.mouseClicked(x, y, button)}
+	 * false : input.mouseClicked(x, y, button)}
 	 */
-	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;mouseClicked(DDI)Z"))
-	private boolean disableChatFieldFocus(TextFieldWidget chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
-		// return false (not clicked) if the search field is showing, otherwise delegate to chatField
+	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;mouseClicked(DDI)Z"))
+	private boolean disableChatFieldFocus(EditBox chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
+		// return false (not clicked) if the search field is showing, otherwise delegate to input
 		return (!config.search || !showSearch) && mouseClicked.call(chatField, mX, mY, button);
 	}
-	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud;mouseClicked(DD)Z"))
-	private boolean fixMenuClickthroughClick(ChatHud chatHud, double mX, double mY, Operation<Boolean> mouseClicked) {
+	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;handleChatQueueClicked(DD)Z"))
+	private boolean fixMenuClickthroughClick(ChatComponent chatHud, double mX, double mY, Operation<Boolean> mouseClicked) {
 		// return false (not clicked) if the context menu is showing and the mouse is over it, otherwise delegate to chatHud
 		return !isMouseOverSettingsMenu(mX, mY) && !contextMenu.isMouseOver(mX, mY) && mouseClicked.call(chatHud, mX, mY);
 	}
 
-	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;getTextStyleAt(DD)Lnet/minecraft/text/Style;"))
+	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/ChatScreen;getComponentStyleAt(DD)Lnet/minecraft/network/chat/Style;"))
 	private Style fixStyleClickthrough(ChatScreen screen, double mX, double mY, Operation<Style> getTextStyleAt) {
 		return (isMouseOverSettingsMenu(mX, mY) || contextMenu.isMouseOver(mX, mY))
 			? null
@@ -309,7 +305,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		boolean clicked = mouseClicked.call(mX, mY, button);
 
 		if(button != GLFW.GLFW_MOUSE_BUTTON_RIGHT)
-			contextMenu.close(this::remove); // closes the menu if it wasn't just created, we don't care if anything was actually clicked
+			contextMenu.close(this::removeWidget); // closes the menu if it wasn't just created, we don't care if anything was actually clicked
 
 		return clicked;
 	}
@@ -353,15 +349,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			else if(regexButton.mouseClicked(mX, mY, button))
 				cir.setReturnValue(true);
 		} else if(contextMenu.mouseClicked(mX, mY, button)) {
-			contextMenu.close(this::remove);
+			contextMenu.close(this::removeWidget);
 			cir.setReturnValue(true);
 		} else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
 			ContextMenu newMenu = new ContextMenu((ChatScreen)(Object)this, mX, mY);
 			// if the mouse right-clicked elsewhere and that location can load a context menu, use it
 			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && newMenu.isFunctional()) {
-				contextMenu.close(this::remove);
+				contextMenu.close(this::removeWidget);
 
-				newMenu.init(this::addSelectableChild); // load the new menu
+				newMenu.init(this::addWidget); // load the new menu
 				setFocused(newMenu); // shift focus from the chat field
 				contextMenu = newMenu;
 
@@ -381,8 +377,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
 	private void allowContextMenuKeyPressing(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
 		// keyPressed must be called first otherwise tabbing will not work
-		if(contextMenu.keyPressed(keyCode, scanCode, modifiers) && KeyCodes.isToggle(keyCode)) {
-			contextMenu.close(this::remove);
+		if(contextMenu.keyPressed(keyCode, scanCode, modifiers) && CommonInputs.selected(keyCode)) {
+			contextMenu.close(this::removeWidget);
 			blockSpaceConsumption = true; // see #charTyped
 			cir.setReturnValue(true);
 		}
@@ -400,7 +396,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Override
 	public boolean charTyped(char chr, int modifiers) {
-		return (blockSpaceConsumption && chr == ' ' && chatField.isFocused()) ? (blockSpaceConsumption = false) : super.charTyped(chr, modifiers);
+		return (blockSpaceConsumption && chr == ' ' && input.isFocused()) ? (blockSpaceConsumption = false) : super.charTyped(chr, modifiers);
 	}
 
 	@Override
@@ -417,25 +413,25 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * @implSpec
 	 * <ul>
 	 *     <li>To support consecutive keys, the cursor should not move (but the text selection may cancel)</li>
-	 *     <li>{@link ChatScreen#chatInputSuggestor} should not be activated, as it interrupts consecutive keys</li>
+	 *     <li>{@link ChatScreen#commandSuggestions} should not be activated, as it interrupts consecutive keys</li>
 	 * </ul>
 	 */
-	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/ChatScreen;setChatFromHistory(I)V"))
+	@WrapOperation(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/ChatScreen;moveInHistory(I)V"))
 	private void searchHistory(ChatScreen chatScreen, int offset, Operation<Void> setChatFromHistory) {
 		if(!config.searchPrefix) {
 			setChatFromHistory.call(chatScreen, offset);
 			return;
 		}
 
-		int cursor = chatField.getCursor();
-		String prefix = chatField.getText().substring(0, cursor);
-		List<String> history = client.inGameHud.getChatHud().getMessageHistory();
+		int cursor = input.getCursorPosition();
+		String prefix = input.getValue().substring(0, cursor);
+		List<String> history = minecraft.gui.getChat().getRecentChat();
 
-		int newHistoryIndex = messageHistorySize + offset;
+		int newHistoryIndex = historyPos + offset;
 		int newOffset = 0;
 		while(0 <= newHistoryIndex && newHistoryIndex < history.size()) {
 			if(history.get(newHistoryIndex).startsWith(prefix)) {
-				newOffset = newHistoryIndex - messageHistorySize;
+				newOffset = newHistoryIndex - historyPos;
 				break;
 			}
 			newHistoryIndex += offset;
@@ -443,8 +439,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		setChatFromHistory.call(chatScreen, newOffset);
 
-		chatField.setSelectionStart(cursor);
-		chatField.setSelectionEnd(cursor);
+		input.setCursorPosition(cursor);
+		input.setHighlightPos(cursor);
 	}
 
 
@@ -456,22 +452,22 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	@Unique
-	private ButtonWidget makeSettingButton(String key, int yOffset) {
+	private Button makeSettingButton(String key, int yOffset) {
 		Config.Setting<Boolean> setting = config.getOption(key);
-		Text name = Text.translatable("text.chatpatches.search." + key);
-		Text text = ScreenTexts.composeToggleText(name, setting.get());
+		Component name = Component.translatable("text.chatpatches.search." + key);
+		Component text = CommonComponents.optionStatus(name, setting.get());
 
-		return ButtonWidget.builder(text, me -> {
+		return Button.builder(text, me -> {
 				setting.set(!setting.get()); // toggle the setting
-				me.setMessage( ScreenTexts.composeToggleText(name, setting.get()) ); // update the button text
-				onSearchFieldUpdate(searchField.getText(), true); // update the search field color
+				me.setMessage( CommonComponents.optionStatus(name, setting.get()) ); // update the button text
+				onSearchFieldUpdate(searchField.getValue(), true); // update the search field color
 				Config.serialize(); // save the setting
 			})
-			.dimensions(
+			.bounds(
 				8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset,
-				client.textRenderer.getWidth(text.getString()) + 10, 20
+				minecraft.font.width(text.getString()) + 10, 20
 			)
-			.tooltip(Tooltip.of( Text.translatable("text.chatpatches.search.desc." + key) ))
+			.tooltip(Tooltip.create( Component.translatable("text.chatpatches.search.desc." + key) ))
 			.build();
 	}
 
@@ -495,8 +491,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					searchError = null;
 				} catch(PatternSyntaxException e) {
 					searchError = e;
-					searchField.setEditableColor(Formatting.RED.getColorValue()); // mark the text red if the regex is invalid
-					client.inGameHud.getChatHud().reset();
+					searchField.setTextColor(ChatFormatting.RED.getColor()); // mark the text red if the regex is invalid
+					minecraft.gui.getChat().rescaleChat();
 				}
 			} else {
 				searchError = null;
@@ -504,30 +500,30 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 				if(results.isEmpty()) {
 					// mark the text yellow if there are no results
-					searchField.setEditableColor(Formatting.YELLOW.getColorValue());
-					client.inGameHud.getChatHud().reset();
+					searchField.setTextColor(ChatFormatting.YELLOW.getColor());
+					minecraft.gui.getChat().rescaleChat();
 				} else {
 					// mark the text green if there are results
-					searchField.setEditableColor(Formatting.GREEN.getColorValue());
+					searchField.setTextColor(ChatFormatting.GREEN.getColor());
 				}
 			}
 
 		} else {
 			searchError = null;
-			searchField.setEditableColor(TextFieldWidget.DEFAULT_EDITABLE_COLOR);
+			searchField.setTextColor(EditBox.DEFAULT_TEXT_COLOR);
 			searchField.setSuggestion(SEARCH_SUGGESTION);
-			client.inGameHud.getChatHud().reset();
+			minecraft.gui.getChat().rescaleChat();
 		}
 
 		searchDraft = text;
 	}
 
 	/**
-	 * Filters all {@linkplain ChatHud#messages chat messages} using the
+	 * Filters all {@linkplain ChatComponent#allMessages chat messages} using the
 	 * given string and according to all search settings, and returns the
-	 * generated {@linkplain ChatHud#visibleMessages visible messages} as
-	 * they are on {@linkplain InGameHud#chatHud the chat hud}. This can
-	 * be easily reversed by calling {@link ChatHud#reset()}.
+	 * generated {@linkplain ChatComponent#trimmedMessages visible messages} as
+	 * they are on {@linkplain Gui#chat the chat hud}. This can
+	 * be easily reversed by calling {@link ChatComponent#rescaleChat()}.
 	 *
 	 * @return Whether the search was successful and modified visible
 	 * messages.
@@ -539,13 +535,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * visible messages.
 	 */
 	@Unique
-	private List<ChatHudLine.Visible> filterMessages(String target) {
+	private List<GuiMessage.Line> filterMessages(String target) {
 		if(target == null)
 			return ObjectList.of();
 
-		ChatHud chatHud = client.inGameHud.getChatHud();
+		ChatComponent chatHud = minecraft.gui.getChat();
 		ChatHudAccess chat = (ChatHudAccess) chatHud;
-		List<ChatHudLine> messageSnapshot = List.copyOf(chat.chatpatches$getMessages());
+		List<GuiMessage> messageSnapshot = List.copyOf(chat.chatpatches$getMessages());
 
 //fixme real issue: changing options removes the `Search...` suggestion for some reason??
 		// filter messages by removing those that don't match the target
@@ -560,7 +556,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		});
 
 		// generate the visible messages from the filtered messages
-		chatHud.reset();
+		chatHud.rescaleChat();
 		chat.chatpatches$getMessages().clear();
 		// add the real messages back to the chat to keep the visual messages
 		chat.chatpatches$getMessages().addAll(messageSnapshot);

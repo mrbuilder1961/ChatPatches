@@ -11,28 +11,27 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.screen.ConfirmLinkScreen;
-import net.minecraft.client.gui.screen.ConfirmScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.network.OtherClientPlayerEntity;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.network.ServerInfo;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.*;
-import net.minecraft.util.JsonHelper;
-import net.minecraft.util.Util;
-import net.minecraft.util.dynamic.Codecs;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.Util;
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.util.ExtraCodecs;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.scores.PlayerTeam;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -45,18 +44,21 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
-
-import static net.minecraft.util.Formatting.*;
+import static net.minecraft.ChatFormatting.*;
 import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.TextUtils.fillVars;
 import static obro1961.chatpatches.util.TextUtils.text;
+//? if <=1.20.2 {
+import net.minecraft.network.chat.contents.LiteralContents;
+//? } else {
+//? }
 
 public class Config {
     public static final Config DEFAULTS = new Config();
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
 
 	protected static final int IO_THRESHOLD_SUGGESTION = 500;
-    protected static final MinecraftClient mc = MinecraftClient.getInstance();
+    protected static final Minecraft mc = Minecraft.getInstance();
 
     /** @see #sendBoundaryLine() */
     protected static String lastWorld = "";
@@ -67,19 +69,19 @@ public class Config {
     //  >> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
     // tab categories: message, boundary, chatlog, chat
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
-    public boolean time = true, timeSystemMessages = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColorValue();
-    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = WHITE.getColorValue();
-    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = YELLOW.getColorValue(); public boolean counterCheckStyle = false;
+    public boolean time = true, timeSystemMessages = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColor();
+    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = WHITE.getColor();
+    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = YELLOW.getColor(); public boolean counterCheckStyle = false;
     public boolean compactChat = false; public int compactDistance = 0;
 
-    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA.getColorValue();
+    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA.getColor();
 
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
 
-    public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColorValue();
+    public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColor();
     public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean vanillaClearing = false, chatHidePacket = true, dynamicChatShift = true, messageDrafting = false,
         onlyInvasiveDrafting = false;
-    public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColorValue(); public String contextReplyFormat = "/msg $ ";
+    public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
         caseSensitive = true, regex = false;
 	public boolean logMessageStructures = false;
@@ -105,32 +107,37 @@ public class Config {
 
 
     public Screen getConfigScreen(Screen parent) {
-		//stonecutter: will fix this silly protocol version access :D
+		//stonecutter: make a const for whether the config is YACL or cloth or nothing aka yacl
         boolean suggestYACL = SharedConstants.getProtocolVersion() >= 759; // 1.19 or higher
         String link = "https://modrinth.com/mod/" + (suggestYACL ? "yacl" : "cloth-config");
 
         return new ConfirmScreen(
             clicked -> {
-                if(clicked)
-                    ConfirmLinkScreen.open(link, parent, true);
-                else
-                    mc.setScreen(parent);
+                if(clicked) {
+					//? if <=1.20.2 {
+                    ConfirmLinkScreen.confirmLinkNow(link, parent, true);
+					//? } else {
+					//ConfirmLinkScreen.confirmLinkNow(parent, link);
+					//? }
+				} else {
+					mc.setScreen(parent);
+				}
             },
-            Text.translatable(YaclConfig.HELP_PREFIX + "missing"),
-            Text.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
-            ScreenTexts.CONTINUE,
-            ScreenTexts.BACK
+            Component.translatable(YaclConfig.HELP_PREFIX + "missing"),
+            Component.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
+            CommonComponents.GUI_CONTINUE,
+            CommonComponents.GUI_BACK
         );
     }
 
 
     /**
-     * Creates a new {@link MutableText} based on {@code formatStr} with all
+     * Creates a new {@link MutableComponent} based on {@code formatStr} with all
 	 * instances of {@code $} replaced with {@code varStr}. {@code prefix}, {@code
 	 * suffix}, and {@code rgbColor} are then applied accordingly.
      */
-    private MutableText makeText(String formatStr, String varStr, String prefix, String suffix, int rgbColor) {
-        return text(prefix + fillVars(formatStr, varStr) + suffix).styled(s -> s.withColor(rgbColor));
+    private MutableComponent makeText(String formatStr, String varStr, String prefix, String suffix, int rgbColor) {
+        return text(prefix + fillVars(formatStr, varStr) + suffix).withStyle(s -> s.withColor(rgbColor));
     }
 
     /**
@@ -142,13 +149,13 @@ public class Config {
 	 * is always added with a string representation of the given time so the context
 	 * menu can always provide timestamp info.
      */
-    public MutableText makeTimestamp(Date when, boolean system) {
-		MutableText timestamp = time && (timeSystemMessages || !system)
+    public MutableComponent makeTimestamp(Date when, boolean system) {
+		MutableComponent timestamp = time && (timeSystemMessages || !system)
 			? makeText(timeFormat, new SimpleDateFormat(timeDate).format(when), "", " ", timeColor)
-			: Text.empty();
-		MutableText hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), "", "", hoverColor);
+			: Component.empty();
+		MutableComponent hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), "", "", hoverColor);
 
-		return timestamp.styled(s ->
+		return timestamp.withStyle(s ->
 			s.withHoverEvent( hover ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText) : null )
 			.withClickEvent( hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText.getString()) : null )
 			.withInsertion(String.valueOf( when.getTime() ))
@@ -161,20 +168,20 @@ public class Config {
      * {@link #nameColor}, and the player's team properties. Uses
      * the player's team color if set, otherwise {@link #nameColor}.
      * Hover and click events are sourced from the style of
-     * {@link PlayerEntity#getDisplayName()}.
+     * {@link Player#getDisplayName()}.
      *
      * @implNote {@code player} must reference a valid, existing
      * player entity and have both a valid name and UUID. Additionally,
-     * the {@linkplain MinecraftClient#world client world} must exist.
+     * the {@linkplain Minecraft#level client world} must exist.
      */
-    public MutableText formatPlayername(GameProfile profile) {
+    public MutableComponent formatPlayername(GameProfile profile) {
         Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
         try {
-            Team team = mc.world.getScoreboard().getPlayerTeam(profile.getName());
-            Style hoverStyle = new OtherClientPlayerEntity(mc.world, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
-                .withParent(style); // fills in the color with nameColor if not specified by the team
+            PlayerTeam team = mc.level.getScoreboard().getPlayersTeam(profile.getName());
+            Style hoverStyle = new RemotePlayer(mc.level, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
+                .applyTo(style); // fills in the color with nameColor if not specified by the team
             String[] configFormat = nameFormat.equals("$") ? new String[] {"", ""} : nameFormat.split("\\$"); // a singular $ results in an empty array
-            ObjectList<Text> components = new ObjectArrayList<>(team != null ? 5 : 3);
+            ObjectList<Component> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
 
             components.add(text( configFormat[0] ));                   // config prefix
@@ -182,24 +189,28 @@ public class Config {
             components.add(text( configFormat[1] + " " )); // config suffix
 
             if(team != null) {
-                components.add(1, team.getPrefix()); // team prefix
-                components.add(3, team.getSuffix()); // team suffix
+                components.add(1, team.getPlayerPrefix()); // team prefix
+                components.add(3, team.getPlayerSuffix()); // team suffix
             }
 
-            return TextUtils.newText(LiteralTextContent.EMPTY, components, hoverStyle);
+			//? if <=1.20.2 {
+            return TextUtils.newText(LiteralContents.EMPTY, components, hoverStyle);
+			//? } else {
+            //return TextUtils.newText(PlainTextContents.EMPTY, components, hoverStyle);
+			//? }
         } catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
 
-            if(mc.world == null)
+            if(mc.level == null)
                 e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
 
             logReportMsg(e);
         }
 
-        return makeText(nameFormat, profile.getName(), "", " ", style.getColor().getRgb()).fillStyle(style);
+        return makeText(nameFormat, profile.getName(), "", " ", style.getColor().getValue()).withStyle(style);
     }
 
-    public MutableText makeDupeCounter(int dupes) {
+    public MutableComponent makeDupeCounter(int dupes) {
 		return makeText(counterFormat, Integer.toString(dupes), " ", "", counterColor);
     }
 
@@ -221,13 +232,13 @@ public class Config {
         if(!boundary || vanillaClearing)
             return;
 
-        List<ChatHudLine> messages = ((ChatHudAccess) mc.inGameHud.getChatHud()).chatpatches$getMessages();
-		String world = mc.isIntegratedServerRunning() // this check prevents NPEs for both if branches
-            ? "C_" + mc.getServer().getSaveProperties().getLevelName()
-            : mc.getCurrentServerEntry() instanceof ServerInfo entry
-                ? "S_" + (entry.name.isBlank() ? entry.address : entry.name) // if the name is blank, uses the address instead
+        List<GuiMessage> messages = ((ChatHudAccess) mc.gui.getChat()).chatpatches$getMessages();
+		String world = mc.hasSingleplayerServer() // this check prevents NPEs for both if branches
+            ? "C_" + mc.getSingleplayerServer().getWorldData().getLevelName()
+            : mc.getCurrentServer() instanceof ServerData entry
+                ? "S_" + (entry.name.isBlank() ? entry.ip : entry.name) // if the name is blank, uses the address instead
                 : "?_?"; // prevents weird game states (ex. from ReplayMod) from throwing IOOBEs from the substring call below
-		Text boundary = ChatUtils.buildMessage(null, null, null, makeText(boundaryFormat, world.substring(2), "", "", boundaryColor));
+		Component boundary = ChatUtils.buildMessage(null, null, null, makeText(boundaryFormat, world.substring(2), "", "", boundaryColor));
 
 		// continues if chat isn't empty, the most recent message isn't a boundary line, and if the world is different from the last one (not including servers)
         if( !messages.isEmpty() && !messages.getFirst().content().getString().equals(boundary.getString()) && (!world.startsWith("S_") || !lastWorld.startsWith("S_") || !world.equals(lastWorld)) ) {
@@ -237,7 +248,7 @@ public class Config {
                 lastWorld = world; // updates #lastWorld
 
                 config.time = false; // disables the timestamp just for the boundary line
-                mc.inGameHud.getChatHud().addMessage(boundary);
+                mc.gui.getChat().addMessage(boundary);
                 config.time = time;
             } catch(RuntimeException e) {
                 LOGGER.warn("[Config.sendBoundaryLine] An error occurred while adding the boundary line:", e);
@@ -259,20 +270,20 @@ public class Config {
 	 * <a href="https://github.com/mrbuilder1961/ChatPatches/pull/224">#224</a>.
 	 */
 	public int calcDynamicChatShift() {
-		PlayerEntity player = mc.player;
+		Player player = mc.player;
 
 		if(!config.dynamicChatShift || player == null)
 			return chatShift;
         // don't shift the chat if there are no hearts visible (not in survival or adventure)
         // also note that player is always non-null by this point
-        if(mc.getNetworkHandler().getPlayerListEntry(player.getUuid()) instanceof PlayerListEntry entry && !entry.getGameMode().isSurvivalLike())
+        if(mc.getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival())
             return chatShift;
 
 		// get player stats and standardize to scaled number of rows
-		int armor = player.getArmor();
+		int armor = player.getArmorValue();
 		float absorption = player.getAbsorptionAmount();
 		float health = player.getMaxHealth();
-		double scale = mc.inGameHud.getChatHud().getChatScale();
+		double scale = mc.gui.getChat().getScale();
 
 		// calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
 		int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
@@ -284,8 +295,8 @@ public class Config {
 			? 0.3f
 			: 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
 
-		return (armorHeightMultiplier * MathHelper.floor(10 / scale))
-			+ (healthHeightMultiplier * MathHelper.floor(10 * healthScale / scale))
+		return (armorHeightMultiplier * Mth.floor(10 / scale))
+			+ (healthHeightMultiplier * Mth.floor(10 * healthScale / scale))
 			+ chatShift;
 	}
 
@@ -315,7 +326,7 @@ public class Config {
 		try {
 			// on different lines to make exception line numbers more useful
 			String raw = Files.readString(PATH);
-			JsonObject json = JsonHelper.deserialize(raw);
+			JsonObject json = GsonHelper.parse(raw);
 
 			config = config.parse(jsonOps(), json)
 				.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
@@ -338,7 +349,7 @@ public class Config {
 
     /**
      * Saves {@link ChatPatches#config} to {@link #PATH}. <b>Executed on an
-	 * {@linkplain Util#getIoWorkerExecutor() I/O worker thread} to avoid freezing
+	 * {@linkplain Util#ioPool() I/O worker thread} to avoid freezing
 	 * the render thread.</b>
      */
     public static void serialize() {
@@ -375,13 +386,13 @@ public class Config {
      * Creates a copy of the current config file located at {@link #PATH} and
      * saves it to {@code chatpatches_${now}.json} in the same directory as the
      * original. If an error occurs, a warning will be logged. Doesn't modify the
-     * current config. <b>Executed on an {@linkplain Util#getIoWorkerExecutor()
+     * current config. <b>Executed on an {@linkplain Util#ioPool()
      * I/O worker thread} to avoid freezing the render thread.</b>
      */
     public static void backup() {
 		ChatPatches.executeIoTask(() -> {
 			try {
-				Files.copy(PATH, PATH.resolveSibling(MOD_ID + "_" + Util.getFormattedCurrentTime() + ".json"));
+				Files.copy(PATH, PATH.resolveSibling(MOD_ID + "_" + Util.getFilenameFormattedDateTime() + ".json"));
 			} catch(IOException e) {
 				LOGGER.warn("[Config.backup] An error occurred trying to back up the original config file:", e);
 			}
@@ -474,7 +485,8 @@ public class Config {
             DataResult<T> result = optCodec.decoder().parse(ops, encoded);
 
             if(result.error().isPresent() || result.result().isEmpty()) {
-                String message = "[Config.parse] Failed to parse field '" + opt.key + "' : " + result.error().map(DataResult.PartialResult::message).orElse("<unknown>");
+				//noinspection Convert2MethodRef: if >=1.20.5 DataResult.PartialResult no longer exists
+				String message = "[Config.parse] Failed to parse field '" + opt.key + "': " + result.error().map(e -> e.message()).orElse("<unknown>");
                 logReportMsg(new IllegalStateException(message));
                 return DataResult.error(() -> message);
             }
@@ -557,9 +569,14 @@ public class Config {
 			Codec<T> codec = (Codec<T>) switch(def) {
 				// this monstrosity allows parsing int -> TextColor (migration) and String <-> TextColor (default) while the final result is always an int
 				// much love to TheWhyEvenHow for the solution: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
-                case Object o when key.contains("Color") -> Codecs.alternatively(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getRgb)).xmap(TextColor::getRgb, TextColor::fromRgb); // expands the
+                case Object o when key.contains("Color") ->
+					/*?if <=1.20.4 {*/ExtraCodecs/*?} else {*//*Codec*//*?}*/
+					.withAlternative(
+						TextColor.CODEC,
+						Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue)
+					).xmap(TextColor::getValue, TextColor::fromRgb);
                 case String s when key.contains("Format") -> Codec.STRING.comapFlatMap(
-                    raw -> raw.contains("$")
+                    raw -> raw.contains("$") //prepub: change this to {} or ${var_name} but make sure to add a psf const for it and put it in the migration codec
                         ? DataResult.success(raw)
                         : DataResult.error(() -> "[Config$Setting#getTypeCodec] Format string '" + raw + "' for option '" + key + "' is missing a '$'"),
                     Function.identity()

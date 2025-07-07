@@ -1,22 +1,22 @@
 package obro1961.chatpatches.accessor;
 
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.gui.components.ChatComponent;
 import obro1961.chatpatches.mixin.gui.ChatHudMixin;
 
 import java.util.List;
 
 public interface ChatHudAccess {
-    /** {@link ChatHud#messages} */
-    List<ChatHudLine> chatpatches$getMessages();
+    /** {@link ChatComponent#allMessages} */
+    List<GuiMessage> chatpatches$getMessages();
 
-    /** {@link ChatHud#visibleMessages} */
-    List<ChatHudLine.Visible> chatpatches$getVisibleMessages();
+    /** {@link ChatComponent#trimmedMessages} */
+    List<GuiMessage.Line> chatpatches$getVisibleMessages();
 
-    /** {@link ChatHud#scrolledLines} */
+    /** {@link ChatComponent#scrolledLines} */
     int chatpatches$getScrolledLines();
 
-    /** {@link ChatHud#getLineHeight()} */
+    /** {@link ChatComponent#getLineHeight()} */
     int chatpatches$getLineHeight();
 
 

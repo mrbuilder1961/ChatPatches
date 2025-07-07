@@ -1,7 +1,7 @@
 package obro1961.chatpatches.mixin.security;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import net.minecraft.text.ClickEvent;
+import net.minecraft.network.chat.ClickEvent;
 import obro1961.chatpatches.ChatLog;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,8 +16,8 @@ public abstract class ClickEvent$ActionMixin {
 	 * unilaterally accepted. <b>However, players are still responsible for being
 	 * vigilant when clicking links and opening files through Minecraft</b>.
 	 */
-	@ModifyReturnValue(method = "isUserDefinable", at = @At("RETURN"))
-	private static boolean allowConditionalSerialization(boolean safe) {
+	@ModifyReturnValue(method = "isAllowedFromServer", at = @At("RETURN"))
+	private boolean allowConditionalSerialization(boolean safe) {
 		return safe || !ChatLog.isCodecSafe().get(); // safe ? true : !ChatLog.isCodecSafe().get()
 	}
 }

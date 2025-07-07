@@ -1,14 +1,14 @@
 package obro1961.chatpatches.gui;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextIconButtonWidget;
-import net.minecraft.client.util.SkinTextures;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.SpriteIconButton;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtils;
 
@@ -26,52 +26,52 @@ public class MenuButtonWidget {
 
 	public static int padding = 4, height = 14 + padding; // padding is 1x vertically and 2x horizontally
 
-	public final ButtonWidget button;
+	public final Button button;
 	public final BiConsumer<MenuButtonWidget, Boolean> onMouseMoved; // called when the mouse hovers over this button; used to decide when to render the hover menu buttons
 	public final Supplier<String> copySupplier; // for supplying the string to be copied when clicked; passed ChatScreenMixin#selectedLine
 	/*new*/public final boolean permanent; // if true, the button will always be rendered, regardless of the hover state
 	public Consumer<MenuButtonWidget> otherPressAction = menuButton -> {}; // currently only for the reply button
 	public List<MenuButtonWidget> children; // the buttons that are rendered when this button is hovered over
-	public SkinTextures skinTexture; // the texture to render over this button, currently only used for the reply button
+	public PlayerSkin skinTexture; // the texture to render over this button, currently only used for the reply button
 	public int xOffset, yOffset, localY = 0, width; // localY is the y offset of this button from its parent, used to align the button vertically
 
-	private MenuButtonWidget(int xOffset, Text message, Supplier<String> cS, boolean p, MenuButtonWidget... c) {
+	private MenuButtonWidget(int xOffset, Component message, Supplier<String> cS, boolean p, MenuButtonWidget... c) {
 		this.children = new ArrayList<>( List.of(c) );
 		this.xOffset = xOffset;
 		this.permanent = p;
 		this.copySupplier = cS != null ? cS : () -> "";
 		this.onMouseMoved = (me, isMouseOver) -> children.forEach(hoverButton -> hoverButton.button.visible = isMouseOver);
 
-		this.width = MinecraftClient.getInstance().textRenderer.getWidth(message) + 2*padding;
+		this.width = Minecraft.getInstance().font.width(message) + 2*padding;
 		this.button =
-			TextIconButtonWidget.builder(message, button -> {
+			SpriteIconButton.builder(message, button -> {
 				String string = this.copySupplier.get();
 				if(!string.isEmpty()) {
-					MinecraftClient.getInstance().keyboard.setClipboard(string);
-					MinecraftClient.getInstance().inGameHud.setOverlayMessage(
-						Text.translatable("text.chatpatches.copy.copied", string.replace('§', '&'))
-							.setStyle( Style.EMPTY.withColor(Formatting.GREEN) ),
+					Minecraft.getInstance().keyboardHandler.setClipboard(string);
+					Minecraft.getInstance().gui.setOverlayMessage(
+						Component.translatable("text.chatpatches.copy.copied", string.replace('§', '&'))
+							.setStyle( Style.EMPTY.withColor(ChatFormatting.GREEN) ),
 						false
 					);
 				}
 				otherPressAction.accept(this);
 			})
-			.position((int) (anchor.x + this.xOffset), (int) (anchor.y + yOffset))
+			.pos((int) (anchor.x + this.xOffset), (int) (anchor.y + yOffset))
 			.size(width, height)
 			.build();
 	}
 
 	/** Creates a MenuButtonWidget with no mouse hover action, used for buttons with copy actions (mostly hover buttons). */
-	public static MenuButtonWidget of(int xOffset, Text text, Supplier<String> componentSupplier) {
+	public static MenuButtonWidget of(int xOffset, Component text, Supplier<String> componentSupplier) {
 		return new MenuButtonWidget(xOffset, text, componentSupplier, false);
 	}
 	/** Creates a MenuButtonWidget with no component supplier, used for buttons that reveal more (main buttons). */
-	public static MenuButtonWidget of(int xOffset, Text text, MenuButtonWidget... children) {
+	public static MenuButtonWidget of(int xOffset, Component text, MenuButtonWidget... children) {
 		return new MenuButtonWidget(xOffset, text, null, true, children);
 	}
 
 	public void updateTooltip() {
-		button.setTooltip(Tooltip.of(Text.of( copySupplier.get().replaceAll("§", "&") )));
+		button.setTooltip(Tooltip.create(Component.nullToEmpty( copySupplier.get().replaceAll("§", "&") )));
 	}
 
 	/** Sets the width of this button, ignoring alignment. */
@@ -80,7 +80,7 @@ public class MenuButtonWidget {
 		button.setWidth(this.width);
 	}
 
-	public MenuButtonWidget setTexture(SkinTextures skinTexture) {
+	public MenuButtonWidget setTexture(PlayerSkin skinTexture) {
 		this.skinTexture = skinTexture;
 		return this;
 	}
@@ -122,7 +122,7 @@ public class MenuButtonWidget {
 	}
 
 	/** Returns true if the Text id provided is equal to the button's text (message). */
-	public boolean is(Text id) {
+	public boolean is(Component id) {
 		return button.getMessage().equals(id);
 	}
 
@@ -156,7 +156,7 @@ public class MenuButtonWidget {
 	/** Returns true if the mouse left-clicked on the actual button or the padded area around it. */
 	public boolean mouseClicked(double mX, double mY, int button) {
 		if( button == 0 && isMouseOver(mX, mY) ) {
-			this.button.playDownSound(MinecraftClient.getInstance().getSoundManager());
+			this.button.playDownSound(Minecraft.getInstance().getSoundManager());
 			this.button.onPress();
 			return true;
 		}
@@ -164,7 +164,7 @@ public class MenuButtonWidget {
 		return false;
 	}
 
-	public void render(DrawContext drawContext, int mX, int mY, float delta) {
+	public void render(GuiGraphics drawContext, int mX, int mY, float delta) {
 		if(!button.visible || x() < 0 || y() < 0)
 			return;
 
@@ -182,8 +182,8 @@ public class MenuButtonWidget {
 			// draw base layer, then the hat
 			int x = (int) (anchor.x + xOffset + 1);
 			int y = (int) (anchor.y + yOffset + 1);
-			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 8, 8, 8, 8, 64, 64);
-			drawContext.drawTexture(skinTexture.texture(), x, y, 16, 16, 40, 8, 8, 8, 64, 64);
+			drawContext.blit(skinTexture.texture(), x, y, 16, 16, 8, 8, 8, 8, 64, 64);
+			drawContext.blit(skinTexture.texture(), x, y, 16, 16, 40, 8, 8, 8, 64, 64);
 
 			// fuck this, there's a reason PlayerSkinDrawer exists! sorry dzwdz :P
 		}

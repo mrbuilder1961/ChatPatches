@@ -7,8 +7,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import net.minecraft.resources.ResourceLocation;
 import obro1961.chatpatches.config.Config;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -24,10 +24,10 @@ public class ChatPatches implements ClientModInitializer {
 
 	public static Config config = Config.initialize();
 
-	public static Identifier id(String path) {
+	public static ResourceLocation id(String path) {
 		// unfortunately this method in 1.20.6 is method_43902
 		// but in 1.21 it's method_60655, making it incompatible ToT
-		return Identifier.of(MOD_ID, path);
+		return ResourceLocation.tryBuild(MOD_ID, path);
 	}
 
 
@@ -149,7 +149,7 @@ public class ChatPatches implements ClientModInitializer {
 	}
 
 	/**
-	 * Submits the given task to an {@linkplain Util#getIoWorkerExecutor() I/O worker
+	 * Submits the given task to an {@linkplain Util#ioPool() I/O worker
 	 * thread} for execution, and returns a {@link CompletableFuture} for managing
 	 * the results. If the task's results are not needed, perhaps in cases where
 	 * exceptions are managed by the task itself or for saving actions, the returned
@@ -160,7 +160,7 @@ public class ChatPatches implements ClientModInitializer {
 	 */
 	@SuppressWarnings("UnusedReturnValue")
 	public static CompletableFuture<Void> executeIoTask(Runnable task) {
-		final ExecutorService IO_POOL = Util.getIoWorkerExecutor();
+		final ExecutorService IO_POOL = Util.ioPool();
 		return CompletableFuture.runAsync(task, IO_POOL).exceptionallyAsync(e -> {
 			logReportMsg(e);
 			return null;

@@ -12,16 +12,16 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.client.gui.screen.GameMenuScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.toast.SystemToast;
-import net.minecraft.text.Text;
-import net.minecraft.util.JsonHelper;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.GuiMessageTag;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.gui.components.toasts.SystemToast;
+import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.GsonHelper;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
@@ -57,7 +57,7 @@ public class ChatLog {
 	 *
 	 * @see ClickEvent$ActionMixin#allowConditionalSerialization(boolean)
      */
-    public static final Codec<Pair<ObjectList<Text>, ObjectList<String>>> CODEC = Util.make(() -> {
+    public static final Codec<Pair<ObjectList<Component>, ObjectList<String>>> CODEC = Util.make(() -> {
 		var CODEC = Codec.pair(
 			TextUtils.textCodec()
 				.listOf()
@@ -73,7 +73,7 @@ public class ChatLog {
 
 		return new Codec<>() {
 			@Override
-			public <T> DataResult<T> encode(Pair<ObjectList<Text>, ObjectList<String>> input, DynamicOps<T> ops, T prefix) {
+			public <T> DataResult<T> encode(Pair<ObjectList<Component>, ObjectList<String>> input, DynamicOps<T> ops, T prefix) {
 				safeCodec.set(false);
 				var result = CODEC.encode(input, ops, prefix);
 				safeCodec.set(true);
@@ -81,7 +81,7 @@ public class ChatLog {
 			}
 
 			@Override
-			public <T> DataResult<Pair<Pair<ObjectList<Text>, ObjectList<String>>, T>> decode(DynamicOps<T> ops, T input) {
+			public <T> DataResult<Pair<Pair<ObjectList<Component>, ObjectList<String>>, T>> decode(DynamicOps<T> ops, T input) {
 				safeCodec.set(false);
 				var result = CODEC.decode(ops, input);
 				safeCodec.set(true);
@@ -95,7 +95,7 @@ public class ChatLog {
 		};
 	});
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
-    public static final MessageIndicator RESTORED_INDICATOR = new MessageIndicator(0x382FB5, null, Text.translatable("text.chatpatches.restored"), "Restored"); // prepub use an AW and put the icon to use
+    public static final GuiMessageTag RESTORED_INDICATOR = new GuiMessageTag(0x382FB5, null, Component.translatable("text.chatpatches.restored"), "Restored"); // prepub use an AW and put the icon to use
 
 	/**
 	 * Thread-local because
@@ -110,7 +110,7 @@ public class ChatLog {
 	private static final int IO_THRESHOLD_SUGGESTION = 1000;
 	private static final String EMPTY_JSON = "{\"messages\":[],\"history\":[]}";
 	private static final ObjectList<?> EMPTY_LIST = newSyncedObjectList(null); // used for determining if the chat log has been deserialized yet
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
+    private static final Minecraft mc = Minecraft.getInstance();
 
     /**
      * Used to suspend the addition of messages
@@ -124,7 +124,7 @@ public class ChatLog {
     private static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
 
     @SuppressWarnings("unchecked")
-	private static ObjectList<Text> messages = (ObjectList<Text>) EMPTY_LIST;
+	private static ObjectList<Component> messages = (ObjectList<Component>) EMPTY_LIST;
     @SuppressWarnings("unchecked")
     private static ObjectList<String> history = (ObjectList<String>) EMPTY_LIST;
 
@@ -140,7 +140,7 @@ public class ChatLog {
     public static boolean isRestoring() { return restoring; }
     public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; }
 
-    public static void addMessage(Text message) {
+    public static void addMessage(Component message) {
         if(restoring)
             return;
 
@@ -192,10 +192,11 @@ public class ChatLog {
         final int MAX_LEN = 60; // minimizes errors going off-screen
         String d = desc.replace("{}", "%s").formatted((Object[]) vars);
 
-        mc.getToastManager().add(new SystemToast(
-            SystemToast.Type.PACK_LOAD_FAILURE,
-            Text.of(header.length() > MAX_LEN ? header.substring(0, MAX_LEN - 3) + "..." : header),
-            Text.of(d.length() > MAX_LEN ? d.substring(0, MAX_LEN - 3) + "..." : d)
+        mc.getToasts().addToast(new SystemToast(
+			// auto replaced by stonecutter
+			SystemToast.SystemToastIds.PACK_LOAD_FAILURE,
+            Component.nullToEmpty(header.length() > MAX_LEN ? header.substring(0, MAX_LEN - 3) + "..." : header),
+            Component.nullToEmpty(d.length() > MAX_LEN ? d.substring(0, MAX_LEN - 3) + "..." : d)
         ));
     }
 
@@ -203,7 +204,7 @@ public class ChatLog {
      * Deserializes the chat log from {@link #PATH}.
      *
      * @apiNote Should be executed on an {@linkplain
-     * Util#getIoWorkerExecutor() I/O worker thread} to avoid freezing
+     * Util#ioPool() I/O worker thread} to avoid freezing
      * the render thread. Must be done by the caller to ensure {@link
      * #restore()} can run sequentially, if necessary.
      *
@@ -264,7 +265,7 @@ public class ChatLog {
                 messages = newSyncedObjectList(null);
                 history = newSyncedObjectList(null);
             } else {
-                JsonObject json = JsonHelper.deserialize(rawJson);
+                JsonObject json = GsonHelper.parse(rawJson);
                 var deserializedPair =
                     CODEC.parse(ChatPatches.jsonOps(), json)
                         .resultOrPartial(e -> {
@@ -297,7 +298,7 @@ public class ChatLog {
      * Saves the chat log to {@link #PATH}. Only saves if {@link Config#chatlog} is
      * true, if {@link #messages} and {@link #history} are not empty, and if there
      * are <i>new</i> messages to save. <b>Executed on an {@linkplain
-     * Util#getIoWorkerExecutor() I/O worker thread} to avoid freezing the render
+     * Util#ioPool() I/O worker thread} to avoid freezing the render
      * thread.</b>
      *
      * @apiNote As of 1.20.5, also requires the player to be in-game during the saving
@@ -321,7 +322,7 @@ public class ChatLog {
 					.orElseThrow();
 
 				// always in UTF-8
-				Files.writeString(PATH, JsonHelper.toSortedString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				Files.writeString(PATH, GsonHelper.toStableString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 				updateMessageCounts();
 
 				LOGGER.info("[ChatLog.serialize] Saved {} messages and {} sent messages to '{}'!", lastMessageCount, lastHistoryCount, PATH);
@@ -329,7 +330,7 @@ public class ChatLog {
 				LOGGER.error("[ChatLog.serialize] An unexpected error occurred while trying to save:", e);
 				LOGGER.warn("[ChatLog.serialize] Dumping data: {}",
 					EMPTY_JSON // assumes the Text codec is unusable, so instead uses #getString()
-						.replace("[]", messages.stream().map(Text::getString).toList().toString())
+						.replace("[]", messages.stream().map(Component::getString).toList().toString())
 						.replace("[]", history.toString())
 				);
 				pushErrorToast("Chat log serialization error", e.getLocalizedMessage());
@@ -343,13 +344,13 @@ public class ChatLog {
      * Creates a backup of the current chat log file located at {@link #PATH} and saves
      * it as {@code chatlog_${now}.json} in the same directory as the original file.
      * If an error occurs, a warning will be logged. Doesn't modify the current chat
-     * log. <b>Executed on an {@linkplain Util#getIoWorkerExecutor() I/O worker thread}
+     * log. <b>Executed on an {@linkplain Util#ioPool() I/O worker thread}
      * to avoid freezing the render thread.</b>
      */
     public static void backup() {
 		ChatPatches.executeIoTask(() -> {
 			try {
-				Path backupPath = PATH.resolveSibling("chatlog_" + Util.getFormattedCurrentTime() + ".json");
+				Path backupPath = PATH.resolveSibling("chatlog_" + Util.getFilenameFormattedDateTime() + ".json");
 				Files.copy(PATH, backupPath);
 				LOGGER.info("[ChatLog.backup] Successfully backed up the current chat log to '{}':", backupPath);
 			} catch(IOException e) {
@@ -361,10 +362,10 @@ public class ChatLog {
 
     public static void restore() {
         if(messageCount() > 0 && historyCount() > 0) {
-			ChatHud chat = mc.inGameHud.getChatHud();
+			ChatComponent chat = mc.gui.getChat();
 
 			restoring = true;
-			history.forEach(chat::addToMessageHistory);
+			history.forEach(chat::addRecentChat);
 			messages.forEach(msg -> chat.addMessage(msg, null, RESTORED_INDICATOR));
 			restoring = false;
 
@@ -377,14 +378,14 @@ public class ChatLog {
 
 	public static void hideRecentMessages() {
 		if(messageCount() > 0 && historyCount() > 0) {
-			final int ticks = mc.inGameHud.getTicks();
+			final int ticks = mc.gui.getGuiTicks();
 
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering (#42)
 			// only replaces messages that would render instantly to save performance on large chat logs
 			// now adds the message's addedTime to account for any extra offsets from the deserialization unsyncing from the main game thread
-			((ChatHudAccess) mc.inGameHud.getChatHud()).chatpatches$getVisibleMessages()
+			((ChatHudAccess) mc.gui.getChat()).chatpatches$getVisibleMessages()
 				.replaceAll(ln ->
-					(ticks - ln.addedTime() < 200) ? new ChatHudLine.Visible(-(200 + ln.addedTime()), ln.content(), ln.indicator(), ln.endOfEntry()) : ln);
+					(ticks - ln.addedTime() < 200) ? new GuiMessage.Line(-(200 + ln.addedTime()), ln.content(), ln.tag(), ln.endOfEntry()) : ln);
 		}
 	}
 
@@ -393,7 +394,7 @@ public class ChatLog {
 	 * Only does so if the chat log is {@linkplain Config#chatlog enabled in the config}
 	 * and hasn't been deserialized yet (when {@link #messages} and {@link #history}
 	 * are both still equal to {@link #EMPTY_LIST}). <b>Executed on an {@linkplain
-     * Util#getIoWorkerExecutor() I/O worker thread} to avoid freezing the render
+     * Util#ioPool() I/O worker thread} to avoid freezing the render
 	 * thread.</b>
 	 *
 	 * @param force {@code true} to force loading the chat log even if it's been
@@ -436,7 +437,7 @@ public class ChatLog {
      * disabled and the game is paused.
      */
     public static void saveIfPaused(Screen screen) {
-        if(config.chatlogSaveInterval == 0 && (!mc.isWindowFocused() || screen instanceof GameMenuScreen))
+        if(config.chatlogSaveInterval == 0 && (!mc.isWindowActive() || screen instanceof PauseScreen))
             serialize();
     }
 }

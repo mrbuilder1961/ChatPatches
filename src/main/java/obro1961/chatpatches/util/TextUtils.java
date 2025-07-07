@@ -3,22 +3,21 @@ package obro1961.chatpatches.util;
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Util;
-import net.minecraft.util.dynamic.Codecs;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
+import net.minecraft.network.chat.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
+//? if >1.20.2
 
 /**
- * A class containing various string and {@link Text} related utilities.
+ * A class containing various string and {@link Component} related utilities.
  */
 public class TextUtils {
 	/**
-	 * @see Formatting#FORMATTING_CODE_PATTERN
+	 * @see ChatFormatting#PREFIX_CODE
 	 */
 	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
 	/**
@@ -28,23 +27,28 @@ public class TextUtils {
 	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
 	/** <a href="https://regex101.com/r/D9x2yv/1">Examples</a>*/
 	public static final String DUPLICATE_COLOR_AMPERSAND_REGEX = "(?im)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])";
-	public static final Int2ObjectMap<Formatting> COLOR_TO_FORMATTING = Util.make(() -> {
-		Int2ObjectMap<Formatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever
-		for(Formatting f : Formatting.values()) {
+	public static final Int2ObjectMap<ChatFormatting> COLOR_TO_FORMATTING = Util.make(() -> {
+		Int2ObjectMap<ChatFormatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever
+		for(ChatFormatting f : ChatFormatting.values()) {
 			if(f.isColor())
-				map.put(f.getColorValue().intValue(), f);
+				map.put(f.getColor().intValue(), f);
 		}
 		return map;
 	});
 
 	/**
-	 * Returns a {@link Codec} for {@link Text} objects.
+	 * Returns a {@link Codec} for {@link Component} objects.
 	 * Used for the stonecutter system so different
 	 * versions can all access the correct codec in a
 	 * simple and short way.
 	 */
-	public static Codec<Text> textCodec() {
-		return Codecs.TEXT;
+	public static Codec<Component> textCodec() { // stonecutter: replace with a swap? or just replacement
+		return
+			//? if <=1.20.2 {
+			net.minecraft.util.ExtraCodecs.COMPONENT;
+			//? } else {
+			//net.minecraft.network.chat.ComponentSerialization.CODEC;
+ 			//? }
 	}
 
 
@@ -60,10 +64,10 @@ public class TextUtils {
 	 * Creates a new MutableText object with explicit
 	 * sibling and style data specified. Behaves
 	 * effectively the same as the private constructor
-	 * {@link MutableText#MutableText(TextContent, List, Style)}.
+	 * {@link MutableComponent#MutableComponent(ComponentContents, List, Style)}.
 	 */
-	public static MutableText newText(TextContent content, List<Text> siblings, Style style) {
-		MutableText text = MutableText.of(content).setStyle(style);
+	public static MutableComponent newText(ComponentContents content, List<Component> siblings, Style style) {
+		MutableComponent text = MutableComponent.create(content).setStyle(style);
 		siblings.forEach(text::append);
 		return text;
 	}
@@ -73,22 +77,23 @@ public class TextUtils {
 	 * parameter replacing the original siblings. The passed {@code text}'s
 	 * content and style are preserved.
 	 */
-	public static MutableText newSiblings(Text text, List<Text> siblings) {
-		return newText(text.getContent(), siblings, text.getStyle());
+	public static MutableComponent newSiblings(Component text, List<Component> siblings) {
+		return newText(text.getContents(), siblings, text.getStyle());
 	}
 
 	/**
 	 * Returns a copy of {@code text} with an empty content.
-	 * Useful for comparing {@link Text} objects'
+	 * Useful for comparing {@link Component} objects'
 	 * metadata (style and siblings) only.
 	 * */
-	public static MutableText withoutContent(Text text) {
-		return newText(TextContent.EMPTY, text.getSiblings(), text.getStyle());
+	public static MutableComponent withoutContent(Component text) {
+		//stonecutter: erroring for no reason..
+		return newText(/*?if <=1.20.2 {*/ ComponentContents.EMPTY /*?} else {*//*PlainTextContents.EMPTY*//*?}*/, text.getSiblings(), text.getStyle());
 	}
 
 
 	/**
-	 * Formats a String with {@code &} formatting codes into a {@link Text}.
+	 * Formats a String with {@code &} formatting codes into a {@link Component}.
 	 * First replaces all {@code &<?>} codes with a section symbol ({@code §}),
 	 * then deletes the backslash from all {@code \&<?>} instances. Doesn't
 	 * support hex colors.
@@ -96,8 +101,8 @@ public class TextUtils {
 	 * @apiNote Hex colors could be supported with the Placeholder API, but using
 	 * an entire library just for this one feature seems excessive.
 	 */
-	public static MutableText text(String unformatted) {
-		return Text.literal(
+	public static MutableComponent text(String unformatted) {
+		return Component.literal(
 			unformatted
 				.replaceAll(NO_BACKSLASH_AMPERSAND_REGEX, "§$1")
 				.replaceAll(AMPERSAND_REGEX, "&$2")
@@ -105,11 +110,11 @@ public class TextUtils {
 	}
 
 	/**
-	 * Converts a {@link Text} into a {@link String} with {@code &<?>} codes.
+	 * Converts a {@link Component} into a {@link String} with {@code &<?>} codes.
 	 * Strips any complex style data, including hover events, fonts, insertions,
 	 * etc. Hex colors are represented in the format {@code &#RRGGBB}.
 	 */
-	public static String toCodedString(Text text, boolean fancyCodes) {
+	public static String toCodedString(Component text, boolean fancyCodes) {
 		StringBuilder builder = new StringBuilder(); // required for the lambda expression
 		AtomicReference<Style> lastStyle = new AtomicReference<>(Style.EMPTY); // ensures that the first equality check returns false
 
@@ -117,17 +122,17 @@ public class TextUtils {
 			// if style is different from last, add any formatting codes
 			if(!style.equals(lastStyle.get())) {
 				if(fancyCodes)
-					builder.append(Formatting.AQUA); // adds a pop of color to the codes to make them more visible
+					builder.append(ChatFormatting.AQUA); // adds a pop of color to the codes to make them more visible
 
 				builder.append(getFormattingCodes(style, lastStyle.get()));
 
 				if(fancyCodes)
-					builder.append(Formatting.RESET); // adding colors breaks some (whitespace separated) functionality of DUPE_COLOR_AMPERSAND_REGEX
+					builder.append(ChatFormatting.RESET); // adding colors breaks some (whitespace separated) functionality of DUPE_COLOR_AMPERSAND_REGEX
 
 				lastStyle.set(style);
 			}
 
-			builder.append( str.replace(Formatting.FORMATTING_CODE_PREFIX, '&') ); // sometimes section signs leak and i want them out
+			builder.append( str.replace(ChatFormatting.PREFIX_CODE, '&') ); // sometimes section signs leak and i want them out
 
 			return Optional.empty();
 		}, Style.EMPTY);
@@ -151,24 +156,24 @@ public class TextUtils {
 	 * applied ones according to {@code last}. Returns an empty string if the style is
 	 * empty or blank. If any hex colors are specified, they will be returned in the
 	 * format {@code &#RRGGBB}. Additionally, any color that exists as a formatting code
-	 * (ex. {@code #55FF55} for {@link Formatting#GREEN}) will return as the formatting
+	 * (ex. {@code #55FF55} for {@link ChatFormatting#GREEN}) will return as the formatting
 	 * code (ex. {@code &a}).
 	 *
-	 * @see TextColor#getHexCode()
+	 * @see TextColor#formatValue()
 	 */
 	public static String getFormattingCodes(Style style, Style last) {
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
 		TextColor color = style.getColor();
-		Formatting formatting = color != null ? Formatting.byName(color.getName()) : Formatting.RESET;
+		ChatFormatting formatting = color != null ? ChatFormatting.getByName(color.serialize()) : ChatFormatting.RESET;
 
 		// only add the color code if one was explicitly specified (reset is not a color ^) and if it's different from the last color
-		if(formatting != Formatting.RESET && (last.getColor() == null || color.getRgb() != last.getColor().getRgb())) {
+		if(formatting != ChatFormatting.RESET && (last.getColor() == null || color.getValue() != last.getColor().getValue())) {
 			if(formatting != null)
-				joiner.add("" + formatting.getCode()); // default colors and reset codes
-			else if( COLOR_TO_FORMATTING.containsKey(color.getRgb()) )
-				joiner.add("" + COLOR_TO_FORMATTING.get(color.getRgb()).getCode()); // hex colors that exist as formatting codes
+				joiner.add("" + formatting.getChar()); // default colors and reset codes
+			else if( COLOR_TO_FORMATTING.containsKey(color.getValue()) )
+				joiner.add("" + COLOR_TO_FORMATTING.get(color.getValue()).getChar()); // hex colors that exist as formatting codes
 			else
-				joiner.add(color.getHexCode()); // custom hex colors
+				joiner.add(color.formatValue()); // custom hex colors
 		} else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY)) { // can't use isEmpty() bc it's a reference check -_-
 			return "&r"; // if the current style is empty and the last style wasn't, we've reset!
 		}

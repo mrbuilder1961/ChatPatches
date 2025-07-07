@@ -1,19 +1,19 @@
 package obro1961.chatpatches.gui;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ButtonTextures;
-import net.minecraft.client.gui.widget.TexturedButtonWidget;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.WidgetSprites;
 import org.lwjgl.glfw.GLFW;
 
 import static obro1961.chatpatches.ChatPatches.id;
 
-public class SearchButton extends TexturedButtonWidget {
-    public static final ButtonTextures TEXTURES = new ButtonTextures(id("search_button_unfocused"), id("search_button_focused"));
+public class SearchButton extends ImageButton {
+    public static final WidgetSprites TEXTURES = new WidgetSprites(id("search_button_unfocused"), id("search_button_focused"));
 
-    private final PressAction onLeftClick;
-    private final PressAction onRightClick;
+    private final OnPress onLeftClick;
+    private final OnPress onRightClick;
 
-    public SearchButton(int x, int y, PressAction leftAction, PressAction rightAction) {
+    public SearchButton(int x, int y, OnPress leftAction, OnPress rightAction) {
         super(x, y, 16, 16, TEXTURES, button -> {});
 
         this.onLeftClick = leftAction;
@@ -24,11 +24,11 @@ public class SearchButton extends TexturedButtonWidget {
     public boolean mouseClicked(double x, double y, int buttonType) {
         if(active && visible && clicked(x, y)) {
             if(buttonType == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                this.playDownSound(MinecraftClient.getInstance().getSoundManager());
+                this.playDownSound(Minecraft.getInstance().getSoundManager());
                 onLeftClick.onPress(this);
                 return true;
             } else if(buttonType == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                this.playDownSound(MinecraftClient.getInstance().getSoundManager());
+                this.playDownSound(Minecraft.getInstance().getSoundManager());
                 onRightClick.onPress(this);
                 return true;
             }
