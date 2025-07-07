@@ -1,9 +1,10 @@
 # Changelog
 
-## Chat Patches `202.8.0` for Minecraft 1.20.2, 1.??.? on Fabric, Quilt
-- Completely refactored basically the entire codebase to support future features and fixes, on multiple loaders and versions!
-- Java 21 is **now required going forward** despite the Minecraft version used
-- Overhauled the copy menu, which is now known as the Context Menu! It now has more features, including a toggle, main buttons copying their first 
+## Chat Patches `8.0-alpha` for Minecraft 1.20.2, 1.21.7 on Fabric, Quilt
+- Completely refactored the entire codebase to support multiple loaders and versions!
+- (I skipped `7.0` because this is content spanning multiple major versions)
+- Java 21 is **now *unconditionally* required going forward**
+- Overhauled the copy menu, which is now known as the Context Menu! It has more features, including a toggle, main buttons copying their first 
   sub-button, and even more message parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
 - Renamed many config options; you will need to manually rename these options: //prepub DFU?
   - `counterCompact` => `compactChat`

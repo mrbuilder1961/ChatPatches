@@ -1,0 +1,49 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+issueTrackerURL = "https://github.com/${mod_source}/issues"
+license = "${mod_license}"
+
+[[mods]]
+modId = "${mod_id}"
+displayName = "${mod_name}"
+version = "${mod_version}"
+description = '''
+${mod_description}
+'''
+authors = "${mod_author}"
+credits = "${mod_credits}"
+displayURL = "https://modrinth.com/mod/${mod_modrinth}"
+features = { javaVersion = "[21,)" }
+logoFile = "assets/chatpatches/icon.png"
+
+[[dependencies."${mod_id}"]]
+modId = "minecraft"
+versionRange = "${minecraft_range}"
+type = "required"
+
+[[dependencies."${mod_id}"]]
+modId = "neoforge"
+versionRange = "[20.2.84,)" # First version to bundle MixinExtras
+type = "required"
+
+[[dependencies."${mod_id}"]]
+modId = "yet_another_config_lib_v3"
+type = "required"
+side = "CLIENT" # TODO if i leave it out will it crash??
+
+[[dependencies."${mod_id}"]]
+modId = "modmenu"
+type = "optional"
+#versionRange = "[10.0.0,)" # TODO First version to bundle Placeholder API
+
+[[dependencies."${mod_id}"]]
+modId = "catalogue"
+type = "optional"
+
+[[dependencies."${mod_id}"]]
+modId = "menulogue"
+type = "optional"
+
+[[dependencies."${mod_id}"]]
+modId = "nochatreports"
+type = "optional"

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "authors": [ "${mod_author}" ],
+  "contributors": [ "${mod_credits}" ],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/${mod_modrinth}",
+    "issues": "https://github.com/${mod_source}/issues",
+    "sources": "https://github.com/${mod_source}"
+  },
+  "license": "${mod_license}",
+  "icon": "assets/chatpatches/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "obro1961.chatpatches.ChatPatches"
+    ],
+    "modmenu": [
+      "obro1961.chatpatches.integration.ModMenuIntegration"
+    ]
+  },
+  "depends": {
+    "java": ">=21",
+    "minecraft": "${minecraft_range}",
+    "fabricloader": ">=0.15.0",
+    "fabric-api": "*",
+    "yet_another_config_lib_v3": "*"
+  },
+  "recommends": {
+    "modmenu": "*",
+    "catalogue": "*",
+    "menulogue": "*"
+  },
+  "suggests": {
+    "nochatreports": "*"
+  }
+}

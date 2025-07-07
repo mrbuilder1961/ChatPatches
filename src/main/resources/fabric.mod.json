@@ -15,7 +15,7 @@
     "ploxxy (uk_ua, bugfixes)",
     "Fiz-Victor (bugfixes)",
     "co-91 (ja_jp)",
-    "JustALittleWolf (#118, #123, #131, #132)",
+    "JustALittleWolf (#118, #123, #131-2)",
     "SmajloSlovakian (#139-141)",
     "LucunJi (#152, #154)",
     "DylanKeir (#190)",
@@ -53,7 +53,7 @@
 
   "depends": {
     "java": ">=21",
-    "minecraft": ${targets},
+    "minecraft": "${targets}",
     "fabricloader": "~${loader}",
     "fabric-api": "*",
     "yet_another_config_lib_v3": "*"
