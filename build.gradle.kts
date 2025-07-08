@@ -11,7 +11,7 @@ plugins { // versions in gradle.properties + settings.gradle.kts
 }
 
 
-println("name: $name")// debug: !
+println("name: $name, SVC: ${stonecutter.current.version}")// debug: !
 val id = m("id") ?: error("No mod id specified")
 val minecraft = name.substringBefore("-") // uses the stonecutter project's minecraft version
 val loader: String = name.substringAfter("-") //name.substring(name.lastIndexOf('-') + 1)
@@ -240,7 +240,7 @@ publishMods {
     //prepub prob need to store these in options... sigh
 
     //version = v // automatically set by mpp
-    displayName = v //prepub keep?
+    displayName = "${modstitch.metadata.modName} $v for \$minecraft_range on $loader" //prepub keep?
     file = modstitch.finalJarTask.flatMap { it.archiveFile } // https://modmuss50.github.io/mod-publish-plugin/getting_started/#input-file
     changelog = changes
     type = when {

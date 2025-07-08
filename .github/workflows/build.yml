@@ -45,14 +45,16 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: build
-        run: ./gradlew build --info --stacktrace
+        run: ./gradlew buildAll --stacktrace
 
       - name: capture build artifacts
         if: ${{ runner.os == 'Linux' && matrix.java == '21' }} # Only upload artifacts built from latest java on one OS
         uses: actions/upload-artifact@v4
         with:
           name: jars
+          # versions line - todo stonecutter.gradle.kts copy results to build/libs
           path: |
             build/libs/
             build/devlibs/
             !build/devlibs/*-sources.jar
+            versions/*/build/libs/

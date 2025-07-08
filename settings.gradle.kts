@@ -39,7 +39,7 @@ stonecutter {
         // 1.20   1.20.1      1.20.2  1.20.3
 
         val loaders: String by settings
-        val loadList = loaders.split(",")
+        val loadList = loaders.replace("neoforge", "neo").split(",")
         val targets: String by settings
         targets.split(",").forEach {
             v: String ->
