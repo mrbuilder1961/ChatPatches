@@ -6,11 +6,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.network.chat.*;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
-//? if >1.20.2 {
 
 /**
  * A class containing various string and {@link Component} related utilities.
@@ -87,8 +87,8 @@ public class TextUtils {
 	 * metadata (style and siblings) only.
 	 * */
 	public static MutableComponent withoutContent(Component text) {
-		//stonecutter: erroring for no reason..
-		return newText(/*?if <=1.20.2 {*/ ComponentContents.EMPTY /*?} else {*//*PlainTextContents.EMPTY*//*?}*/, text.getSiblings(), text.getStyle());
+		//stonecutter: remove qualifier when import optimizer fix is available
+		return newText(/*?if <=1.20.2 {*/ComponentContents.EMPTY/*?} else {*//*net.minecraft.network.chat.contents.PlainTextContents.EMPTY*//*?}*/, text.getSiblings(), text.getStyle());
 	}
 
 

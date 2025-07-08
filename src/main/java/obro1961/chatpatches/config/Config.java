@@ -21,8 +21,6 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.chat.*;
-import net.minecraft.network.chat.contents.LiteralContents;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -32,6 +30,7 @@ import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -44,14 +43,11 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
+
 import static net.minecraft.ChatFormatting.*;
 import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.TextUtils.fillVars;
 import static obro1961.chatpatches.util.TextUtils.text;
-//? if <=1.20.2 {
-import net.minecraft.network.chat.contents.LiteralContents;
-//? } else {
-//? }
 
 public class Config {
     public static final Config DEFAULTS = new Config();
@@ -193,10 +189,11 @@ public class Config {
                 components.add(3, team.getPlayerSuffix()); // team suffix
             }
 
+			// stonecutter: remove qualifiers when import optimizer fix is available
 			//? if <=1.20.2 {
-            return TextUtils.newText(LiteralContents.EMPTY, components, hoverStyle);
+            return TextUtils.newText(net.minecraft.network.chat.contents.LiteralContents.EMPTY, components, hoverStyle);
 			//? } else {
-            //return TextUtils.newText(PlainTextContents.EMPTY, components, hoverStyle);
+            //return TextUtils.newText(net.minecraft.network.chat.contents.PlainTextContents.EMPTY, components, hoverStyle);
 			//? }
         } catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
@@ -570,7 +567,8 @@ public class Config {
 				// this monstrosity allows parsing int -> TextColor (migration) and String <-> TextColor (default) while the final result is always an int
 				// much love to TheWhyEvenHow for the solution: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
                 case Object o when key.contains("Color") ->
-					/*?if <=1.20.4 {*/ExtraCodecs/*?} else {*//*Codec*//*?}*/
+					//stonecutter: remove qualifier when import optimizer fix is available
+					/*?if <=1.20.4 {*/net.minecraft.util.ExtraCodecs/*?} else {*//*Codec*//*?}*/
 					.withAlternative(
 						TextColor.CODEC,
 						Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue)
