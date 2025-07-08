@@ -350,7 +350,7 @@ public class ChatUtils {
 			}
 
 			if(config.logMessageStructures)
-				throw new AssertionError("meow", null);
+				throw new AssertionError("time to log those message structures!", null);
 		} catch(RuntimeException | AssertionError e) {
 			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying '{}'", m.getString());
 			LOGGER.error("[ChatUtils.modifyMessage] \tTimestamp: {}", optimizeEmpties(timestamp));

@@ -42,7 +42,7 @@ public class TextUtils {
 	 * versions can all access the correct codec in a
 	 * simple and short way.
 	 */
-	public static Codec<Component> textCodec() { // stonecutter: replace with a swap? or just replacement
+	public static Codec<Component> textCodec() { // stonecutter: replace with a swap to del unnecessary method (* micro optimization :D *)
 		return
 			//? if <=1.20.2 {
 			net.minecraft.util.ExtraCodecs.COMPONENT;
@@ -132,7 +132,7 @@ public class TextUtils {
 				lastStyle.set(style);
 			}
 
-			builder.append( str.replace(ChatFormatting.PREFIX_CODE, '&') ); // sometimes section signs leak and i want them out
+			builder.append( str.replace(ChatFormatting.PREFIX_CODE, '&') ); // sometimes section signs leak and I WANT THEM OUT
 
 			return Optional.empty();
 		}, Style.EMPTY);
