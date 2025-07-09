@@ -4,6 +4,8 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -54,6 +56,17 @@ public class ChatPatches implements ClientModInitializer {
 			config.sendBoundaryLine();
 			ChatLog.hideRecentMessages();
 		});
+
+		// Command Event
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(ClientCommandManager.literal("chatpatches")
+                        .executes(context -> {
+                                    MinecraftClient client = MinecraftClient.getInstance();
+                                    client.send(() -> client.setScreen(ChatPatches.config.getConfigScreen(null)));
+                                    return 1;
+                                }
+                        )
+                )
+		);
 
 		LOGGER.info("[ChatPatches()] Finished setting up!");
 	}
