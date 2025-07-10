@@ -182,36 +182,40 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * </ol>
 	 */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
-	private void renderCustomWidgets(GuiGraphics context, int mX, int mY, float delta, CallbackInfo ci) {
-		context.pose().pushPose();
-		context.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
+	private void renderCustomWidgets(GuiGraphics graphics, int mX, int mY, float delta, CallbackInfo ci) {
+		graphics.pose().pushPose();
+		//? if <1.21.6 {
+		graphics.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
+		//?}
+		//todo: try .guiRenderState.up() or down() ? if it doesnt work w/o the shift. if removed edit javadoc
 
 		if(showSearch && config.search) {
-			context.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
-			searchField.render(context, mX, mY, delta);
+			graphics.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
+			searchField.render(graphics, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-
-				context.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), ChatFormatting.DARK_RED.getColor());
+				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), ChatFormatting.DARK_RED.getColor());
 			}
 		}
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && config.search) {
-			context.blit(
-				id("textures/gui/search_settings_panel.png"),
+			graphics.blit(
+				// stonecutter: remove qualifier when import optimizer fix is available
+				/*? if >=1.21.6 {*//*net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,*//*?} elif >=1.21.2 {*//*net.minecraft.client.renderer.RenderType::guiTextured,*//*?}*/
+				id("textures/gui/search_settings_panel.png"), // todo: use a nine-sliced aka dynamic texture, even better find an existing bg
 				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
 
-			caseSensitiveButton.render(context, mX, mY, delta);
-			regexButton.render(context, mX, mY, delta);
+			caseSensitiveButton.render(graphics, mX, mY, delta);
+			regexButton.render(graphics, mX, mY, delta);
 		}
 
-		context.pose().popPose(); // stop shifting before the context menu renders so the chat field doesn't cut it off
+		graphics.pose().popPose(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
-		contextMenu.render(context, mX, mY, delta);
+		contextMenu.render(graphics, mX, mY, delta);
 	}
 
 	/**
@@ -221,7 +225,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * menu or the <i>shown</i> context menu.
 	 * */
 	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;renderComponentHoverEffect(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Style;II)V"))
-	public boolean renderTooltipSmartly(GuiGraphics drawContext, Font textRenderer, Style style, int mX, int mY) {
+	public boolean renderTooltipSmartly(GuiGraphics graphics, Font textRenderer, Style style, int mX, int mY) {
 		return !isMouseOverSettingsMenu(mX, mY) && !contextMenu.isMouseOver(mX, mY);
 	}
 

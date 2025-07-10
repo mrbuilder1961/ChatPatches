@@ -2,11 +2,9 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.CommandHistory;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.Minecraft;
@@ -134,9 +132,9 @@ public abstract class ChatHudMixin implements ChatHudAccess {
     @ModifyExpressionValue(
         //? if <=1.20.4 {
         method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V", "addRecentChat"},
-        //? } else {
-        //method = {"Lnet/minecraft/client/gui/components/ChatComponent;addMessageToQueue(Lnet/minecraft/client/GuiMessage;)V", "addMessageToDisplayQueue", "addRecentChat"},
-        //? }
+        //?} else {
+        /*method = {"Lnet/minecraft/client/gui/components/ChatComponent;addMessageToQueue(Lnet/minecraft/client/GuiMessage;)V", "addMessageToDisplayQueue", "addRecentChat"},
+        *///?}
         at = @At(value = "CONSTANT", args = "intValue=100")
     )
     private int moreMessages(int hundred) {
@@ -208,31 +206,53 @@ public abstract class ChatHudMixin implements ChatHudAccess {
     @ModifyVariable(
         //? if <=1.20.4 {
         method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V",
-        //? } else {
-        //method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
-        //? }
+        //?} else {
+        /*method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
+        *///?}
         at = @At("HEAD"),
         argsOnly = true
     )
-    private Component modifyMessage(Component m /*?if <=1.20.4 {*/, @Local(argsOnly = true) boolean refreshing /*?}*/) {
-        return /*?if <=1.20.4 {*/ refreshing ? m : /*?}*/ ChatUtils.modifyMessage(m);
+    private Component modifyMessage(Component m /*? if <=1.20.4 {*/, @Local(argsOnly = true) boolean refreshing /*?}*/) {
+        return /*? if <=1.20.4 {*/ refreshing ? m : /*?}*/ ChatUtils.modifyMessage(m);
     }
 
-    @Inject(method = "addRecentChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ArrayListDeque;size()I"))
+    @Inject(
+        method = "addRecentChat",
+        at = @At(
+            value = "INVOKE",
+            //? if >=1.20.2 {
+            target = "Lnet/minecraft/util/ArrayListDeque;size()I"
+            //?} else {
+            /*target = "Ljava/util/List;add(Ljava/lang/Object;)Z"
+            *///?}
+        )
+    )
     private void addHistory(String message, CallbackInfo ci) {
         ChatLog.addHistory(message);
     }
 
+    //? if >=1.20.2 {
     /**
      * Disables the vanilla command log, a feature added in 1.20.2 that logs up to
      * 50 commands only, if the chat log is already enabled.
      *
      * @since 1.20.2, mod WHEN
      */
-    @WrapWithCondition(method = "addRecentChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/CommandHistory;addCommand(Ljava/lang/String;)V"))
-    private boolean toggleCommandLog(CommandHistory manager, String message) {
+    @com.llamalad7.mixinextras.injector.v2.WrapWithCondition( // stonecutter: remove qualifier when import optimizer fix is available
+        method = "addRecentChat",
+        at = @At(
+            value = "INVOKE",
+            //? if >=1.20.2 {
+            target = "Lnet/minecraft/client/CommandHistory;addCommand(Ljava/lang/String;)V"
+            //?} else {
+            /*target = "Ljava/util/List;add(Ljava/lang/Object;)V"
+            *///?}
+        )
+    )
+    private boolean toggleCommandLog(net.minecraft.client.CommandHistory manager, String message) {
         return !config.chatlog;
     }
+    //?}
 
     /**
      * Cancels logging chat messages if the chat log is restoring or if the tag is
@@ -241,11 +261,11 @@ public abstract class ChatHudMixin implements ChatHudAccess {
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
     //? if <=1.20.4 {
     private void ignoreRestoredMessages(Component message, @Nullable GuiMessageTag tag, CallbackInfo ci) {
-    //? } else {
-    //private void ignoreRestoredMessages(GuiMessage message, CallbackInfo ci) {
-    //? }
+    //?} else {
+    /*private void ignoreRestoredMessages(GuiMessage message, CallbackInfo ci) {
+    *///?}
 
-        if(ChatLog.isRestoring() || /*?if <=1.20.4 {*/tag/*?} else {*//*message.tag()*//*?}*/.equals(ChatLog.RESTORED_INDICATOR))
+        if(ChatLog.isRestoring() || ChatLog.RESTORED_INDICATOR.equals(/*? if <=1.20.4 {*/tag/*?} else {*//*message.tag()*//*?}*/))
             ci.cancel();
     }
 }

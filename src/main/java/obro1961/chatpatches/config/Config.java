@@ -112,9 +112,9 @@ public class Config {
                 if(clicked) {
 					//? if <=1.20.2 {
                     ConfirmLinkScreen.confirmLinkNow(link, parent, true);
-					//? } else {
-					//ConfirmLinkScreen.confirmLinkNow(parent, link);
-					//? }
+					//?} else {
+					/*ConfirmLinkScreen.confirmLinkNow(parent, link);
+					*///?}
 				} else {
 					mc.setScreen(parent);
 				}
@@ -152,8 +152,8 @@ public class Config {
 		MutableComponent hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), "", "", hoverColor);
 
 		return timestamp.withStyle(s ->
-			s.withHoverEvent( hover ? new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText) : null )
-			.withClickEvent( hover ? new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, hoverText.getString()) : null )
+			s.withHoverEvent( hover ? TextUtils.showText(hoverText) : null )
+			.withClickEvent( hover ? TextUtils.suggestCommand(hoverText.getString()) : null )
 			.withInsertion(String.valueOf( when.getTime() ))
 			.withColor(timeColor)
 		);
@@ -192,9 +192,9 @@ public class Config {
 			// stonecutter: remove qualifiers when import optimizer fix is available
 			//? if <=1.20.2 {
             return TextUtils.newText(net.minecraft.network.chat.contents.LiteralContents.EMPTY, components, hoverStyle);
-			//? } else {
-            //return TextUtils.newText(net.minecraft.network.chat.contents.PlainTextContents.EMPTY, components, hoverStyle);
-			//? }
+			//?} else {
+            /*return TextUtils.newText(net.minecraft.network.chat.contents.PlainTextContents.EMPTY, components, hoverStyle);
+			*///?}
         } catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
 
@@ -568,7 +568,7 @@ public class Config {
 				// much love to TheWhyEvenHow for the solution: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
                 case Object o when key.contains("Color") ->
 					//stonecutter: remove qualifier when import optimizer fix is available
-					/*?if <=1.20.4 {*/net.minecraft.util.ExtraCodecs/*?} else {*//*Codec*//*?}*/
+					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*/net.minecraft.util.ExtraCodecs/*?} else {*//*Codec*//*?}*/
 					.withAlternative(
 						TextColor.CODEC,
 						Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue)
@@ -601,5 +601,12 @@ public class Config {
 
             return codec.optionalFieldOf(key, def);
         }
+
+		//prepub move elsewhere (new CodecUtils?) if u want idrc or just wait it out until i discontinue this version?
+		//? if <=1.20.1 {
+		/*static <T> Codec<T> withAlternative(Codec<T> codec, Codec<? extends T> alternative) {
+			return Codec.either(codec, alternative).xmap(either -> either.map(Function.identity(), Function.identity()), com.mojang.datafixers.util.Either::left);
+		}
+		*///?}
     }
 }

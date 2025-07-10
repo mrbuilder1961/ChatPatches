@@ -2,7 +2,6 @@ plugins {
     id("dev.kikugie.stonecutter")
 }
 
-//val vcs: String by settings//todo?
 stonecutter active "1.20.2-fabric"
 
 // each build task builds all of its loader and copies them to build/libs/

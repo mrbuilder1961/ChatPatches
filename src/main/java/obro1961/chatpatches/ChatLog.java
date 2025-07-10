@@ -192,6 +192,7 @@ public class ChatLog {
         final int MAX_LEN = 60; // minimizes errors going off-screen
         String d = desc.replace("{}", "%s").formatted((Object[]) vars);
 
+		// auto replaced by stonecutter
         mc.getToasts().addToast(new SystemToast(
 			// auto replaced by stonecutter
 			SystemToast.SystemToastIds.PACK_LOAD_FAILURE,

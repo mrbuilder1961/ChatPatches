@@ -12,7 +12,6 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -144,7 +143,7 @@ public class YaclConfig extends Config {
                 subGroup("time", timeOpts, null),
                 subGroup("hover", hoverOpts, null),
                 subGroup("counter", counterOpts, null),
-                subGroup("compact", compactOpts, Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modrinth.com/mod/compact-chat")))
+                subGroup("compact", compactOpts, Style.EMPTY.withClickEvent( TextUtils.openUrl("https://modrinth.com/mod/compact-chat") ))
             ))
             .category( tabCat("boundary", boundaryOpts) )
             .category( tabCat("chatlog", chatlogOpts,
@@ -343,7 +342,7 @@ public class YaclConfig extends Config {
                 case "chatWidth" -> mc.getWindow().getGuiScaledWidth();
                 case "chatHeight" -> mc.getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
-                case "compactDistance" -> mc.gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 50;
+                case "compactDistance" -> mc.gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25;
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
@@ -442,7 +441,7 @@ public class YaclConfig extends Config {
     }
 
     private static Option<Component> label(MutableComponent labelText, String urlTooltip) {
-        return LabelOption.create( labelText.withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, urlTooltip))) );
+        return LabelOption.create(labelText.withStyle(style -> style.withClickEvent( TextUtils.openUrl(urlTooltip) ) ));
     }
 
     private static ButtonOption action(String key, Object... args) {

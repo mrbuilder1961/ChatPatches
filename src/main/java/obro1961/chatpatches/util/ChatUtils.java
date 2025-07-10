@@ -232,7 +232,7 @@ public class ChatUtils {
 	 * Reformats the incoming message {@code m} according to configured
 	 * settings, message data, and at indices specified in this class.
 	 * This method is used in the
-	 * {@link ChatHudMixin#modifyMessage(Component, boolean)} mixin.
+	 * {@link ChatHudMixin#modifyMessage(Component)} mixin.
 	 *
 	 * @implNote
 	 * <ol>

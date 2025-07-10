@@ -20,7 +20,6 @@ import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.*;
@@ -45,11 +44,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import oshi.util.Memoizer;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,7 +81,7 @@ public class ContextMenu implements GuiEventListener {
 	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
 	// region text constants
-	static final UnaryOperator<Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", id);
+	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", id instanceof Component ? id : Component.nullToEmpty(String.valueOf(id)));
 	static final Component MENU_STRING = Component.translatable(LANG_PREFIX + "copyText");
 	static final Component RAW_TEXT = Component.translatable(LANG_PREFIX + "rawText");
 	static final Component FORMATTED_STR = Component.translatable(LANG_PREFIX + "formattedString");
@@ -204,15 +202,15 @@ public class ContextMenu implements GuiEventListener {
 
 
 		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
-		//Optional<Component> o = null;
-		//o.orElse(UNKNOWN.apply(Component.nullToEmpty("Sender " + ec.id))).getString()
-		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityTooltipInfo ec
-			?
-			//? if <=1.20.2 {
-			new GameProfile(ec.id, Objects.requireNonNullElse(ec.name, UNKNOWN.apply(Component.nullToEmpty("Sender " + ec.id))).getString())
-			//? } else {
-			//new GameProfile(ec.id, ec.name.orElse(UNKNOWN.apply(Component.nullToEmpty("Sender " + ec.id))).getString())
-			//? }
+		//? if <=1.21.4 {
+		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityTooltipInfo info
+		//?} else {
+		/*this.messageSender = s.getHoverEvent() instanceof HoverEvent.ShowEntity(HoverEvent.EntityTooltipInfo info)
+		*///?}
+			? new GameProfile(
+				info./*? if >=1.21.5 {*//*uuid*//*?} else {*/id/*?}*/,
+				/*? if <=1.20.2 {*/Optional.ofNullable/*?}*/(info.name).orElse(UNKNOWN.apply( MENU_SENDER.copy().append(" " +info./*? if >=1.21.5 {*//*uuid*//*?} else {*/id/*?}*/) )).getString()
+			)
 			: NIL_MESSAGE_DATA.sender();
 	}
 
@@ -232,7 +230,7 @@ public class ContextMenu implements GuiEventListener {
 	 * @param col      The column in the grid menu where the button should be
 	 *                 placed. Main buttons are always in column 0, and hover
 	 *                 buttons are in columns ≥1.
-	 * @param renderObject An {@link Item} or {@link PlayerSkin} object to
+	 * @param renderObject An {@link Item} or {@link net.minecraft.client.resources.PlayerSkin} object to
 	 *                     render over the leftmost button area, or {@code null}
 	 *                     to not render anything extra.
 	 */
@@ -248,6 +246,7 @@ public class ContextMenu implements GuiEventListener {
 			String copyStr = StringUtil.stripColor(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc.keyboardHandler.setClipboard(copyStr);
+				// auto replaced by stonecutter
 				mc.getToasts().addToast(new SystemToast(
 					// auto replaced by stonecutter
 					SystemToast.SystemToastIds.PERIODIC_NOTIFICATION, Component.translatable(LANG_PREFIX + "copied"), copyText
@@ -260,7 +259,7 @@ public class ContextMenu implements GuiEventListener {
 
 		if(renderObject != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
 			final AbstractButton src = button;
-			// fixme: make the button *not* adjust the text if it doesnt need to
+			// idea: make the button *not* adjust the text if it doesnt need to
 			// accounts for the 16x16 icon on the left with the +16 and prefixed 4 spaces (each of width 4) in the id label
 			button = new AbstractButton(button.getX(), button.getY(), button.getWidth() + 16, button.getHeight(), Component.literal("    ").append(id)) {
 				final Button.CreateNarration narrationSupplier = Supplier::get;
@@ -268,13 +267,14 @@ public class ContextMenu implements GuiEventListener {
 				@Override public void onPress() { src.onPress(); }
 
 				@Override
-				protected void renderWidget(GuiGraphics context, int mX, int mY, float delta) {
-					super.renderWidget(context, mX, mY, delta);
+				protected void renderWidget(GuiGraphics graphics, int mX, int mY, float delta) {
+					super.renderWidget(graphics, mX, mY, delta);
 
 					if(renderObject instanceof Item icon)
-						context.renderFakeItem(icon.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
-					else if(renderObject instanceof PlayerSkin playerSkin)
-						PlayerFaceRenderer.draw(context, playerSkin, this.getX() + 1, this.getY() + 1, 16);
+						graphics.renderFakeItem(icon.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
+					//stonecutter: remove qualifier when import optimizer fix is available
+					else if(renderObject instanceof /*? if >=1.20.2 {*/net.minecraft.client.resources.PlayerSkin/*?} else {*//*net.minecraft.resources.ResourceLocation*//*?}*/ playerSkin)
+						PlayerFaceRenderer.draw(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 				}
 
 				@Override
@@ -284,7 +284,7 @@ public class ContextMenu implements GuiEventListener {
 				}
 
 				// pulled from ButtonWidget
-				@Override protected MutableComponent createNarrationMessage() {return narrationSupplier.createNarrationMessage(super::createNarrationMessage);}
+				@Override protected @NotNull MutableComponent createNarrationMessage() {return narrationSupplier.createNarrationMessage(super::createNarrationMessage);}
 				@Override public void updateWidgetNarration(NarrationElementOutput builder) {defaultButtonNarrationText(builder);}
 			};
 		}
@@ -429,7 +429,11 @@ public class ContextMenu implements GuiEventListener {
 				registerCopyButton(TIMESTAMP, 0, timestamp);
 				registerCopyButton(TIMESTAMP_HOVER, 1, 1, () -> {
 					HoverEvent hoverEvent = timestamp.getStyle().getHoverEvent();
+					//? if >=1.21.5 {
+					/*return hoverEvent instanceof HoverEvent.ShowText(Component value) ? value : EMPTY;
+ 					*///?} else {
 					return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : EMPTY;
+					//?}
 				}, null);
 		}
 
@@ -454,12 +458,27 @@ public class ContextMenu implements GuiEventListener {
 		});
 		ObjectList<String> filePaths = Util.make(new ObjectArrayList<>(), l ->
 			text.visit((style, str) -> {
-				if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
-					if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v))
-						webLinks.add(v);
-					else if(ce.getAction() == ClickEvent.Action.OPEN_FILE && !l.contains(v))
-						l.add(v);
+				//? if >=1.21.5 {
+				/*if(style.getClickEvent() instanceof ClickEvent ce && (ce instanceof ClickEvent.OpenUrl || ce instanceof ClickEvent.OpenFile)) {
+					boolean isUrl = ce instanceof ClickEvent.OpenUrl;
+					String link = isUrl ? ((ClickEvent.OpenUrl)ce).uri().toString() : ((ClickEvent.OpenFile)ce).path();
+					if(link != null && !link.isBlank()) {
+						if(isUrl && !webLinks.contains(link)) {
+							webLinks.add(link);
+						} else if(!isUrl && !l.contains(link)) {
+							l.add(link);
+						}
+					}
 				}
+				*///?} else {
+				if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
+					if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v)) {
+						webLinks.add(v);
+					} else if(ce.getAction() == ClickEvent.Action.OPEN_FILE && !l.contains(v)) {
+						l.add(v);
+					}
+				}
+				//?}
 				return Optional.empty();
 			}, Style.EMPTY));
 		if(!webLinks.isEmpty() || !filePaths.isEmpty()) {
@@ -484,7 +503,7 @@ public class ContextMenu implements GuiEventListener {
 				0, 0,
 				null,
 				me -> ((ChatScreenAccess) screen).chatpatches$getChatField().setValue(TextUtils.fillVars(config.contextReplyFormat, messageSender.getName())),
-				mc.getSkinManager().getInsecureSkin(messageSender)
+				mc.getSkinManager()./*? if >=1.20.2 {*/getInsecureSkin/*?} else {*//*getInsecureSkinLocation*//*?}*/(messageSender)
 			);
 		}
 
@@ -502,19 +521,19 @@ public class ContextMenu implements GuiEventListener {
 	 *
 	 * @see ChatScreenMixin#renderCustomWidgets(GuiGraphics, int, int, float, CallbackInfo)
 	 */
-	public void render(GuiGraphics drawContext, int mX, int mY, float delta) {
+	public void render(GuiGraphics graphics, int mX, int mY, float delta) {
 		if(noOp)
 			return;
 
-		renderSelectionOutline(drawContext/*, mX, mY, delta*/);
-		renderMenuButtons(drawContext, mX, mY, delta);
+		renderSelectionOutline(graphics/*, mX, mY, delta*/);
+		renderMenuButtons(graphics, mX, mY, delta);
 	}
 
 	/**
 	 * Renders a selection outline around the hovered message lines
 	 * in the chat, to indicate which message will be copied.
 	 */
-	private void renderSelectionOutline(GuiGraphics drawContext/*, int mX, int mY, float delta*/) {
+	private void renderSelectionOutline(GuiGraphics graphics/*, int mX, int mY, float delta*/) {
 		if(visibleLines == 0 || visibleMessageIndex == -1)
 			return;
 
@@ -527,8 +546,8 @@ public class ContextMenu implements GuiEventListener {
 		int i = visibleMessageIndex - access.chatpatches$getScrolledLines();
 		int hoveredY = sH - (i * lH) - shift;
 
-		drawContext.pose().pushPose();
-		drawContext.pose().scale((float) s, (float) s, 1.0f);
+		graphics.pose().pushPose();
+		graphics.pose().scale((float) s, (float) s /*? if <=1.21.5 {*/, 1.0f/*?}*/);
 
 		int borderW = sW + 8;
 		int scissorY1 = Mth.floor((sH - (hud.getLinesPerPage() * lH) - shift - 1) * s);
@@ -537,15 +556,15 @@ public class ContextMenu implements GuiEventListener {
 		int selectionH = (lH * hoveredParts) + 1;
 
 		// cuts off any of the selection rect that goes past the chat hud
-		drawContext.enableScissor(0, scissorY1, borderW, scissorY2);
-		drawContext.renderOutline(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));
-		drawContext.disableScissor();
+		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
+		graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));
+		graphics.disableScissor();
 
-		drawContext.pose().popPose();
+		graphics.pose().popPose();
 	}
 
-	private void renderMenuButtons(GuiGraphics drawContext, int mX, int mY, float delta) {
-		grid.buttons().forEach(w -> w.render(drawContext, mX, mY, delta));
+	private void renderMenuButtons(GuiGraphics graphics, int mX, int mY, float delta) {
+		grid.buttons().forEach(w -> w.render(graphics, mX, mY, delta));
 	}
 
 

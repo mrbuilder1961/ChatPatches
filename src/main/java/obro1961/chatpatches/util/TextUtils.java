@@ -46,9 +46,9 @@ public class TextUtils {
 		return
 			//? if <=1.20.2 {
 			net.minecraft.util.ExtraCodecs.COMPONENT;
-			//? } else {
-			//net.minecraft.network.chat.ComponentSerialization.CODEC;
- 			//? }
+			//?} else {
+			/*net.minecraft.network.chat.ComponentSerialization.CODEC;
+ 			*///?}
 	}
 
 
@@ -88,7 +88,34 @@ public class TextUtils {
 	 * */
 	public static MutableComponent withoutContent(Component text) {
 		//stonecutter: remove qualifier when import optimizer fix is available
-		return newText(/*?if <=1.20.2 {*/ComponentContents.EMPTY/*?} else {*//*net.minecraft.network.chat.contents.PlainTextContents.EMPTY*//*?}*/, text.getSiblings(), text.getStyle());
+		return newText(/*? if <=1.20.2 {*/ComponentContents.EMPTY/*?} else {*//*net.minecraft.network.chat.contents.PlainTextContents.EMPTY*//*?}*/, text.getSiblings(), text.getStyle());
+	}
+
+	public static ClickEvent/*? if >=1.21.5 {*//*.OpenUrl*//*?}*/ openUrl(String url) {
+		return new
+			//? if >=1.21.5 {
+			/*ClickEvent.OpenUrl(java.net.URI.create(url));*/
+			//?} else {
+			ClickEvent(ClickEvent.Action.OPEN_URL, url);
+ 			//?}
+	}
+
+	public static ClickEvent/*? if >=1.21.5 {*//*.SuggestCommand*//*?}*/ suggestCommand(String command) {
+		return new
+			//? if >=1.21.5 {
+			/*ClickEvent.SuggestCommand(command);*/
+			//?} else {
+			ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command);
+			//?}
+	}
+
+	public static HoverEvent/*? if >=1.21.5 {*//*.ShowText*//*?}*/ showText(Component text) {
+		return new
+			//? if >=1.21.5 {
+			/*HoverEvent.ShowText(text);*/
+			//?} else {
+			HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
+			//?}
 	}
 
 

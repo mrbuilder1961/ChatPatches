@@ -137,29 +137,6 @@ modstitch {
             // configs.register("chatpatches-{}")
     }
 }
-
-stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
-    // https://stonecutter.kikugie.dev/blog/changes/0.7.html#_0-7-alpha-10
-    constants {
-        match(loader, "fabric", "neo", "forge")
-    }
-
-    //prepub: make this data-driven from gradle.properties
-    replacements {
-        // needed bc only one replacement per block -_-
-        fun strRepl(dir: Boolean, from: String, to: String) {
-            string {
-                direction = dir
-                replace(from, to)
-            }
-        }
-
-        strRepl(eval(minecraft, ">=1.20.3"), "SystemToast.SystemToastIds.", "SystemToast.SystemToastId.") // '.' prevents adding an extra 's'
-        // todo: update and merge the toast method so i can just put the versioned code straight in the method
-        strRepl(eval(minecraft, ">=1.21.2"), "getToasts()", "getToastManager()") // on Minecraft
-    }
-}
-
 tasks {
     modstitch.finalJarTask {
         archiveBaseName.set(id)
@@ -204,6 +181,35 @@ tasks {
         dependencies.get().dependsOn("processResources")
     }
 }
+
+stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
+    // https://stonecutter.kikugie.dev/blog/changes/0.7.html#_0-7-alpha-10
+    constants {
+        match(loader, "fabric", "neo", "forge")
+    }
+
+    //prepub: make this data-driven from gradle.properties
+    replacements {
+        // needed bc only one replacement per block -_-
+        fun strRepl(dir: Boolean, from: String, to: String) {
+            string {
+                direction = dir
+                replace(from, to)
+            }
+        }
+
+        strRepl(eval(minecraft, ">=1.20.3"), "SystemToast.SystemToastIds.", "SystemToast.SystemToastId.") // '.' prevents adding an extra 's'
+
+        // todo: update and merge the toast method so i can just put the versioned code straight in the method
+        strRepl(eval(minecraft, ">=1.21.2"), "getToasts()", "getToastManager()") // on Minecraft
+
+        val v1216 = eval(minecraft, ">=1.21.6")
+        //fixme: all of these replacements need stonecutter comments so i dont forget they're being replaced
+        strRepl(v1216, "graphics.pose().pushPose()", "graphics.pose().pushMatrix()") // on GuiGraphics
+        strRepl(v1216, "graphics.pose().popPose()", "graphics.pose().popMatrix()") // on GuiGraphics
+    }
+}
+
 
 publishMods {
     val secrets = rootDir.toPath().resolve("secrets.json").toFile()
@@ -279,11 +285,10 @@ publishMods {
         commitish = "omnivers"
         tagName = "$v-$name" //prepub
 
-        // warning: this probably doesn't work bc loom-specific?
         if(modstitch.isLoom) {
             additionalFiles.from(
-                tasks.remapSourcesJar.flatMap { it.archiveFile },
-                tasks.jar.flatMap { it.archiveFile }
+                tasks.remapSourcesJar.flatMap { it.archiveFile }, // warning: broken bc loom-specific?
+                modstitch.namedJarTask.flatMap { it.archiveFile } // should work for both
             )
         }
     }

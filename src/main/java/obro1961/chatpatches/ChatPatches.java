@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ChatPatches implements ClientModInitializer {
@@ -158,10 +157,9 @@ public class ChatPatches implements ClientModInitializer {
 	 * @apiNote Methods such as {@link CompletableFuture#orTimeout(long, TimeUnit)},
 	 * by nature, <b>will block</b>, and as such should <b>probably not be used</b>.
 	 */
-	@SuppressWarnings("UnusedReturnValue")
-	public static CompletableFuture<Void> executeIoTask(Runnable task) {
-		final ExecutorService IO_POOL = Util.ioPool();
-		return CompletableFuture.runAsync(task, IO_POOL).exceptionallyAsync(e -> {
+	public static /*CompletableFuture<Void>*/ void executeIoTask(Runnable task) {
+		final var IO_POOL = Util.ioPool(); // var for stonecutter!
+		/*return*/ CompletableFuture.runAsync(task, IO_POOL).exceptionallyAsync(e -> {
 			logReportMsg(e);
 			return null;
 		}, IO_POOL);
