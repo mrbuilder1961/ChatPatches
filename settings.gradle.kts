@@ -1,5 +1,5 @@
 pluginManagement {
-    // allow storing plugin versions in gradle.properties
+    // allows storing plugin versions in gradle.properties
     val kotlin: String by settings
     val stonecutter: String by settings
     val modstitch: String by settings
@@ -33,7 +33,7 @@ stonecutter {
     centralScript = "build.gradle.kts"
 
     create(rootProject) {
-        // forge/neoforge modstitch compat key:
+        //       modstitch compat key:
         //           /-----------|------|.... // neoforge
         // ----|----/                         // forge
         // 1.20   1.20.1      1.20.2  1.20.3
@@ -45,13 +45,13 @@ stonecutter {
             v: String ->
             loadList.forEach {
                 l: String ->
-                vers("$v-$l", v) // creates a version named "version-loader"
+                vers("$v-$l", v)
             }
         }
 
         val vcs: String by settings
-        vcsVersion = vcs // when not explicitly specified defaults to first version
+        vcsVersion = vcs // if not explicitly specified defaults to first version
     }
 }
 
-rootProject.name = "Chat Patches" // mod.name
+rootProject.name = "Chat Patches"

@@ -3,18 +3,15 @@ import kotlinx.serialization.json.jsonObject
 import me.modmuss50.mpp.ReleaseType
 
 plugins { // versions in gradle.properties + settings.gradle.kts
-    //id("dev.kikugie.stonecutter") //prepub ?
     id("dev.isxander.modstitch.base")
     id("me.modmuss50.mod-publish-plugin")
-    //id("fabric-loom") // prepub ??
     kotlin("jvm")
 }
 
 
-println("name: $name, SVC: ${stonecutter.current.version}")// debug: !
 val id = m("id") ?: error("No mod id specified")
-val minecraft = name.substringBefore("-") // uses the stonecutter project's minecraft version
-val loader: String = name.substringAfter("-") //name.substring(name.lastIndexOf('-') + 1)
+val minecraft = stonecutter.current.version //name.substringBefore("-")
+val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prepub: does this cause any issues...
 val v: String = m("version") ?: error("No version specified")
 
 var allowPublish = false
@@ -33,18 +30,19 @@ fun m(name: String): String? = findProperty("mod.$name") as String?
  * will return the value of `fabric.api`, `neo.api`, or `forge.api` depending on
  * the current loader.
  */
-fun l(name: String): String? = findProperty("${if(loader == "neoforge") "neo" else loader}.$name") as String?
+fun l(name: String): String? = findProperty("$loader.$name") as String?
 
 
-// All dependencies should be specified through the modstitch proxy configuration.
-// Wondering where the "repositories" block is? Go to "stonecutter.gradle.kts" // prepub lie
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
     // fabric only
     modstitch.loom {
         modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${l("api")}+$minecraft")
     }
 
-    //modstitchModApi "dev.architectury:architectury-fabric:${d("arch")}"
     //modstitchModImplementation("eu.pb4:placeholder-api:${d("placeholder")}")
     if(minecraft == "1.20.2")
         modstitchModImplementation("dev.isxander.yacl:yet-another-config-lib-fabric:${d("yacl")}")
@@ -56,9 +54,8 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 }
 
-repositories { // ??????
+repositories {
     mavenCentral()
-    //maven("https://maven.kikugie.dev/releases")
     //todo NEW MAVEN FOR ARCH... later
     maven("https://maven.isxander.dev/releases")
     maven("https://maven.terraformersmc.com/releases/")
@@ -81,48 +78,32 @@ modstitch {
         fun <K, V> MapProperty<K, V>.populate(block: MapProperty<K, V>.() -> Unit) { block() }
 
         modId = id
-        modVersion = v//"$v-$minecraft" // prepub?!
+        modVersion = v
         modName = m("name")
         modGroup = m("group")
         modDescription = m("desc")
         modAuthor = m("author")
-        modCredits = m("credits")?.replace("\"", "\\\"") //prepub todo make this a list
+        modCredits = m("credits")?.split(",")?.toString() // transforms the invalid json into a valid list
         modLicense = m("license")
         //todo forge: uses mods.toml instead of neoforge.mods.toml
         // also todo with FMJ: remove fabric api and use arch api or sm
 
         replacementProperties.populate {
-            // prepub absolute logo path?
-            //put("mod_logo", /*not rootDir..*/rootDir.toPath().resolve("assets/$id/logo.png").toString())
-            put("minecraft_range", minecraft) // fixme: use a version-specific property that defaults to its mc vers?!
+            // URGENT: idk how range is supposed to work between fabric's nice system and neo's dumb maven shit
+            put("minecraft_range", m("range") ?: minecraft) // if range is not specified, use the current minecraft version
             put("mod_source", m("source") ?: error("No source repo specified"))
             put("mod_modrinth", m("modrinth") ?: error("No Modrinth ID specified"))
-            // prepub delete this guy
-            put("pack_format", // https://minecraft.wiki/w/Pack_format#List_of_data_pack_formats
-                when(minecraft) {
-                    "1.20", "1.20.1" -> 15
-                    "1.20.2" -> 18
-                    "1.20.3", "1.20.4" -> 26
-                    "1.20.5", "1.20.6" -> 41
-                    "1.21", "1.21.1" -> 48
-                    "1.21.2", "1.21.3" -> 57
-                    "1.21.4" -> 61
-                    "1.21.5" -> 71
-                    "1.21.6" -> 77
-                    "1.21.7" -> 81
-                    else -> error("No `pack_format` exists for $minecraft.")
-                }.toString()
-            )
         }
     }
 
     // Fabric
     loom {
-        fabricLoaderVersion = p("fabric.loader")
+        fabricLoaderVersion = if(isLoom) l("loader") else error("Trying to specify Fabric loader on '$loader'") //p("fabric.loader")
+
 
         // Configure loom like normal in this block.
         configureLoom {
-            //todo ?? blank i think
+            //todo ?? blank unless i need to edit something like AW (aka disable validation for versioning)
         }
     }
 
@@ -131,11 +112,10 @@ modstitch {
         enable {
             prop("forge.loader") { forgeVersion = it }
             prop("neo.loader") { neoForgeVersion = it }
-            //dep("mcp") { mcpVersion = it }
         }
 
         // Configures client runs for MDG, it is not done by default
-        defaultRuns(true, false, { "$loader $it" })
+        defaultRuns(true, false) { "$loader $it" }
 
         // This block configures the `neoforge` extension that MDG exposes by default,
         // you can configure MDG like normal from here
@@ -161,42 +141,44 @@ modstitch {
 stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     // https://stonecutter.kikugie.dev/blog/changes/0.7.html#_0-7-alpha-10
     constants {
-        match(if(loader == "neoforge") "neo" else loader, "fabric", "neo", "forge") // prepub does this neo shortener work
+        match(loader, "fabric", "neo", "forge")
     }
 
+    //prepub: make this data-driven from gradle.properties
     replacements {
-        string {
-            direction = eval(minecraft, ">1.20.2")
-            phase = "first"//fixme????
-            // a SINGLE LETTER CHANGE is SO DIABOLICAL it inspired me to add stonecutter.
-            replace("SystemToast.SystemToastIds", "SystemToast.SystemToastId")
-            //replace("ExtraCodecs.COMPONENT", "ComponentSerialization.CODEC")
+        // needed bc only one replacement per block -_-
+        fun strRepl(dir: Boolean, from: String, to: String) {
+            string {
+                direction = dir
+                replace(from, to)
+            }
         }
-    }
-}
 
-kotlin {
-    jvmToolchain(21)
+        strRepl(eval(minecraft, ">=1.20.3"), "SystemToast.SystemToastIds.", "SystemToast.SystemToastId.") // '.' prevents adding an extra 's'
+        // todo: update and merge the toast method so i can just put the versioned code straight in the method
+        strRepl(eval(minecraft, ">=1.21.2"), "getToasts()", "getToastManager()") // on Minecraft
+    }
 }
 
 tasks {
-    modstitch.finalJarTask { // todo: vet plz idk if this is what i want or too much
-        archiveBaseName.set(id) //?
+    modstitch.finalJarTask {
+        archiveBaseName.set(id)
         archiveVersion.set("$v+$minecraft")
-        archiveClassifier.set(loader) //?
+        archiveClassifier.set(loader)
     }
 
     processResources {
-        duplicatesStrategy = DuplicatesStrategy.WARN //?
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        outputs.upToDateWhen { false } // from Bawnorton/Trimica: works around modstitch mixin cache issue
 
         val changelogFile: File = rootDir.toPath().resolve("changelog.md").toFile()
         if(changelogFile.exists()) {
             var fileText = changelogFile.readText()
             // replace issue numbers with links
-            fileText = fileText.replace(Regex("##(\\d+)"), "[#\$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/\$1)")
+            fileText = fileText.replace(Regex("##(\\d+)"), "[#$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/$1)")
             changelogFile.writeText(fileText) // update the file
 
-            // hackily gets the first changelog entry
+            // hack-ily gets the first changelog entry
             val newEntryTitle = "## Chat Patches `$v`"
             val newIndex = fileText.indexOf(newEntryTitle)
             val prevEntryIndex = fileText.replaceFirst(newEntryTitle, "").indexOf("## Chat Patches `") + newEntryTitle.length - 2
@@ -204,13 +186,18 @@ tasks {
             changes = fileText.substring(if(newIndex >= 0) newIndex else 0, prevEntryIndex)
 
             // considered "malformed" if it doesn't end with any word characters, whitespace, or newlines
-            if( !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)\$")) || newIndex == -1 ) {
+            if( !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)$")) || newIndex == -1 ) {
                 println("/!\\ Warning: /!\\ Changelog appears malformed, this is probably caused by an invalid version ($v).")
                 if(allowPublish) {
                     allowPublish = false
                 }
             }
         }
+    }
+
+    clean {
+        delete(rootProject.layout.buildDirectory)
+        delete(project.file("build"))
     }
 
     publishMods {
@@ -226,8 +213,14 @@ publishMods {
         return p.split(",").filter { it.isNotBlank() }
     }
     fun token(name: String): String {
-        if(!allowPublish || !secrets.exists()) return "-"
-        return (Json.parseToJsonElement( secrets.readText(Charsets.UTF_8) ).jsonObject[name]?.toString() ?: "?")
+        return when {
+            !allowPublish -> "-"
+            !secrets.exists() -> {
+                dryRun = true
+                "x"
+            }
+            else -> (Json.parseToJsonElement( secrets.readText(Charsets.UTF_8) ).jsonObject[name]?.toString() ?: "?")
+        }
     }
 
     val loaders = propList("loaders")
@@ -251,23 +244,6 @@ publishMods {
     modLoaders = loaders
     println("dryRun = ${dryRun.getOrElse(false)}, but will be set to ${!allowPublish}")
     dryRun = !allowPublish
-
-    /*if(allowPublish) {
-        println("Publishing v$v to $loaders on $targets!")
-    } else {
-        println("Not publishing v$v because `allowPublish` was false! Maybe the changelog is malformed?")
-        println("Using:")
-        println("\tphase: ${type.get()}")
-        println("\tbranch: omnivers")
-        println("\tloaders: $loaders")
-        println("\ttargets: $targets")
-        println("\trequired: $required")
-        println("\toptionals: $optionals")
-        println("\tincompatibles: $incompatibles")
-        println("\tembedded: $embedded")
-        println("\tchangelog: |$changes|")
-        //return@publishMods
-    }*/
 
     curseforge {
         if(allowPublish) {
@@ -299,10 +275,17 @@ publishMods {
 
     github {
         accessToken = token("github")
-        repository = "mrbuilder1961/ChatPatches"
+        repository = m("source")!!
         commitish = "omnivers"
         tagName = "$v-$name" //prepub
-        //additionalFiles.from(remapSourcesJar.archiveFile, jar.archiveFile)//fixme
+
+        // warning: this probably doesn't work bc loom-specific?
+        if(modstitch.isLoom) {
+            additionalFiles.from(
+                tasks.remapSourcesJar.flatMap { it.archiveFile },
+                tasks.jar.flatMap { it.archiveFile }
+            )
+        }
     }
 
     discord {

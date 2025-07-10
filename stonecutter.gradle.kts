@@ -1,7 +1,5 @@
 plugins {
     id("dev.kikugie.stonecutter")
-    //id("me.modmuss50.mod-publish-plugin")
-    //id("dev.isxander.modstitch.base") apply false//prepub ???
 }
 
 //val vcs: String by settings//todo?
@@ -22,7 +20,7 @@ fun registerLoaderBuildTask(loader: String) {
 
 registerLoaderBuildTask("fabric")
 registerLoaderBuildTask("neo")
-//registerLoaderBuildTask("forge") // todo w forge
+//registerLoaderBuildTask("forge") // todo
 
 tasks.register("buildAll") {
     dependsOn("buildFabric", "buildNeo"/*, "buildForge"*/)

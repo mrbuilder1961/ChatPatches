@@ -5,7 +5,7 @@
   "name": "${mod_name}",
   "description": "${mod_description}",
   "authors": [ "${mod_author}" ],
-  "contributors": [ "${mod_credits}" ],
+  "contributors": ${mod_credits},
   "contact": {
     "homepage": "https://modrinth.com/mod/${mod_modrinth}",
     "issues": "https://github.com/${mod_source}/issues",
@@ -24,7 +24,7 @@
   },
   "depends": {
     "java": ">=21",
-    "minecraft": "${minecraft_range}",
+    "minecraft": ${minecraft_range},
     "fabricloader": ">=0.15.0",
     "fabric-api": "*",
     "yet_another_config_lib_v3": "*"
