@@ -31,7 +31,7 @@ public class SearchButton extends ImageButton {
 
     @Override
     public boolean mouseClicked(double x, double y, int buttonType) {
-        if(active && visible && /*? if <1.21.2 {*/clicked/*?} else {*//*isMouseOver*//*?}*/(x, y)) {
+        if(active && visible && /*? if <1.21.2 {*//*clicked*//*?} else {*/isMouseOver/*?}*/(x, y)) {
             if(buttonType == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                 this.playDownSound(Minecraft.getInstance().getSoundManager());
                 onPress.onPress(this);

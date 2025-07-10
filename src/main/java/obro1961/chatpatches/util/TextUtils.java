@@ -45,10 +45,10 @@ public class TextUtils {
 	public static Codec<Component> textCodec() { // stonecutter: replace with a swap to del unnecessary method (* micro optimization :D *)
 		return
 			//? if <=1.20.2 {
-			net.minecraft.util.ExtraCodecs.COMPONENT;
-			//?} else {
-			/*net.minecraft.network.chat.ComponentSerialization.CODEC;
- 			*///?}
+			/*net.minecraft.util.ExtraCodecs.COMPONENT;
+			*///?} else {
+			net.minecraft.network.chat.ComponentSerialization.CODEC;
+ 			//?}
 	}
 
 
@@ -88,34 +88,34 @@ public class TextUtils {
 	 * */
 	public static MutableComponent withoutContent(Component text) {
 		//stonecutter: remove qualifier when import optimizer fix is available
-		return newText(/*? if <=1.20.2 {*/ComponentContents.EMPTY/*?} else {*//*net.minecraft.network.chat.contents.PlainTextContents.EMPTY*//*?}*/, text.getSiblings(), text.getStyle());
+		return newText(/*? if <=1.20.2 {*//*ComponentContents.EMPTY*//*?} else {*/net.minecraft.network.chat.contents.PlainTextContents.EMPTY/*?}*/, text.getSiblings(), text.getStyle());
 	}
 
-	public static ClickEvent/*? if >=1.21.5 {*//*.OpenUrl*//*?}*/ openUrl(String url) {
+	public static ClickEvent/*? if >=1.21.5 {*/.OpenUrl/*?}*/ openUrl(String url) {
 		return new
 			//? if >=1.21.5 {
-			/*ClickEvent.OpenUrl(java.net.URI.create(url));*/
+			ClickEvent.OpenUrl(java.net.URI.create(url));
 			//?} else {
-			ClickEvent(ClickEvent.Action.OPEN_URL, url);
- 			//?}
+			/*ClickEvent(ClickEvent.Action.OPEN_URL, url);
+ 			*///?}
 	}
 
-	public static ClickEvent/*? if >=1.21.5 {*//*.SuggestCommand*//*?}*/ suggestCommand(String command) {
+	public static ClickEvent/*? if >=1.21.5 {*/.SuggestCommand/*?}*/ suggestCommand(String command) {
 		return new
 			//? if >=1.21.5 {
-			/*ClickEvent.SuggestCommand(command);*/
+			ClickEvent.SuggestCommand(command);
 			//?} else {
-			ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command);
-			//?}
+			/*ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command);
+			*///?}
 	}
 
-	public static HoverEvent/*? if >=1.21.5 {*//*.ShowText*//*?}*/ showText(Component text) {
+	public static HoverEvent/*? if >=1.21.5 {*/.ShowText/*?}*/ showText(Component text) {
 		return new
 			//? if >=1.21.5 {
-			/*HoverEvent.ShowText(text);*/
+			HoverEvent.ShowText(text);
 			//?} else {
-			HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
-			//?}
+			/*HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
+			*///?}
 	}
 
 

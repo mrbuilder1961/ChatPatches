@@ -203,13 +203,13 @@ public class ContextMenu implements GuiEventListener {
 
 		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		//? if <=1.21.4 {
-		this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityTooltipInfo info
-		//?} else {
-		/*this.messageSender = s.getHoverEvent() instanceof HoverEvent.ShowEntity(HoverEvent.EntityTooltipInfo info)
-		*///?}
+		/*this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityTooltipInfo info
+		*///?} else {
+		this.messageSender = s.getHoverEvent() instanceof HoverEvent.ShowEntity(HoverEvent.EntityTooltipInfo info)
+		//?}
 			? new GameProfile(
-				info./*? if >=1.21.5 {*//*uuid*//*?} else {*/id/*?}*/,
-				/*? if <=1.20.2 {*/Optional.ofNullable/*?}*/(info.name).orElse(UNKNOWN.apply( MENU_SENDER.copy().append(" " +info./*? if >=1.21.5 {*//*uuid*//*?} else {*/id/*?}*/) )).getString()
+				info./*? if >=1.21.5 {*/uuid/*?} else {*//*id*//*?}*/,
+				/*? if <=1.20.2 {*//*Optional.ofNullable*//*?}*/(info.name).orElse(UNKNOWN.apply( MENU_SENDER.copy().append(" " +info./*? if >=1.21.5 {*/uuid/*?} else {*//*id*//*?}*/) )).getString()
 			)
 			: NIL_MESSAGE_DATA.sender();
 	}
@@ -247,9 +247,9 @@ public class ContextMenu implements GuiEventListener {
 			if(!copyStr.isEmpty()) {
 				mc.keyboardHandler.setClipboard(copyStr);
 				// auto replaced by stonecutter
-				mc.getToasts().addToast(new SystemToast(
+				mc.getToastManager().addToast(new SystemToast(
 					// auto replaced by stonecutter
-					SystemToast.SystemToastIds.PERIODIC_NOTIFICATION, Component.translatable(LANG_PREFIX + "copied"), copyText
+					SystemToast.SystemToastId.PERIODIC_NOTIFICATION, Component.translatable(LANG_PREFIX + "copied"), copyText
 				));//prepub merge this guy with the toast maker in ChatLog (should be moved to ChatPatches?) amd then del the stonecutter replacer
 			}
 
@@ -430,10 +430,10 @@ public class ContextMenu implements GuiEventListener {
 				registerCopyButton(TIMESTAMP_HOVER, 1, 1, () -> {
 					HoverEvent hoverEvent = timestamp.getStyle().getHoverEvent();
 					//? if >=1.21.5 {
-					/*return hoverEvent instanceof HoverEvent.ShowText(Component value) ? value : EMPTY;
- 					*///?} else {
-					return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : EMPTY;
-					//?}
+					return hoverEvent instanceof HoverEvent.ShowText(Component value) ? value : EMPTY;
+ 					//?} else {
+					/*return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : EMPTY;
+					*///?}
 				}, null);
 		}
 
@@ -459,7 +459,7 @@ public class ContextMenu implements GuiEventListener {
 		ObjectList<String> filePaths = Util.make(new ObjectArrayList<>(), l ->
 			text.visit((style, str) -> {
 				//? if >=1.21.5 {
-				/*if(style.getClickEvent() instanceof ClickEvent ce && (ce instanceof ClickEvent.OpenUrl || ce instanceof ClickEvent.OpenFile)) {
+				if(style.getClickEvent() instanceof ClickEvent ce && (ce instanceof ClickEvent.OpenUrl || ce instanceof ClickEvent.OpenFile)) {
 					boolean isUrl = ce instanceof ClickEvent.OpenUrl;
 					String link = isUrl ? ((ClickEvent.OpenUrl)ce).uri().toString() : ((ClickEvent.OpenFile)ce).path();
 					if(link != null && !link.isBlank()) {
@@ -470,15 +470,15 @@ public class ContextMenu implements GuiEventListener {
 						}
 					}
 				}
-				*///?} else {
-				if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
+				//?} else {
+				/*if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
 					if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v)) {
 						webLinks.add(v);
 					} else if(ce.getAction() == ClickEvent.Action.OPEN_FILE && !l.contains(v)) {
 						l.add(v);
 					}
 				}
-				//?}
+				*///?}
 				return Optional.empty();
 			}, Style.EMPTY));
 		if(!webLinks.isEmpty() || !filePaths.isEmpty()) {
@@ -546,8 +546,8 @@ public class ContextMenu implements GuiEventListener {
 		int i = visibleMessageIndex - access.chatpatches$getScrolledLines();
 		int hoveredY = sH - (i * lH) - shift;
 
-		graphics.pose().pushPose();
-		graphics.pose().scale((float) s, (float) s /*? if <=1.21.5 {*/, 1.0f/*?}*/);
+		graphics.pose().pushMatrix();
+		graphics.pose().scale((float) s, (float) s /*? if <=1.21.5 {*//*, 1.0f*//*?}*/);
 
 		int borderW = sW + 8;
 		int scissorY1 = Mth.floor((sH - (hud.getLinesPerPage() * lH) - shift - 1) * s);
@@ -560,7 +560,7 @@ public class ContextMenu implements GuiEventListener {
 		graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));
 		graphics.disableScissor();
 
-		graphics.pose().popPose();
+		graphics.pose().popMatrix();
 	}
 
 	private void renderMenuButtons(GuiGraphics graphics, int mX, int mY, float delta) {

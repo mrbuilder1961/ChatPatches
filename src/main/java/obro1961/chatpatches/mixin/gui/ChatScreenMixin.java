@@ -183,10 +183,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
 	private void renderCustomWidgets(GuiGraphics graphics, int mX, int mY, float delta, CallbackInfo ci) {
-		graphics.pose().pushPose();
+		graphics.pose().pushMatrix();
 		//? if <1.21.6 {
-		graphics.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
-		//?}
+		/*graphics.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
+		*///?}
 		//todo: try .guiRenderState.up() or down() ? if it doesnt work w/o the shift. if removed edit javadoc
 
 		if(showSearch && config.search) {
@@ -204,7 +204,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(showSettingsMenu && config.search) {
 			graphics.blit(
 				// stonecutter: remove qualifier when import optimizer fix is available
-				/*? if >=1.21.6 {*//*net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,*//*?} elif >=1.21.2 {*//*net.minecraft.client.renderer.RenderType::guiTextured,*//*?}*/
+				/*? if >=1.21.6 {*/net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,/*?} elif >=1.21.2 {*//*net.minecraft.client.renderer.RenderType::guiTextured,*//*?}*/
 				id("textures/gui/search_settings_panel.png"), // todo: use a nine-sliced aka dynamic texture, even better find an existing bg
 				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
@@ -213,7 +213,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			regexButton.render(graphics, mX, mY, delta);
 		}
 
-		graphics.pose().popPose(); // stop shifting before the context menu renders so the chat field doesn't cut it off
+		graphics.pose().popMatrix(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
 		contextMenu.render(graphics, mX, mY, delta);
 	}

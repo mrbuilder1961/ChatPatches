@@ -48,7 +48,7 @@ public abstract class MessageHandlerMixin {
     @Inject(method = "handlePlayerChatMessage", at = @At("HEAD"))
     private void cacheChatData(PlayerChatMessage message, GameProfile sender, ChatType.Bound params, CallbackInfo ci) {
         ChatUtils.messageData = PARSEABLE_MESSAGE_KEYS.matcher(
-            /*?if <1.20.5 {*/ params.chatType().chat().translationKey() /*?} else {*//*params.chatType().value().chat().translationKey()*//*?}*/
+            /*? if <1.20.5 {*/ /*params.chatType().chat().translationKey() *//*?} else {*/params.chatType().value().chat().translationKey()/*?}*/
         ).matches()
             ? new MessageData(sender, Date.from(message.timeStamp()), isVanilla(params.decorate(message.decoratedContent())))
             : NIL_MESSAGE_DATA;

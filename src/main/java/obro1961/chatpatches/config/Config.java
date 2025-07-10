@@ -111,10 +111,10 @@ public class Config {
             clicked -> {
                 if(clicked) {
 					//? if <=1.20.2 {
-                    ConfirmLinkScreen.confirmLinkNow(link, parent, true);
-					//?} else {
-					/*ConfirmLinkScreen.confirmLinkNow(parent, link);
-					*///?}
+                    /*ConfirmLinkScreen.confirmLinkNow(link, parent, true);
+					*///?} else {
+					ConfirmLinkScreen.confirmLinkNow(parent, link);
+					//?}
 				} else {
 					mc.setScreen(parent);
 				}
@@ -191,10 +191,10 @@ public class Config {
 
 			// stonecutter: remove qualifiers when import optimizer fix is available
 			//? if <=1.20.2 {
-            return TextUtils.newText(net.minecraft.network.chat.contents.LiteralContents.EMPTY, components, hoverStyle);
-			//?} else {
-            /*return TextUtils.newText(net.minecraft.network.chat.contents.PlainTextContents.EMPTY, components, hoverStyle);
-			*///?}
+            /*return TextUtils.newText(net.minecraft.network.chat.contents.LiteralContents.EMPTY, components, hoverStyle);
+			*///?} else {
+            return TextUtils.newText(net.minecraft.network.chat.contents.PlainTextContents.EMPTY, components, hoverStyle);
+			//?}
         } catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
 
@@ -568,7 +568,7 @@ public class Config {
 				// much love to TheWhyEvenHow for the solution: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
                 case Object o when key.contains("Color") ->
 					//stonecutter: remove qualifier when import optimizer fix is available
-					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*/net.minecraft.util.ExtraCodecs/*?} else {*//*Codec*//*?}*/
+					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*net.minecraft.util.ExtraCodecs*//*?} else {*/Codec/*?}*/
 					.withAlternative(
 						TextColor.CODEC,
 						Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue)

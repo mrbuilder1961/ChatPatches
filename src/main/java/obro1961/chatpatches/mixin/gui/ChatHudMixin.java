@@ -2,11 +2,9 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.llamalad7.mixinextras.sugar.Local;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.GuiMessage;
-import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
@@ -15,7 +13,6 @@ import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Intrinsic;
 import org.spongepowered.asm.mixin.Mixin;
@@ -131,10 +128,10 @@ public abstract class ChatHudMixin implements ChatHudAccess {
     /** Increases the chat message limit */
     @ModifyExpressionValue(
         //? if <=1.20.4 {
-        method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V", "addRecentChat"},
-        //?} else {
-        /*method = {"Lnet/minecraft/client/gui/components/ChatComponent;addMessageToQueue(Lnet/minecraft/client/GuiMessage;)V", "addMessageToDisplayQueue", "addRecentChat"},
-        *///?}
+        /*method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V", "addRecentChat"},
+        *///?} else {
+        method = {"addMessageToQueue(Lnet/minecraft/client/GuiMessage;)V", "addMessageToDisplayQueue", "addRecentChat"},
+        //?}
         at = @At(value = "CONSTANT", args = "intValue=100")
     )
     private int moreMessages(int hundred) {
@@ -205,15 +202,15 @@ public abstract class ChatHudMixin implements ChatHudAccess {
      */
     @ModifyVariable(
         //? if <=1.20.4 {
-        method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V",
-        //?} else {
-        /*method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
-        *///?}
+        /*method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V",
+        *///?} else {
+        method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
+        //?}
         at = @At("HEAD"),
         argsOnly = true
-    )
-    private Component modifyMessage(Component m /*? if <=1.20.4 {*/, @Local(argsOnly = true) boolean refreshing /*?}*/) {
-        return /*? if <=1.20.4 {*/ refreshing ? m : /*?}*/ ChatUtils.modifyMessage(m);
+    ) // stonecutter: remove qualifier when import optimizer fix is available
+    private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @com.llamalad7.mixinextras.sugar.Local(argsOnly = true) boolean refreshing *//*?}*/) {
+        return /*? if <=1.20.4 {*/ /*refreshing ? m : *//*?}*/ ChatUtils.modifyMessage(m);
     }
 
     @Inject(
@@ -258,14 +255,14 @@ public abstract class ChatHudMixin implements ChatHudAccess {
      * Cancels logging chat messages if the chat log is restoring or if the tag is
      * {@link ChatLog#RESTORED_INDICATOR}.
      */
-    @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true) // stonecutter: remove qualifier when import optimizer fix is available
     //? if <=1.20.4 {
-    private void ignoreRestoredMessages(Component message, @Nullable GuiMessageTag tag, CallbackInfo ci) {
-    //?} else {
-    /*private void ignoreRestoredMessages(GuiMessage message, CallbackInfo ci) {
-    *///?}
+    /*private void ignoreRestoredMessages(Component message, net.minecraft.client.GuiMessageTag tag, CallbackInfo ci) {
+    *///?} else {
+    private void ignoreRestoredMessages(GuiMessage message, CallbackInfo ci) {
+    //?}
 
-        if(ChatLog.isRestoring() || ChatLog.RESTORED_INDICATOR.equals(/*? if <=1.20.4 {*/tag/*?} else {*//*message.tag()*//*?}*/))
+        if(ChatLog.isRestoring() || ChatLog.RESTORED_INDICATOR.equals(/*? if <=1.20.4 {*//*tag*//*?} else {*/message.tag()/*?}*/))
             ci.cancel();
     }
 }

@@ -193,9 +193,9 @@ public class ChatLog {
         String d = desc.replace("{}", "%s").formatted((Object[]) vars);
 
 		// auto replaced by stonecutter
-        mc.getToasts().addToast(new SystemToast(
+        mc.getToastManager().addToast(new SystemToast(
 			// auto replaced by stonecutter
-			SystemToast.SystemToastIds.PACK_LOAD_FAILURE,
+			SystemToast.SystemToastId.PACK_LOAD_FAILURE,
             Component.nullToEmpty(header.length() > MAX_LEN ? header.substring(0, MAX_LEN - 3) + "..." : header),
             Component.nullToEmpty(d.length() > MAX_LEN ? d.substring(0, MAX_LEN - 3) + "..." : d)
         ));
