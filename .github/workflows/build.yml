@@ -21,10 +21,8 @@ jobs:
     strategy:
       matrix:
         java: [
-          21 # Current Java LTS & minimum supported by Minecraft
-          #,21 # Latest Java LTS
+          21
         ]
-        # and run on the latest dists of Linux, MacOs, and Windows
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -52,7 +50,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jars
-          # versions line - todo stonecutter.gradle.kts copy results to build/libs
           path: |
             build/libs/
             build/devlibs/

@@ -8,6 +8,9 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import obro1961.chatpatches.config.Config;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +27,6 @@ public class ChatPatches implements ClientModInitializer {
 	public static Config config = Config.initialize();
 
 	public static ResourceLocation id(String path) {
-		// unfortunately this method in 1.20.6 is method_43902
-		// but in 1.21 it's method_60655, making it incompatible ToT
 		return ResourceLocation.tryBuild(MOD_ID, path);
 	}
 
@@ -165,8 +166,24 @@ public class ChatPatches implements ClientModInitializer {
 		}, IO_POOL);
 	}
 
-	// 1.20.5+ needs the RegistryOps instance
+	/**
+	 * Returns {@link JsonOps#INSTANCE} wrapped by a {@link RegistryAccess.Frozen}
+	 * (provided by the {@linkplain Minecraft#level client's level}) to not crash
+	 * when serializing.
+	 *
+	 * <p>Fixes <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>.
+	 * Thanks to
+	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1278519812628156528">arkosammy12</a>
+	 * for help on the Fabric Discord!
+	 */
 	public static DynamicOps<JsonElement> jsonOps() {
+		//? if >=1.20.5 {
+		if(Minecraft.getInstance().level instanceof ClientLevel world) {
+			return world.registryAccess().createSerializationContext(JsonOps.INSTANCE);
+		} else {
+			logReportMsg(new NullPointerException("[ChatPatches#jsonOps] Expected existing client world"));
+		}
+		//? }
 		return JsonOps.INSTANCE;
 	}
 }
