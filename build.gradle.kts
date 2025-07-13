@@ -188,7 +188,6 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         match(loader, "fabric", "neo", "forge")
     }
 
-    // preferred to replacements bc swap comments are required and therefore are harder to forget
     swaps {
         //prepub: make this data-driven from gradle.properties
         val v1216 = eval(minecraft, ">=1.21.6")
@@ -196,7 +195,9 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         put("popStack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
     }
 
-    /*replacements {
+    /*
+    // discouraged bc swap is better: comments are required, making them harder to accidentally forget
+    replacements {
         // needed bc only one replacement per block -_-
         fun strRepl(dir: Boolean, from: String, to: String) {
             string {

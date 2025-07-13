@@ -28,6 +28,7 @@ import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
 import obro1961.chatpatches.util.ChatUtils;
+import obro1961.chatpatches.util.RenderUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -185,10 +186,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	private void renderCustomWidgets(GuiGraphics graphics, int mX, int mY, float delta, CallbackInfo ci) {
 		//$ pushStack
 		graphics.pose().pushMatrix();
+
+		// 1.21.6+ automatically renders everything z=0.1+ relative to the last element :D
 		//? if <1.21.6 {
 		/*graphics.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
 		*///?}
-		//todo: try .guiRenderState.up() or down() ? if it doesnt work w/o the shift. if removed edit javadoc
 
 		if(showSearch && config.search) {
 			graphics.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
@@ -197,7 +199,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), ChatFormatting.DARK_RED.getColor());
+				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), /*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.DARK_RED.getColor()));
 			}
 		}
 
@@ -483,7 +485,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * and field coloring.
 	 */
 	@Unique
-	private void onSearchFieldUpdate(String text, boolean refresh) {
+	private void onSearchFieldUpdate(String text, boolean refresh) { // fixme: when regex is enabled, saved, and mc is restarted, it doesn't search & color=white until any opt is toggled. may work w CS too(?)
 		if(text.equals(searchDraft) && !refresh)
 			return; // prevent useless updates
 
@@ -497,7 +499,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					searchError = null;
 				} catch(PatternSyntaxException e) {
 					searchError = e;
-					searchField.setTextColor(ChatFormatting.RED.getColor()); // mark the text red if the regex is invalid
+					searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.RED.getColor())); // mark the text red if the regex is invalid
 					minecraft.gui.getChat().rescaleChat();
 				}
 			} else {
@@ -506,11 +508,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 				if(results.isEmpty()) {
 					// mark the text yellow if there are no results
-					searchField.setTextColor(ChatFormatting.YELLOW.getColor());
+					searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.YELLOW.getColor()));
 					minecraft.gui.getChat().rescaleChat();
 				} else {
 					// mark the text green if there are results
-					searchField.setTextColor(ChatFormatting.GREEN.getColor());
+					searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.GREEN.getColor()));
 				}
 			}
 
@@ -541,7 +543,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * visible messages.
 	 */
 	@Unique
-	private List<GuiMessage.Line> filterMessages(String target) {
+	private List<GuiMessage.Line> filterMessages(String target) { //prepub: re-eval this method, it can def be simplified right? mayhaps even inlined?
 		if(target == null)
 			return ObjectList.of();
 
