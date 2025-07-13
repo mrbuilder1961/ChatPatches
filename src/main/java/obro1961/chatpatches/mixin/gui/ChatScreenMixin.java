@@ -183,6 +183,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
 	private void renderCustomWidgets(GuiGraphics graphics, int mX, int mY, float delta, CallbackInfo ci) {
+		//$ pushStack
 		graphics.pose().pushMatrix();
 		//? if <1.21.6 {
 		/*graphics.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
@@ -213,6 +214,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			regexButton.render(graphics, mX, mY, delta);
 		}
 
+		//$ popStack
 		graphics.pose().popMatrix(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
 		contextMenu.render(graphics, mX, mY, delta);

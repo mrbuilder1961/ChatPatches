@@ -188,8 +188,15 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         match(loader, "fabric", "neo", "forge")
     }
 
-    //prepub: make this data-driven from gradle.properties
-    replacements {
+    // preferred to replacements bc swap comments are required and therefore are harder to forget
+    swaps {
+        //prepub: make this data-driven from gradle.properties
+        val v1216 = eval(minecraft, ">=1.21.6")
+        put("pushStack", if(v1216) "graphics.pose().pushMatrix();" else "graphics.pose().pushPose();")
+        put("popStack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
+    }
+
+    /*replacements {
         // needed bc only one replacement per block -_-
         fun strRepl(dir: Boolean, from: String, to: String) {
             string {
@@ -197,17 +204,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
                 replace(from, to)
             }
         }
-
-        strRepl(eval(minecraft, ">=1.20.3"), "SystemToast.SystemToastIds.", "SystemToast.SystemToastId.") // '.' prevents adding an extra 's'
-
-        // todo: update and merge the toast method so i can just put the versioned code straight in the method
-        strRepl(eval(minecraft, ">=1.21.2"), "getToasts()", "getToastManager()") // on Minecraft
-
-        val v1216 = eval(minecraft, ">=1.21.6")
-        //fixme: all of these replacements need stonecutter comments so i dont forget they're being replaced
-        strRepl(v1216, "graphics.pose().pushPose()", "graphics.pose().pushMatrix()") // on GuiGraphics
-        strRepl(v1216, "graphics.pose().popPose()", "graphics.pose().popMatrix()") // on GuiGraphics
-    }
+    }*/
 }
 
 
