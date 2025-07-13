@@ -325,7 +325,8 @@ public class Config {
 			String raw = Files.readString(PATH);
 			JsonObject json = GsonHelper.parse(raw);
 
-			config = config.parse(jsonOps(), json)
+			// note: removed registry-backed JsonOps here bc this loads before the world is available, throwing an NPE. shouldn't matter tho
+			config = config.parse(JsonOps.INSTANCE/*ChatPatches.jsonOps()*/, json)
 				.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 				.orElseThrow();
 
@@ -355,7 +356,7 @@ public class Config {
 			LOGGER.info("[Config.serialize] Saving...");
 
 			try {
-				JsonElement json = config.encodeStart(ChatPatches.jsonOps())
+				JsonElement json = config.encodeStart(JsonOps.INSTANCE/*ChatPatches.jsonOps()*/)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.orElseThrow();
 

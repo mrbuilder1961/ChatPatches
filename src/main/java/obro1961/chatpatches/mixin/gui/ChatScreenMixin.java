@@ -147,7 +147,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				onSearchFieldUpdate(searchField.getValue(), true);
 		}
 
-		caseSensitiveButton = makeSettingButton("caseSensitive", 0);
+		caseSensitiveButton = makeSettingButton("caseSensitive", 0); // todo redo this thing
 		regexButton = makeSettingButton("regex", 22);
 
 		if(config.search) {
