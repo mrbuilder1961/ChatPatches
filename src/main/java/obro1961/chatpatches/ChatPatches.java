@@ -13,9 +13,11 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import obro1961.chatpatches.config.Config;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.Unsafe;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +26,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches");
 
-	public static Config config = Config.initialize();
+	public static Config config /*? if <1.21.6 {*/= Config.initialize()/*?}*/; // fixme: (#243)
 
 	public static ResourceLocation id(String path) {
 		return ResourceLocation.tryBuild(MOD_ID, path);
@@ -50,6 +52,14 @@ public class ChatPatches implements ClientModInitializer {
 			config.sendBoundaryLine();
 			ChatLog.hideRecentMessages();
 		});
+
+		//? if >=1.21.6 {
+		// populates the NOW existing Minecraft instance in the following classes. config needs to be initialized after as to avoid an NPE
+		resist243(Config.class);
+		Config.initialize();
+		resist243(ChatLog.class);
+		resist243(obro1961.chatpatches.gui.ContextMenu.class);
+		//? }
 
 		LOGGER.info("[ChatPatches()] Finished setup!");
 	}
@@ -186,4 +196,48 @@ public class ChatPatches implements ClientModInitializer {
 		//? }
 		return JsonOps.INSTANCE;
 	}
+
+	//? if >=1.21.6 {
+	/**
+	 * Sets the static final {@code mc} field of the given class to the current return
+	 * value of {@link Minecraft#getInstance()}, if it is non-null and the field value
+	 * is. Temporary method to fix #243 while preserving the {@code final} modifier of
+	 * the targeted field and waiting for a proper fix.
+	 *
+	 * @implNote I am aware of the disgusting nature of this method, but I will not
+	 * compromise on the intended non-nullity of {@link Minecraft#getInstance()}. Even
+	 * IntelliJ knows it should be non-null.
+	 */
+	@SuppressWarnings({"ConstantValue", "deprecation"})
+	public static <T> void resist243(Class<T> clazz) {
+		Minecraft instance = Minecraft.getInstance();
+		if(instance == null) {
+			LOGGER.warn("[ChatPatches#resist243] Client not yet available, skipping update for {}", clazz.getName());
+			return;
+		}
+
+		Exception ex = null;
+		try {
+			var mcField = FieldUtils.getDeclaredField(clazz, "mc", true);
+			if(mcField.get(null) != null) { return; } // don't bother if it's already set
+
+			// get the Unsafe instance
+			var theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+			theUnsafe.setAccessible(true);
+			var unsafe = (Unsafe)theUnsafe.get(null);
+
+			// use it to set the static final field, without any setAccessible or modifier hacks >:)
+			unsafe.putObject(unsafe.staticFieldBase(mcField), unsafe.staticFieldOffset(mcField), instance);
+			LOGGER.info("[ChatPatches#resist243] Successfully resisted #243 for {}", clazz.getName());
+		} catch(IllegalAccessException e) {
+			ex = e;
+			LOGGER.error("[ChatPatches#resist243] {}#mc is still null", clazz.getName());
+		} catch(NoSuchFieldException e) {
+			ex = e;
+			LOGGER.warn("[ChatPatches#resist243] no unsafe??", e);
+		}
+
+		if(ex != null) { logReportMsg(ex); }
+	}
+	//? }
 }
