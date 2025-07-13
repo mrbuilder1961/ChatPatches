@@ -190,12 +190,8 @@ public class ChatUtils {
 	 * literal texts}, and nulls as {@linkplain Component#empty() empty texts}.
 	 */
 	public static MutableComponent getArg(TranslatableContents content, int index) {
-		return switch( content.getArgs()[index] ) {
-			case Component t -> (MutableComponent) t;
-			case FormattedText sv -> Component.literal(sv.getString());
-			case String s -> Component.literal(s);
-			default -> Component.empty();
-		};
+		// intentionally doesn't do a bounds check bc if that happens I need to know
+		return TextUtils.asText( content.getArgs()[index] );
 	}
 
 	/**

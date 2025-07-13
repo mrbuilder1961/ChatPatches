@@ -20,7 +20,9 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.GsonHelper;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.config.Config;
@@ -186,19 +188,29 @@ public class ChatLog {
     }
 
 
-    //prepub: WOAH FORGOT ABOUT THIS! i think i can keep this but needs to go on pause while i do more important stuff.
-    // it should probably be integrated somehow with ChatPatches#logReportMsg
-    private static void pushErrorToast(String header, String desc, String... vars) {
+    //prepub integrate somehow with ChatPatches#logReportMsg or ChatPatches class
+	// also todo test this
+    public static void pushToast(boolean error, Object header, Object description) {
         final int MAX_LEN = 60; // minimizes errors going off-screen
-        String d = desc.replace("{}", "%s").formatted((Object[]) vars);
+		MutableComponent head = TextUtils.asText(header);
+		MutableComponent desc = TextUtils.asText(description);
+		boolean longHead = head.getString().length() > MAX_LEN;
+		boolean longDesc = desc.getString().length() > MAX_LEN;
 
-		// auto replaced by stonecutter
-        mc.getToastManager().addToast(new SystemToast(
-			// auto replaced by stonecutter
-			SystemToast.SystemToastId.PACK_LOAD_FAILURE,
-            Component.nullToEmpty(header.length() > MAX_LEN ? header.substring(0, MAX_LEN - 3) + "..." : header),
-            Component.nullToEmpty(d.length() > MAX_LEN ? d.substring(0, MAX_LEN - 3) + "..." : d)
-        ));
+		if(longHead) {
+			head = TextUtils.truncate(head, MAX_LEN);
+		}
+		if(longDesc) {
+			desc = TextUtils.truncate(desc, MAX_LEN);
+		}
+
+		SystemToast.add(mc./*?if >=1.21.2 {*/getToastManager/*?} else {*//*getToasts*//*?}*/(),
+			error
+				? SystemToast./*?if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PACK_LOAD_FAILURE
+				: SystemToast./*?if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PERIODIC_NOTIFICATION,
+			head.copy().append(longHead ? CommonComponents.ELLIPSIS : CommonComponents.EMPTY),
+			desc.copy().append(longDesc ? CommonComponents.ELLIPSIS : CommonComponents.EMPTY)
+		);
     }
 
     /**
@@ -249,13 +261,13 @@ public class ChatLog {
 				} catch(IOException e) {
                     LOGGER.error("[ChatLog.deserialize] Couldn't parse '{}' in UTF-8 or '{}', generating a new one:", PATH, def.name(), e);
                     rawJson = EMPTY_JSON;
-                    pushErrorToast("Chat log encoding error", "Expected UTF-8 or '{}'", def.name());
+                    pushToast(true, "Chat log encoding error", "Expected UTF-8 or '%s'".formatted(def.name()));
                     backup();
                 }
             } catch(IOException e) {
                 LOGGER.error("[ChatLog.deserialize] Something went wrong accessing '{}':", PATH, e);
                 rawJson = EMPTY_JSON;
-                pushErrorToast("Chat log I/O error", e.getLocalizedMessage());
+                pushToast(true, "Chat log I/O error", e.getLocalizedMessage());
                 backup();
             }
         }
@@ -271,7 +283,7 @@ public class ChatLog {
                     CODEC.parse(ChatPatches.jsonOps(), json)
                         .resultOrPartial(e -> {
                             ChatPatches.logReportMsg(new JsonParseException(e));
-                            pushErrorToast("Chat log parse error", e);
+                            pushToast(true, "Chat log parse error", e);
                             backup();
                         })
                         .orElseGet(() -> Pair.of(newSyncedObjectList(null), newSyncedObjectList(null)));
@@ -286,7 +298,7 @@ public class ChatLog {
 			LOGGER.info("[ChatLog.deserialize] Parsed {} messages and {} sent messages!", lastMessageCount, lastHistoryCount);
         } catch(RuntimeException e) {
             LOGGER.error("[ChatLog.deserialize] An unexpected error occurred while trying to parse '{}', backing it up and generating a new one:", PATH, e);
-            pushErrorToast("Chat log deserialization error", e.getLocalizedMessage());
+            pushToast(true, "Chat log deserialization error", e.getLocalizedMessage());
             backup();
 
             messages = newSyncedObjectList(null);
@@ -334,7 +346,7 @@ public class ChatLog {
 						.replace("[]", messages.stream().map(Component::getString).toList().toString())
 						.replace("[]", history.toString())
 				);
-				pushErrorToast("Chat log serialization error", e.getLocalizedMessage());
+				pushToast(true, "Chat log serialization error", e.getLocalizedMessage());
 			}
 			ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
 		});
@@ -356,7 +368,7 @@ public class ChatLog {
 				LOGGER.info("[ChatLog.backup] Successfully backed up the current chat log to '{}':", backupPath);
 			} catch(IOException e) {
 				LOGGER.warn("[ChatLog.backup] Couldn't backup '{}':", PATH, e);
-				pushErrorToast("Chat log backup error", e.getLocalizedMessage());
+				pushToast(true, "Chat log backup error", e.getLocalizedMessage());
 			}
 		});
 	}
@@ -437,7 +449,7 @@ public class ChatLog {
      * Saves the chat log if the save interval is
      * disabled and the game is paused.
      */
-    public static void saveIfPaused(Screen screen) {
+	public static void saveIfPaused(Screen screen) {
         if(config.chatlogSaveInterval == 0 && (!mc.isWindowActive() || screen instanceof PauseScreen))
             serialize();
     }

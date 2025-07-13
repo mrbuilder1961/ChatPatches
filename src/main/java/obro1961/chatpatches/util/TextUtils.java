@@ -61,6 +61,45 @@ public class TextUtils {
 	}
 
 	/**
+	 * Parses the given object into a {@link MutableComponent}.
+	 */
+	public static MutableComponent asText(Object o) {
+		if(o == null) {
+			return Component.empty();
+		}
+
+		return switch(o) {
+			case Component t -> (MutableComponent) t;
+			case FormattedText sv -> Component.literal(sv.getString());
+			case String s -> Component.literal(s);
+			default -> Component.literal(String.valueOf(o));
+		};
+	}
+
+	public static MutableComponent truncate(Component text, int max) {
+		var truncated = Component.empty();
+		int[] len = {0};
+
+		text.visit((style, str) -> {
+			if(str.length() + len[0] > max) {
+				if(len[0] >= max) {
+					return Optional.empty(); // if the text is the perfect length, don't add anything
+				}
+				// warning: might throw an error but the math seems right so idk?
+				str = str.substring(0, max - len[0]); // truncate the string to the max length
+			}
+
+			truncated.append(Component.literal(str).setStyle(style));
+
+			len[0] += str.length();
+
+			return Optional.empty();
+		}, Style.EMPTY);
+
+		return truncated;
+	}
+
+	/**
 	 * Creates a new MutableText object with explicit
 	 * sibling and style data specified. Behaves
 	 * effectively the same as the private constructor
@@ -90,6 +129,7 @@ public class TextUtils {
 		//stonecutter: remove qualifier when import optimizer fix is available
 		return newText(/*? if <=1.20.2 {*//*ComponentContents.EMPTY*//*?} else {*/net.minecraft.network.chat.contents.PlainTextContents.EMPTY/*?}*/, text.getSiblings(), text.getStyle());
 	}
+
 
 	public static ClickEvent/*? if >=1.21.5 {*/.OpenUrl/*?}*/ openUrl(String url) {
 		return new

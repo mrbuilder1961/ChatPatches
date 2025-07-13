@@ -15,7 +15,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -27,6 +26,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
@@ -81,7 +81,7 @@ public class ContextMenu implements GuiEventListener {
 	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
 	// region text constants
-	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", id instanceof Component ? id : Component.nullToEmpty(String.valueOf(id)));
+	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", TextUtils.asText(id));
 	static final Component MENU_STRING = Component.translatable(LANG_PREFIX + "copyText");
 	static final Component RAW_TEXT = Component.translatable(LANG_PREFIX + "rawText");
 	static final Component FORMATTED_STR = Component.translatable(LANG_PREFIX + "formattedString");
@@ -246,11 +246,7 @@ public class ContextMenu implements GuiEventListener {
 			String copyStr = StringUtil.stripColor(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc.keyboardHandler.setClipboard(copyStr);
-				// auto replaced by stonecutter
-				mc.getToastManager().addToast(new SystemToast(
-					// auto replaced by stonecutter
-					SystemToast.SystemToastId.PERIODIC_NOTIFICATION, Component.translatable(LANG_PREFIX + "copied"), copyText
-				));//prepub merge this guy with the toast maker in ChatLog (should be moved to ChatPatches?) amd then del the stonecutter replacer
+				ChatLog.pushToast(false, Component.translatable(LANG_PREFIX + "copied"), copyText);
 			}
 
 			if(pressAction != null)
