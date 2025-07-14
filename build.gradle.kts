@@ -90,7 +90,7 @@ modstitch {
 
         replacementProperties.populate {
             // URGENT: idk how range is supposed to work between fabric's nice system and neo's dumb maven shit
-            put("minecraft_range", m("range") ?: minecraft) // if range is not specified, use the current minecraft version
+            put("minecraft_range", m("range") ?: (if(isLoom) minecraft else "[$minecraft]")) // if range is not specified, use the current minecraft version
             put("mod_source", m("source") ?: error("No source repo specified"))
             put("mod_modrinth", m("modrinth") ?: error("No Modrinth ID specified"))
         }
