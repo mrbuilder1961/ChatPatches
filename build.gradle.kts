@@ -9,28 +9,42 @@ plugins { // versions in gradle.properties + settings.gradle.kts
 }
 
 
-val id = m("id") ?: error("No mod id specified")
+val id = m("id")
 val minecraft = stonecutter.current.version //name.substringBefore("-")
 val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prepub: does this cause any issues...
-val v: String = m("version") ?: error("No version specified")
+val v: String = m("version")
 
 var allowPublish = false
 var changes = "No changelog specified."
 
-fun p(name: String): String? = findProperty(name) as String?
-fun prop(name: String, consumer: (prop: String) -> Unit) = p(name)?.let(consumer)
+/**
+ * Returns the property with the given name. If it doesn't exist then returns the
+ * fallback, but if that's null then throws an error.
+ */
+fun p(name: String, fallback: String? = null): String {
+    val p = findProperty(name) as String?
+    return when {
+        p != null -> p
+        fallback != null -> fallback
+        else -> error("Property '$name' not found with no fallback provided")
+    }
+}
+fun prop(name: String, consumer: (prop: String) -> Unit) {
+    val p = p(name, "")
+    if(p.isNotEmpty()) p.let(consumer)
+}
 
-fun d(name: String): String? = findProperty("deps.$name") as String?
-fun dep(name: String, consumer: (prop: String) -> Unit) = d(name)?.let(consumer)
+fun d(name: String, fallback: String? = null): String = p("dep.$name", fallback)
+fun dep(name: String, consumer: (prop: String) -> Unit) = prop("dep.$name", consumer)
 
-fun m(name: String): String? = findProperty("mod.$name") as String?
+fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 
 /**
  * Returns the property belonging to the current loader. For example, `l("api")`
  * will return the value of `fabric.api`, `neo.api`, or `forge.api` depending on
  * the current loader.
  */
-fun l(name: String): String? = findProperty("$loader.$name") as String?
+fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallback) //delete: this i think
 
 
 kotlin {
@@ -83,22 +97,21 @@ modstitch {
         modGroup = m("group")
         modDescription = m("desc")
         modAuthor = m("author")
-        modCredits = m("credits")?.split(",")?.toString() // transforms the invalid json into a valid list
+        modCredits = m("credits").split(",").toString() // transforms the invalid json into a valid list
         modLicense = m("license")
         //todo forge: uses mods.toml instead of neoforge.mods.toml
         // also todo with FMJ: remove fabric api and use arch api or sm
 
         replacementProperties.populate {
-            // URGENT: idk how range is supposed to work between fabric's nice system and neo's dumb maven shit
-            put("minecraft_range", m("range") ?: (if(isLoom) minecraft else "[$minecraft]")) // if range is not specified, use the current minecraft version
-            put("mod_source", m("source") ?: error("No source repo specified"))
-            put("mod_modrinth", m("modrinth") ?: error("No Modrinth ID specified"))
+            put("minecraft_range", m("range", (if(isLoom) minecraft else "[$minecraft]"))) // if range is not specified, use the current minecraft version
+            put("mod_source", m("source"))
+            put("mod_modrinth", m("modrinth"))
         }
     }
 
     // Fabric
     loom {
-        fabricLoaderVersion = if(isLoom) l("loader") else error("Trying to specify Fabric loader on '$loader'") //p("fabric.loader")
+        fabricLoaderVersion = if(isLoom) l("loader") else error("Trying to specify Fabric loader on '$loader'")
 
 
         // Configure loom like normal in this block.
@@ -212,10 +225,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 publishMods {
     val secrets = rootDir.toPath().resolve("secrets.json").toFile()
 
-    fun propList(name: String): List<String> {
-        val p: String = p(name) ?: return emptyList()
-        return p.split(",").filter { it.isNotBlank() }
-    }
+    fun propList(name: String): List<String> = p(name).split(",").filter { it.isNotBlank() }
     fun token(name: String): String {
         return when {
             !allowPublish -> "-"
@@ -255,8 +265,8 @@ publishMods {
         }
 
         accessToken = token("curseforge")
-        projectId = m("curseforge") ?: error("No CurseForge project id specified")
-        projectSlug = m("id") ?: error("No mod id specified")
+        projectId = m("curseforge")
+        projectSlug = m("id")
         minecraftVersions.addAll(targets)
 
         required.forEach(::requires)
@@ -267,7 +277,7 @@ publishMods {
 
     modrinth {
         accessToken = token("modrinth")
-        projectId = m("modrinth") ?: error("No Modrinth project id specified")
+        projectId = m("modrinth")
         minecraftVersions.addAll(targets)
 
         // specify id OR slug NOT both, +OPTIONAL specific version
@@ -279,7 +289,7 @@ publishMods {
 
     github {
         accessToken = token("github")
-        repository = m("source")!!
+        repository = m("source")
         commitish = "omnivers"
         tagName = "$v-$name" //prepub
 
