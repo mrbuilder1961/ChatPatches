@@ -7,7 +7,7 @@ stonecutter active "1.21.7-fabric"
 // each build task builds all of its loader and copies them to build/libs/
 fun registerLoaderBuildTask(loader: String) {
     // registers as a Copy task to allow easy copying
-    tasks.register<Copy>("build${loader.replaceFirstChar { it.uppercase() } }") { // not sure why Kotlin deprecated capitalize() ...
+    tasks.register<Copy>("buildAndCopy${loader.replaceFirstChar { it.uppercase() } }") { // not sure why Kotlin deprecated capitalize() ...
         group = "build"
 
         // builds the loader's jars (lazily)
@@ -48,6 +48,6 @@ registerLoaderBuildTask("fabric")
 registerLoaderBuildTask("neo")
 registerLoaderBuildTask("forge")
 
-tasks.register("buildAll") {
-    dependsOn("buildFabric", "buildNeo", "buildForge")
+tasks.register("buildAndCopyAll") {
+    dependsOn("buildAndCopyFabric", "buildAndCopyNeo", "buildAndCopyForge")
 }

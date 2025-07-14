@@ -43,7 +43,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: build
-        run: ./gradlew clean buildAll --stacktrace
+        run: ./gradlew buildAndCopyAll --stacktrace
 
       - name: capture build artifacts
         if: ${{ runner.os == 'Linux' && matrix.java == '21' }} # Only upload artifacts built from latest java on one OS
