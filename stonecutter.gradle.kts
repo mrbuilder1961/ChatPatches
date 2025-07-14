@@ -21,13 +21,18 @@ fun registerLoaderBuildTask(loader: String) {
         val versions = stonecutter.versions.filter { it.project.endsWith(loader) }.map { it.version } // gets this loader's versions
         if(versions.isNotEmpty()) {
             var libs = rootProject.layout.buildDirectory.file("libs/").get().asFile
-            libs.parentFile.mkdirs() // avoid IOExceptions
-            libs.createNewFile() // ensure the directory exists
+            // ensure the directory exists
+            if(!libs.exists()) {
+                libs.parentFile.mkdirs() // avoid IOExceptions
+                libs.createNewFile()
+            }
 
             from(versions.map {
                 val vLibs = rootProject.file("versions/$it-$loader/build/libs/") // maps each version to its build/libs directory
-                vLibs.parentFile.mkdirs()
-                vLibs.createNewFile()
+                if(!vLibs.exists()) {
+                    vLibs.parentFile.mkdirs()
+                    vLibs.createNewFile()
+                }
                 vLibs
             })
             into(libs)
