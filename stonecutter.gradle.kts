@@ -49,5 +49,6 @@ registerLoaderBuildTask("neo")
 registerLoaderBuildTask("forge")
 
 tasks.register("buildAndCopyAll") {
+    group = "build"
     dependsOn("buildAndCopyFabric", "buildAndCopyNeo", "buildAndCopyForge")
 }

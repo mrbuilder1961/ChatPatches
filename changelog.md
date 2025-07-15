@@ -1,5 +1,9 @@
 # Changelog
 
+## Chat Patches `8.0-alpha.1` for Minecraft 1.20.1-1.21.7 on Fabric, Quilt
+- STONECUTTER AHHHHHHHHHHH
+- everything happened. ignore this changelog tho it's a placeholder
+
 ## Chat Patches `8.0-alpha` for Minecraft 1.20.2, 1.21.7 on Fabric, Quilt
 - Completely refactored the entire codebase to support multiple loaders and versions!
 - (I skipped `7.0` because this is content spanning multiple major versions)

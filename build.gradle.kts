@@ -177,7 +177,7 @@ tasks {
 
             // considered "malformed" if it doesn't end with any word characters, whitespace, or newlines
             if( !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)$")) || newIndex == -1 ) {
-                println("/!\\ Warning: /!\\ Changelog appears malformed, this is probably caused by an invalid version ($v).")
+                println("Warning: Changelog appears malformed, this is probably caused by an invalid version ($v).")
                 if(allowPublish) {
                     allowPublish = false
                 }
