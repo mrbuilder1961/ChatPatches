@@ -77,6 +77,10 @@ public class TextUtils {
 	}
 
 	public static MutableComponent truncate(Component text, int max) {
+		if(ChatFormatting.stripFormatting(text.getString()).length() <= max) {
+			return (MutableComponent) text;
+		}
+
 		var truncated = Component.empty();
 		int[] len = {0};
 

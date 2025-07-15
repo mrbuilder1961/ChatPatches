@@ -7,12 +7,17 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import obro1961.chatpatches.config.Config;
+import obro1961.chatpatches.util.TextUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -21,6 +26,8 @@ import sun.misc.Unsafe;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+
+import static obro1961.chatpatches.util.TextUtils.asText;
 
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
@@ -176,6 +183,39 @@ public class ChatPatches implements ClientModInitializer {
 		}, IO_POOL);
 	}
 
+	private static void pushToast(boolean error, Object header, Object description) {
+		final int MAX_LEN = 60; // minimizes errors going off-screen
+		MutableComponent head = TextUtils.truncate(asText(header), MAX_LEN);
+		MutableComponent desc = TextUtils.truncate(asText(description), MAX_LEN);
+
+		if(!head.equals(asText(header))) {
+			head = head.append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
+		}
+		if(!desc.equals(asText(description))) {
+			desc = desc.append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
+		}
+		/*if(ChatFormatting.stripFormatting(desc.getString()).length() > MAX_LEN) {
+			desc = TextUtils.truncate(desc, MAX_LEN).append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
+		}*/
+
+		SystemToast.add(
+			Minecraft.getInstance()./*?if >=1.21.2 {*/getToastManager/*?} else {*//*getToasts*//*?}*/(),
+			error
+				? SystemToast./*?if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PACK_LOAD_FAILURE
+				: SystemToast./*?if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PERIODIC_NOTIFICATION,
+			head,
+			desc
+		);
+	}
+
+	public static void pushErrorToast(Object header, Object description) {
+		pushToast(true, header, description);
+	}
+
+	public static void pushInfoToast(Object header, Object description) {
+		pushToast(false, header, description);
+	}
+
 	/**
 	 * Returns {@link JsonOps#INSTANCE} wrapped by a {@link RegistryAccess.Frozen}
 	 * (provided by the {@linkplain Minecraft#level client's level}) to not crash
@@ -208,7 +248,7 @@ public class ChatPatches implements ClientModInitializer {
 	 * compromise on the intended non-nullity of {@link Minecraft#getInstance()}. Even
 	 * IntelliJ knows it should be non-null.
 	 */
-	@SuppressWarnings({"ConstantValue", "deprecation"})
+	@SuppressWarnings({"ConstantValue", "deprecation"}) // this whole method is deprecated and unsafe. i'm horribly aware
 	public static <T> void resist243(Class<T> clazz) {
 		Minecraft instance = Minecraft.getInstance();
 		if(instance == null) {
@@ -236,7 +276,6 @@ public class ChatPatches implements ClientModInitializer {
 			ex = e;
 			LOGGER.warn("[ChatPatches#resist243] no unsafe??", e);
 		}
-
 		if(ex != null) { logReportMsg(ex); }
 	}
 	//? }

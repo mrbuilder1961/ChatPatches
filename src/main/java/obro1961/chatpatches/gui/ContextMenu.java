@@ -26,7 +26,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
@@ -246,7 +245,7 @@ public class ContextMenu implements GuiEventListener {
 			String copyStr = StringUtil.stripColor(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc.keyboardHandler.setClipboard(copyStr);
-				ChatLog.pushToast(false, Component.translatable(LANG_PREFIX + "copied"), copyText);
+				ChatPatches.pushInfoToast(Component.translatable(LANG_PREFIX + "copied"), copyText);
 			}
 
 			if(pressAction != null)

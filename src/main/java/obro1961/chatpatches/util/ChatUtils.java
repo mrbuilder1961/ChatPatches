@@ -28,12 +28,13 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.util.TextUtils.withoutContent;
 
 public class ChatUtils {
-	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, CommonComponents.EMPTY, null, null);
+	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, EMPTY, null, null);
 	public static final MessageData NIL_MESSAGE_DATA = new MessageData(new GameProfile(Util.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 
 	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
@@ -154,7 +155,7 @@ public class ChatUtils {
 	 * @see #DUPE_INDEX
 	 */
 	public static Component getPart(Component message, int index) {
-		return message.getSiblings().size() > index ? message.getSiblings().get(index) : CommonComponents.EMPTY;
+		return message.getSiblings().size() > index ? message.getSiblings().get(index) : EMPTY;
 	}
 
 	/**
@@ -324,6 +325,7 @@ public class ChatUtils {
 						.orElseGet(() -> {
 							String error = "No closing angle bracket found in vanilla message '" + m.getString() + "'!";
 							ChatPatches.logReportMsg(new IllegalStateException(error));
+							ChatPatches.pushErrorToast("Message modification error", error);
 							return Component.literal("ERROR: " + error).withStyle(ChatFormatting.RED);
 						});
 
@@ -339,7 +341,7 @@ public class ChatUtils {
 					for(int i = parts.indexOf(firstPart) + 1; i < parts.size(); i++)
 						realContent.append(parts.get(i));
 
-					content.append(Component.empty()); // keeps MSG_TEAM_INDEX constant
+					content.append(EMPTY); // keeps MSG_TEAM_INDEX constant
 					content.append(config.formatPlayername(messageData.sender)); // sender data is already known
 					content.append(realContent); // adds the reconstructed message content
 				}
@@ -363,8 +365,10 @@ public class ChatUtils {
 				}
 			}
 
-			if(e instanceof RuntimeException)
+			if(e instanceof RuntimeException) {
 				ChatPatches.logReportMsg(e); // don't log forced errors
+				ChatPatches.pushErrorToast("Message modification error", e.getMessage());
+			}
 		}
 
 		// assembles constructed message and tries to add a dupe counter

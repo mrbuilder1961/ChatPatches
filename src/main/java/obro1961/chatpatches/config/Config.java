@@ -91,10 +91,12 @@ public class Config {
      */
     public static Config initialize() {
         FabricLoader f = FabricLoader.getInstance();
+		// todo: make this a const or enum on this class
 		boolean accessibleInGame = f.isModLoaded("modmenu") || (f.isModLoaded("catalogue") && f.isModLoaded("menulogue"));
 
 		// ensures yacl config is used if available
 		config = accessibleInGame ? new YaclConfig() : DEFAULTS;
+		//setDefaults() but req for the yaclconfig check to work
 
         deserialize();
 
@@ -202,6 +204,7 @@ public class Config {
                 e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
 
             logReportMsg(e);
+			pushErrorToast("Playername formatting error", e.getMessage());
         }
 
         return makeText(nameFormat, profile.getName(), "", " ", style.getColor().getValue()).withStyle(style);
@@ -315,7 +318,7 @@ public class Config {
 		LOGGER.info("[Config.deserialize] Reading...");
 
 		if(!Files.exists(PATH)) {
-			config = DEFAULTS;
+			config.resetValues();
 			LOGGER.info("[Config.deserialize] No config file found; using default values");
 			return;
 		}
@@ -332,12 +335,12 @@ public class Config {
 
 			LOGGER.info("[Config.deserialize] Read config data from '{}'!", PATH);
 		} catch(IOException | NoSuchElementException e) {
-			config = DEFAULTS;
+			config.resetValues();
 			String action = e instanceof NoSuchElementException ? "decode" : "read";
 			LOGGER.error("[Config.deserialize] An error occurred while trying to {} config data from '{}', backing up and using default settings:", action, PATH, e);
 			backup();
 		} catch(RuntimeException e) {
-			config = DEFAULTS;
+			config.resetValues();
 			LOGGER.error("[Config.deserialize] An unexpected error occurred, backing up and using default settings");
 			logReportMsg(e);
 			backup();
@@ -435,6 +438,13 @@ public class Config {
                 return new Setting<>(new Object(), new Object(), key);
             });
     }
+
+	/**
+	 * PREPUB!
+	 */
+	protected void resetValues() {
+		config = (config instanceof YaclConfig) ? new YaclConfig() : DEFAULTS;
+	}
 
 
     /**
