@@ -31,7 +31,7 @@ import static obro1961.chatpatches.util.TextUtils.asText;
 
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
-	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches");
+	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches"); //prepub: custom impl that overrides everything to call #getBracedCaller(.) to simplify log messages??
 
 	public static Config config /*? if <1.21.6 {*/= Config.initialize()/*?}*/; // fixme: (#243)
 
@@ -189,10 +189,10 @@ public class ChatPatches implements ClientModInitializer {
 		MutableComponent desc = TextUtils.truncate(asText(description), MAX_LEN);
 
 		if(!head.equals(asText(header))) {
-			head = head.append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
+			head.append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
 		}
 		if(!desc.equals(asText(description))) {
-			desc = desc.append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
+			desc.append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
 		}
 		/*if(ChatFormatting.stripFormatting(desc.getString()).length() > MAX_LEN) {
 			desc = TextUtils.truncate(desc, MAX_LEN).append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));

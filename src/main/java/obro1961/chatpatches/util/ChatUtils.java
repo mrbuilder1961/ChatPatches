@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
@@ -29,8 +28,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
-import static obro1961.chatpatches.ChatPatches.LOGGER;
-import static obro1961.chatpatches.ChatPatches.config;
+import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.TextUtils.withoutContent;
 
 public class ChatUtils {
@@ -226,16 +224,17 @@ public class ChatUtils {
 	}
 
 	/**
-	 * Reformats the incoming message {@code m} according to configured
-	 * settings, message data, and at indices specified in this class.
-	 * This method is used in the
-	 * {@link ChatHudMixin#modifyMessage(Component)} mixin.
+	 * Reformats the incoming message {@code m} according to configured settings,
+	 * message data, {@link #tryCondenseDupes(Component)}, and more.
+	 *
+	 * @see ChatHudMixin#modifyMessage(Component)
 	 *
 	 * @implNote
 	 * <ol>
 	 *   <li>Return {@code m} early if the chat log is suspended to not cause
-	 *   other issues.</li>
-	 * 	 <li>Reconstruct the message if {@linkplain Config#name allowed},
+	 *   other issues. The only modification provided in this case is done by
+	 *   {@link #tryCondenseDupes(Component)}</li>
+	 * 	 <li>Reconstruct the message if {@linkplain Config#name it's wanted},
 	 * 	 it has player message data, and is {@linkplain #VANILLA_FORMAT in
 	 * 	 the vanilla format}:
 	 *     	 <ol>
@@ -266,11 +265,13 @@ public class ChatUtils {
 	 * 	 </li>
 	 *   <li>If the message shouldn't be formatted (doesn't satisfy all
 	 *   prerequisites), then don't do anything to {@code m}.</li>
-	 * 	 <li>Assemble the message, despite any/all changes and add a duplicate counter
-	 * 	 according to {@link #tryCondenseDupes(Component)}.</li>
+	 *   <li>If {@link Config#logMessageStructures} is toggled, throw an {@link
+	 *   AssertionError} to force debug logging of messages.</li>
+	 * 	 <li>Assemble the message, despite any changes, and {@linkplain
+	 * 	 #tryCondenseDupes(Component) add a duplicate counter}.</li>
 	 * 	 <li>Log the modified message in the {@link ChatLog}.</li>
-	 * 	 <li>Reset the {@link ChatUtils#messageData} to prevent a rare bug.</li>
-	 * 	 <li>Return the message, regardless of if it was actually modified or not.</li>
+	 * 	 <li>Reset {@link ChatUtils#messageData} to prevent a rare bug.</li>
+	 * 	 <li>Return the built message.</li>
 	 * </ol>
 	 */
 	public static Component modifyMessage(@NotNull Component m) {
@@ -324,9 +325,9 @@ public class ChatUtils {
 						.findFirst()
 						.orElseGet(() -> {
 							String error = "No closing angle bracket found in vanilla message '" + m.getString() + "'!";
-							ChatPatches.logReportMsg(new IllegalStateException(error));
+							logReportMsg(new IllegalStateException(error));
 							ChatPatches.pushErrorToast("Message modification error", error);
-							return Component.literal("ERROR: " + error).withStyle(ChatFormatting.RED);
+							return Component.literal(">");
 						});
 
 					String[] split = firstPart.getString().split(">"); // fixes (#156)
@@ -347,14 +348,15 @@ public class ChatUtils {
 				}
 			}
 
-			if(config.logMessageStructures)
+			if(config.logMessageStructures) {
 				throw new AssertionError("time to log those message structures!", null);
+			}
 		} catch(RuntimeException | AssertionError e) {
 			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying '{}'", m.getString());
 			LOGGER.error("[ChatUtils.modifyMessage] \tTimestamp: {}", optimizeEmpties(timestamp));
 			LOGGER.error("[ChatUtils.modifyMessage] \tBody:");
 
-			if(content.getSiblings().size() == 3) { // modified vanilla message
+			if(content.getSiblings().size() == 3 && !content.equals(m)) { // modified vanilla message
 				LOGGER.error("[ChatUtils.modifyMessage] \t\tTeam: {}", optimizeEmpties(getPart(content, MSG_TEAM_INDEX)));
 				LOGGER.error("[ChatUtils.modifyMessage] \t\tSender: {}", optimizeEmpties(getPart(content, MSG_SENDER_INDEX)));
 				LOGGER.error("[ChatUtils.modifyMessage] \t\tContent: {}", optimizeEmpties(getPart(content, MSG_CONTENT_INDEX)));
@@ -366,7 +368,7 @@ public class ChatUtils {
 			}
 
 			if(e instanceof RuntimeException) {
-				ChatPatches.logReportMsg(e); // don't log forced errors
+				logReportMsg(e); // don't log forced errors
 				ChatPatches.pushErrorToast("Message modification error", e.getMessage());
 			}
 		}
@@ -467,8 +469,15 @@ public class ChatUtils {
 		}
 
 		// update the incoming message with the new dupe counter
-		if(dupeCount > 1)
-			siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // this will throw errors if DUPE_INDEX doesn't exist!
+		if(dupeCount > 1) {
+			if(siblings.size() > DUPE_INDEX) {
+				siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // this will throw errors if DUPE_INDEX doesn't exist!
+			} else {
+				LOGGER.warn("[ChatUtils.tryCondenseDupes] Invalid message structure: {}", optimizeEmpties(incoming));
+				logReportMsg(new IllegalStateException("DUPE_INDEX is out of bounds for message '" + incoming.getString() + "'"));
+				siblings.add(DUPE_INDEX, config.makeDupeCounter(dupeCount));
+			}
+		}
 
 		return TextUtils.newText(incoming.getContents(), siblings, incoming.getStyle());
 	}
