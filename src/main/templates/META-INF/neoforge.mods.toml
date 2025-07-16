@@ -14,7 +14,7 @@ authors = "${mod_author}"
 credits = "${mod_credits}" # todo test these w current list system
 displayURL = "https://modrinth.com/mod/${mod_modrinth}"
 features = { javaVersion = "[21,)" }
-logoFile = "assets/chatpatches/icon.png"
+logoFile = "assets/${mod_id}/icon.png"
 
 [[dependencies."${mod_id}"]]
 modId = "minecraft"

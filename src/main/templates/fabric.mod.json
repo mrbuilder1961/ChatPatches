@@ -12,7 +12,7 @@
     "sources": "https://github.com/${mod_source}"
   },
   "license": "${mod_license}",
-  "icon": "assets/chatpatches/icon.png",
+  "icon": "assets/${mod_id}/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
