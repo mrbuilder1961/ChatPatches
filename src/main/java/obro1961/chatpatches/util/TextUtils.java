@@ -89,7 +89,7 @@ public class TextUtils {
 				if(len[0] >= max) {
 					return Optional.empty(); // if the text is the perfect length, don't add anything
 				}
-				// warning: might throw an error but the math seems right so idk?
+				// warning: might throw an error but the math seems right?
 				str = str.substring(0, max - len[0]); // truncate the string to the max length
 			}
 
