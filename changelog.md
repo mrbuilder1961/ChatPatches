@@ -1,16 +1,15 @@
 # Changelog
 
-## Chat Patches `8.0-alpha.1` for Minecraft 1.20.1-1.21.7 on Fabric, Quilt
-- STONECUTTER AHHHHHHHHHHH
-- everything happened. ignore this changelog tho it's a placeholder
+## Chat Patches `8.0-alpha.2` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
+### Since alpha.1:
+- Compiled <1.20.5 versions with Java 17 ([#247](https://www.github.com/mrbuilder1961/ChatPatches/issues/247))
+- Fixed 'Disallowed character' log and toast spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
 
-## Chat Patches `8.0-alpha` for Minecraft 1.20.2, 1.21.7 on Fabric, Quilt
-- Completely refactored the entire codebase to support multiple loaders and versions!
-- (I skipped `7.0` because this is content spanning multiple major versions)
-- Java 21 is **now *unconditionally* required going forward**
+### Since x.6.16:
+- Completely refactored the entire mod to use Stonecutter and Modstitch! ([#137](https://www.github.com/mrbuilder1961/ChatPatches/issues/137))
 - Overhauled the copy menu, which is now known as the Context Menu! It has more features, including a toggle, main buttons copying their first 
-  sub-button, and even more message parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
-- Renamed many config options; you will need to manually rename these options: //prepub DFU?
+  sub-button, and new parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
+- Renamed many config options; **for now** you will need to **manually rename** these options:
   - `counterCompact` => `compactChat`
   - `counterCompactDistance` => `compactDistance`
   - `shiftChat` => `chatShift`
@@ -18,19 +17,19 @@
   - `chatNameFormat` => `nameFormat`
   - `chatNameColor` => `nameColor`
   - `contextColor` => `contextOutlineColor`
-  - `hideSearchButton` => `search` (invert the previous value to keep your preference)
+  - `hideSearchButton` => `search` (invert old value)
   - `timeSystemMessages` (new! [#162](https://www.github.com/mrbuilder1961/ChatPatches/issues/162))
-  - `formatting` => (removed: didn't work and was unused)
-- The config file will now only save changed options, rather than all of them
-- Config saving and all chat log I/O events are now executed on I/O threads, which should prevent any potential freezing ([#227](https://www.github.com/mrbuilder1961/ChatPatches/issues/227))
-- Fatal chat log saving errors will now try and dump all the data to the debug log
+  - `formatting` => (removed: broken and unused)
+- The config file will now only save non-default options
+- All I/O events except for config loading are now run on dedicated threads ([#227](https://www.github.com/mrbuilder1961/ChatPatches/issues/227))
+- Fatal chat log errors will now try to dump saved data to the log
 - Fixed team names and related components not formatting properly
-- An infinite amount of misc changes, like rewordings
-- **Dev notes:**
-  - (???) Simplified `fabric.mod.json` thanks to Loom's new features (looks like illegal JSON, but is ultimately fixed when built)
-  - Replaced usages of GSON with Mojang's `DataFixerUpper` (Codec) library, which is now used going forward
-  - Made chat log references consistent throughout the codebase ("chat log" most commonly, and "ChatLog" in select code locations)
-  - TODO
+- Error toasts will now show when problems arise with the chat log, ensuring quicker fixes
+- ***SO*** much more, skim the commit history for extensive details
+
+## Chat Patches `8.0-alpha.1` for Minecraft 1.20.1-1.21.7 on Fabric, Quilt
+- STONECUTTER AHHHHHHHHHHH
+- everything happened. ignore this changelog tho it's a placeholder
 
 ## Chat Patches `202.6.5` for Minecraft 1.20.2 on Fabric, Quilt
 - Added the `searchPrefix` config option, which controls whether to filter previously sent messages based on the text behind the cursor, to speed up 
