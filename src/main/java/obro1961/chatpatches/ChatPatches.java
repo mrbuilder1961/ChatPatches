@@ -33,7 +33,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches"); //prepub: custom impl that overrides everything to call #getBracedCaller(.) to simplify log messages??
 
-	public static Config config /*? if <1.21.6 {*/= Config.initialize()/*?}*/; // fixme: (#243)
+	public static Config config /*? if <1.21.6 {*//*= Config.initialize()*//*?}*/; // fixme: (#243)
 
 	public static ResourceLocation id(String path) {
 		return ResourceLocation.tryBuild(MOD_ID, path);
@@ -66,7 +66,7 @@ public class ChatPatches implements ClientModInitializer {
 		Config.initialize();
 		resist243(ChatLog.class);
 		resist243(obro1961.chatpatches.gui.ContextMenu.class);
-		//? }
+		//?}
 
 		LOGGER.info("[ChatPatches()] Finished setup!");
 	}
@@ -233,7 +233,7 @@ public class ChatPatches implements ClientModInitializer {
 		} else {
 			logReportMsg(new NullPointerException("[ChatPatches#jsonOps] Expected existing client world"));
 		}
-		//? }
+		//?}
 		return JsonOps.INSTANCE;
 	}
 
@@ -278,5 +278,5 @@ public class ChatPatches implements ClientModInitializer {
 		}
 		if(ex != null) { logReportMsg(ex); }
 	}
-	//? }
+	//?}
 }

@@ -205,12 +205,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && config.search) {
+			// prepub use demo_background.png instead, but idk how to make it nine-sliced bc by default it's too big
 			graphics.blit(
 				// stonecutter: remove qualifier when import optimizer fix is available
 				/*? if >=1.21.6 {*/net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,/*?} elif >=1.21.2 {*//*net.minecraft.client.renderer.RenderType::guiTextured,*//*?}*/
-				id("textures/gui/search_settings_panel.png"), // todo: use a nine-sliced aka dynamic texture, even better find an existing bg
+				id("textures/gui/search_settings_panel.png"),
 				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
+			//ResourceLocation DEMO = ResourceLocation.withDefaultNamespace("textures/gui/demo_background.png");
+			//graphics.blit(RenderPipelines.GUI_TEXTURED, DEMO, MENU_X, MENU_Y_OFFSET + height, 0, 0, 248, 166, 256, 256); // too big
 
 			caseSensitiveButton.render(graphics, mX, mY, delta);
 			regexButton.render(graphics, mX, mY, delta);
