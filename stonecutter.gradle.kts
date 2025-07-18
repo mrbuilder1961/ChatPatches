@@ -2,7 +2,13 @@ plugins {
     id("dev.kikugie.stonecutter")
 }
 
-stonecutter active "1.21.7-fabric"
+stonecutter active "1.21.8-fabric"
+
+
+stonecutter tasks {
+    order("publishModrinth")
+    order("publishCurseforge")
+}
 
 // each build task builds all of its loader and copies them to build/libs/
 fun registerLoaderBuildTask(loader: String) {

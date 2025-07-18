@@ -10,9 +10,11 @@ plugins { // versions in gradle.properties + settings.gradle.kts
 
 
 val id = m("id")
+val v: String = m("version")
 val minecraft = stonecutter.current.version //name.substringBefore("-")
 val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prepub: does this cause any issues...
-val v: String = m("version")
+val currentIsActive = minecraft == stonecutter.active?.version
+val java = if(stonecutter.eval(minecraft, ">1.20.4")) 21 else 17
 
 var allowPublish = false
 var changes = "No changelog specified."
@@ -38,13 +40,14 @@ fun d(name: String, fallback: String? = null): String = p("dep.$name", fallback)
 fun dep(name: String, consumer: (prop: String) -> Unit) = prop("dep.$name", consumer)
 
 fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
+//fun mod(name: String, consumer: (prop: String) -> Unit) = prop("mod.$name", consumer)
 
 /**
  * Returns the property belonging to the current loader. For example, `l("api")`
  * will return the value of `fabric.api`, `neo.api`, or `forge.api` depending on
  * the current loader.
  */
-fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallback) //delete: this i think
+/*fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallback)*/
 
 
 kotlin {
@@ -54,15 +57,15 @@ kotlin {
 dependencies {
     // fabric only
     modstitch.loom {
-        modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${l("api")}+$minecraft")
+        modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabric.api")}+$minecraft")
     }
 
-    //modstitchModImplementation("eu.pb4:placeholder-api:${d("placeholder")}")
     if(minecraft == "1.20.2")
         modstitchModImplementation("dev.isxander.yacl:yet-another-config-lib-fabric:${d("yacl")}")
     else
         modstitchModImplementation("dev.isxander:yet-another-config-lib:${d("yacl")}-fabric")
 
+    //modstitchModImplementation("eu.pb4:placeholder-api:${d("placeholder")}")
     modstitchModImplementation("com.terraformersmc:modmenu:${d("modmenu")}")
 
     implementation(kotlin("stdlib-jdk8"))
@@ -70,7 +73,6 @@ dependencies {
 
 repositories {
     mavenCentral()
-    //todo NEW MAVEN FOR ARCH... later
     maven("https://maven.isxander.dev/releases")
     maven("https://maven.terraformersmc.com/releases/")
     maven("https://maven.nucleoid.xyz/") // Placeholder API, for us and Mod Menu
@@ -103,7 +105,15 @@ modstitch {
         // also todo with FMJ: remove fabric api and use arch api or sm
 
         replacementProperties.populate {
-            put("minecraft_range", m("range", (if(isLoom) minecraft else "[$minecraft]"))) // if range is not specified, use the current minecraft version
+            put("java", java.toString())
+            put("minecraft_range", m("range", "")
+                .takeIf { it.contains(",") } // if there are multiple versions...
+                ?.split(",") // parse them into a list
+                ?.map { "\"$it\"" } // add quotes to ensure valid JSON syntax
+                ?.toString()
+                ?: "\"$minecraft\"" // else only one version
+                //if(!isLoom) [list.getFirst(),list.getLast()] // version ranges should all be consecutive
+            )
             put("mod_source", m("source"))
             put("mod_modrinth", m("modrinth"))
         }
@@ -111,7 +121,7 @@ modstitch {
 
     // Fabric
     loom {
-        fabricLoaderVersion = if(isLoom) l("loader") else error("Trying to specify Fabric loader on '$loader'")
+        fabricLoaderVersion = p("fabric.loader")
 
 
         // Configure loom like normal in this block.
@@ -143,11 +153,11 @@ modstitch {
     mixin {
         addMixinsToModManifest = true // auto-gen mixins in FMJ and mods.toml
 
-        configs.register("chatpatches")
+        configs.register(id)
 
-        // If you need loader specific mixins, simply make the mixin file and add it like so for the respective loader:
-        // if(is(Loom|ModDevGradleRegular|ModDevGradleLegacy))
-            // configs.register("chatpatches-{}")
+        // loader specific mixin configs:
+        //if(is(Loom|ModDevGradleRegular|ModDevGradleLegacy))
+            //configs.register("$id-{}")
     }
 }
 tasks {
@@ -228,42 +238,42 @@ publishMods {
     fun propList(name: String): List<String> = p(name).split(",").filter { it.isNotBlank() }
     fun token(name: String): String {
         return when {
-            !allowPublish -> "-"
             !secrets.exists() -> {
                 dryRun = true
-                "x"
+                "-"
             }
-            else -> (Json.parseToJsonElement( secrets.readText(Charsets.UTF_8) ).jsonObject[name]?.toString() ?: "?")
+            else -> (
+                Json.parseToJsonElement( secrets.readText(Charsets.UTF_8) )
+                    .jsonObject[name]
+                    ?.toString()
+                    ?.replace("\"", "") // kotlin's json is weird
+                ?:
+                    "?"
+            )
         }
     }
 
-    val loaders = propList("loaders")
-    val targets  = propList("targets")
-
+    val targets = m("range", minecraft).split(",")
     val required = propList("required")
     val optionals = propList("optionals")
     val incompatibles = propList("incompatibles")
     val embedded = propList("embedded")
     //prepub prob need to store these in options... sigh
 
-    //version = v // automatically set by mpp
-    displayName = "${modstitch.metadata.modName} $v for \$minecraft_range on $loader" //prepub keep?
+    version = "$v+$name" // mod_version+minecraft-loader
+    displayName = "$v for $minecraft ${loader.replaceFirstChar { it.uppercase() }}"
     file = modstitch.finalJarTask.flatMap { it.archiveFile } // https://modmuss50.github.io/mod-publish-plugin/getting_started/#input-file
     changelog = changes
     type = when {
-        v.contains("alpha", true) -> ReleaseType.ALPHA
-        v.contains("beta", true) -> ReleaseType.BETA
+        "alpha" in v -> ReleaseType.ALPHA
+        "beta" in v -> ReleaseType.BETA
         else -> ReleaseType.STABLE
     }
-    modLoaders = loaders
-    println("dryRun = ${dryRun.getOrElse(false)}, but will be set to ${!allowPublish}")
+    modLoaders = propList("loaders") // todo: vers-specific for forge/neo version cutoffs
+    println("dryRun = ${dryRun.orNull}, but will be set to ${!allowPublish}")
     dryRun = !allowPublish
 
     curseforge {
-        if(allowPublish) {
-            println("Publishing v$v to $loaders on $targets!")
-        }
-
         accessToken = token("curseforge")
         projectId = m("curseforge")
         projectSlug = m("id")
@@ -287,24 +297,28 @@ publishMods {
         embedded.forEach(::embeds)
     }
 
-    github {
+    // temp disabled bc idk how to make stonecutter accumulate the versions (its not compiling)
+    /*github {
         accessToken = token("github")
-        repository = m("source")
-        commitish = "omnivers"
-        tagName = "$v-$name" //prepub
 
-        if(modstitch.isLoom) {
-            additionalFiles.from(
-                tasks.remapSourcesJar.flatMap { it.archiveFile }, // warning: broken bc loom-specific?
-                modstitch.namedJarTask.flatMap { it.archiveFile } // should work for both
-            )
+        if(currentIsActive) {
+            repository = m("source")
+            commitish = "omnivers"
+            tagName = version
+
+            allowEmptyFiles = true // active version (parent) task only
+        } else {
+             //parent(stonecutter.tasks.named("publishMods").filter { it.version == minecraft })
         }
-    }
+    }*/
 
-    discord {
-        webhookUrl = token("discord") // official
-        dryRunWebhookUrl = token("discord_debug") // testing
-        username = "Publisher Bot"
-        avatarUrl = "https://cdn.modrinth.com/data/MOqt4Z5n/56c954dea290ef4dd1b0d6ea92a811acac62ca85.png"
+    // only announce the version once (if it's the active version)
+    if(currentIsActive) {
+        discord {
+            webhookUrl = token("discord") // official
+            dryRunWebhookUrl = token("discord_debug") // testing
+            username = "Publisher Bot"
+            avatarUrl = "https://cdn.modrinth.com/data/MOqt4Z5n/56c954dea290ef4dd1b0d6ea92a811acac62ca85.png"
+        }
     }
 }
