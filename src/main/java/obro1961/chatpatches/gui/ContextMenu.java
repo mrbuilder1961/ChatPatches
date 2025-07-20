@@ -202,7 +202,7 @@ public class ContextMenu implements GuiEventListener {
 
 		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
 		//? if <=1.21.4 {
-		/*this.messageSender = s.getHoverEvent() != null && s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityTooltipInfo info
+		/*this.messageSender = s.getHoverEvent() != null && (Object)s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityTooltipInfo info
 		*///?} else {
 		this.messageSender = s.getHoverEvent() instanceof HoverEvent.ShowEntity(HoverEvent.EntityTooltipInfo info)
 		//?}
@@ -466,7 +466,7 @@ public class ContextMenu implements GuiEventListener {
 					}
 				}
 				//?} else {
-				/*if(style.getClickEvent() instanceof ClickEvent ce && ce.getValue() instanceof String v && !v.isBlank()) {
+				/*if((Object)style.getClickEvent() instanceof ClickEvent ce && (Object)ce.getValue() instanceof String v && !v.isBlank()) {
 					if(ce.getAction() == ClickEvent.Action.OPEN_URL && !webLinks.contains(v)) {
 						webLinks.add(v);
 					} else if(ce.getAction() == ClickEvent.Action.OPEN_FILE && !l.contains(v)) {
@@ -607,7 +607,8 @@ public class ContextMenu implements GuiEventListener {
 	 */
 	@Override
 	public boolean mouseClicked(double mX, double mY, int button) {
-		if(!noOp && button == GLFW.GLFW_MOUSE_BUTTON_LEFT && getHoveredButton(mX, mY) instanceof Optional<AbstractButton> opt) {
+		if(!noOp && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+			Optional<AbstractButton> opt = getHoveredButton(mX, mY);
 			// whether the button at (mX, mY) was clicked or not, otherwise return false and close the menu
 			return opt.isPresent() && opt.get().mouseClicked(mX, mY, button);
 		}
@@ -744,7 +745,7 @@ public class ContextMenu implements GuiEventListener {
 					itr.button.visible = group.contains(grid.get( hoveredButton.getMessage() ));
 
 				// proceed with underlining if the hovered button is in the iterated group and the group has a hover button
-				if(itr.button == hoveredButton && group.size() > 1 && group.get(1).button instanceof AbstractButton firstHoverButton) {
+				if(itr.button == hoveredButton && group.size() > 1 && /*?if java: <21 {*//*(Object)*//*?}*/ group.get(1).button instanceof AbstractButton firstHoverButton) {
 					// remove if iterated button is in the group and the message is already underlined
 					boolean hide = itr.col > 0 && itr.row == group.getFirst().row;
 

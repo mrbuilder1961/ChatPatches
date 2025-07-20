@@ -51,7 +51,13 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(java)
+}
+
+if(java < 21) {
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("--enable-preview") // allows patterns in switch statements
+    }
 }
 
 dependencies {
@@ -79,11 +85,8 @@ repositories {
 }
 
 modstitch {
+    javaTarget = java
     minecraftVersion = minecraft
-
-    // Alternatively use stonecutter.eval if you have a lot of versions to target.
-    // https://stonecutter.kikugie.dev/stonecutter/guide/setup#checking-versions
-    javaTarget = 21
 
     parchment {
         dep("parchment") { mappingsVersion = it }
@@ -106,6 +109,8 @@ modstitch {
 
         replacementProperties.populate {
             put("java", java.toString())
+            put("mod_source", m("source"))
+            put("mod_modrinth", m("modrinth"))
             put("minecraft_range", m("range", "")
                 .takeIf { it.contains(",") } // if there are multiple versions...
                 ?.split(",") // parse them into a list
@@ -114,8 +119,6 @@ modstitch {
                 ?: "\"$minecraft\"" // else only one version
                 //if(!isLoom) [list.getFirst(),list.getLast()] // version ranges should all be consecutive
             )
-            put("mod_source", m("source"))
-            put("mod_modrinth", m("modrinth"))
         }
     }
 
@@ -206,10 +209,8 @@ tasks {
 }
 
 stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
-    // https://stonecutter.kikugie.dev/blog/changes/0.7.html#_0-7-alpha-10
-    constants {
-        match(loader, "fabric", "neo", "forge")
-    }
+    constants { match(loader, "fabric", "neo", "forge") }
+    dependencies { put("java", java.toString()) }
 
     swaps {
         //prepub: make this data-driven from gradle.properties
@@ -218,17 +219,12 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         put("popStack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
     }
 
-    /*
-    // discouraged bc swap is better: comments are required, making them harder to accidentally forget
     replacements {
-        // needed bc only one replacement per block -_-
-        fun strRepl(dir: Boolean, from: String, to: String) {
-            string {
-                direction = dir
-                replace(from, to)
-            }
+        string {
+            direction = java < 21
+            replace(".getFirst()", ".get(0)")
         }
-    }*/
+    }
 }
 
 

@@ -235,7 +235,7 @@ public class Config {
         List<GuiMessage> messages = ((ChatHudAccess) mc.gui.getChat()).chatpatches$getMessages();
 		String world = mc.hasSingleplayerServer() // this check prevents NPEs for both if branches
             ? "C_" + mc.getSingleplayerServer().getWorldData().getLevelName()
-            : mc.getCurrentServer() instanceof ServerData entry
+            : /*? if java: <21 {*//*(Object)*//*?}*/ mc.getCurrentServer() instanceof ServerData entry
                 ? "S_" + (entry.name.isBlank() ? entry.ip : entry.name) // if the name is blank, uses the address instead
                 : "?_?"; // prevents weird game states (ex. from ReplayMod) from throwing IOOBEs from the substring call below
 		Component boundary = ChatUtils.buildMessage(null, null, null, makeText(boundaryFormat, world.substring(2), "", "", boundaryColor));
@@ -276,7 +276,7 @@ public class Config {
 			return chatShift;
         // don't shift the chat if there are no hearts visible (not in survival or adventure)
         // also note that player is always non-null by this point
-        if(mc.getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival())
+        if(/*? if java: <21 {*//*(Object)*//*?}*/ mc.getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival())
             return chatShift;
 
 		// get player stats and standardize to scaled number of rows
@@ -572,52 +572,65 @@ public class Config {
          * {@link String}s and {@link Integer}s ({@link TextColor}s); however, no int
 		 * range checks are performed.
          */
-        @SuppressWarnings({"unchecked", "unused"}) // from pattern variables
+        @SuppressWarnings("unused") // from pattern variables
         public MapCodec<T> getTypeCodec() {
-			Codec<T> codec = (Codec<T>) switch(def) {
-				// this monstrosity allows parsing int -> TextColor (migration) and String <-> TextColor (default) while the final result is always an int
-				// much love to TheWhyEvenHow for the solution: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
-                case Object o when key.contains("Color") ->
-					//stonecutter: remove qualifier when import optimizer fix is available
-					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*net.minecraft.util.ExtraCodecs*//*?} else {*/Codec/*?}*/
-					.withAlternative(
-						TextColor.CODEC,
-						Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue)
-					).xmap(TextColor::getValue, TextColor::fromRgb);
-                case String s when key.contains("Format") -> Codec.STRING.comapFlatMap(
-                    raw -> raw.contains("$") //prepub: change this to {} or ${var_name} but make sure to add a psf const for it and put it in the migration codec
-                        ? DataResult.success(raw)
-                        : DataResult.error(() -> "[Config$Setting#getTypeCodec] Format string '" + raw + "' for option '" + key + "' is missing a '$'"),
-                    Function.identity()
-                );
-                case String s when key.contains("Date") -> Codec.STRING.comapFlatMap(
-                    raw -> {
-						try {
-                            new SimpleDateFormat(raw);
-							return DataResult.success(raw);
-						} catch(IllegalArgumentException e) {
-							return DataResult.error(() -> "[Config$Setting#getTypeCodec] Date string '" + raw + "' for option '" + key + "' is not a valid SimpleDateFormat");
-						}
-					},
-                    Function.identity()
-                );
-                case String s -> Codec.STRING;
-				case Integer i -> Codec.INT;
+			Codec<?> codec = switch(def) {
 				case Boolean b -> Codec.BOOL;
-                default -> {
-                    logReportMsg(new IllegalStateException("Option '" + key + "' is not a valid type for serialization"));
-                    yield Codec.STRING;
-                }
-            };
+				case Integer i -> Codec.INT;
+				case String s -> {
+					if(key.contains("Format")) {
+						yield Codec.STRING.comapFlatMap(
+							//todo: change this to {} or ${var_name} but make sure to add a psf const for it and put it in the migration codec
+							raw -> raw.contains("$")
+								? DataResult.success(raw)
+								: DataResult.error(() -> "Format string '" + raw + "' for option '" + key + "' is missing a '$'"),
+							Function.identity()
+						);
+					} else if(key.contains("Date")) {
+						yield Codec.STRING.comapFlatMap(
+							raw -> {
+								try {
+									new SimpleDateFormat(raw);
+									return DataResult.success(raw);
+								} catch(IllegalArgumentException e) {
+									return DataResult.error(() -> "Date string '" + raw + "' for option '" + key + "' is not a valid SimpleDateFormat");
+								}
+							},
+							Function.identity()
+						);
+					} else {
+						yield Codec.STRING;
+					}
+				}
+				default -> {
+					if(key.contains("Color")) {
+						yield null;
+					} else {
+						logReportMsg(new IllegalStateException("Option '" + key + "' is not a valid type for serialization"));
+						yield Codec.STRING;
+					}
+				}
+			};
 
-            return codec.optionalFieldOf(key, def);
+			// this monstrosity allows parsing int -> TextColor (migration) and String <-> TextColor (default) while the final result is always an int
+			// much love to TheWhyEvenHow for the solution: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
+			if(key.contains("Color")) {
+				//stonecutter: remove qualifier when import optimizer fix is available
+				codec =
+					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*net.minecraft.util.ExtraCodecs*//*?} else {*/Codec/*?}*/
+					.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
+					.xmap(TextColor::getValue, TextColor::fromRgb);
+			}
+
+			//noinspection unchecked: java is stupid about T casting lol
+			return ((Codec<T>) codec).optionalFieldOf(key, def);
         }
 
 		//prepub move elsewhere (new CodecUtils?) if u want idrc or just wait it out until i discontinue this version?
 		//? if <=1.20.1 {
 		/*static <T> Codec<T> withAlternative(Codec<T> codec, Codec<? extends T> alternative) {
 			return Codec.either(codec, alternative).xmap(either -> either.map(Function.identity(), Function.identity()), com.mojang.datafixers.util.Either::left);
-		}
-		*///?}
+		}*/
+		//?}
     }
 }

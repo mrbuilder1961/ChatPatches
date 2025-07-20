@@ -258,7 +258,7 @@ public class ChatLog {
                         })
                         .orElseGet(() -> Pair.of(newSyncedObjectList(null), newSyncedObjectList(null)));
 
-                messages = deserializedPair.getFirst();
+                messages = deserializedPair.getFirst(/*stonecutter: java 21 getFirst block*/);
                 history = deserializedPair.getSecond();
             }
 

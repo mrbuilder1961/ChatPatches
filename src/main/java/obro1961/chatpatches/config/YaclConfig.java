@@ -192,7 +192,10 @@ public class YaclConfig extends Config {
 
                                         ( d instanceof Integer i && k.contains("Color") )
                                             ? "`0x%06X`".formatted(i)
-                                                + (TextUtils.COLOR_TO_FORMATTING.get(i.intValue()) instanceof ChatFormatting f ? " ("+f.getName().toLowerCase(Locale.ROOT)+")" : "")
+                                                + (/*? if java: <21 {*//*(Object)*//*?}*/ TextUtils.COLOR_TO_FORMATTING.get(i.intValue()) instanceof ChatFormatting f
+                                                    ? " ("+f.getName().toLowerCase(Locale.ROOT)+")"
+                                                    : ""
+                                                )
                                             : (opt.getType().equals(String.class))
                                                 ? "`\"" + d + "\"`"
                                                 : "`" + d + "`",
@@ -342,7 +345,7 @@ public class YaclConfig extends Config {
                 case "chatWidth" -> mc.getWindow().getGuiScaledWidth();
                 case "chatHeight" -> mc.getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
-                case "compactDistance" -> mc.gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25;
+                case "compactDistance" -> /*? if java: <21 {*//*(Object)*//*?}*/ mc.gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25;
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
