@@ -7,6 +7,7 @@
   "mixins": [],
   "client": [
     "accessor.GridWidgetAccessor",
+    "codec.ExtraCodecsMixin",
     "gui.ChatHudMixin",
     "gui.ChatScreenMixin",
     "gui.ScreenMixin",
