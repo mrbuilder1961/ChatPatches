@@ -79,7 +79,6 @@ repositories {
 }
 
 modstitch {
-    javaTarget = java
     minecraftVersion = minecraft
 
     parchment {
@@ -124,27 +123,23 @@ modstitch {
         // Configure loom like normal in this block.
         configureLoom {
             //todo ?? blank unless i need to edit something like AW (aka disable validation for versioning)
+            // also note that AW/ATs are now automatically translated to the other by modstitch >:) see stonecutter website for using them together :D
         }
     }
 
     // NeoForge, Forge
     moddevgradle {
-        enable {
-            prop("forge.loader") { forgeVersion = it }
-            prop("neo.loader") { neoForgeVersion = it }
-        }
-
         // Configures client runs for MDG, it is not done by default
-        defaultRuns(true, false) { "$loader $it" }
+        //defaultRuns(true, false) { "$loader $it" }
 
         // This block configures the `neoforge` extension that MDG exposes by default,
         // you can configure MDG like normal from here
-        configureNeoforge {
+        /*configureNeoforge {
             runs.all {
                 disableIdeRun()
             }
             //todo https://projects.neoforged.net/neoforged/moddevgradle # Runs
-        }
+        }*/
     }
 
     mixin {
