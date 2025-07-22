@@ -66,14 +66,11 @@ public class TextUtils {
 	public static MutableComponent asText(Object o) {
 		if(o == null) {
 			return Component.empty();
+		} else if(o instanceof Component) {
+			return (MutableComponent) o;
+		} else {
+			return Component.literal(o instanceof FormattedText ft ? ft.getString() : String.valueOf(o));
 		}
-
-		return switch(o) {
-			case Component t -> (MutableComponent) t;
-			case FormattedText sv -> Component.literal(sv.getString());
-			case String s -> Component.literal(s);
-			default -> Component.literal(String.valueOf(o));
-		};
 	}
 
 	public static MutableComponent truncate(Component text, int max) {

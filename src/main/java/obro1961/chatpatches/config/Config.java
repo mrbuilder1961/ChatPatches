@@ -572,12 +572,11 @@ public class Config {
          * {@link String}s and {@link Integer}s ({@link TextColor}s); however, no int
 		 * range checks are performed.
          */
-        @SuppressWarnings("unused") // from pattern variables
         public MapCodec<T> getTypeCodec() {
-			Codec<?> codec = switch(def) {
-				case Boolean b -> Codec.BOOL;
-				case Integer i -> Codec.INT;
-				case String s -> {
+			Codec<?> codec = switch(getType().getName()) { // rip 21 pattern matching ;(
+				case "java.lang.Boolean", "boolean" -> Codec.BOOL;
+				case "java.lang.Integer", "int" -> Codec.INT;
+				case "java.lang.String" -> {
 					if(key.contains("Format")) {
 						yield Codec.STRING.comapFlatMap(
 							//todo: change this to {} or ${var_name} but make sure to add a psf const for it and put it in the migration codec
@@ -604,7 +603,7 @@ public class Config {
 				}
 				default -> {
 					if(key.contains("Color")) {
-						yield null;
+						yield null; // managed below
 					} else {
 						logReportMsg(new IllegalStateException("Option '" + key + "' is not a valid type for serialization"));
 						yield Codec.STRING;

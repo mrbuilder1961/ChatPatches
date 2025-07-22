@@ -54,12 +54,6 @@ kotlin {
     jvmToolchain(java)
 }
 
-if(java < 21) {
-    tasks.withType<JavaCompile> {
-        options.compilerArgs.add("--enable-preview") // allows patterns in switch statements
-    }
-}
-
 dependencies {
     // fabric only
     modstitch.loom {
