@@ -14,7 +14,7 @@ import static obro1961.chatpatches.ChatPatches.config;
 
 @Environment(EnvType.CLIENT)
 @Mixin(ClientPacketListener.class)
-public abstract class CPNHMixin {
+public abstract class ClientPacketListenerMixin {
     /**
      * Prevents messages from being deleted.
      * Extremely unclear implementation on Mojang's part,

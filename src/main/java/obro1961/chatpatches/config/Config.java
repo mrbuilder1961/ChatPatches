@@ -52,6 +52,7 @@ import static obro1961.chatpatches.util.TextUtils.text;
 public class Config {
     public static final Config DEFAULTS = new Config();
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
+	public static final String PLACEHOLDER = "$"; // prepub use in all options..? like of(pre, suf) -> pre + PLACEHOLDER + suf
 
 	protected static final int IO_THRESHOLD_SUGGESTION = 500;
     protected static final Minecraft mc = Minecraft.getInstance();
@@ -66,7 +67,7 @@ public class Config {
     // tab categories: message, boundary, chatlog, chat
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
     public boolean time = true, timeSystemMessages = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColor();
-    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = "$"; public int hoverColor = WHITE.getColor();
+    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = PLACEHOLDER; public int hoverColor = WHITE.getColor();
     public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = YELLOW.getColor(); public boolean counterCheckStyle = false;
     public boolean compactChat = false; public int compactDistance = 0;
 
@@ -112,11 +113,7 @@ public class Config {
         return new ConfirmScreen(
             clicked -> {
                 if(clicked) {
-					//? if <=1.20.2 {
-                    /*ConfirmLinkScreen.confirmLinkNow(link, parent, true);
-					*///?} else {
-					ConfirmLinkScreen.confirmLinkNow(parent, link);
-					//?}
+					ConfirmLinkScreen.confirmLinkNow(/*? if >1.20.2 {*/ parent, link /*?} else {*//*link, parent, true*//*?}*/);
 				} else {
 					mc.setScreen(parent);
 				}
@@ -131,7 +128,7 @@ public class Config {
 
     /**
      * Creates a new {@link MutableComponent} based on {@code formatStr} with all
-	 * instances of {@code $} replaced with {@code varStr}. {@code prefix}, {@code
+	 * instances of {@value #PLACEHOLDER} replaced with {@code varStr}. {@code prefix}, {@code
 	 * suffix}, and {@code rgbColor} are then applied accordingly.
      */
     private MutableComponent makeText(String formatStr, String varStr, String prefix, String suffix, int rgbColor) {
@@ -178,7 +175,7 @@ public class Config {
             PlayerTeam team = mc.level.getScoreboard().getPlayersTeam(profile.getName());
             Style hoverStyle = new RemotePlayer(mc.level, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
                 .applyTo(style); // fills in the color with nameColor if not specified by the team
-            String[] configFormat = nameFormat.equals("$") ? new String[] {"", ""} : nameFormat.split("\\$"); // a singular $ results in an empty array
+            String[] configFormat = nameFormat.equals(PLACEHOLDER) ? new String[] {"", ""} : nameFormat.split("\\$"); // note: changing placeholder requires removing the backslashes in the split regex
             ObjectList<Component> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
 
@@ -579,10 +576,9 @@ public class Config {
 				case "java.lang.String" -> {
 					if(key.contains("Format")) {
 						yield Codec.STRING.comapFlatMap(
-							//todo: change this to {} or ${var_name} but make sure to add a psf const for it and put it in the migration codec
-							raw -> raw.contains("$")
+							raw -> raw.contains(PLACEHOLDER)
 								? DataResult.success(raw)
-								: DataResult.error(() -> "Format string '" + raw + "' for option '" + key + "' is missing a '$'"),
+								: DataResult.error(() -> "Format string '" + raw + "' for option '" + key + "' is missing a '" + PLACEHOLDER + "' placeholder"),
 							Function.identity()
 						);
 					} else if(key.contains("Date")) {

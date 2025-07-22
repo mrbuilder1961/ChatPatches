@@ -12,7 +12,7 @@
     "gui.ScreenMixin",
     "listener.MessageHandlerMixin",
     "security.ClickEvent$ActionMixin",
-    "security.CPNHMixin"
+    "security.ClientPacketListenerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

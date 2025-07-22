@@ -312,9 +312,9 @@ public class YaclConfig extends Config {
             });
 
         else if( o.key.contains("Format") )
-            // must contain '$'
+            // must contain placeholder
             return Binding.generic(o.def, o::get, inc -> {
-                if(inc.toString().contains("$"))
+                if(inc.toString().contains(PLACEHOLDER))
                     o.set(inc);
             });
 
