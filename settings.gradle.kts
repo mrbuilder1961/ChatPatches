@@ -49,8 +49,7 @@ stonecutter {
             }
         }
 
-        val vcs: String by settings
-        vcsVersion = vcs // if not explicitly specified defaults to first version
+        vcsVersion = "${targets.substringAfterLast(',')}-fabric" // most recent version on fabric
     }
 }
 
