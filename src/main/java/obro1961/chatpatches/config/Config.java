@@ -599,23 +599,19 @@ public class Config {
 				}
 				default -> {
 					if(key.contains("Color")) {
-						yield null; // managed below
+						// parses int -> TextColor (migration) and String <-> TextColor (default); the final result is always of type int
+						// thx to TheWhyEvenHow: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
+						yield
+							//stonecutter: remove qualifier when import optimizer fix is available
+							/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*net.minecraft.util.ExtraCodecs*//*?} else {*/Codec/*?}*/
+							.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
+							.xmap(TextColor::getValue, TextColor::fromRgb);
 					} else {
 						logReportMsg(new IllegalStateException("Option '" + key + "' is not a valid type for serialization"));
 						yield Codec.STRING;
 					}
 				}
 			};
-
-			// this monstrosity allows parsing int -> TextColor (migration) and String <-> TextColor (default) while the final result is always an int
-			// much love to TheWhyEvenHow for the solution: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
-			if(key.contains("Color")) {
-				//stonecutter: remove qualifier when import optimizer fix is available
-				codec =
-					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*net.minecraft.util.ExtraCodecs*//*?} else {*/Codec/*?}*/
-					.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
-					.xmap(TextColor::getValue, TextColor::fromRgb);
-			}
 
 			//noinspection unchecked: java is stupid about T casting lol
 			return ((Codec<T>) codec).optionalFieldOf(key, def);

@@ -13,7 +13,7 @@ stonecutter tasks {
 // each build task builds all of its loader and copies them to build/libs/
 fun registerLoaderBuildTask(loader: String) {
     // registers as a Copy task to allow easy copying
-    tasks.register<Copy>("buildAndCopy${loader.replaceFirstChar { it.uppercase() } }") { // not sure why Kotlin deprecated capitalize() ...
+    tasks.register<Copy>("collect${loader.replaceFirstChar { it.uppercase() } }") { // not sure why Kotlin deprecated capitalize() ...
         group = "build"
 
         // builds the loader's jars (lazily)
@@ -52,7 +52,7 @@ registerLoaderBuildTask("fabric")
 registerLoaderBuildTask("neo")
 registerLoaderBuildTask("forge")
 
-tasks.register("buildAndCopyAll") {
+tasks.register("collectAll") {
     group = "build"
-    dependsOn("buildAndCopyFabric", "buildAndCopyNeo", "buildAndCopyForge")
+    dependsOn("collectFabric", "collectNeo", "collectForge")
 }

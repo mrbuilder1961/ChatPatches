@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
 
 import java.util.function.Function;
 
+// we can't comment out the entire file otherwise older versions will throw errors bc the mixin won't exist
 @Mixin(ExtraCodecs.class)
 public class ExtraCodecsMixin {
 	//? if >=1.21.5 {
