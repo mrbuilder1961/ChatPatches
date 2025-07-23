@@ -33,7 +33,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches"); //prepub: custom impl that overrides everything to call #getBracedCaller(.) to simplify log messages??
 
-	public static Config config /*? if <1.21.6 {*//*= Config.initialize()*//*?}*/; // fixme: (#243)
+	public static Config config /*? if <1.21.5 {*//*= Config.initialize()*//*?}*/; // fixme: (#243)
 
 	public static ResourceLocation id(String path) {
 		return ResourceLocation.tryBuild(MOD_ID, path);
@@ -60,7 +60,7 @@ public class ChatPatches implements ClientModInitializer {
 			ChatLog.hideRecentMessages();
 		});
 
-		//? if >=1.21.6 {
+		//? if >=1.21.5 {
 		// populates the NOW existing Minecraft instance in the following classes. config needs to be initialized after as to avoid an NPE
 		resist243(Config.class);
 		Config.initialize();
@@ -237,7 +237,7 @@ public class ChatPatches implements ClientModInitializer {
 		return JsonOps.INSTANCE;
 	}
 
-	//? if >=1.21.6 {
+	//? if >=1.21.5 {
 	/**
 	 * Sets the static final {@code mc} field of the given class to the current return
 	 * value of {@link Minecraft#getInstance()}, if it is non-null and the field value
