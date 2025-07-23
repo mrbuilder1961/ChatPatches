@@ -9,12 +9,14 @@ on:
   # Prevents waiting for unnecessary checks/actions
   push:
     paths-ignore:
+      - 'LICENSE'
       - '**.md'
-      - '**.txt'
+      - '.gitignore'
   pull_request:
     paths-ignore:
+      - 'LICENSE'
       - '**.md'
-      - '**.txt'
+      - '.gitignore'
 
 jobs:
   build:
