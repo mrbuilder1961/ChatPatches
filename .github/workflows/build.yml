@@ -20,9 +20,6 @@ jobs:
   build:
     strategy:
       matrix:
-        java: [
-          21
-        ]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -32,10 +29,10 @@ jobs:
       - name: validate gradle wrapper
         uses: gradle/wrapper-validation-action@v2
 
-      - name: setup jdk ${{ matrix.java }}
+      - name: setup jdk
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java }}
+          java-version: '21'
           distribution: temurin
 
       - name: make gradle wrapper executable
@@ -43,10 +40,10 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: build
-        run: ./gradlew buildAndCopyAll --stacktrace
+        run: ./gradlew collectAll --stacktrace
 
       - name: capture build artifacts
-        if: ${{ runner.os == 'Linux' && matrix.java == '21' }} # Only upload artifacts built from latest java on one OS
+        if: ${{ runner.os == 'Linux' }} # Only upload artifacts built from latest java on one OS
         uses: actions/upload-artifact@v4
         with:
           name: jars
