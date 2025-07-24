@@ -571,7 +571,8 @@ public class Config {
          * {@link String}s and {@link Integer}s ({@link TextColor}s); however, no int
 		 * range checks are performed.
          */
-        public MapCodec<T> getTypeCodec() {
+        @SuppressWarnings("unchecked") // java is stupid about T casting
+		public MapCodec<T> getTypeCodec() {
 			Codec<?> codec;
 
 			// ensures the TextColor codec is used
@@ -618,7 +619,6 @@ public class Config {
 				};
 			}
 
-			//noinspection unchecked: java is stupid about T casting lol
 			return ((Codec<T>) codec).optionalFieldOf(key, def);
         }
 
