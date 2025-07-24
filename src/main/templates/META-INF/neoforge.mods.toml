@@ -11,7 +11,7 @@ description = '''
 ${mod_description}
 '''
 authors = "${mod_author}"
-credits = "${mod_credits}" # todo test these w current list system
+credits = "${mod_credits}" # test these w current list system
 displayURL = "https://modrinth.com/mod/${mod_modrinth}"
 features = { javaVersion = "[21,)" }
 logoFile = "assets/${mod_id}/icon.png"
@@ -29,7 +29,7 @@ type = "required"
 [[dependencies."${mod_id}"]]
 modId = "yet_another_config_lib_v3"
 type = "required"
-side = "CLIENT" # TODO if i leave it out will it crash??
+#side = "CLIENT" # TODO if i leave it out will it crash??
 
 [[dependencies."${mod_id}"]]
 modId = "modmenu"

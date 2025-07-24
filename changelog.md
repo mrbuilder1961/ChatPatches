@@ -2,12 +2,13 @@
 
 ## Chat Patches `8.0-alpha.2` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 ### Since alpha.1:
-- Compiled <1.20.5 versions with Java 17 ([#247](https://www.github.com/mrbuilder1961/ChatPatches/issues/247))
-- Fixed 'Disallowed character' log and toast spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
+- [#243](https://www.github.com/mrbuilder1961/ChatPatches/issues/243)
+- Fixed 'Disallowed character' spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
+- Java 17 compat ([#247](https://www.github.com/mrbuilder1961/ChatPatches/issues/247))
 
 ### Since x.6.16:
-- Completely refactored the entire mod to use Stonecutter and Modstitch! ([#137](https://www.github.com/mrbuilder1961/ChatPatches/issues/137))
-- Overhauled the copy menu, which is now known as the Context Menu! It has more features, including a toggle, main buttons copying their first 
+- Completely refactored the mod using Stonecutter and Modstitch! ([#137](https://www.github.com/mrbuilder1961/ChatPatches/issues/137))
+- Replaced the copy menu with the Context Menu! New features include a toggle, main buttons copying their first 
   sub-button, and new parts to copy! ([#128](https://www.github.com/mrbuilder1961/ChatPatches/issues/128), [#129](https://www.github.com/mrbuilder1961/ChatPatches/issues/129), [#166](https://www.github.com/mrbuilder1961/ChatPatches/issues/166), [#168](https://www.github.com/mrbuilder1961/ChatPatches/issues/168), [#185](https://www.github.com/mrbuilder1961/ChatPatches/issues/185))
 - Renamed many config options; **for now** you will need to **manually rename** these options:
   - `counterCompact` => `compactChat`
@@ -18,14 +19,14 @@
   - `chatNameColor` => `nameColor`
   - `contextColor` => `contextOutlineColor`
   - `hideSearchButton` => `search` (invert old value)
-  - `timeSystemMessages` (new! [#162](https://www.github.com/mrbuilder1961/ChatPatches/issues/162))
+  - `timeSystemMessages` ([#162](https://www.github.com/mrbuilder1961/ChatPatches/issues/162))
   - `formatting` => (removed: broken and unused)
 - The config file will now only save non-default options
 - All I/O events except for config loading are now run on dedicated threads ([#227](https://www.github.com/mrbuilder1961/ChatPatches/issues/227))
 - Fatal chat log errors will now try to dump saved data to the log
-- Fixed team names and related components not formatting properly
-- Error toasts will now show when problems arise with the chat log, ensuring quicker fixes
-- ***SO*** much more, skim the commit history for extensive details
+- Fixed team names and related components not formatting
+- Error toasts will now show when the chat log breaks, ensuring quicker fixes
+- and ***SO*** much more!
 
 ## Chat Patches `8.0-alpha.1` for Minecraft 1.20.1-1.21.7 on Fabric, Quilt
 - STONECUTTER AHHHHHHHHHHH
