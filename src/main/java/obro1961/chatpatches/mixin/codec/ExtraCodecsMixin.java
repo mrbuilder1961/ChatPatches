@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 // we can't comment out the entire file otherwise older versions will throw errors bc the mixin won't exist
 @Mixin(ExtraCodecs.class)
-public class ExtraCodecsMixin {
+public abstract class ExtraCodecsMixin {
 	//? if >=1.21.5 {
 	/**
 	 * Allows all chat strings to be serialized while restoring chat logs. Fixes
@@ -28,7 +28,7 @@ public class ExtraCodecsMixin {
 		at = @At(value = "INVOKE:FIRST", target = "Lcom/mojang/serialization/Codec;validate(Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;")
 	)
 	private static Function<String, DataResult<String>> allowEverythingWhileRestoring(Function<String, DataResult<String>> checker) {
-		return ChatLog.isRestoring() ? DataResult::success : checker;
+		return ChatLog.isCodecSafe().get() ? checker : DataResult::success;
 	}
 	//? }
 }
