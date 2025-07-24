@@ -18,11 +18,9 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.TextUtils;
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.Unsafe;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +31,7 @@ public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches"); //prepub: custom impl that overrides everything to call #getBracedCaller(.) to simplify log messages??
 
-	public static Config config /*? if <1.21.5 {*//*= Config.initialize()*//*?}*/; // fixme: (#243)
+	public static Config config = Config.initialize();
 
 	public static ResourceLocation id(String path) {
 		return ResourceLocation.tryBuild(MOD_ID, path);
@@ -42,31 +40,25 @@ public class ChatPatches implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		//stonecutter: arch api - put all these callbacks in another class for splitting by loader.. unless i can just use arch callbacks
-		//also todo: gametests! somewhere somehow!
+		// todo: gametests! somewhere somehow!
 
 		// -- chat log saving events --
 		// according to my testing, this event works as needed when the game disconnects and on crashes if the game is functional at that point
 		// testing details (server=hypixel): normal disconnects work on both world and server, manual F3+C crash works on world but NOT server
 		// honestly I don't care if it fails on crashes, its fixable A) through the save interval or B) by fixing the crash's source
+		//stonecutter: * events *
 		ClientPlayConnectionEvents.DISCONNECT.register((network, client) -> ChatLog.serialize());
 		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> ChatLog.saveIfPaused(screen));
 		ClientTickEvents.END_WORLD_TICK.register(world -> ChatLog.tickSaveCounter());
 
 		// -- chat log loader and boundary sender --
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
+			// loads once
 			ChatLog.load(false);
+			// loads every time
 			config.sendBoundaryLine();
 			ChatLog.hideRecentMessages();
 		});
-
-		//? if >=1.21.5 {
-		// populates the NOW existing Minecraft instance in the following classes. config needs to be initialized after as to avoid an NPE
-		resist243(Config.class);
-		Config.initialize();
-		resist243(ChatLog.class);
-		resist243(obro1961.chatpatches.gui.ContextMenu.class);
-		//?}
 
 		LOGGER.info("[ChatPatches()] Finished setup!");
 	}
@@ -236,47 +228,4 @@ public class ChatPatches implements ClientModInitializer {
 		//?}
 		return JsonOps.INSTANCE;
 	}
-
-	//? if >=1.21.5 {
-	/**
-	 * Sets the static final {@code mc} field of the given class to the current return
-	 * value of {@link Minecraft#getInstance()}, if it is non-null and the field value
-	 * is. Temporary method to fix #243 while preserving the {@code final} modifier of
-	 * the targeted field and waiting for a proper fix.
-	 *
-	 * @implNote I am aware of the disgusting nature of this method, but I will not
-	 * compromise on the intended non-nullity of {@link Minecraft#getInstance()}. Even
-	 * IntelliJ knows it should be non-null.
-	 */
-	@SuppressWarnings({"ConstantValue", "deprecation"}) // this whole method is deprecated and unsafe. i'm horribly aware
-	public static <T> void resist243(Class<T> clazz) {
-		Minecraft instance = Minecraft.getInstance();
-		if(instance == null) {
-			LOGGER.warn("[ChatPatches#resist243] Client not yet available, skipping update for {}", clazz.getName());
-			return;
-		}
-
-		Exception ex = null;
-		try {
-			var mcField = FieldUtils.getDeclaredField(clazz, "mc", true);
-			if(mcField.get(null) != null) { return; } // don't bother if it's already set
-
-			// get the Unsafe instance
-			var theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-			theUnsafe.setAccessible(true);
-			var unsafe = (Unsafe)theUnsafe.get(null);
-
-			// use it to set the static final field, without any setAccessible or modifier hacks >:)
-			unsafe.putObject(unsafe.staticFieldBase(mcField), unsafe.staticFieldOffset(mcField), instance);
-			LOGGER.info("[ChatPatches#resist243] Successfully resisted #243 for {}", clazz.getName());
-		} catch(IllegalAccessException e) {
-			ex = e;
-			LOGGER.error("[ChatPatches#resist243] {}#mc is still null", clazz.getName());
-		} catch(NoSuchFieldException e) {
-			ex = e;
-			LOGGER.warn("[ChatPatches#resist243] no unsafe??", e);
-		}
-		if(ex != null) { logReportMsg(ex); }
-	}
-	//?}
 }

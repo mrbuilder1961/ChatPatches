@@ -55,7 +55,8 @@ public class Config {
 	public static final String PLACEHOLDER = "$"; // prepub use in all options..? like of(pre, suf) -> pre + PLACEHOLDER + suf
 
 	protected static final int IO_THRESHOLD_SUGGESTION = 500;
-    protected static final Minecraft mc = Minecraft.getInstance();
+
+    protected static Minecraft mc() { return Minecraft.getInstance(); }
 
     /** @see #sendBoundaryLine() */
     protected static String lastWorld = "";
@@ -115,7 +116,7 @@ public class Config {
                 if(clicked) {
 					ConfirmLinkScreen.confirmLinkNow(/*? if >1.20.2 {*/ parent, link /*?} else {*//*link, parent, true*//*?}*/);
 				} else {
-					mc.setScreen(parent);
+					mc().setScreen(parent);
 				}
             },
             Component.translatable(YaclConfig.HELP_PREFIX + "missing"),
@@ -172,8 +173,8 @@ public class Config {
     public MutableComponent formatPlayername(GameProfile profile) {
         Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
         try {
-            PlayerTeam team = mc.level.getScoreboard().getPlayersTeam(profile.getName());
-            Style hoverStyle = new RemotePlayer(mc.level, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
+            PlayerTeam team = mc().level.getScoreboard().getPlayersTeam(profile.getName());
+            Style hoverStyle = new RemotePlayer(mc().level, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
                 .applyTo(style); // fills in the color with nameColor if not specified by the team
             String[] configFormat = nameFormat.equals(PLACEHOLDER) ? new String[] {"", ""} : nameFormat.split("\\$"); // note: changing placeholder requires removing the backslashes in the split regex
             ObjectList<Component> components = new ObjectArrayList<>(team != null ? 5 : 3);
@@ -189,16 +190,17 @@ public class Config {
             }
 
 			// stonecutter: remove qualifiers when import optimizer fix is available
-			//? if <=1.20.2 {
-            /*return TextUtils.newText(net.minecraft.network.chat.contents.LiteralContents.EMPTY, components, hoverStyle);
-			*///?} else {
-            return TextUtils.newText(net.minecraft.network.chat.contents.PlainTextContents.EMPTY, components, hoverStyle);
-			//?}
+            return TextUtils.newText(
+				net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/.EMPTY,
+				components,
+				hoverStyle
+			);
         } catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
 
-            if(mc.level == null)
-                e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
+            if(mc().level == null) {
+				e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
+			}
 
             logReportMsg(e);
 			pushErrorToast("Playername formatting error", e.getMessage());
@@ -229,10 +231,10 @@ public class Config {
         if(!boundary || vanillaClearing)
             return;
 
-        List<GuiMessage> messages = ((ChatHudAccess) mc.gui.getChat()).chatpatches$getMessages();
-		String world = mc.hasSingleplayerServer() // this check prevents NPEs for both if branches
-            ? "C_" + mc.getSingleplayerServer().getWorldData().getLevelName()
-            : /*? if java: <21 {*//*(Object)*//*?}*/ mc.getCurrentServer() instanceof ServerData entry
+        List<GuiMessage> messages = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getMessages();
+		String world = mc().hasSingleplayerServer() // this check prevents NPEs for both if branches
+            ? "C_" + mc().getSingleplayerServer().getWorldData().getLevelName()
+            : /*? if java: <21 {*//*(Object)*//*?}*/ mc().getCurrentServer() instanceof ServerData entry
                 ? "S_" + (entry.name.isBlank() ? entry.ip : entry.name) // if the name is blank, uses the address instead
                 : "?_?"; // prevents weird game states (ex. from ReplayMod) from throwing IOOBEs from the substring call below
 		Component boundary = ChatUtils.buildMessage(null, null, null, makeText(boundaryFormat, world.substring(2), "", "", boundaryColor));
@@ -245,7 +247,7 @@ public class Config {
                 lastWorld = world; // updates #lastWorld
 
                 config.time = false; // disables the timestamp just for the boundary line
-                mc.gui.getChat().addMessage(boundary);
+                mc().gui.getChat().addMessage(boundary);
                 config.time = time;
             } catch(RuntimeException e) {
                 LOGGER.warn("[Config.sendBoundaryLine] An error occurred while adding the boundary line:", e);
@@ -267,20 +269,20 @@ public class Config {
 	 * <a href="https://github.com/mrbuilder1961/ChatPatches/pull/224">#224</a>.
 	 */
 	public int calcDynamicChatShift() {
-		Player player = mc.player;
+		Player player = mc().player;
 
 		if(!config.dynamicChatShift || player == null)
 			return chatShift;
         // don't shift the chat if there are no hearts visible (not in survival or adventure)
         // also note that player is always non-null by this point
-        if(/*? if java: <21 {*//*(Object)*//*?}*/ mc.getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival())
+        if(/*? if java: <21 {*//*(Object)*//*?}*/ mc().getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival())
             return chatShift;
 
 		// get player stats and standardize to scaled number of rows
 		int armor = player.getArmorValue();
 		float absorption = player.getAbsorptionAmount();
 		float health = player.getMaxHealth();
-		double scale = mc.gui.getChat().getScale();
+		double scale = mc().gui.getChat().getScale();
 
 		// calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
 		int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
@@ -342,7 +344,7 @@ public class Config {
 			logReportMsg(e);
 			backup();
 		}
-		ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
+		logDuration(start, IO_THRESHOLD_SUGGESTION);
 	}
 
     /**
@@ -351,7 +353,7 @@ public class Config {
 	 * the render thread.</b>
      */
     public static void serialize() {
-		ChatPatches.executeIoTask(() -> {
+		executeIoTask(() -> {
 			long start = System.currentTimeMillis();
 			LOGGER.info("[Config.serialize] Saving...");
 
@@ -376,7 +378,7 @@ public class Config {
 				LOGGER.error("[Config.serialize] An error occurred while trying to {} config data to '{}'", action, PATH);
 				logReportMsg(e);
 			}
-			ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
+			logDuration(start, IO_THRESHOLD_SUGGESTION);
 		});
 	}
 
@@ -388,7 +390,7 @@ public class Config {
      * I/O worker thread} to avoid freezing the render thread.</b>
      */
     public static void backup() {
-		ChatPatches.executeIoTask(() -> {
+		executeIoTask(() -> {
 			try {
 				Files.copy(PATH, PATH.resolveSibling(MOD_ID + "_" + Util.getFilenameFormattedDateTime() + ".json"));
 			} catch(IOException e) {

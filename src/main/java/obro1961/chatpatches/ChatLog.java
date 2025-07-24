@@ -108,7 +108,8 @@ public class ChatLog {
 	private static final int IO_THRESHOLD_SUGGESTION = 1000;
 	private static final String EMPTY_JSON = "{\"messages\":[],\"history\":[]}";
 	private static final ObjectList<?> EMPTY_LIST = newSyncedObjectList(null); // used for determining if the chat log has been deserialized yet
-    private static final Minecraft mc = Minecraft.getInstance();
+
+	private static Minecraft mc() { return Minecraft.getInstance(); }
 
     /**
      * Used to suspend the addition of messages
@@ -345,7 +346,7 @@ public class ChatLog {
 
     public static void restore() {
         if(messageCount() > 0 && historyCount() > 0) {
-			ChatComponent chat = mc.gui.getChat();
+			ChatComponent chat = mc().gui.getChat();
 
 			restoring = true;
 			history.forEach(chat::addRecentChat);
@@ -359,14 +360,14 @@ public class ChatLog {
 		LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages!", messageCount(), historyCount());
 	}
 
-	public static void hideRecentMessages() {
+	public static void hideRecentMessages() { // prepub: optimize this (prob w param) so if only one new message is added it skips iterating
 		if(messageCount() > 0 && historyCount() > 0) {
-			final int ticks = mc.gui.getGuiTicks();
+			final int ticks = mc().gui.getGuiTicks();
 
-			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering (#42)
+			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering! (#42)
 			// only replaces messages that would render instantly to save performance on large chat logs
 			// now adds the message's addedTime to account for any extra offsets from the deserialization unsyncing from the main game thread
-			((ChatHudAccess) mc.gui.getChat()).chatpatches$getVisibleMessages()
+			((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages()
 				.replaceAll(ln ->
 					(ticks - ln.addedTime() < 200) ? new GuiMessage.Line(-(200 + ln.addedTime()), ln.content(), ln.tag(), ln.endOfEntry()) : ln);
 		}
@@ -420,7 +421,8 @@ public class ChatLog {
      * disabled and the game is paused.
      */
 	public static void saveIfPaused(Screen screen) {
-        if(config.chatlogSaveInterval == 0 && (!mc.isWindowActive() || screen instanceof PauseScreen))
-            serialize();
+        if(config.chatlogSaveInterval == 0 && (screen instanceof PauseScreen || !mc().isWindowActive())) {
+			serialize();
+		}
     }
 }

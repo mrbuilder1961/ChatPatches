@@ -205,7 +205,7 @@ public class YaclConfig extends Config {
 									));
                                 });
 
-                                mc.keyboardHandler.setClipboard(str.toString());
+                                mc().keyboardHandler.setClipboard(str.toString());
                                 LOGGER.warn("[YaclConfig.exportGithubTables] {}", str);
                             })
                             .build(),
@@ -342,10 +342,10 @@ public class YaclConfig extends Config {
         } else {
             return switch(key) {
                 case "chatMaxMessages" -> Short.MAX_VALUE;
-                case "chatWidth" -> mc.getWindow().getGuiScaledWidth();
-                case "chatHeight" -> mc.getWindow().getGuiScaledHeight();
+                case "chatWidth" -> mc().getWindow().getGuiScaledWidth();
+                case "chatHeight" -> mc().getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
-                case "compactDistance" -> /*? if java: <21 {*//*(Object)*//*?}*/ mc.gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25;
+                case "compactDistance" -> /*? if java: <21 {*//*(Object)*//*?}*/ mc().gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25;
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
@@ -432,10 +432,9 @@ public class YaclConfig extends Config {
         ResourceLocation id = ChatPatches.id(image);
 
         try {
-            if( mc.getResourceManager().getResource(id).isPresent() )
+            if(mc().getResourceManager().getResource(id).isPresent()) {
                 builder.webpImage(id);
-            else
-                LOGGER.debug("[YaclConfig.desc] Couldn't find '{}'", image);
+            }
         } catch(Throwable e) {
             LOGGER.error("[YaclConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
         }

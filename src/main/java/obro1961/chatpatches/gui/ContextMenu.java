@@ -76,8 +76,9 @@ public class ContextMenu implements GuiEventListener {
 	 * to not include file links. Memoized to avoid recompiling the regex every time, and so
 	 * it's only compiled once when it's needed.
 	 */
-	private static final Minecraft mc = Minecraft.getInstance();
 	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
+
+	private static Minecraft mc() { return Minecraft.getInstance(); }
 
 	// region text constants
 	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", TextUtils.asText(id));
@@ -175,7 +176,7 @@ public class ContextMenu implements GuiEventListener {
 		this.grid = new Grid();
 
 		// reference and optimization fields
-		this.hud = mc.gui.getChat();
+		this.hud = mc().gui.getChat();
 		this.access = (ChatHudAccess) hud;
 		this.screen = noOp ? null : screen;
 
@@ -234,7 +235,7 @@ public class ContextMenu implements GuiEventListener {
 	 *                     to not render anything extra.
 	 */
 	private void registerButton(Component id, int localRow, int col, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction, Object renderObject) {
-		int w = mc.font.width(id) + 2 * BUTTON_PADDING;
+		int w = mc().font.width(id) + 2 * BUTTON_PADDING;
 		int h = BUTTON_HEIGHT + BUTTON_PADDING;
 
 		AbstractButton button = Button.builder(id, b -> {
@@ -244,7 +245,7 @@ public class ContextMenu implements GuiEventListener {
 			Component copyText = tooltipCopyTextSupplier != null ? tooltipCopyTextSupplier.get() : EMPTY;
 			String copyStr = StringUtil.stripColor(copyText.getString());
 			if(!copyStr.isEmpty()) {
-				mc.keyboardHandler.setClipboard(copyStr);
+				mc().keyboardHandler.setClipboard(copyStr);
 				ChatPatches.pushInfoToast(Component.translatable(LANG_PREFIX + "copied"), copyText);
 			}
 
@@ -498,7 +499,7 @@ public class ContextMenu implements GuiEventListener {
 				0, 0,
 				null,
 				me -> ((ChatScreenAccess) screen).chatpatches$getChatField().setValue(TextUtils.fillVars(config.contextReplyFormat, messageSender.getName())),
-				mc.getSkinManager()./*? if >=1.20.2 {*/getInsecureSkin/*?} else {*//*getInsecureSkinLocation*//*?}*/(messageSender)
+				mc().getSkinManager()./*? if >=1.20.2 {*/getInsecureSkin/*?} else {*//*getInsecureSkinLocation*//*?}*/(messageSender)
 			);
 		}
 
@@ -536,7 +537,7 @@ public class ContextMenu implements GuiEventListener {
 		double s = hud.getScale();
 		int lH = access.chatpatches$getLineHeight();
 		int sW = Mth.ceil(hud.getWidth() / s); // scaled width
-		int sH = Mth.floor((mc.getWindow().getGuiScaledHeight() - 40) / s); // scaled height
+		int sH = Mth.floor((mc().getWindow().getGuiScaledHeight() - 40) / s); // scaled height
 		int shift = Mth.floor(config.calcDynamicChatShift() / s);
 		int i = visibleMessageIndex - access.chatpatches$getScrolledLines();
 		int hoveredY = sH - (i * lH) - shift;
@@ -911,16 +912,16 @@ public class ContextMenu implements GuiEventListener {
 
 
 			// if the grid menu goes off the screen, shift it up
-			int y = widget.getY();
-			if(widget.getHeight() + y > mc.getWindow().getGuiScaledHeight()) {
+			int y = widget.getY(), h = mc().getWindow().getGuiScaledHeight();
+			if(widget.getHeight() + y > h) {
 				// moves the menu up by the amount it goes off the screen, plus a padding buffer
-				widget.setY(y - ((widget.getHeight() + y) - mc.getWindow().getGuiScaledHeight()) - BUTTON_PADDING);
+				widget.setY(y - ((widget.getHeight() + y) - h) - BUTTON_PADDING);
 			}
 			// if the grid menu goes off the screen, shift it left
-			int x = widget.getX();
-			if(widget.getWidth() + x > mc.getWindow().getGuiScaledWidth()) {
+			int x = widget.getX(), w = mc().getWindow().getGuiScaledWidth();
+			if(widget.getWidth() + x > w) {
 				// moves the menu left by the amount it goes off the screen, plus a padding buffer
-				widget.setX(x - ((widget.getWidth() + x) - mc.getWindow().getGuiScaledWidth()) - BUTTON_PADDING);
+				widget.setX(x - ((widget.getWidth() + x) - w) - BUTTON_PADDING);
 			}
 		}
 
