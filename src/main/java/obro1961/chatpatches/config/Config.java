@@ -572,48 +572,51 @@ public class Config {
 		 * range checks are performed.
          */
         public MapCodec<T> getTypeCodec() {
-			Codec<?> codec = switch(getType().getName()) { // rip 21 pattern matching ;(
-				case "java.lang.Boolean", "boolean" -> Codec.BOOL;
-				case "java.lang.Integer", "int" -> Codec.INT;
-				case "java.lang.String" -> {
-					if(key.contains("Format")) {
-						yield Codec.STRING.comapFlatMap(
-							raw -> raw.contains(PLACEHOLDER)
-								? DataResult.success(raw)
-								: DataResult.error(() -> "Format string '" + raw + "' for option '" + key + "' is missing a '" + PLACEHOLDER + "' placeholder"),
-							Function.identity()
-						);
-					} else if(key.contains("Date")) {
-						yield Codec.STRING.comapFlatMap(
-							raw -> {
-								try {
-									new SimpleDateFormat(raw);
-									return DataResult.success(raw);
-								} catch(IllegalArgumentException e) {
-									return DataResult.error(() -> "Date string '" + raw + "' for option '" + key + "' is not a valid SimpleDateFormat");
-								}
-							},
-							Function.identity()
-						);
-					} else {
-						yield Codec.STRING;
+			Codec<?> codec;
+
+			// ensures the TextColor codec is used
+			if(key.contains("Color")) {
+				// parses int -> TextColor (migration) and String <-> TextColor (default); the final result is always of type int
+				// thx to TheWhyEvenHow: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
+				codec =
+					//stonecutter: remove qualifier when import optimizer fix is available
+					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*net.minecraft.util.ExtraCodecs*//*?} else {*/Codec/*?}*/
+					.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
+					.xmap(TextColor::getValue, TextColor::fromRgb);
+			} else {
+				codec = switch(getType().getName()) { // rip 21 pattern matching ;(
+					case "java.lang.Boolean", "boolean" -> Codec.BOOL;
+					case "java.lang.Integer", "int" -> Codec.INT;
+					case "java.lang.String" -> {
+						if(key.contains("Format")) {
+							yield Codec.STRING.comapFlatMap(
+								raw -> raw.contains(PLACEHOLDER)
+									? DataResult.success(raw)
+									: DataResult.error(() -> "Format string '" + raw + "' for option '" + key + "' is missing a '" + PLACEHOLDER + "' placeholder"),
+								Function.identity()
+							);
+						} else if(key.contains("Date")) {
+							yield Codec.STRING.comapFlatMap(
+								raw -> {
+									try {
+										new SimpleDateFormat(raw);
+										return DataResult.success(raw);
+									} catch(IllegalArgumentException e) {
+										return DataResult.error(() -> "Date string '" + raw + "' for option '" + key + "' is not a valid SimpleDateFormat");
+									}
+								},
+								Function.identity()
+							);
+						} else {
+							yield Codec.STRING;
+						}
 					}
-				}
-				default -> {
-					if(key.contains("Color")) {
-						// parses int -> TextColor (migration) and String <-> TextColor (default); the final result is always of type int
-						// thx to TheWhyEvenHow: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
-						yield
-							//stonecutter: remove qualifier when import optimizer fix is available
-							/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*net.minecraft.util.ExtraCodecs*//*?} else {*/Codec/*?}*/
-							.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
-							.xmap(TextColor::getValue, TextColor::fromRgb);
-					} else {
+					default -> {
 						logReportMsg(new IllegalStateException("Option '" + key + "' is not a valid type for serialization"));
 						yield Codec.STRING;
 					}
-				}
-			};
+				};
+			}
 
 			//noinspection unchecked: java is stupid about T casting lol
 			return ((Codec<T>) codec).optionalFieldOf(key, def);
