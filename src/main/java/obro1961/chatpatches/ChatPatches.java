@@ -209,11 +209,9 @@ public class ChatPatches implements ClientModInitializer {
 	}
 
 	/**
-	 * Returns {@link JsonOps#INSTANCE} wrapped by a {@link RegistryAccess.Frozen}
-	 * (provided by the {@linkplain Minecraft#level client's level}) to not crash
-	 * when serializing.
-	 *
-	 * <p>Fixes <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>.
+	 * Returns a registry-backed {@link JsonOps#INSTANCE}, provided by the
+	 * {@linkplain Minecraft#level client's world}, to not crash when serializing;
+	 * fixes <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>.
 	 * Thanks to
 	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1278519812628156528">arkosammy12</a>
 	 * for help on the Fabric Discord!

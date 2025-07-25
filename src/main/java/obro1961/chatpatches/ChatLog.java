@@ -301,10 +301,10 @@ public class ChatLog {
 			LOGGER.info("[ChatLog.serialize] Saving...");
 
 			try {
-					.orElseThrow();
 				JsonElement json = CODEC
 					.encodeStart(ChatPatches.jsonOps(), Pair.of(messages, history))
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
+					.orElseThrow();
 
 				// always in UTF-8
 				Files.writeString(PATH, GsonHelper.toStableString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);

@@ -255,7 +255,6 @@ publishMods {
         else -> ReleaseType.STABLE
     }
     modLoaders = propList("loaders") // todo: vers-specific for forge/neo version cutoffs
-    println("dryRun = ${dryRun.orNull}, but will be set to ${!allowPublish}")
     dryRun = !allowPublish
 
     curseforge {

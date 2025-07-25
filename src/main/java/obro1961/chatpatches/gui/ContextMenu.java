@@ -181,7 +181,9 @@ public class ContextMenu implements GuiEventListener {
 		this.screen = noOp ? null : screen;
 
 		// selected fields
-		var messages = access.chatpatches$getMessages();
+		// ensures the search results are copied properly, when present
+		var searchResults = noOp ? ObjectList.<GuiMessage>of() : ((ChatScreenAccess) screen).getSearchResults();
+		var messages = searchResults.isEmpty() ? access.chatpatches$getMessages() : searchResults;
 		int messageIndex = noOp ? -1 : access.getChatHudLineIndex(mX, mY);
 
 		if(messageIndex == -1)

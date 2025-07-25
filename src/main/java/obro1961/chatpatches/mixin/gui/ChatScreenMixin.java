@@ -4,6 +4,9 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import it.unimi.dsi.fastutil.booleans.BooleanArrayList;
+import it.unimi.dsi.fastutil.booleans.BooleanList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -74,10 +77,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/**
 	 * @see #charTyped(char, int)
 	 */
-	@Unique private boolean blockSpaceConsumption = false;
+	@Unique private /*static*/ boolean blockSpaceConsumption = false;
 	// search stuff
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
+	@Unique private static final BooleanList searchSettings = new BooleanArrayList(new boolean[] { config.caseSensitive, config.regex });
+	@Unique private static final List<GuiMessage> searchResults = new ObjectArrayList<>();
 
 	@Unique private boolean showSearch = true;
 	@Unique private EditBox searchField;
@@ -143,8 +148,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// if necessary, forces the colors to switch + removes suggestion text
 			// normally this would be ignored because the field text = searchDraft
 			// see (#229)/(#230)
-			if(!searchDraft.isEmpty())
+			if(!searchDraft.isEmpty()) {
 				onSearchFieldUpdate(searchField.getValue(), true);
+			}
 		}
 
 		caseSensitiveButton = makeSettingButton("caseSensitive", 0); // todo redo this thing
@@ -252,6 +258,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			minecraft.gui.getChat().rescaleChat(); // reset the hud if it had anything in the field (#102)
 
 		contextMenu.close(this::removeWidget);
+
+		// if the search settings have changed, save them to disk
+		// this avoids unnecessary and costly disk writes when messing around with the search settings
+		var ss = BooleanList.of(config.caseSensitive, config.regex);
+		if(!searchSettings.equals(ss)) {
+			searchSettings.setElements(ss.toBooleanArray());
+			Config.serialize();
+		}
 	}
 
 	/**
@@ -472,7 +486,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				setting.set(!setting.get()); // toggle the setting
 				me.setMessage( CommonComponents.optionStatus(name, setting.get()) ); // update the button text
 				onSearchFieldUpdate(searchField.getValue(), true); // update the search field color
-				Config.serialize(); // save the setting
+				// saved in #onScreenClose
 			})
 			.bounds(
 				8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset,
@@ -482,47 +496,58 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			.build();
 	}
 
+	@Unique
+	public List<GuiMessage> getSearchResults() {
+		// returns the search results, used by the context menu to display the search results
+		return searchResults;
+	}
+
 	/**
-	 * Called when the search field is updated, and
-	 * applies search settings, field suggestions,
-	 * and field coloring.
+	 * Updates and applies search settings, coloring, errors, and the "Search..."
+	 * suggestion. Actual rendering and updating is called in multiple places, most
+	 * notably in {@link #initSearchWidgets(CallbackInfo)},
+	 * y, and {@linkplain #makeSettingButton(String, int) by the setting buttons}.
 	 */
 	@Unique
-	private void onSearchFieldUpdate(String text, boolean refresh) { // fixme: when regex is enabled, saved, and mc is restarted, it doesn't search & color=white until any opt is toggled. may work w CS too(?)
+	private void onSearchFieldUpdate(String text, boolean refresh) {
 		if(text.equals(searchDraft) && !refresh)
 			return; // prevent useless updates
 
 		if(!text.isEmpty() || refresh) {
-			searchField.setSuggestion(null);
+			if(!text.isEmpty()) { // ensures the suggestion is kept when there is no query
+				searchField.setSuggestion(null);
+			}
 
 			// if regex is enabled and the text is invalid, set the error and color
 			if(config.regex) {
 				try {
 					Pattern.compile(text);
-					searchError = null;
+					searchError = null; // compiled successfully!
 				} catch(PatternSyntaxException e) {
 					searchError = e;
 					searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.RED.getColor())); // mark the text red if the regex is invalid
 					minecraft.gui.getChat().rescaleChat();
 				}
 			} else {
-				searchError = null;
-				var results = filterMessages(text); // search messages for the target string and return results
-
-				if(results.isEmpty()) {
-					// mark the text yellow if there are no results
-					searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.YELLOW.getColor()));
-					minecraft.gui.getChat().rescaleChat();
-				} else {
-					// mark the text green if there are results
-					searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.GREEN.getColor()));
-				}
+				searchError = null; // no errors possible, only lack of match(es)!
 			}
 
+			// don't search if the regex is invalid
+			var results = searchError != null ? ObjectList.of() : filterMessages(text);
+
+			if(results.isEmpty()) {
+				// mark the text yellow if there are no results
+				searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.YELLOW.getColor()));
+				minecraft.gui.getChat().rescaleChat();
+			} else {
+				// mark the text green if there are results
+				searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.GREEN.getColor()));
+			}
 		} else {
 			searchError = null;
 			searchField.setTextColor(EditBox.DEFAULT_TEXT_COLOR);
 			searchField.setSuggestion(SEARCH_SUGGESTION);
+			searchResults.clear();
 			minecraft.gui.getChat().rescaleChat();
 		}
 
@@ -552,9 +577,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		ChatComponent chatHud = minecraft.gui.getChat();
 		ChatHudAccess chat = (ChatHudAccess) chatHud;
-		List<GuiMessage> messageSnapshot = List.copyOf(chat.chatpatches$getMessages());
+		List<GuiMessage> realMessages = List.copyOf(chat.chatpatches$getMessages());
 
-//fixme real issue: changing options removes the `Search...` suggestion for some reason??
 		// filter messages by removing those that don't match the target
 		chat.chatpatches$getMessages().removeIf(msg -> {
 			String text = msg.content().getString();
@@ -566,11 +590,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			);
 		});
 
+		// save the full, filtered messages for the context menu
+		searchResults.clear();
+		searchResults.addAll(chat.chatpatches$getMessages());
 		// generate the visible messages from the filtered messages
 		chatHud.rescaleChat();
 		chat.chatpatches$getMessages().clear();
 		// add the real messages back to the chat to keep the visual messages
-		chat.chatpatches$getMessages().addAll(messageSnapshot);
+		chat.chatpatches$getMessages().addAll(realMessages);
 
 		return chat.chatpatches$getVisibleMessages();
 	}
