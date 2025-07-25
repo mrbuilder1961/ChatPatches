@@ -16,7 +16,7 @@ val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prep
 val currentIsActive = minecraft == stonecutter.active?.version
 val java = if(stonecutter.eval(minecraft, ">1.20.4")) 21 else 17
 
-var allowPublish = false
+var allowPublish = false // prepub: abolish somehow
 var changes = "No changelog specified."
 
 /**
@@ -198,8 +198,13 @@ tasks {
 }
 
 stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
-    constants { match(loader, "fabric", "neo", "forge") }
-    dependencies { put("java", java.toString()) }
+    constants {
+        match(loader, "fabric", "neo", "forge")
+        //put("forge", loader != "fabric") //prepub forgelike maybe?
+    }
+    dependencies {
+        put("java", java.toString())
+    }
 
     swaps {
         //prepub: make this data-driven from gradle.properties

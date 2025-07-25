@@ -26,6 +26,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: validate gradle wrapper
+        timeout-minutes: 1 # Hopefully prevents some of the ECONNECTTIMEOUT errors?
         uses: gradle/wrapper-validation-action@v2
 
       - name: setup jdk
