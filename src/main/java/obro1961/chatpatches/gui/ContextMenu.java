@@ -805,7 +805,7 @@ public class ContextMenu implements GuiEventListener {
 		private int groupCount = 0;
 
 		public Grid() {
-			this.widget = new GridLayout( clickPos.xInt(), clickPos.yInt() );
+			this.widget = new GridLayout(clickPos.xInt(), clickPos.yInt());
 			this.entries = new ObjectArrayList<>(MAX_ROWS * MAX_COLUMNS);
 			this.groups = new ObjectArrayList<>(MAX_ROWS);
 		}

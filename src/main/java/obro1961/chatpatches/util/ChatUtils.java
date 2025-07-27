@@ -475,7 +475,7 @@ public class ChatUtils {
 			} else {
 				LOGGER.warn("[ChatUtils.tryCondenseDupes] Invalid message structure: {}", optimizeEmpties(incoming));
 				logReportMsg(new IllegalStateException("DUPE_INDEX is out of bounds for message '" + incoming.getString() + "'"));
-				siblings.add(DUPE_INDEX, config.makeDupeCounter(dupeCount));
+				siblings.add(config.makeDupeCounter(dupeCount));
 			}
 		}
 
