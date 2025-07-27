@@ -1,6 +1,7 @@
 # Changelog
 
 ## Chat Patches `8.0-alpha.3` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
+- Fixed the search bar accidentally including invisible formatting codes in the search results
 - Fixed the search bar not initially working with certain settings
 - Fixed the context menu using incorrect messages when searching
 

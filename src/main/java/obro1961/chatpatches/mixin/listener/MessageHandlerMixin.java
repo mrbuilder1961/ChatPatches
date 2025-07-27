@@ -27,7 +27,7 @@ import static obro1961.chatpatches.util.ChatUtils.*;
 /**
  * A mixin used to cache the metadata of the most recent message
  * received by the client. This is used in
- * {@link ChatHudMixin#modifyMessage(Component, boolean)}
+ * {@link ChatHudMixin#modifyMessage(Component)}
  * to provide more accurate timestamp data, the correct player
  * name, and the player's UUID.
  */
@@ -47,7 +47,7 @@ public abstract class MessageHandlerMixin {
      */
     @Inject(method = "handlePlayerChatMessage", at = @At("HEAD"))
     private void cacheChatData(PlayerChatMessage message, GameProfile sender, ChatType.Bound params, CallbackInfo ci) {
-        ChatUtils.messageData = PARSEABLE_MESSAGE_KEYS.matcher(
+        ChatUtils.messageData = PARSEABLE_MESSAGE_KEYS.reset(
             /*? if <1.20.5 {*/ /*params.chatType().chat().translationKey() *//*?} else {*/params.chatType().value().chat().translationKey()/*?}*/
         ).matches()
             ? new MessageData(sender, Date.from(message.timeStamp()), isVanilla(params.decorate(message.decoratedContent())))
@@ -83,6 +83,6 @@ public abstract class MessageHandlerMixin {
      */
     @Unique
     private boolean isVanilla(Component message) {
-        return VANILLA_FORMAT.matcher(message.getString()).matches();
+        return VANILLA_FORMAT.reset(message.getString()).matches();
     }
 }

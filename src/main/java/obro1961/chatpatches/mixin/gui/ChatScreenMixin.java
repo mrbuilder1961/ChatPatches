@@ -63,10 +63,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	// search text
 	@Unique private static final String SEARCH_SUGGESTION = I18n.get("text.chatpatches.search.suggestion");
 	@Unique private static final Component SEARCH_TOOLTIP = Component.translatable("text.chatpatches.search.desc");
-	// coordinates and positioning
+	// coordinates and positioning // todo: remove magic numbers from the math where these are used
 	@Unique private static final int SEARCH_X = 22,
 									 SEARCH_Y_OFFSET = -31,
-									 SEARCH_H = 12;
+									 SEARCH_HEIGHT = 12;
+	// prepub: make this instead a minimum value to hold the suggestion plus a bit of padding and then make it bigger when you type with a max right before the hotbar!
 	@Unique private static final double SEARCH_W_MULT = 0.25;
 	@Unique private static final int MENU_WIDTH = 146,
 									 MENU_HEIGHT = 76,
@@ -89,6 +90,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * @see ContextMenu#ContextMenu(ChatScreen, double, double)
 	 */
 	@Unique private static final List<GuiMessage> searchResults = new ObjectArrayList<>();
+	/**
+	 * Caches the compiled pattern matcher to slightly optimize the search regex, so
+	 * it can be reused during the search. Initialized to a pattern that lazily
+	 * matches everything with an empty string as input, as to return a match as fast
+	 * as possible. Only used when {@link Config#regex} is enabled.
+	 */
+	@Unique private static Matcher searchMatcher = Pattern.compile(".*?").matcher("");
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
 
@@ -146,7 +154,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchButton = new SearchButton(2, height - 35, me -> showSearchBar = !showSearchBar, me -> showSettingsMenu = !showSettingsMenu);
 		searchButton.setTooltip(Tooltip.create(SEARCH_TOOLTIP));
 
-		searchField = new EditBox(minecraft.font, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_H, Component.translatable("chat.editBox"));
+		searchField = new EditBox(minecraft.font, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_HEIGHT, Component.translatable("chat.editBox"));
 		searchField.setMaxLength(ChatUtils.MAX_MESSAGE_LENGTH);
 		searchField.setBordered(false);
 		searchField.setSuggestion(SEARCH_SUGGESTION);
@@ -207,13 +215,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		*///?}
 
 		if(showSearchBar && config.search) {
-			graphics.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_H - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
+			graphics.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_HEIGHT - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
 			searchField.render(graphics, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
 				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), /*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.DARK_RED.getColor()));
+				// todo: that option to disable text shadows - raw calls can have the boolean plugged right in, elsewhere needs injectors
 			}
 		}
 
@@ -484,7 +493,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	@Unique
-	private Button makeSettingButton(String key, int yOffset) {
+	private Button makeSettingButton(String key, int yOffset) { // prepub this manual offset is grotesque.
 		Config.Setting<Boolean> setting = config.getOption(key);
 		Component name = Component.translatable("text.chatpatches.search." + key);
 		Component text = CommonComponents.optionStatus(name, setting.get());
@@ -511,103 +520,87 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	/**
-	 * Updates and applies search settings, coloring, errors, and the "Search..."
-	 * suggestion. Actual rendering and updating is called in multiple places, most
-	 * notably in {@link #initSearchWidgets(CallbackInfo)},
-	 * y, and {@linkplain #makeSettingButton(String, int) by the setting buttons}.
+	 * Updates and applies {@linkplain #searchSettings search settings}, coloring,
+	 * errors, and the "Search..." {@linkplain #SEARCH_SUGGESTION suggestion}.
+	 * Additionally, filters chat messages according to the current settings.
+	 * <p>
+	 * Actual rendering and related field updating is
+	 * called in multiple places, most notably in {@link #initSearchWidgets(CallbackInfo)},
+	 * {@link #onScreenClose(CallbackInfo)}, and
+	 * {@linkplain #makeSettingButton(String, int) by the setting buttons}.
 	 */
 	@Unique
 	private void onSearchFieldUpdate(String text, boolean refresh) {
 		if(text.equals(searchDraft) && !refresh)
 			return; // prevent useless updates
 
+		ChatComponent chatHud = minecraft.gui.getChat();
 		if(!text.isEmpty() || refresh) {
 			if(!text.isEmpty()) { // ensures the suggestion is kept when there is no query
 				searchField.setSuggestion(null);
 			}
 
+			ChatFormatting status = ChatFormatting.WHITE;
+
 			// if regex is enabled and the text is invalid, set the error and color
 			if(config.regex) {
 				try {
-					Pattern.compile(text);
+					searchMatcher = Pattern.compile(text, config.caseSensitive ? 0 : Pattern.CASE_INSENSITIVE).matcher("");
 					searchError = null; // compiled successfully!
 				} catch(PatternSyntaxException e) {
 					searchError = e;
-					searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.RED.getColor())); // mark the text red if the regex is invalid
-					minecraft.gui.getChat().rescaleChat();
+					// red = invalid regex
+					status = ChatFormatting.RED;
+					chatHud.rescaleChat();
 				}
 			} else {
 				searchError = null; // no errors possible, only lack of match(es)!
 			}
 
-			// don't search if the regex is invalid
-			var results = searchError != null ? ObjectList.of() : filterMessages(text);
+			if(searchError == null) {
+				var messages = ((ChatHudAccess) chatHud).chatpatches$getMessages();
+				var copy = List.copyOf(messages);
 
-			if(results.isEmpty()) {
-				// mark the text yellow if there are no results
-				searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.YELLOW.getColor()));
-				minecraft.gui.getChat().rescaleChat();
-			} else {
-				// mark the text green if there are results
-				searchField.setTextColor(/*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.GREEN.getColor()));
+				messages.removeIf(Predicate.not(msg -> {
+					String m = ChatFormatting.stripFormatting(msg.content().getString());
+					return (config.regex)
+						? searchMatcher.reset(m).matches()
+						: (config.caseSensitive)
+							? m.contains(text)
+							: StringUtils.containsIgnoreCase(m, text);
+				}));
+
+				searchResults.clear(); // either there are no results -> clear(), or there are new ones -> clear() + addAll()
+
+				// only update the chat if there are results to show
+				if(!messages.isEmpty()) {
+					// save the full, filtered messages for the context menu
+					searchResults.addAll(messages);
+					// generate the visible messages from the filtered messages
+					chatHud.rescaleChat();
+					// add the real messages back; doesn't affect the visible messages
+					messages.clear();
+					messages.addAll(copy);
+
+					status = ChatFormatting.GREEN; // match(es) exist
+				} else {
+					// already empty
+					messages.addAll(copy);
+					chatHud.rescaleChat(); // we need the visible messages back
+
+					status = ChatFormatting.YELLOW; // no matches but valid search
+				}
 			}
+
+			searchField.setTextColor(/*? if >=1.21.6 {*/RenderUtils.opaque/*?}*/( status.getColor() ));
 		} else {
 			searchError = null;
 			searchField.setTextColor(EditBox.DEFAULT_TEXT_COLOR);
 			searchField.setSuggestion(SEARCH_SUGGESTION);
 			searchResults.clear();
-			minecraft.gui.getChat().rescaleChat();
+			chatHud.rescaleChat();
 		}
 
 		searchDraft = text;
-	}
-
-	/**
-	 * Filters all {@linkplain ChatComponent#allMessages chat messages} using the
-	 * given string and according to all search settings, and returns the
-	 * generated {@linkplain ChatComponent#trimmedMessages visible messages} as
-	 * they are on {@linkplain Gui#chat the chat hud}. This can
-	 * be easily reversed by calling {@link ChatComponent#rescaleChat()}.
-	 *
-	 * @return Whether the search was successful and modified visible
-	 * messages.
-	 * @implNote This method momentarily mutates the chat hud's messages
-	 * to filter out messages that don't match the target string,
-	 * then resets the chat hud to generate the visible messages
-	 * from the filtered messages. This method does not
-	 * <u>effectively</u> modify the original messages, only the
-	 * visible messages.
-	 */
-	@Unique
-	private List<GuiMessage.Line> filterMessages(String target) { //prepub: re-eval this method, it can def be simplified right? mayhaps even inlined?
-		if(target == null)
-			return ObjectList.of();
-
-		ChatComponent chatHud = minecraft.gui.getChat();
-		ChatHudAccess chat = (ChatHudAccess) chatHud;
-		var messages = chat.chatpatches$getMessages();
-		var copy = List.copyOf(messages);
-
-		// filter messages by removing those that don't match the target
-		messages.removeIf(msg -> {
-			String text = msg.content().getString();
-			// *removes* the message if it *doesn't* match: *keeps* those that *do* match
-			return !(
-				config.regex
-					? text.matches( (config.caseSensitive ? "(?i)" : "") + target )
-					: (config.caseSensitive ? text.contains(target) : StringUtils.containsIgnoreCase(text, target))
-			);
-		});
-
-		// save the full, filtered messages for the context menu
-		searchResults.clear();
-		searchResults.addAll(messages);
-		// generate the visible messages from the filtered messages
-		chatHud.rescaleChat();
-		// add the real messages back to the chat to keep the visual messages
-		messages.clear();
-		messages.addAll(copy);
-
-		return chat.chatpatches$getVisibleMessages();
 	}
 }

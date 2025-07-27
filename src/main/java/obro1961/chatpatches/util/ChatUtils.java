@@ -74,8 +74,8 @@ public class ChatUtils {
 	 * however, when factoring in team pre- and
 	 * suf-fixes, this limit becomes irrelevant.
 	 */
-	public static final Pattern VANILLA_FORMAT = Pattern.compile("(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$");
-	public static final Pattern PARSEABLE_MESSAGE_KEYS = Pattern.compile("chat.type.(text|team.(text|sent))");
+	public static final Matcher VANILLA_FORMAT = Pattern.compile("(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$").matcher("");
+	public static final Matcher PARSEABLE_MESSAGE_KEYS = Pattern.compile("chat.type.(text|team.(text|sent))").matcher("");
 
 
 	/**
@@ -284,7 +284,7 @@ public class ChatUtils {
 
 		MutableComponent timestamp = null;
 		MutableComponent content = m.copy(); // default to the original message
-		// dupe counter always empty at this stage
+		// dupe counter is always empty at this stage
 
 		try {
 			timestamp = config.makeTimestamp(now, lastEmpty);
@@ -292,11 +292,11 @@ public class ChatUtils {
 			// reconstruct the player message if it's in the vanilla format & it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(config.name && !lastEmpty && messageData.vanilla && VANILLA_FORMAT.matcher(m.getString()).matches()) {
+			if(config.name && !lastEmpty && messageData.vanilla && VANILLA_FORMAT.reset(m.getString()).matches()) {
 				content = Component.empty().setStyle(style);
 
 				// if the message is translatable, then we know exactly where everything is
-				if(m.getContents() instanceof TranslatableContents ttc && PARSEABLE_MESSAGE_KEYS.matcher(ttc.getKey()).matches()) {
+				if(m.getContents() instanceof TranslatableContents ttc && PARSEABLE_MESSAGE_KEYS.reset(ttc.getKey()).matches()) {
 					boolean team = ttc.getKey().contains("team");
 
 					// adds the team name for team messages
@@ -473,7 +473,7 @@ public class ChatUtils {
 			if(siblings.size() > DUPE_INDEX) {
 				siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // this will throw errors if DUPE_INDEX doesn't exist!
 			} else {
-				LOGGER.warn("[ChatUtils.tryCondenseDupes] Invalid message structure: {}", optimizeEmpties(incoming));
+				LOGGER.warn("[ChatUtils.tryCondenseDupes] Invalid message structure: {}", optimizeEmpties(incoming)); // todo entire message structure
 				logReportMsg(new IllegalStateException("DUPE_INDEX is out of bounds for message '" + incoming.getString() + "'"));
 				siblings.add(config.makeDupeCounter(dupeCount));
 			}
