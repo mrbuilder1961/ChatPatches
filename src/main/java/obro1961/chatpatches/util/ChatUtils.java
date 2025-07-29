@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
