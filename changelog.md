@@ -1,5 +1,9 @@
 # Changelog
 
+## Chat Patches `8.0-alpha.4` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
+- ACTUALLY fixed 'Disallowed character' toast and log spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
+- Now requires Fabric Loader `0.17.0`+ (doesn't currently apply, but will also require NeoForge `21.1.18`+)
+
 ## Chat Patches `8.0-alpha.3` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - Fixed the search bar accidentally including invisible formatting codes in the search results
 - Fixed the search bar not initially working with certain settings
@@ -8,7 +12,7 @@
 ## Chat Patches `8.0-alpha.2` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 ### Since alpha.1:
 - [#243](https://www.github.com/mrbuilder1961/ChatPatches/issues/243)
-- Fixed 'Disallowed character' spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
+- ~~Fixed 'Disallowed character' spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))~~
 - Java 17 compat ([#247](https://www.github.com/mrbuilder1961/ChatPatches/issues/247))
 
 ### Since x.6.16:

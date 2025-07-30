@@ -179,7 +179,7 @@ public class ChatLog {
             history.removeElements(0, historyCount() - config.chatMaxMessages);
     }
 
-    private static void updateMessageCounts() {
+    private static void updateMessagesLogged() {
         lastMessageCount = messageCount();
         lastHistoryCount = historyCount();
     }
@@ -264,7 +264,7 @@ public class ChatLog {
             }
 
             ensureCapacity();
-            updateMessageCounts();
+            updateMessagesLogged();
 
 			LOGGER.info("[ChatLog.deserialize] Parsed {} messages and {} sent messages!", lastMessageCount, lastHistoryCount);
         } catch(RuntimeException e) {
@@ -308,7 +308,8 @@ public class ChatLog {
 
 				// always in UTF-8
 				Files.writeString(PATH, GsonHelper.toStableString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-				updateMessageCounts();
+
+				updateMessagesLogged();
 
 				LOGGER.info("[ChatLog.serialize] Saved {} messages and {} sent messages to '{}'!", lastMessageCount, lastHistoryCount, PATH);
 			} catch(IOException | RuntimeException e) {
