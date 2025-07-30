@@ -3,6 +3,7 @@
 ## Chat Patches `8.0-alpha.4` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - ACTUALLY fixed 'Disallowed character' toast and log spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
 - Now requires Fabric Loader `0.17.0`+ (doesn't currently apply, but will also require NeoForge `21.1.18`+)
+- Override chat height now explicitly changes the **focused** chat height, and the docs + config suggest this ([#254](https://www.github.com/mrbuilder1961/ChatPatches/issues/254))
 
 ## Chat Patches `8.0-alpha.3` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - Fixed the search bar accidentally including invisible formatting codes in the search results

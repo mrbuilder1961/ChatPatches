@@ -24,8 +24,7 @@ It's most significant features include (but are not limited to):
 - Letting you search through all received messages with a search bar
 - YOU being able to toggle any of these features and MORE!
 
-Many of these features were adopted or inspired from the following existing mods
-(of which Chat Patches serves as a replacement):
+Many of these features were adopted or inspired from the following existing mods:
 - [More Chat History](https://www.curseforge.com/minecraft/mc-mods/more-chat-history)
 - [When Was That Again](https://www.curseforge.com/minecraft/mc-mods/wwta)
 - [Don't Clear Chat History](https://www.curseforge.com/minecraft/mc-mods/dont-clear-chat-history)
@@ -40,8 +39,7 @@ Many of these features were adopted or inspired from the following existing mods
 - Will you make it for (older Minecraft version)?
   - Unless it's after 1.18.x, then probably not. Any older version would only be considered if it was requested across the board, because I don't have the time for that!
 - Will you make this for Forge or NeoForge?
-  - Yes, but it will take some time. I have a system that is in-development that would support Forge, but it's pretty complicated and hinges on a lot of 
-    other things. But keep an eye out, one day it will be ready!
+  - Yes, but it won't be ready for at least a few more months.
 - I found a bug/issue, what do I do?
   - First, make sure you're on the latest version of Chat Patches for your Minecraft version. If it doesn't go away, you can click on the Issues tab on this 
     page, and if it hasn't been reported yet, you can create a new report! Make sure to fill out the entire thing as much as possible.
@@ -56,7 +54,7 @@ Many of these features were adopted or inspired from the following existing mods
       provide any logged errors if they exist.
   - <u>For 1.18.x:</u> You need the latest versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu]
     (https://modrinth.com/mod/modmenu/versions?l=fabric&c=release).
-  - <u>**For all versions:**</u> You can **always** edit the config at `(directory)/config/chatpatches.json`.
+  - Regardless of Minecraft version, you can **always** edit the config at `(directory)/config/chatpatches.json`.
 - My config is broken/not working!
   - When you load one of the more recent mod versions, it makes a creates a new file with your old settings and resets the main file. You can access this
     copy at `(directory)/config/chatpatches_old.json`. By then opening both the new and old configs at the same time, you can copy and paste over the values.
@@ -74,22 +72,17 @@ Many of these features were adopted or inspired from the following existing mods
 ## Setup devenv / Build latest jars
 1. Download the latest ZIP (this page -> Code -> Download ZIP)
 2. Extract it to your desired folder
-3. Open a terminal/command prompt, then run `./gradlew build`
+3. Open a terminal/command prompt, then run `./gradlew build` (to build and collect jars for every Minecraft version, run `./gradlew collectAll`)
 4. [For a devenv]: open the folder in your IDE
-5. [For built jars]: navigate to `/build/libs/`
+5. [For built jars]: navigate to `/versions/<version>/build/libs/` (or `/build/libs/` if you ran `collectAll`)
 
 ## Localization and Translation
 If you would like to help translate Chat Patches into other languages, you can:
 - [Create a pull request](https://github.com/mrbuilder1961/ChatPatches/compare) that adds, corrects, or updates a language file *(preferred)*
-- [Create an issue on GitHub](https://github.com/mrbuilder1961/ChatPatches/issues/new) with the language file attached
 - DM me on Discord (@obro1961)
 
 Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so you can receive your complementary Contributor and Translator roles!
-
-## Changelog
-The `changelog.md` file has changelog information starting from `194.4.0`.
-For individual releases prior to `194.4.0`, check `latest_changelog.md`. 
-For specific, file or line changes, check the [GitHub commit list](https://github.com/mrbuilder1961/ChatPatches/commits).
+(Or join for extra info and status updates!)
 
 ## License
 This mod is available under the GNU LGPLv3 license. Check out [this](https://choosealicense.com/licenses/lgpl-3.0/) page for information.
@@ -190,7 +183,7 @@ Make sure you leave Chat Patches and its dependencies installed when you're look
 |       Playername color        | `0xFFFFFF` (white)        | The color that fills in the unformatted areas of the resulting formatted playername. To use this with other formatting codes, use '&r' in the decoration text option.                                                                                           | `text.chatpatches.nameColor`                |
 |     Maximum chat messages     | `16384`                   | The max amount of chat messages allowed to save. Vanilla caps it at 100, this mod can increase it up to 32,767. Keep in mind a higher max equals higher memory usage.                                                                                           | `text.chatpatches.chatMaxMessages`          |
 |      Override chat width      | `0`                       | The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.                                                                                                        | `text.chatpatches.chatWidth`                |
-|     Override chat height      | `0`                       | The height of the chat box. This overrides vanilla's default and allows for a much larger height. Set to 0 to use the vanilla setting and not override it.                                                                                                      | `text.chatpatches.chatHeight`               |
+| Override focused chat height  | `0`                       | The focused height of the chat box. This overrides vanilla's default and allows for a much larger height. Set to 0 to use the vanilla setting and not override it.                                                                                              | `text.chatpatches.chatHeight`               |
 |       Chat shift offset       | `0`                       | Shifts the chat interface according to the provided value (negative values shift downward). Default is 0 with dynamic shift enabled; to emulate vanilla behavior make sure to disable dynamic shift.                                                            | `text.chatpatches.chatShift`                |
 |     Vanilla chat clearing     | `false`                   | Should chat messages clear after leaving a world/server like vanilla? Note that this completely erases the chat and effectively disables the chat log.                                                                                                          | `text.chatpatches.vanillaClearing`          |
 |  Ignore hide message packet   | `true`                    | Should hide message packets that delete chat messages be ignored?                                                                                                                                                                                               | `text.chatpatches.chatHidePacket`           |

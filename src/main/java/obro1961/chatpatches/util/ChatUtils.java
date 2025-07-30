@@ -221,7 +221,9 @@ public class ChatUtils {
 
 	// prepub keep or nah...
 	private static String optimizeEmpties(Object o) {
-		return (o instanceof String str ? str : String.valueOf(o)).replace("literal{}", "empty").replace("[style={}]", "");
+		return (o instanceof String str ? str : String.valueOf(o))
+			.replace("literal{}", "empty")
+			.replace("[style={}]", "");
 	}
 
 	/**

@@ -47,6 +47,8 @@ public abstract class ChatHudMixin implements ChatHudAccess {
     @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageEndIndexAt(double chatLineX, double chatLineY);
 
+    @Shadow public abstract boolean isChatFocused();
+
     // ChatHudAccess methods used outside this mixin
     // @Intrinsic > @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
     @Intrinsic public List<GuiMessage> chatpatches$getMessages() { return allMessages; }
@@ -139,23 +141,21 @@ public abstract class ChatHudMixin implements ChatHudAccess {
     }
 
     /**
-     * Allows for a chat width larger than 320px. Only used if the
-     * {@link Config#chatWidth} value is configured to be greater
-     * than 0, otherwise uses the default width option.
+     * Allows for a chat width larger than 320px. Only used if {@link
+     * Config#chatWidth} is a positive number, otherwise uses the default.
      */
     @ModifyReturnValue(method = "getWidth()I", at = @At("RETURN"))
-    private int moreWidth(int defaultWidth) {
-        return config.chatWidth > 0 ? config.chatWidth : defaultWidth;
+    private int moreWidth(int width) {
+        return config.chatWidth > 0 ? config.chatWidth : width;
     }
 
     /**
-     * Allows for a chat height taller than 180px. Only used if the
-     * {@link Config#chatHeight} value is configured to be greater
-     * than 0, otherwise uses the default width option.
+     * Allows for a <b>focused</b> chat height taller than 180px. Only used if
+     * {@link Config#chatHeight} is a positive number, otherwise uses the default.
      */
     @ModifyReturnValue(method = "getHeight()I", at = @At("RETURN"))
-    private int moreHeight(int defaultHeight) {
-        return config.chatHeight > 0 ? config.chatHeight : defaultHeight;
+    private int moreFocusedHeight(int height) {
+        return config.chatHeight > 0 && isChatFocused() ? config.chatHeight : height;
     }
 
     /**
