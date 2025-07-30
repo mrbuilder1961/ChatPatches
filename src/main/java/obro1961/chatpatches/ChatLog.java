@@ -10,7 +10,9 @@ import com.mojang.serialization.DynamicOps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
+import joptsimple.internal.Strings;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.client.GuiMessage;
@@ -25,6 +27,7 @@ import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 import obro1961.chatpatches.util.TextUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -143,14 +146,14 @@ public class ChatLog {
         if(restoring)
             return;
 
-        ensureCapacity();
+        enforceLimits();
         messages.add(message);
     }
     public static void addHistory(String sentMessage) {
         if(restoring)
             return;
 
-        ensureCapacity();
+        enforceLimits();
         history.add(sentMessage);
     }
 
@@ -169,9 +172,10 @@ public class ChatLog {
      *
      * @implNote The chat log system has the oldest messages at 0,
      * but vanilla has the newest at 0. I would switch them to be in
-     * the same order, but it would break existing chat logs.
+     * the same order, but it would break existing chat logs and is
+	 * therefore not worth the hassle.
      */
-    private static void ensureCapacity() {
+    private static void enforceLimits() {
         if(messageCount() > config.chatMaxMessages)
             messages.removeElements(0, messageCount() - config.chatMaxMessages);
 
@@ -259,11 +263,11 @@ public class ChatLog {
                         })
                         .orElseGet(() -> Pair.of(newSyncedObjectList(null), newSyncedObjectList(null)));
 
-                messages = deserializedPair.getFirst(/*stonecutter: java 21 getFirst block*/);
+                messages = deserializedPair.getFirst(/*stonecutter: NOT java 21 getFirst*/);
                 history = deserializedPair.getSecond();
             }
 
-            ensureCapacity();
+            enforceLimits();
             updateMessagesLogged();
 
 			LOGGER.info("[ChatLog.deserialize] Parsed {} messages and {} sent messages!", lastMessageCount, lastHistoryCount);
@@ -277,6 +281,11 @@ public class ChatLog {
         }
 		ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
     }
+
+	@SuppressWarnings("deprecation") // if an alternative is found, i'll gladly use it
+	private static String escapeAndSurround(String str) {
+		return Strings.surround(StringEscapeUtils.escapeJava(str), '"', '"');
+	}
 
     /**
      * Saves the chat log to {@link #PATH}. Only saves if {@link Config#chatlog} is
@@ -301,24 +310,46 @@ public class ChatLog {
 			LOGGER.info("[ChatLog.serialize] Saving...");
 
 			try {
-				JsonElement json = CODEC
-					.encodeStart(ChatPatches.jsonOps(), Pair.of(messages, history))
-					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
-					.orElseThrow();
+				DataResult<JsonElement> result = CODEC.encodeStart(ChatPatches.jsonOps(), Pair.of(messages, history));
+				JsonElement json = result.result().orElse(null);
+				String data = GsonHelper.toStableString(json);
+				Path target = PATH;
 
-				// always in UTF-8
-				Files.writeString(PATH, GsonHelper.toStableString(json), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				// todo: restoring the dump doesn't restore the actual stringified messages properly?? idk bruh.
+				if(json == null) {
+					target = PATH.resolveSibling("chatlog_dump_" + Util.getFilenameFormattedDateTime() + ".json");
+					LOGGER.warn("[ChatLog.serialize] Failed to serialize chat log; dumping to '{}' instead!", target);
+					// noinspection Convert2MethodRef: makes stonecutter life easier
+					pushErrorToast(
+						"Chat log codec error",
+						result.error().map(e -> e.message()).orElse(ChatFormatting.RED + "Unknown cause")
+					);
+
+					data = EMPTY_JSON
+						.replace/*All*/("[],", messages.stream()
+							// codec is unusable here
+							.map(Component::getString)
+							.map(ChatLog::escapeAndSurround)
+							.toList() + ","
+						)
+						.replace/*All*/("[]}", history.stream()
+							.map(ChatLog::escapeAndSurround)
+							.toList() + "}"
+						);
+				}
+
+				Files.writeString(
+					target,
+					data,
+					// always in UTF-8
+					StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
+				);
 
 				updateMessagesLogged();
 
 				LOGGER.info("[ChatLog.serialize] Saved {} messages and {} sent messages to '{}'!", lastMessageCount, lastHistoryCount, PATH);
 			} catch(IOException | RuntimeException e) {
 				LOGGER.error("[ChatLog.serialize] An unexpected error occurred while trying to save:", e);
-				LOGGER.warn("[ChatLog.serialize] Dumping data: {}",
-					EMPTY_JSON // assumes the Text codec is unusable, so instead uses #getString()
-						.replace("[]", messages.stream().map(Component::getString).toList().toString())
-						.replace("[]", history.toString())
-				);
 				pushErrorToast("Chat log serialization error", e.getLocalizedMessage());
 			}
 			ChatPatches.logDuration(start, IO_THRESHOLD_SUGGESTION);
@@ -356,7 +387,7 @@ public class ChatLog {
 			restoring = false;
 
 			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
-			hideRecentMessages();
+			hideRecentMessages(false);
 		}
 
 		LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages!", messageCount(), historyCount());

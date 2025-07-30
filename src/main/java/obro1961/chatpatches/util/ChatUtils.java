@@ -429,6 +429,7 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	private static Component tryCondenseDupes(Component incoming) {
+		// prepub: make this method save to the chat log too (so no redundant messages)!
 		ChatComponent chathud = Minecraft.getInstance().gui.getChat();
 		ChatHudAccess chat = (ChatHudAccess) chathud;
 		List<GuiMessage> messages = chat.chatpatches$getMessages();
@@ -476,8 +477,8 @@ public class ChatUtils {
 			if(siblings.size() > DUPE_INDEX) {
 				siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // this will throw errors if DUPE_INDEX doesn't exist!
 			} else {
-				LOGGER.warn("[ChatUtils.tryCondenseDupes] Invalid message structure: {}", optimizeEmpties(incoming)); // todo entire message structure
-				logReportMsg(new IllegalStateException("DUPE_INDEX is out of bounds for message '" + incoming.getString() + "'"));
+				// don't bother reporting this, restoring dumped logs and other edge cases will cause the same issue
+				// no use in creating more headaches when a perfectly valid solution exists right here
 				siblings.add(config.makeDupeCounter(dupeCount));
 			}
 		}
