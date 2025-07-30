@@ -387,7 +387,7 @@ public class ChatLog {
 			restoring = false;
 
 			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
-			hideRecentMessages(false);
+			hideRecentMessages();
 		}
 
 		LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages!", messageCount(), historyCount());
