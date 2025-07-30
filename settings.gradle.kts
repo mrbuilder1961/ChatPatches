@@ -45,7 +45,7 @@ stonecutter {
             v: String ->
             loadList.forEach {
                 l: String ->
-                vers("$v-$l", v)
+                version("$v-$l", v)
             }
         }
 
