@@ -90,22 +90,19 @@ This mod is available under the GNU LGPLv3 license. Check out [this](https://cho
 ## Help
 
 ### How to upload log files [log-info]
-There are multiple different types of log file that can be uploaded, although they are all very similar. These are all located in `(directory)/logs/`. In 
-order of most useful to least, these are the three main types:
-1. `debug.log` - Generated when the game is configured to output on the `DEBUG` level. It isn't always present, but when it is, it almost always has a ton of
-   extra information that can be critical to solving issues. This is a more detailed subset of the `latest.log`.
-2. `crash-report-<date>-<time>.txt` - Generated when the game crashes; contains a lot of extra information not provided in the other two logs, however it is
-   most useful when coupled with one of the others.
-3. `latest.log` - The main log file that is generated every time the game is run. It constantly updates, and contains plenty of useful information on what
-   the game is doing.
+There are multiple different types of log file that can be uploaded, all located in `(directory)/logs/`. In order of most useful to least:
+1. `latest.log` - The main log file that is generated every time the game is run. I personally consider it the most useful because it often contains some information
+   about what was going on before the issue or crash occurred.
+2. `crash-report-<date>-<time>.txt` - Generated when the game crashes. It contains a lot of extra information not provided in the other logs, but it typically lacks 
+   context of what happened before the crash.
+3. `debug.log` - Generated when the game is configured to output on the `DEBUG` level. It isn't always present, but it is extremely verbose and contains tons of extra
+   information, albeit at the cost of a LOT of bloat. Although this log can have more relevant information than the `latest.log`, it often just takes up more space.
 
-Generally, you should upload one `.log` file and one `crash-report-<date>-<time>.txt` file if you have them. Otherwise, just upload whatever you have that
-is listed above. The only thing you shouldn't upload is both `debug.log` and `latest.log`, as the `debug.log` has everything the `latest.log` has and more.
-*TL;DR upload as much as you can, but don't upload both the `debug.log` and `latest.log` files.*
+Generally, you should upload one `.log` file and one `crash-report-<date>-<time>.txt` file. If you need more help, feel free to ask!
 
 Now that you have the files, simply submitting them to https://mclo.gs/ will give you a link that you can share with me and others to help diagnose your issue.
 It is really the only site I use, because it provides a lot of useful tools both for me and for you. One of those being that it censors many instances of
-potentially identifiable information, such as your computer's username and IP address.
+potentially identifiable information, such as your computer's username and IP address, and it allows filtering errors and warnings!
 
 #### To upload the log(s) without Prism Launcher: [log-upload]
 1. Go to https://mclo.gs/
@@ -127,17 +124,17 @@ potentially identifiable information, such as your computer's username and IP ad
 ### How to access beta releases [beta-install]
 To access beta releases, you'll need a link that looks like this:
 
-https://github.com/mrbuilder1961/ChatPatches/actions/runs/8310511511/ or
+https://github.com/mrbuilder1961/ChatPatches/actions/runs/1234567890/ or
 
-https://github.com/mrbuilder1961/ChatPatches/actions/runs/8310511511/artifacts/1332245802
+https://github.com/mrbuilder1961/ChatPatches/actions/runs/1234567890/artifacts/0987654321
 
 #### Now, follow these steps:
-1. Click on the link. If it doesn't instantly download, scroll down, and under the "Artifacts" section, click on "jars" and the download should start.
+1. Click on the link. If it doesn't instantly download, scroll down, and under the "Artifacts" section, click on "jars" and the download should start. If the text isn't clickable, make sure you're logged in to GitHub. Otherwise, click on `build` -> `ubuntu-latest` (if multiple runs are present) -> `capture build artifacts`; the last line should have a download link
 2. Once the download is complete, open or extract the .zip file.
 3. You should see two folders, `libs` and `devlibs`. Open the `libs` folder.
-4. Inside the `libs` folder, you should see a .jar file, and another file with the same name but instead ends with `-sources.jar`. The .jar file is the mod itself, and the `-sources.jar` file is the source code.
-5. Move the .jar file, NOT the `-sources` file, to your mods folder.
-6. If you have another version of Chat Patches already installed there, you can move it, rename the file extension to anything but `.jar`, or delete it.
+4. Inside the `libs` folder, you should see multiple `.jar` files for different Minecraft versions.
+5. Move the file applicable to your version to your mods folder. If your specific version is not present but nearby ones are, pick the newest between them (ex. you need 1.21.2, but only 1.21.1 and 1.21.4 are present, so use the file for 1.21.4)
+6. If you have another version of Chat Patches already installed, you can move it, rename the file extension to anything but `.jar`, or delete it.
 7. Now you should be good to go! Launching the game should now load the beta version. If you experience any issues, make sure to report them as soon as
    possible wherever you were given the link (here on GitHub or [the Discord](https://discord.gg/3MqBvNEyMz)).
 
