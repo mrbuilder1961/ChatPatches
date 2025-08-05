@@ -45,6 +45,8 @@ public class ChatUtils {
 
 	public static final int MAX_MESSAGE_LENGTH = 256; // pulled from input's max length
 
+	private static Minecraft mc() { return Minecraft.getInstance(); }
+
 	/**
 	 * Contains the sender and timestamp data of the last received chat message.
 	 *
@@ -94,12 +96,16 @@ public class ChatUtils {
 	 * corresponding to the EoE message index.
 	 *
 	 * @see #tryCondenseDupes(Component)
+	 * @see ChatLog#hideRecentMessages()
+	 *
+	 * @see #visible2Message(int)
 	 */
 	public static int message2Visible(int messageIndex) {
-		var visibles = ((ChatHudAccess) Minecraft.getInstance().gui.getChat()).chatpatches$getVisibleMessages();
+		var visibles = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages();
 
-		if(messageIndex == -1)
+		if(messageIndex == -1) {
 			return -1; // avoids iterating through the entire list
+		}
 
 		int EoEs = -1; // # of EoE messages counted so far
 		for(int j = 0; j < visibles.size(); j++) {
@@ -129,9 +135,11 @@ public class ChatUtils {
 	 * frustrating issues.
 	 *
 	 * @see ChatHudMixin#getChatHudLineIndex(double, double)
+	 *
+	 * @see #message2Visible(int)
 	 */
 	public static int visible2Message(int visibleIndex) {
-		var visibles = ((ChatHudAccess) Minecraft.getInstance().gui.getChat()).chatpatches$getVisibleMessages();
+		var visibles = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages();
 
 		if(visibleIndex == -1 || visibleIndex >= visibles.size())
 			return -1;
@@ -430,7 +438,7 @@ public class ChatUtils {
 	 */
 	private static Component tryCondenseDupes(Component incoming) {
 		// prepub: make this method save to the chat log too (so no redundant messages)!
-		ChatComponent chathud = Minecraft.getInstance().gui.getChat();
+		ChatComponent chathud = mc().gui.getChat();
 		ChatHudAccess chat = (ChatHudAccess) chathud;
 		List<GuiMessage> messages = chat.chatpatches$getMessages();
 

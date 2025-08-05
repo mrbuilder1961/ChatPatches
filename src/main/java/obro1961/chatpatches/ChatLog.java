@@ -389,16 +389,29 @@ public class ChatLog {
 		LOGGER.info("[ChatLog.restore] Restored {} messages and {} history messages!", messageCount(), historyCount());
 	}
 
-	public static void hideRecentMessages() { // prepub: optimize this (prob w param) so if only one new message is added it skips iterating
+	/**
+	 * Hides the most recent messages in chat, so they don't render instantly when
+	 * restored or when a boundary line is added. This is done by setting {@link
+	 * GuiMessage.Line#addedTime} to a calculated value. Avoids iterating through
+	 * the entire list by exiting from the loop after hitting the first message
+	 * that is already old enough to not render.
+	 */
+	public static void hideRecentMessages() {
 		if(messageCount() > 0 && historyCount() > 0) {
-			final int ticks = mc().gui.getGuiTicks();
+			int ticks = mc().gui.getGuiTicks();
+			var visibles = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages();
 
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering! (#42)
-			// only replaces messages that would render instantly to save performance on large chat logs
-			// now adds the message's addedTime to account for any extra offsets from the deserialization unsyncing from the main game thread
-			((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages()
-				.replaceAll(ln ->
-					(ticks - ln.addedTime() < 200) ? new GuiMessage.Line(-(200 + ln.addedTime()), ln.content(), ln.tag(), ln.endOfEntry()) : ln);
+			// now adds the message's addedTime to account for any extra offsets from the deserialization desync from the main game thread
+			for(int i = 0; i < visibles.size(); i++) {
+				var ln = visibles.get(i);
+				if(ticks - ln.addedTime() < 200) {
+					visibles.set(i, new GuiMessage.Line(-(200 + ln.addedTime()), ln.content(), ln.tag(), ln.endOfEntry()));
+				} else {
+					break; // only the most recent messages need to be checked, the rest are guaranteed to be old enough
+					// note: this assumes the list is continuous, which should always be true, but who knows
+				}
+			}
 		}
 	}
 
