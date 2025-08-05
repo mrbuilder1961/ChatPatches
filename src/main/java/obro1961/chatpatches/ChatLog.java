@@ -313,17 +313,17 @@ public class ChatLog {
 				DataResult<JsonElement> result = CODEC.encodeStart(ChatPatches.regJsonOps(), Pair.of(messages, history));
 				JsonElement json = result.result().orElse(null);
 				String data = GsonHelper.toStableString(json);
-				Path target = PATH;
+				Path path = PATH;
 
 				// todo: restoring the dump doesn't restore the actual stringified messages properly?? idk bruh.
 				if(json == null) {
-					target = PATH.resolveSibling("chatlog_dump_" + Util.getFilenameFormattedDateTime() + ".json");
-					LOGGER.warn("[ChatLog.serialize] Failed to serialize chat log; dumping to '{}' instead!", target);
 					// noinspection Convert2MethodRef: makes stonecutter life easier
-					pushErrorToast(
-						"Chat log codec error",
-						result.error().map(e -> e.message()).orElse(ChatFormatting.RED + "Unknown cause")
-					);
+					var err = result.error().map(e -> e.message()).orElse(ChatFormatting.RED + "Unknown cause");
+					path = PATH.resolveSibling("chatlog_dump_" + Util.getFilenameFormattedDateTime() + ".json");
+
+					LOGGER.warn("[ChatLog.serialize] Failed to serialize chat log; dumping to '{}' instead!", path);
+					logReportMsg(new JsonParseException(err));
+					pushErrorToast("Chat log codec error", err);
 
 					data = EMPTY_JSON
 						.replace/*All*/("[],", messages.stream()
@@ -338,16 +338,12 @@ public class ChatLog {
 						);
 				}
 
-				Files.writeString(
-					target,
-					data,
-					// always in UTF-8
-					StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING
-				);
+				// always in UTF-8
+				Files.writeString(path, data, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
 				updateMessagesLogged();
 
-				LOGGER.info("[ChatLog.serialize] Saved {} messages and {} sent messages to '{}'!", lastMessageCount, lastHistoryCount, PATH);
+				LOGGER.info("[ChatLog.serialize] Saved {} messages and {} sent messages to '{}'!", lastMessageCount, lastHistoryCount, path);
 			} catch(IOException | RuntimeException e) {
 				LOGGER.error("[ChatLog.serialize] An unexpected error occurred while trying to save:", e);
 				pushErrorToast("Chat log serialization error", e.getLocalizedMessage());
