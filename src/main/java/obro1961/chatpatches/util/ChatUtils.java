@@ -289,7 +289,7 @@ public class ChatUtils {
 		if(ChatLog.isRestoring())
 			return tryCondenseDupes(m); // cancel modifications when loading the chat log minus the minimal dupe counter
 
-		boolean lastEmpty = messageData.equals(ChatUtils.NIL_MESSAGE_DATA); // also signifies that this is a system message (when true)
+		boolean lastEmpty = messageData.equals(NIL_MESSAGE_DATA); // also signifies that this is a system message (when true)
 		Date now = lastEmpty ? new Date() : messageData.timestamp;
 		Style style = m.getStyle();
 
@@ -364,22 +364,27 @@ public class ChatUtils {
 			}
 		} catch(RuntimeException | AssertionError e) {
 			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying '{}'", m.getString());
-			LOGGER.error("[ChatUtils.modifyMessage] \tTimestamp: {}", optimizeEmpties(timestamp));
-			LOGGER.error("[ChatUtils.modifyMessage] \tBody:");
+			LOGGER.error("\tTimestamp: {}", optimizeEmpties(timestamp));
+			LOGGER.error("\tBody:");
 
 			if(content.getSiblings().size() == 3 && !content.equals(m)) { // modified vanilla message
-				LOGGER.error("[ChatUtils.modifyMessage] \t\tTeam: {}", optimizeEmpties(getPart(content, MSG_TEAM_INDEX)));
-				LOGGER.error("[ChatUtils.modifyMessage] \t\tSender: {}", optimizeEmpties(getPart(content, MSG_SENDER_INDEX)));
-				LOGGER.error("[ChatUtils.modifyMessage] \t\tContent: {}", optimizeEmpties(getPart(content, MSG_CONTENT_INDEX)));
+				LOGGER.error("\t\tTeam: {}", optimizeEmpties(getMsgPart(m, MSG_TEAM_INDEX)));
+				LOGGER.error("\t\tSender: {}", optimizeEmpties(getMsgPart(m, MSG_SENDER_INDEX)));
+				LOGGER.error("\t\tContent: {}", optimizeEmpties(getMsgPart(m, MSG_CONTENT_INDEX)));
 			} else { // literally everything else
-				LOGGER.error("[ChatUtils.modifyMessage] \t\tRoot: {}", optimizeEmpties(content.getContents()));
+				LOGGER.error("\t\tRoot: {}", optimizeEmpties(content.getContents()));
 				for(int i = 0; i < content.getSiblings().size(); i++) {
-					LOGGER.error("[ChatUtils.modifyMessage] \t\tSibling {}: {}", i, optimizeEmpties(getPart(content, i)));
+					LOGGER.error("\t\tSibling {}: {}", i, optimizeEmpties(getPart(content, i)));
 				}
 			}
+			if(m.getSiblings().size() > DUPE_INDEX) {
+				LOGGER.error("\tDupes: {}", optimizeEmpties(getPart(m, DUPE_INDEX)));
+			}
 
-			if(e instanceof RuntimeException) {
-				logReportMsg(e); // don't log forced errors
+			LOGGER.error("[ChatUtils.modifyMessage] -- End of message structure --");
+
+			if(e instanceof RuntimeException) { // don't log forced errors
+				logReportMsg(e);
 				ChatPatches.pushErrorToast("Message modification error", e.getMessage());
 			}
 		}
@@ -387,7 +392,7 @@ public class ChatUtils {
 		// assembles constructed message and tries to add a dupe counter
 		Component modified = tryCondenseDupes( buildMessage(null, timestamp, content, null) ); // style is null bc only the message content should take on the original style
 		ChatLog.addMessage(modified);
-		messageData = ChatUtils.NIL_MESSAGE_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
+		messageData = NIL_MESSAGE_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
 	}
 
@@ -395,7 +400,7 @@ public class ChatUtils {
 	 * Updated, more efficient version of the original {@code addCounter} and {@code
 	 * getCondensedMessage} method combo. This method is used in conjunction with
 	 * (after) {@link #modifyMessage(Component)} to add a duplicate counter and remove
-	 * duplicate(s) to the given message, if they exist and according to the config.
+	 * duplicate(s) to the given message, if they exist, and according to the config.
 	 *
 	 * @implNote
 	 * <ol>
