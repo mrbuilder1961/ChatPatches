@@ -7,6 +7,7 @@
 - Chat log now instead dumps the current chat to `chatlog_dump_<time>.json` instead of to the log. This can be renamed to `chatlog.json` to restore the log 
   if needed (FIXME: doesn't work yet)
 - Removed log spam from messages being formatted incorrectly ("`DUPE_INDEX` is out of bounds")
+- Fixed the context menu sometimes failing to provide JSON data when copying
 
 ## Chat Patches `8.0-alpha.3` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - Fixed the main crash from [#250](https://www.github.com/mrbuilder1961/ChatPatches/issues/250)

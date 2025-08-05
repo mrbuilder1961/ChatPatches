@@ -52,6 +52,7 @@ import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static obro1961.chatpatches.ChatPatches.config;
+import static obro1961.chatpatches.ChatPatches.logReportMsg;
 import static obro1961.chatpatches.util.ChatUtils.*;
 import static obro1961.chatpatches.util.TextUtils.textCodec;
 
@@ -74,7 +75,7 @@ public class ContextMenu implements GuiEventListener {
 	/**
 	 * Slightly modified from <a href="https://stackoverflow.com/a/163398">StackOverflow</a>
 	 * to not include file links. Memoized to avoid recompiling the regex every time, and so
-	 * it's only compiled once when it's needed.
+	 * it's only compiled once when needed.
 	 */
 	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
@@ -147,11 +148,10 @@ public class ContextMenu implements GuiEventListener {
 
 	/**
 	 * If true, effectively disables this context menu, meaning
-	 * it will do nothing when interacted with. This is used
-	 * when a passed parameter is invalid, the context menu is
-	 * not needed yet, or it's disabled in the config. It is
-	 * also very helpful for closing the menu when it's no
-	 * longer needed.
+	 * it will do nothing when interacted with. This is used when
+	 * a passed parameter is invalid, the context menu is not
+	 * needed yet, it's disabled in the config, or for closing
+	 * the menu.
 	 */
 	private boolean noOp = false;
 
@@ -306,7 +306,7 @@ public class ContextMenu implements GuiEventListener {
 	 */
 	private void registerProxyActionButton(Component id, Component proxyId, int localRow, int col, Object renderObject) {
 		if(id.equals(proxyId)) {
-			ChatPatches.logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
+			logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
 			return;
 		}
 
@@ -415,11 +415,12 @@ public class ContextMenu implements GuiEventListener {
 			if(duped)
 				registerCopyButton(NO_DUPE_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
 			registerCopyButton(JSON_STR,
-				strRow, textCodec().encodeStart(NbtOps.INSTANCE, text)
-					.resultOrPartial(e -> ChatPatches.logReportMsg(new JsonParseException(e)))
+				strRow, textCodec().encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
+					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.map(NbtUtils::toPrettyComponent)
 					.orElse(UNKNOWN.apply(JSON_STR))
 			); // (timestamped && duped) ? 4 : (timestamped || duped) ? 3 : 2
+			// todo: OG_JSON_STR - json of the original message w/o CPS mods - some sort of check should determine if we can just use the time/dupe-stripped text or if reconstruction is needed
 
 		// timestamp buttons - conditional (not on boundary lines)
 		if(timestamped) {
@@ -439,7 +440,7 @@ public class ContextMenu implements GuiEventListener {
 		if(duped) {
 			registerProxyButton(MENU_DUPE_COUNTER, COUNTER_TEXT, Items.MAP);
 				registerCopyButton(COUNTER_TEXT, 0, counter);
-				registerCopyButton(COUNTER_VALUE, 1, Component.nullToEmpty(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
+				registerCopyButton(COUNTER_VALUE, 1, Component.literal(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
 		}
 
 		// unix timestamp button - unconditional
@@ -573,7 +574,7 @@ public class ContextMenu implements GuiEventListener {
 	 * checks if the chat screen is hovered/focused on a menu
 	 * button, and if so {@linkplain #updateButtons(Optional)
 	 * updates the buttons} accordingly. Otherwise, tries to
-	 * press the selected button, if it's part of the menu.
+	 * press the selected button if it's part of the menu.
 	 *
 	 * @return {@code true} if the menu was successfully updated
 	 * or if a button was pressed, otherwise {@code false} if the
@@ -712,7 +713,7 @@ public class ContextMenu implements GuiEventListener {
 	/**
 	 * Updates the visibility of all buttons in the context menu,
 	 * focuses the hovered button, and underlines the first hover
-	 * button in each group, if it exists.
+	 * button in each group if it exists.
 	 *
 	 * @see #mouseMoved(double, double)
 	 * @see #keyPressed(int, int, int)
@@ -728,7 +729,7 @@ public class ContextMenu implements GuiEventListener {
 	 *	     on whether the hovered button is in the iterated group or not</li>
 	 *	     <li>If the iterated button is the hovered button and the iterated group has at least one hover
 	 *	     button, toggles the {@link Style#underlined} attribute of the group's first hovered button
-	 *	     based on whether it should show (main button) or hide (hover button aligned with its main
+	 *	     based on whether it should show (main) or hide (hover button aligned with its main
 	 *	     button).</li>
 	 *	 </ol>
 	 * </ol>
@@ -833,7 +834,7 @@ public class ContextMenu implements GuiEventListener {
 		 *
 		 * @implNote Compares using {@link Component#getString()} because direct equality
 		 * checks returned false negatives due to the styles occasionally being
-		 * different (typically from the underlined  button text).
+		 * different (typically from the underlined button text).
 		 */
 		public Entry get(Component id) {
 			for(Entry e : entries)
@@ -869,7 +870,7 @@ public class ContextMenu implements GuiEventListener {
 			try {
 				return (List<AbstractButton>) (Object) ((GridWidgetAccessor) widget).getChildren();
 			} catch(ClassCastException e) {
-				ChatPatches.logReportMsg(e);
+				logReportMsg(e);
 				return ObjectList.of();
 			}
 		}
@@ -881,8 +882,7 @@ public class ContextMenu implements GuiEventListener {
 		 * unconditionally, and the hover buttons (col 1) by
 		 * group, so that they are all the same width.
 		 * Additionally, ensures the entire grid menu is visible
-		 * on-screen by shifting it up and/or left if it would
-		 * be cut off.
+		 * on-screen by shifting it up and/or left if necessary.
 		 */
 		public void updateButtonPositions() {
 			widget.arrangeElements();

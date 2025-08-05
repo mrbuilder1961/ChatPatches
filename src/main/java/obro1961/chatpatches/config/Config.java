@@ -328,7 +328,7 @@ public class Config {
 			JsonObject json = GsonHelper.parse(raw);
 
 			// note: removed registry-backed JsonOps here bc this loads before the world is available, throwing an NPE. shouldn't matter tho
-			config = config.parse(JsonOps.INSTANCE/*ChatPatches.jsonOps()*/, json)
+			config = config.parse(JsonOps.INSTANCE, json)
 				.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 				.orElseThrow();
 
@@ -358,14 +358,14 @@ public class Config {
 			LOGGER.info("[Config.serialize] Saving...");
 
 			try {
-				JsonElement json = config.encodeStart(JsonOps.INSTANCE/*ChatPatches.jsonOps()*/)
+				JsonElement json = config.encodeStart(JsonOps.INSTANCE)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.orElseThrow();
 
 				String pretty = new GsonBuilder()
 					.setPrettyPrinting()
 					.disableHtmlEscaping() // also disables non-ASCII characters becoming \\uXXXX codes
-					//.serializeNulls() // might be needed in the future, hopefully this can save a few days of agonizing debugging
+					//.serializeNulls() // might be needed in the future; hopefully this can save a few days of agonizing debugging
 					.create()
 						.toJson(json); // automatically sorts the keys as declared in this class
 

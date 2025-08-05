@@ -255,7 +255,7 @@ public class ChatLog {
             } else {
                 JsonObject json = GsonHelper.parse(rawJson);
                 var deserializedPair =
-                    CODEC.parse(ChatPatches.jsonOps(), json)
+                    CODEC.parse(ChatPatches.regJsonOps(), json)
                         .resultOrPartial(e -> {
                             logReportMsg(new JsonParseException(e));
                             pushErrorToast("Chat log parse error", e);
@@ -310,7 +310,7 @@ public class ChatLog {
 			LOGGER.info("[ChatLog.serialize] Saving...");
 
 			try {
-				DataResult<JsonElement> result = CODEC.encodeStart(ChatPatches.jsonOps(), Pair.of(messages, history));
+				DataResult<JsonElement> result = CODEC.encodeStart(ChatPatches.regJsonOps(), Pair.of(messages, history));
 				JsonElement json = result.result().orElse(null);
 				String data = GsonHelper.toStableString(json);
 				Path target = PATH;
