@@ -409,7 +409,7 @@ public class ContextMenu implements GuiEventListener {
 		int strRow = 0; // current row for string and text buttons
 		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
 			registerCopyButton(RAW_TEXT, strRow++, text); // 0
-			registerCopyButton(FORMATTED_STR, strRow++, Component.nullToEmpty(TextUtils.toCodedString(text, true))); // 1
+			registerCopyButton(FORMATTED_STR, strRow++, Component.literal(TextUtils.toCodedString(text))); // 1
 			if(timestamped)
 				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			if(duped)

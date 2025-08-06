@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A class containing various string and {@link Component} related utilities.
@@ -19,14 +21,14 @@ public class TextUtils {
 	/**
 	 * @see ChatFormatting#PREFIX_CODE
 	 */
-	public static final String AMPERSAND_REGEX = "(?im)&([0-9a-fk-or])";
+	public static final Matcher AMPERSAND_REGEX = Pattern.compile("(?im)&([0-9a-fk-or])").matcher("");
 	/**
 	 * {@link #AMPERSAND_REGEX} that explicitly does not match any
 	 * formatting codes following backslashes
 	 */
-	public static final String NO_BACKSLASH_AMPERSAND_REGEX = "(?im)(?<!\\\\)&([0-9a-fk-or])";
+	public static final Matcher NO_BACKSLASH_AMPERSAND_REGEX = Pattern.compile("(?im)(?<!\\\\)&([0-9a-fk-or])").matcher("");
 	/** <a href="https://regex101.com/r/D9x2yv/1">Examples</a>*/
-	public static final String DUPLICATE_COLOR_AMPERSAND_REGEX = "(?im)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])";
+	public static final Matcher DUPLICATE_COLOR_AMPERSAND_REGEX = Pattern.compile("(?im)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])").matcher("");
 	public static final Int2ObjectMap<ChatFormatting> COLOR_TO_FORMATTING = Util.make(() -> {
 		Int2ObjectMap<ChatFormatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever
 		for(ChatFormatting f : ChatFormatting.values()) {
@@ -170,11 +172,10 @@ public class TextUtils {
 	 * an entire library just for this one feature seems excessive.
 	 */
 	public static MutableComponent text(String unformatted) {
-		return Component.literal(
-			unformatted
-				.replaceAll(NO_BACKSLASH_AMPERSAND_REGEX, "§$1")
-				.replaceAll(AMPERSAND_REGEX, "&$2")
-		);
+		String s = NO_BACKSLASH_AMPERSAND_REGEX.reset(unformatted).replaceAll("§$1");
+		s = AMPERSAND_REGEX.reset(s).replaceAll("&$2");
+
+		return Component.literal(s);
 	}
 
 	/**
@@ -182,20 +183,16 @@ public class TextUtils {
 	 * Strips any complex style data, including hover events, fonts, insertions,
 	 * etc. Hex colors are represented in the format {@code &#RRGGBB}.
 	 */
-	public static String toCodedString(Component text, boolean fancyCodes) {
+	public static String toCodedString(Component text) {
 		StringBuilder builder = new StringBuilder(); // required for the lambda expression
 		AtomicReference<Style> lastStyle = new AtomicReference<>(Style.EMPTY); // ensures that the first equality check returns false
 
 		text.visit((style, str) -> {
 			// if style is different from last, add any formatting codes
 			if(!style.equals(lastStyle.get())) {
-				if(fancyCodes)
-					builder.append(ChatFormatting.AQUA); // adds a pop of color to the codes to make them more visible
-
+				builder.append(ChatFormatting.AQUA); // adds a pop of color to the codes to make them more visible
 				builder.append(getFormattingCodes(style, lastStyle.get()));
-
-				if(fancyCodes)
-					builder.append(ChatFormatting.RESET); // adding colors breaks some (whitespace separated) functionality of DUPE_COLOR_AMPERSAND_REGEX
+				builder.append(ChatFormatting.RESET); // adding colors breaks some (whitespace separated) functionality of DUPE_COLOR_AMPERSAND_REGEX
 
 				lastStyle.set(style);
 			}
@@ -213,7 +210,7 @@ public class TextUtils {
 
 		// removes the redundant code in a pair of color codes, optionally separated by whitespace, even including hex codes
 		// ex. '&a&9' -> '&9', '&b   &4' -> '   &4', '&c&#123ABC' -> '&#123ABC', '&#00FF22\t&f' -> '\t&f'
-		return builder.toString().replaceAll(DUPLICATE_COLOR_AMPERSAND_REGEX, "$1&$2");
+		return DUPLICATE_COLOR_AMPERSAND_REGEX.reset(builder.toString()).replaceAll("$1&$2");
 	}
 
 	// prepub: alright here is the deal. this method is always gonna have some issue bc of lots of edge cases and etc etc.
