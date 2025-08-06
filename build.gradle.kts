@@ -95,7 +95,7 @@ modstitch {
         modGroup = m("group")
         modDescription = m("desc")
         modAuthor = m("author")
-        modCredits = m("credits").split(",").toString() // transforms the invalid json into a valid list
+        modCredits = m("credits").split(",").map { "\"$it\"" }.toString() // transforms the invalid json into a valid list
         modLicense = m("license")
         //todo forge: uses mods.toml instead of neoforge.mods.toml
         // also todo with FMJ: remove fabric api and use arch api or sm
