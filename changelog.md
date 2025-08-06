@@ -1,5 +1,9 @@
 # Changelog
 
+## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
+- Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
+  data is lost
+
 ## Chat Patches `8.0-alpha.4` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - ACTUALLY fixed 'Disallowed character' toast and log spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
 - Now requires Fabric Loader `0.17.0`+ (doesn't currently apply, but will also require NeoForge `21.1.18`+)

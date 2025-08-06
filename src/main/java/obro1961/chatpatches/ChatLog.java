@@ -315,21 +315,21 @@ public class ChatLog {
 				String data = GsonHelper.toStableString(json);
 				Path path = PATH;
 
-				// FIXME: dump -> chatlog.json doesn't restore the messages bc they never get added for some reason? it doesn't seem to be a codec issue, but a chathud one
 				if(json == null) {
 					// noinspection Convert2MethodRef: makes stonecutter life easier
 					var err = result.error().map(e -> e.message()).orElse(ChatFormatting.RED + "Unknown cause");
 					path = PATH.resolveSibling("chatlog_dump_" + Util.getFilenameFormattedDateTime() + ".json");
 
-					LOGGER.warn("[ChatLog.serialize] Failed to serialize chat log; dumping to '{}' instead!", path);
+					LOGGER.warn("[ChatLog.serialize] Failed to serialize chat log");
 					logReportMsg(new JsonParseException(err));
 					pushErrorToast("Chat log codec error", err);
 
 					data = EMPTY_JSON
 						.replace/*All*/("[],", messages.stream()
 							// codec is unusable here
-							.map(Component::getString)
-							.map(ChatLog::escapeAndSurround)
+							.map(Component::getString) // some message with "quotes"
+							.map(ChatLog::escapeAndSurround) // "some message with \"quotes\""
+							.map(str -> "{\"extra\":[\"\"," + str + ",\"\"],\"text\":\"\"}") // equivalent to ChatUtils.buildMessage(null, null, str, null)
 							.toList() + ","
 						)
 						.replace/*All*/("[]}", history.stream()
@@ -365,7 +365,7 @@ public class ChatLog {
 			try {
 				Path backupPath = PATH.resolveSibling("chatlog_" + Util.getFilenameFormattedDateTime() + ".json");
 				Files.copy(PATH, backupPath);
-				LOGGER.info("[ChatLog.backup] Successfully backed up the current chat log to '{}':", backupPath);
+				LOGGER.info("[ChatLog.backup] Successfully backed up the current chat log to '{}'!", backupPath);
 			} catch(IOException e) {
 				LOGGER.warn("[ChatLog.backup] Couldn't backup '{}':", PATH, e);
 				pushErrorToast("Chat log backup error", e.getLocalizedMessage());
