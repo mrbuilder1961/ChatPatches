@@ -5,16 +5,17 @@
 
 name: build
 on:
-  # Don't build if only text-based files were changed.
-  # Prevents waiting for unnecessary checks/actions
+  # Prevents redundant builds
   push:
     paths-ignore:
       - 'LICENSE'
+      - 'assets/chatpatches/**' # no asset file will cause a compile-time issue, so don't bother
       - '**.md'
       - '.gitignore'
   pull_request:
     paths-ignore:
       - 'LICENSE'
+      - 'assets/chatpatches/**' # no asset file will cause a compile-time issue, so don't bother
       - '**.md'
       - '.gitignore'
 
