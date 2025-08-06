@@ -20,29 +20,26 @@ on:
 
 jobs:
   build:
-    runs-on: 'ubuntu-latest' # Windows was failing for no reason and Stonecutter slows it down anyway
+    runs-on: 'ubuntu-latest' # Windows was failing for no reason, and Stonecutter slows it down anyway
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: validate gradle wrapper
-        timeout-minutes: 1 # Hopefully prevents some of the ECONNECTTIMEOUT errors?
-        uses: gradle/wrapper-validation-action@v2
-
-      - name: setup jdk
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '21' # Build everything with 21, even older 17 files
           distribution: temurin
 
-      - name: make gradle wrapper executable
+      - uses: gradle/actions/setup-gradle@v4
+        #with:
+          #cache-disabled: true
+
+      - name: Make executable
         run: chmod +x ./gradlew
 
-      - name: build
+      - name: Build jars for all Minecraft versions
         run: ./gradlew collectAll --stacktrace
 
-      - name: capture build artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: jars
           path: |
