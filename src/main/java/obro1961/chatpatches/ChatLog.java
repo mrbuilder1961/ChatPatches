@@ -315,7 +315,7 @@ public class ChatLog {
 				String data = GsonHelper.toStableString(json);
 				Path path = PATH;
 
-				// todo: restoring the dump doesn't restore the actual stringified messages properly?? idk bruh.
+				// FIXME: dump -> chatlog.json doesn't restore the messages bc they never get added for some reason? it doesn't seem to be a codec issue, but a chathud one
 				if(json == null) {
 					// noinspection Convert2MethodRef: makes stonecutter life easier
 					var err = result.error().map(e -> e.message()).orElse(ChatFormatting.RED + "Unknown cause");

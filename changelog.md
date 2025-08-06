@@ -4,10 +4,12 @@
 - ACTUALLY fixed 'Disallowed character' toast and log spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
 - Now requires Fabric Loader `0.17.0`+ (doesn't currently apply, but will also require NeoForge `21.1.18`+)
 - Override chat height now explicitly changes the **focused** chat height, and the docs + config suggest this ([#254](https://www.github.com/mrbuilder1961/ChatPatches/issues/254))
-- Chat log now instead dumps the current chat to `chatlog_dump_<time>.json` instead of to the log. This can be renamed to `chatlog.json` to restore the log 
-  if needed (FIXME: doesn't work yet)
+- Chat log now instead dumps the current chat to `chatlog_dump_<time>.json` instead of to the log. ~~This can be renamed to `chatlog.json` to restore the log 
+  if needed~~ Doesn't work yet, but it will soon
 - Removed log spam from messages being formatted incorrectly ("`DUPE_INDEX` is out of bounds")
 - Updated `zh_cn` translations thanks to [layou233](https://github.com/layou233)! ([#255](https://www.github.com/mrbuilder1961/ChatPatches/pull/255))
+- Finally marked ModMenu and Menulogue + Catalogue as under `suggests` instead of `recommends` according to Fabric. This should make log files a tad less 
+  confusing for some users, but to be clear, these are still **HIGHLY RECOMMENDED** so you can actually use the config in-game!
 
 ## Chat Patches `8.0-alpha.3` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - Fixed the main crash from [#250](https://www.github.com/mrbuilder1961/ChatPatches/issues/250)

@@ -56,7 +56,7 @@ public class ChatPatches implements ClientModInitializer {
 			// loads once
 			ChatLog.load(false);
 			// loads every time
-			config.sendBoundaryLine();
+			config.sendBoundaryLine(); // doesn't run the first time because of the slight delay before the chat log initializes messages
 			ChatLog.hideRecentMessages();
 		});
 

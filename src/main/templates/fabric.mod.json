@@ -29,12 +29,11 @@
     "fabric-api": "*",
     "yet_another_config_lib_v3": "*"
   },
-  "recommends": {
+  "suggests": {
     "modmenu": "*",
     "catalogue": "*",
-    "menulogue": "*"
-  },
-  "suggests": {
+    "menulogue": "*",
+
     "nochatreports": "*"
   }
 }
