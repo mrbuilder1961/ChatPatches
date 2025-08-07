@@ -228,7 +228,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && config.search) {
-			// prepub use demo_background.png instead, but idk how to make it nine-sliced bc by default it's too big
+			// prepub use demo_background.png instead, but idk how to make it nine-sliced bc by default it's too big. also once done update preview photos in config and on cf/mr
 			graphics.blit(
 				// stonecutter: remove qualifier when import optimizer fix is available
 				/*? if >=1.21.6 {*/net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,/*?} elif >=1.21.2 {*//*net.minecraft.client.renderer.RenderType::guiTextured,*//*?}*/
