@@ -3,7 +3,7 @@
 ## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
   data is lost
-- The chat input box will now be grayed out while the chat log is loading to prevent sent messages being moved to the end of chat history (##257)
+- The chat input box will now be grayed out while the chat log is loading to prevent sent messages being moved to the end of chat history ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263))
 
 ## Chat Patches `8.0-alpha.4` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - ACTUALLY fixed 'Disallowed character' toast and log spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))
