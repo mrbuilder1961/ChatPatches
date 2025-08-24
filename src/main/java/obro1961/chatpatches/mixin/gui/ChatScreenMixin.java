@@ -23,6 +23,7 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
@@ -119,9 +120,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Shadow private int historyPos;
 
 	/**
-	 * Allows access to {@link #input}. Notably used
-	 * in {@link ContextMenu#init(Consumer)} for the
-	 * {@code #MENU_REPLY} action.
+	 * Allows access to {@link #input}. Notably used in {@link
+	 * ContextMenu#init(Consumer)} for the {@link ContextMenu#MENU_REPLY} action.
 	 */
 	public EditBox chatpatches$getChatField() { return input; }
 
@@ -163,10 +163,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			searchField.setValue(searchDraft);
 			// if necessary, forces the colors to switch + removes suggestion text
 			// normally this would be ignored because the field text = searchDraft
-			// see (#229)/(#230)
+			// see #229/#230
 			if(!searchDraft.isEmpty()) {
 				onSearchFieldUpdate(searchField.getValue(), true);
 			}
+		}
+
+		if(ChatLog.isRestoring()) { // fixes #257
+			input.setEditable(false);
+			input.setValue("Chat log not yet available - try reopening the chat");
 		}
 
 		caseSensitiveButton = makeSettingButton("caseSensitive", 0); // todo redo this thing

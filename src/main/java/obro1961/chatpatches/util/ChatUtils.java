@@ -213,7 +213,7 @@ public class ChatUtils {
 	 * @param second {@link #MESSAGE_INDEX} or {@link #MSG_SENDER_INDEX}
 	 * @param third {@link #DUPE_INDEX} or {@link #MSG_CONTENT_INDEX}
 	 */
-	@NotNull
+	@NotNull //prepub: this is giving TextUtils??? idk all these util methods need to be refactored and re-evaluated
 	public static MutableComponent buildMessage(@Nullable Style rootStyle, @Nullable Component first, @Nullable Component second, @Nullable Component third) {
 		MutableComponent root = Component.empty();
 

@@ -96,7 +96,8 @@ public class ChatLog {
 		};
 	});
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
-    public static final GuiMessageTag RESTORED_INDICATOR = new GuiMessageTag(0x382FB5, null, Component.translatable("text.chatpatches.restored"), "Restored"); // prepub use an AW and put the icon to use
+	// prepub can't use an AW. i can use this lib Fabric-ASM but the docs are INSANE (derogatory), so last resort is reflection i think? idfk
+    public static final GuiMessageTag RESTORED_INDICATOR = new GuiMessageTag(0x382FB5, null, Component.translatable("text.chatpatches.restored"), "Restored");
 
 	/**
 	 * Thread-local because
@@ -336,6 +337,8 @@ public class ChatLog {
 							.map(ChatLog::escapeAndSurround)
 							.toList() + "}"
 						);
+
+					// warning: when QuickText is implemented, this can be changed to use that (assuming it doesn't use codecs itself)
 				}
 
 				// always in UTF-8
