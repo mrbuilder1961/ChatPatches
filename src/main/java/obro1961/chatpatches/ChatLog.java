@@ -385,11 +385,21 @@ public class ChatLog {
     public static void restore() {
         if(messageCount() > 0 && historyCount() > 0) {
 			ChatComponent chat = mc().gui.getChat();
+			ChatHudAccess access = (ChatHudAccess) chat;
+
+			// copy and clear the current chat so delayed restoration doesn't drown existing messages
+			var prevHistory = List.copyOf(chat.getRecentChat());
+			var prevMessages = List.copyOf(access.chatpatches$getMessages());
+			chat.getRecentChat().clear();
+			access.chatpatches$getMessages().clear();
 
 			restoring = true;
 			history.forEach(chat::addRecentChat);
 			messages.forEach(msg -> chat.addMessage(msg, null, RESTORED_INDICATOR));
 			restoring = false;
+
+			chat.getRecentChat().addAll(prevHistory);
+			access.chatpatches$getMessages().addAll(prevMessages);
 
 			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
 			hideRecentMessages();
