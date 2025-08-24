@@ -144,15 +144,17 @@ public class ChatLog {
     public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; }
 
     public static void addMessage(Component message) {
-        if(restoring)
-            return;
+        if(restoring) {
+			return;
+		}
 
         enforceLimits();
         messages.add(message);
     }
     public static void addHistory(String sentMessage) {
-        if(restoring)
-            return;
+        if(restoring) {
+			return;
+		}
 
         enforceLimits();
         history.add(sentMessage);
@@ -177,11 +179,13 @@ public class ChatLog {
 	 * therefore not worth the hassle.
      */
     private static void enforceLimits() {
-        if(messageCount() > config.chatMaxMessages)
-            messages.removeElements(0, messageCount() - config.chatMaxMessages);
+        if(messageCount() > config.chatMaxMessages) {
+			messages.removeElements(0, messageCount() - config.chatMaxMessages);
+		}
 
-        if(historyCount() > config.chatMaxMessages)
-            history.removeElements(0, historyCount() - config.chatMaxMessages);
+        if(historyCount() > config.chatMaxMessages) {
+			history.removeElements(0, historyCount() - config.chatMaxMessages);
+		}
     }
 
     private static void updateMessagesLogged() {
@@ -301,10 +305,12 @@ public class ChatLog {
      * @see <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>
      */
     public static void serialize() {
-        if(!config.chatlog)
-            return;
-        if((messages.size() == lastMessageCount && history.size() == lastHistoryCount) || (messages.isEmpty() && history.isEmpty()))
-            return; // don't write empty or old data
+        if(!config.chatlog) {
+			return;
+		}
+        if((messages.size() == lastMessageCount && history.size() == lastHistoryCount) || (messages.isEmpty() && history.isEmpty())) {
+			return; // don't write empty or old data
+		}
 
 		ChatPatches.executeIoTask(() -> {
 			long start = System.currentTimeMillis();
@@ -452,13 +458,15 @@ public class ChatLog {
      * </ol>
      */
     public static void tickSaveCounter() {
-        if(config.chatlogSaveInterval > 0 && ticksUntilSave == 0)
-            serialize();
+        if(config.chatlogSaveInterval > 0 && ticksUntilSave == 0) {
+			serialize();
+		}
 
         ticksUntilSave--;
 
-        if(ticksUntilSave < 0)
-            ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
+        if(ticksUntilSave < 0) {
+			ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
+		}
     }
 
     /**

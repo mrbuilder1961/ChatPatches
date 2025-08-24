@@ -179,7 +179,6 @@ public class Config {
             String[] configFormat = nameFormat.equals(PLACEHOLDER) ? new String[] {"", ""} : nameFormat.split("\\$"); // note: changing placeholder requires removing the backslashes in the split regex
             ObjectList<Component> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
-
             components.add(text( configFormat[0] ));                   // config prefix
             components.add(text( profile.getName() ));                 // playername
             components.add(text( configFormat[1] + " " )); // config suffix
@@ -228,8 +227,9 @@ public class Config {
      * boundary line was sent.
      */
     public void sendBoundaryLine() {
-        if(!boundary || vanillaClearing)
-            return;
+        if(!boundary || vanillaClearing) {
+			return;
+		}
 
         List<GuiMessage> messages = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getMessages();
 		String world = mc().hasSingleplayerServer() // this check prevents NPEs for both if branches
@@ -271,12 +271,14 @@ public class Config {
 	public int calcDynamicChatShift() {
 		Player player = mc().player;
 
-		if(!config.dynamicChatShift || player == null)
+		if(!config.dynamicChatShift || player == null) {
 			return chatShift;
+		}
         // don't shift the chat if there are no hearts visible (not in survival or adventure)
         // also note that player is always non-null by this point
-        if(/*? if java: <21 {*//*(Object)*//*?}*/ mc().getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival())
-            return chatShift;
+        if(/*? if java: <21 {*//*(Object)*//*?}*/ mc().getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival()) {
+			return chatShift;
+		}
 
 		// get player stats and standardize to scaled number of rows
 		int armor = player.getArmorValue();
@@ -405,9 +407,11 @@ public class Config {
         ObjectList<Setting<?>> options = new ObjectArrayList<>( fields.length );
 
         try {
-            for(Field f : fields)
-                if(!Modifier.isStatic(f.getModifiers()))
-                    options.add(new Setting<>( f.get(config), f.get(DEFAULTS), f.getName() ));
+            for(Field f : fields) {
+				if(!Modifier.isStatic(f.getModifiers())) {
+					options.add(new Setting<>( f.get(config), f.get(DEFAULTS), f.getName() ));
+				}
+			}
         } catch(IllegalAccessException e) {
             logReportMsg(e);
         }

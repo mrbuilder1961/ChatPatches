@@ -29,7 +29,8 @@ public abstract class ClientPacketListenerMixin {
      */
     @Inject(method = "handleDeleteChat", at = @At("HEAD"), cancellable = true)
     private void keepMessage(CallbackInfo ci) {
-        if(config.chatHidePacket)
-            ci.cancel();
+        if(config.chatHidePacket) {
+			ci.cancel();
+		}
     }
 }

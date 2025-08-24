@@ -99,18 +99,20 @@ public class ChatPatches implements ClientModInitializer {
 
 		if(clazz.isEmpty()) {
 			Class<?> callingClass = caller.getDeclaringClass();
-			if(callingClass.isAnonymousClass())
+			if(callingClass.isAnonymousClass()) {
 				clazz = "<anonymous>";
-			else if(callingClass.isHidden())
+			} else if(callingClass.isHidden()) {
 				clazz = "<hidden>";
-			else
+			} else {
 				clazz = "<unnamed>"; // preview feature so it goes in the else
+			}
 		}
 
-		if(method.startsWith("lambda$static$")) // goes first so it doesn't get masked by the next check
+		if(method.startsWith("lambda$static$")) { // goes first so it doesn't get masked by the next check
 			method = "<static_init>";
-		else if(!lambda.isEmpty())
+		} else if(!lambda.isEmpty()) {
 			method = method.substring(7, method.lastIndexOf("$")); // removes the 'lambda$' (l=7) and the '$n' at the end to get the method name
+		}
 
 		return String.format("[%s.%s%s]", clazz, method, lambda);
 	}

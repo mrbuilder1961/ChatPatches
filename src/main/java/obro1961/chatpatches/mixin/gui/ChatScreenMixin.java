@@ -130,12 +130,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void chatScreenInit(String originalChatText, CallbackInfo ci) {
 		if(config.messageDrafting && !messageDraft.isBlank()) {
-			// if message drafting is enabled, a draft exists, and SMWYG sent an item message, clear the draft to avoid crashing
-			if(FabricLoader.getInstance().isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$"))
+			if(FabricLoader.getInstance().isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$")) {
+				// if message drafting is enabled, a draft exists, and SMWYG sent an item message: clear the draft to avoid crashing
 				messageDraft = originalChatText;
-			// otherwise if message drafting is enabled, a draft exists and this is not triggered by command key, update the draft
-			else if(!originalChatText.equals("/"))
-				this.initial = messageDraft;
+			} else if(!originalChatText.equals("/")) {
+				// otherwise, if message drafting is enabled, a draft exists, and this is not triggered by command key: update the draft
+				initial = messageDraft;
+			}
 		}
 	}
 
@@ -276,8 +277,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		messageDraft = input.getValue();
 		searchDraft = searchField.getValue();
 
-		if(!searchField.getValue().isEmpty())
+		if(!searchField.getValue().isEmpty()) {
 			minecraft.gui.getChat().rescaleChat(); // reset the hud if it had anything in the field (#102)
+		}
 
 		contextMenu.close(this::removeWidget);
 
@@ -298,8 +300,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed(III)Z"))
 	private void emptyNonInvasiveDrafts(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-		if(config.onlyInvasiveDrafting && keyCode == GLFW.GLFW_KEY_ESCAPE)
+		if(config.onlyInvasiveDrafting && keyCode == GLFW.GLFW_KEY_ESCAPE) {
 			input.setValue(""); // required to empty both the chat field and the messageDraft (later on in #onScreenClose)
+		}
 	}
 
 	/**
@@ -350,8 +353,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	private boolean fixContextMenuNotClosing(double mX, double mY, int button, Operation<Boolean> mouseClicked) {
 		boolean clicked = mouseClicked.call(mX, mY, button);
 
-		if(button != GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+		if(button != GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
 			contextMenu.close(this::removeWidget); // closes the menu if it wasn't just created, we don't care if anything was actually clicked
+		}
 
 		return clicked;
 	}
@@ -383,17 +387,20 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
 	public void mouseClickedEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
-		if(cir.getReturnValueZ())
+		if(cir.getReturnValueZ()) {
 			return;
+		}
 
-		if(searchField.mouseClicked(mX, mY, button))
+		if(searchField.mouseClicked(mX, mY, button)) {
 			cir.setReturnValue(true);
+		}
 
 		if(isMouseOverSettingsMenu(mX, mY)) {
-			if(caseSensitiveButton.mouseClicked(mX, mY, button))
+			if(caseSensitiveButton.mouseClicked(mX, mY, button)) {
 				cir.setReturnValue(true);
-			else if(regexButton.mouseClicked(mX, mY, button))
+			} else if(regexButton.mouseClicked(mX, mY, button)) {
 				cir.setReturnValue(true);
+			}
 		} else if(contextMenu.mouseClicked(mX, mY, button)) {
 			contextMenu.close(this::removeWidget);
 			cir.setReturnValue(true);
@@ -536,8 +543,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Unique
 	private void onSearchFieldUpdate(String text, boolean refresh) {
-		if(text.equals(searchDraft) && !refresh)
+		if(text.equals(searchDraft) && !refresh) {
 			return; // prevent useless updates
+		}
 
 		ChatComponent chatHud = minecraft.gui.getChat();
 		if(!text.isEmpty() || refresh) {

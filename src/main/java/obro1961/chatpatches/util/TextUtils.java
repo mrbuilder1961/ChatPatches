@@ -32,8 +32,9 @@ public class TextUtils {
 	public static final Int2ObjectMap<ChatFormatting> COLOR_TO_FORMATTING = Util.make(() -> {
 		Int2ObjectMap<ChatFormatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever
 		for(ChatFormatting f : ChatFormatting.values()) {
-			if(f.isColor())
+			if(f.isColor()) {
 				map.put(f.getColor().intValue(), f);
+			}
 		}
 		return map;
 	});
@@ -202,11 +203,13 @@ public class TextUtils {
 			return Optional.empty();
 		}, Style.EMPTY);
 
-		while(builder.toString().startsWith("&r")) // removes any leading reset codes
+		while(builder.toString().startsWith("&r")) { // removes any leading reset codes
 			builder.delete(0, 2);
+		}
 
-		while(builder.toString().endsWith("&r&r")) // removes duplicate trailing reset codes (leaves one if it exists just in case it's intended)
+		while(builder.toString().endsWith("&r&r")) { // removes duplicate trailing reset codes (leaves one if it exists just in case it's intended)
 			builder.setLength(builder.length() - 4);
+		}
 
 		// removes the redundant code in a pair of color codes, optionally separated by whitespace, even including hex codes
 		// ex. '&a&9' -> '&9', '&b   &4' -> '   &4', '&c&#123ABC' -> '&#123ABC', '&#00FF22\t&f' -> '\t&f'
@@ -233,26 +236,32 @@ public class TextUtils {
 
 		// only add the color code if one was explicitly specified (reset is not a color ^) and if it's different from the last color
 		if(formatting != ChatFormatting.RESET && (last.getColor() == null || color.getValue() != last.getColor().getValue())) {
-			if(formatting != null)
+			if(formatting != null) {
 				joiner.add("" + formatting.getChar()); // default colors and reset codes
-			else if( COLOR_TO_FORMATTING.containsKey(color.getValue()) )
+			} else if( COLOR_TO_FORMATTING.containsKey(color.getValue()) ) {
 				joiner.add("" + COLOR_TO_FORMATTING.get(color.getValue()).getChar()); // hex colors that exist as formatting codes
-			else
+			} else {
 				joiner.add(color.formatValue()); // custom hex colors
+			}
 		} else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY)) { // can't use isEmpty() bc it's a reference check -_-
 			return "&r"; // if the current style is empty and the last style wasn't, we've reset!
 		}
 
-		if(style.isBold() && !last.isBold())
+		if(style.isBold() && !last.isBold()) {
 			joiner.add("l");
-		if(style.isItalic() && !last.isItalic())
+		}
+		if(style.isItalic() && !last.isItalic()) {
 			joiner.add("o");
-		if(style.isUnderlined() && !last.isUnderlined())
+		}
+		if(style.isUnderlined() && !last.isUnderlined()) {
 			joiner.add("n");
-		if(style.isStrikethrough() && !last.isStrikethrough())
+		}
+		if(style.isStrikethrough() && !last.isStrikethrough()) {
 			joiner.add("m");
-		if(style.isObfuscated() && !last.isObfuscated())
+		}
+		if(style.isObfuscated() && !last.isObfuscated()) {
 			joiner.add("k");
+		}
 
 		return joiner.toString();
 	}

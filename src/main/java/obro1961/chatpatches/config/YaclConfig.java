@@ -71,12 +71,13 @@ public class YaclConfig extends Config {
             String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
 
-            if(I18n.exists(SEARCH_PREFIX + key))
-                cat = "_"; // chat search filters are configurable in the chat screen, not here, where they won't render nicely
-            else if(key.equals("logMessageStructures"))
-                cat = "help";
-            else if(!I18n.exists(CATEGORY_PREFIX + cat))
-                cat = "chat"; // default to chat if the category is invalid
+            if(I18n.exists(SEARCH_PREFIX + key)) {
+				cat = "_"; // chat search filters are configurable in the chat screen, not here, where they won't render nicely
+			} else if(key.equals("logMessageStructures")) {
+				cat = "help";
+			} else if(!I18n.exists(CATEGORY_PREFIX + cat)) {
+				cat = "chat"; // default to chat if the category is invalid
+			}
 
             if(key.endsWith("Color")) {
                 opt = new Setting<>(new Color( (int)opt.val ), new Color( (int)opt.def ), key) {
@@ -260,19 +261,21 @@ public class YaclConfig extends Config {
 
     @SuppressWarnings("unchecked")
     private static <T> ControllerBuilder<T> getController(Option<T> opt, String key) {
-        if( key.matches("^.*(?:Str|Date|Format)$") ) // endsWith "Str" "Date" or "Format"
-            return (ControllerBuilder<T>) StringControllerBuilder.create( (Option<String>)opt );
+        ControllerBuilder<?> builder;
 
-        else if( key.contains("Color") )
-            return (ControllerBuilder<T>) ColorControllerBuilder.create( (Option<Color>)opt );
+        if( key.matches("^.*(?:Str|Date|Format)$") ) { // endsWith "Str" "Date" or "Format"
+            builder = StringControllerBuilder.create((Option<String>) opt);
+        } else if( key.contains("Color") ) {
+            builder = ColorControllerBuilder.create((Option<Color>) opt);
+        } else if( config.getOption(key).get() instanceof Integer ) { // key is int but not color
+            builder = IntegerSliderControllerBuilder.create((Option<Integer>) opt)
+                .range(getMinOrMax(key, true), getMinOrMax(key, false))
+                .step(getInterval(key));
+        } else {
+            builder = BooleanControllerBuilder.create((Option<Boolean>) opt).coloured(true);
+        }
 
-        else if( config.getOption(key).get() instanceof Integer ) // key is int but not color
-            return (ControllerBuilder<T>) IntegerSliderControllerBuilder.create( (Option<Integer>)opt )
-                .range( getMinOrMax(key, true), getMinOrMax(key, false) )
-                .step( getInterval(key) );
-
-        else
-            return (ControllerBuilder<T>) BooleanControllerBuilder.create( (Option<Boolean>)opt ).coloured(true);
+        return (ControllerBuilder<T>) builder;
     }
 
     private static BiConsumer<YACLScreen, ButtonOption> getAction(String key) {
@@ -300,29 +303,29 @@ public class YaclConfig extends Config {
     private static <T> Binding<T> getBinding(Setting<?> option) {
         Setting<T> o = (Setting<T>) option;
 
-        if( o.key.contains("Date") )
+        if(o.key.contains("Date")) {
             // must be able to successfully create a SimpleDateFormat
             return Binding.generic(o.def, o::get, inc -> {
                 try {
-                    new SimpleDateFormat( inc.toString() );
-                    o.set( inc );
+                    new SimpleDateFormat(inc.toString());
+                    o.set(inc);
                 } catch(IllegalArgumentException e) {
                     LOGGER.error("[YaclConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
                 }
             });
-
-        else if( o.key.contains("Format") )
+        } else if(o.key.contains("Format")) {
             // must contain placeholder
             return Binding.generic(o.def, o::get, inc -> {
-                if(inc.toString().contains(PLACEHOLDER))
+                if(inc.toString().contains(PLACEHOLDER)) {
                     o.set(inc);
+                }
             });
-
-        else
+        } else {
             // every other setting either has no requirements or is already constrained with its controller
             // this applies to all options containing 'Str' and all boolean, int, and color options.
             // color options have type transformers to int overridden in the screen builder
             return Binding.generic(o.def, o::get, o::set);
+        }
     }
 
     /**
@@ -374,12 +377,15 @@ public class YaclConfig extends Config {
 
         Component tooltip = Component.translatable(CATEGORY_DESC_PREFIX + key);
         // use the tooltip if it translated properly
-        if( !tooltip.getString().equals(CATEGORY_DESC_PREFIX + key) )
-            builder.tooltip(tooltip);
-        if( groups.length > 0 )
-            builder.groups( List.of(groups) );
-        if( !options.isEmpty() )
-            builder.options( options );
+        if( !tooltip.getString().equals(CATEGORY_DESC_PREFIX + key) ) {
+			builder.tooltip(tooltip);
+		}
+        if( groups.length > 0 ) {
+			builder.groups( List.of(groups) );
+		}
+        if( !options.isEmpty() ) {
+			builder.options( options );
+		}
 
         return builder.build();
     }

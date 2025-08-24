@@ -186,8 +186,9 @@ public class ContextMenu implements GuiEventListener {
 		var messages = searchResults.isEmpty() ? access.chatpatches$getMessages() : searchResults;
 		int messageIndex = noOp ? -1 : access.getChatHudLineIndex(mX, mY);
 
-		if(messageIndex == -1)
+		if(messageIndex == -1) {
 			noOp = true;
+		}
 
 		this.selectedLine = noOp ? NIL_HUD_LINE : Iterables.get(messages, messageIndex, NIL_HUD_LINE);
 		this.visibleMessageIndex = noOp ? -1 : access.getEoEIndex(mX, mY); // returns the index of the EoE line at the mouse position
@@ -196,8 +197,9 @@ public class ContextMenu implements GuiEventListener {
 
 			// if the line before (+) this visible message isn't EoE, we need to account for it(them?)
 			int l = 1; // minimum of one line
-			for(int j = visibleMessageIndex + 1; j < visibles.size() && !visibles.get(j).endOfEntry(); j++)
+			for(int j = visibleMessageIndex + 1; j < visibles.size() && !visibles.get(j).endOfEntry(); j++) {
 				l++;
+			}
 
 			return l;
 		});
@@ -241,8 +243,9 @@ public class ContextMenu implements GuiEventListener {
 		int h = BUTTON_HEIGHT + BUTTON_PADDING;
 
 		AbstractButton button = Button.builder(id, b -> {
-			if(noOp)
+			if(noOp) {
 				return;
+			}
 
 			Component copyText = tooltipCopyTextSupplier != null ? tooltipCopyTextSupplier.get() : EMPTY;
 			String copyStr = StringUtil.stripColor(copyText.getString());
@@ -251,8 +254,9 @@ public class ContextMenu implements GuiEventListener {
 				ChatPatches.pushInfoToast(Component.translatable(LANG_PREFIX + "copied"), copyText);
 			}
 
-			if(pressAction != null)
+			if(pressAction != null) {
 				pressAction.onPress(b);
+			}
 		}).bounds(clickPos.xInt(), clickPos.yInt(), w, h).build();
 
 		if(renderObject != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
@@ -268,11 +272,13 @@ public class ContextMenu implements GuiEventListener {
 				protected void renderWidget(GuiGraphics graphics, int mX, int mY, float delta) {
 					super.renderWidget(graphics, mX, mY, delta);
 
-					if(renderObject instanceof Item icon)
+					if(renderObject instanceof Item icon) {
 						graphics.renderFakeItem(icon.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
+
 					//stonecutter: remove qualifier when import optimizer fix is available
-					else if(renderObject instanceof /*? if >=1.20.2 {*/net.minecraft.client.resources.PlayerSkin/*?} else {*//*net.minecraft.resources.ResourceLocation*//*?}*/ playerSkin)
+					} else if(renderObject instanceof /*? if >=1.20.2 {*/net.minecraft.client.resources.PlayerSkin/*?} else {*//*net.minecraft.resources.ResourceLocation*//*?}*/ playerSkin) {
 						PlayerFaceRenderer.draw(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
+					}
 				}
 
 				@Override
@@ -288,8 +294,9 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		// set here so buttons with a renderObject don't have theirs deleted
-		if(tooltipCopyTextSupplier != null)
+		if(tooltipCopyTextSupplier != null) {
 			button.setTooltip(Tooltip.create( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace(Formatting.FORMATTING_CODE_PREFIX, '&') )
+		}
 
 		grid.add(button, localRow, col, tooltipCopyTextSupplier, pressAction);
 	}
@@ -395,8 +402,9 @@ public class ContextMenu implements GuiEventListener {
 	 * @see ChatScreenMixin#initSearchWidgets(CallbackInfo)
 	 */
 	public void init(Consumer<AbstractButton> addSelectableChild) {
-		if(noOp)
+		if(noOp) {
 			return;
+		}
 
 		Component text = selectedLine.content();
 		Component timestamp = getPart(text, TIMESTAMP_INDEX);
@@ -410,10 +418,12 @@ public class ContextMenu implements GuiEventListener {
 		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
 			registerCopyButton(RAW_TEXT, strRow++, text); // 0
 			registerCopyButton(FORMATTED_STR, strRow++, Component.literal(TextUtils.toCodedString(text))); // 1
-			if(timestamped)
+			if(timestamped) {
 				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
-			if(duped)
+			}
+			if(duped) {
 				registerCopyButton(NO_DUPE_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
+			}
 			registerCopyButton(JSON_STR,
 				strRow, textCodec().encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
@@ -452,8 +462,9 @@ public class ContextMenu implements GuiEventListener {
 		// link buttons - conditional
 		ObjectList<String> webLinks = Util.make(new ObjectArrayList<>(), l -> {
 			Matcher matcher = URL_PATTERN.get().matcher(text.getString());
-			while(matcher.find())
+			while(matcher.find()) {
 				l.add(matcher.group());
+			}
 		});
 		ObjectList<String> filePaths = Util.make(new ObjectArrayList<>(), l ->
 			text.visit((style, str) -> {
@@ -483,12 +494,14 @@ public class ContextMenu implements GuiEventListener {
 		if(!webLinks.isEmpty() || !filePaths.isEmpty()) {
 			registerProxyButton(MENU_LINKS, LINK_N.apply(1), Items.CHAIN);
 
-			for(int i = 0; i < filePaths.size(); i++)
+			for(int i = 0; i < filePaths.size(); i++) {
 				registerCopyButton(LINK_N.apply(i + 1), i, Component.nullToEmpty("§6§n" + filePaths.get(i)));
+			}
 
-			for(int i = filePaths.size(); i < webLinks.size() + filePaths.size(); i++)
+			for(int i = filePaths.size(); i < webLinks.size() + filePaths.size(); i++) {
 				// creates link buttons starting at link 1 up to link n, with ids following the same pattern (LINK_1 - LINK_N)
 				registerCopyButton(LINK_N.apply(i + 1), i, Component.nullToEmpty("§9§n" + webLinks.get(i)));
+			}
 		}
 
 		// sender buttons - conditional
@@ -521,8 +534,9 @@ public class ContextMenu implements GuiEventListener {
 	 * @see ChatScreenMixin#renderCustomWidgets(GuiGraphics, int, int, float, CallbackInfo)
 	 */
 	public void render(GuiGraphics graphics, int mX, int mY, float delta) {
-		if(noOp)
+		if(noOp) {
 			return;
+		}
 
 		renderSelectionOutline(graphics/*, mX, mY, delta*/);
 		renderMenuButtons(graphics, mX, mY, delta);
@@ -533,8 +547,9 @@ public class ContextMenu implements GuiEventListener {
 	 * in the chat, to indicate which message will be copied.
 	 */
 	private void renderSelectionOutline(GuiGraphics graphics/*, int mX, int mY, float delta*/) {
-		if(visibleLines == 0 || visibleMessageIndex == -1)
+		if(visibleLines == 0 || visibleMessageIndex == -1) {
 			return;
+		}
 
 		int hoveredParts = visibleLines;
 		double s = hud.getScale();
@@ -584,8 +599,9 @@ public class ContextMenu implements GuiEventListener {
 	 */
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if(noOp)
+		if(noOp) {
 			return false; // failed - did nothing
+		}
 
 		GuiEventListener focused = screen.getFocused();
 
@@ -657,8 +673,9 @@ public class ContextMenu implements GuiEventListener {
 	 * ignored and delegated to a (now deleted) menu button.
 	 */
 	public void close(Consumer<AbstractButton> remove) {
-		if(noOp)
+		if(noOp) {
 			return; // if the menu is already disabled, it was born broken, and therefore was never initialized
+		}
 
 		noOp = true;
 		grid.buttons().forEach(remove);
@@ -702,11 +719,13 @@ public class ContextMenu implements GuiEventListener {
 	@Override
 	@Deprecated
 	public void setFocused(boolean focused) {
-		if(noOp)
+		if(noOp) {
 			return;
+		}
 
-		if(!grid.buttons().isEmpty())
+		if(!grid.buttons().isEmpty()) {
 			grid.buttons().getFirst().visitWidgets(MENU_STRING_BUTTON -> MENU_STRING_BUTTON.setFocused(focused));
+		}
 	}
 
 
@@ -814,18 +833,20 @@ public class ContextMenu implements GuiEventListener {
 		public void add(AbstractButton button, int localRow, int col, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction) {
 			boolean newGroup = button.visible = (col == 0); // this will only break things if >1 main buttons are grouped together
 			int groupId = newGroup ? groupCount++ : groupCount - 1;
-			if(newGroup)
+			if(newGroup) {
 				currentRow++;
+			}
 			int absRow = currentRow + localRow;
 
 			Entry entry = new Entry(absRow, col, groupId, button, tooltipCopyTextSupplier, pressAction);
 
 			widget.addChild(button, absRow, col);
 			entries.add(entry);
-			if(groups.size() > groupId)
+			if(groups.size() > groupId) {
 				groups.get(groupId).add(entry);
-			else
+			} else {
 				groups.add(groupId, new ObjectArrayList<>(ObjectArrayList.of(entry)));
+			}
 		}
 
 		/**
@@ -837,9 +858,11 @@ public class ContextMenu implements GuiEventListener {
 		 * different (typically from the underlined button text).
 		 */
 		public Entry get(Component id) {
-			for(Entry e : entries)
-				if(e.button.getMessage().getString().equals(id.getString()))
+			for(Entry e : entries) {
+				if(e.button.getMessage().getString().equals(id.getString())) {
 					return e;
+				}
+			}
 
 			return null;
 		}

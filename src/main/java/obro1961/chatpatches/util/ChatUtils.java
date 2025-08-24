@@ -141,8 +141,9 @@ public class ChatUtils {
 	public static int visible2Message(int visibleIndex) {
 		var visibles = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages();
 
-		if(visibleIndex == -1 || visibleIndex >= visibles.size())
+		if(visibleIndex == -1 || visibleIndex >= visibles.size()) {
 			return -1;
+		}
 
 		return (int)(visibleIndex - visibles.subList(0, visibleIndex).stream().filter(Predicate.not(GuiMessage.Line::endOfEntry)).count());
 	}
@@ -217,8 +218,9 @@ public class ChatUtils {
 	public static MutableComponent buildMessage(@Nullable Style rootStyle, @Nullable Component first, @Nullable Component second, @Nullable Component third) {
 		MutableComponent root = Component.empty();
 
-		if(rootStyle != null)
+		if(rootStyle != null) {
 			root.setStyle(rootStyle);
+		}
 
 		first = Objects.requireNonNullElse(first, Component.empty());
 		second = Objects.requireNonNullElse(second, Component.empty());
@@ -286,8 +288,9 @@ public class ChatUtils {
 	 * </ol>
 	 */
 	public static Component modifyMessage(@NotNull Component m) {
-		if(ChatLog.isRestoring())
+		if(ChatLog.isRestoring()) {
 			return tryCondenseDupes(m); // cancel modifications when loading the chat log minus the minimal dupe counter
+		}
 
 		boolean lastEmpty = messageData.equals(NIL_MESSAGE_DATA); // also signifies that this is a system message (when true)
 		Date now = lastEmpty ? new Date() : messageData.timestamp;
@@ -314,8 +317,9 @@ public class ChatUtils {
 					MutableComponent teamPart = Component.empty();
 					if(team) {
 						// adds the preceding arrow for sent team messages
-						if(ttc.getKey().endsWith("sent"))
+						if(ttc.getKey().endsWith("sent")) {
 							teamPart.append(Component.literal("-> ").setStyle(style)); // "-> {team} <{player}> {content}"
+						}
 
 						// adds the team name for team messages
 						teamPart.append( getArg(ttc, MSG_TEAM_INDEX).copy().append(" ") ); // copy to prevent UOEs on 1.20.3+ (#199)
@@ -346,12 +350,14 @@ public class ChatUtils {
 
 					// ignore everything before the '>' because it's the playername, which we already know
 					// adds the part after the closing bracket but before any remaining siblings, if it exists
-					if(!afterEndBracket.isEmpty())
+					if(!afterEndBracket.isEmpty()) {
 						realContent.append( Component.literal(afterEndBracket).setStyle(firstPart.getStyle()) );
+					}
 
 					// we know everything remaining is message content parts, so add everything
-					for(int i = parts.indexOf(firstPart) + 1; i < parts.size(); i++)
+					for(int i = parts.indexOf(firstPart) + 1; i < parts.size(); i++) {
 						realContent.append(parts.get(i));
+					}
 
 					content.append(EMPTY); // keeps MSG_TEAM_INDEX constant
 					content.append(config.formatPlayername(messageData.sender)); // sender data is already known
@@ -360,7 +366,7 @@ public class ChatUtils {
 			}
 
 			if(config.logMessageStructures) {
-				throw new AssertionError("time to log those message structures!", null);
+				throw new AssertionError("Time to log those message structures!", null);
 			}
 		} catch(RuntimeException | AssertionError e) {
 			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying '{}'", m.getString());
@@ -447,8 +453,9 @@ public class ChatUtils {
 		ChatHudAccess chat = (ChatHudAccess) chathud;
 		List<GuiMessage> messages = chat.chatpatches$getMessages();
 
-		if(!config.counter || messages.isEmpty())
+		if(!config.counter || messages.isEmpty()) {
 			return incoming;
+		}
 
 		ObjectList<Component> siblings = new ObjectArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
 		List<GuiMessage.Line> visibles = chat.chatpatches$getVisibleMessages();
@@ -465,10 +472,11 @@ public class ChatUtils {
 		for(int i = 0; i < attemptDistance && i < messages.size(); i++) {
 			Component msg = messages.get(i).content();
 
-			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) )
+			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) ) {
 				continue; // if the incoming message is different from the iterated message, don't try to condense (delete) it
-			else if( config.counterCheckStyle && !withoutContent(incoming).equals(withoutContent(msg)) )
+			} else if( config.counterCheckStyle && !withoutContent(incoming).equals(withoutContent(msg)) ) {
 				continue; // if the incoming message has different metadata from the iterated message, skip it
+			}
 
 			// remove all number formatting codes and non-digits, then replace empty strings with 1 to prevent NumberFormatExceptions
 			// finally add it to the total dupe count

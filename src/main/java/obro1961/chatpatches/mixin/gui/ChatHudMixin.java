@@ -261,8 +261,8 @@ public abstract class ChatHudMixin implements ChatHudAccess {
     *///?} else {
     private void ignoreRestoredMessages(GuiMessage message, CallbackInfo ci) {
     //?}
-
-        if(ChatLog.isRestoring() || ChatLog.RESTORED_INDICATOR.equals(/*? if <=1.20.4 {*//*tag*//*?} else {*/message.tag()/*?}*/))
-            ci.cancel();
+        if(ChatLog.isRestoring() || ChatLog.RESTORED_INDICATOR.equals(/*? if <=1.20.4 {*//*tag*//*?} else {*/message.tag()/*?}*/)) {
+			ci.cancel();
+		}
     }
 }
