@@ -32,5 +32,5 @@ public abstract class ExtraCodecsMixin {
 	private static boolean allowSectionSigns(boolean isValidChatCharacter, @Local char c) {
 		return isValidChatCharacter || c == '§';
 	}
-	//? }
+	//?}
 }

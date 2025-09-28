@@ -193,10 +193,10 @@ public class ChatPatches implements ClientModInitializer {
 		}*/
 
 		SystemToast.add(
-			Minecraft.getInstance()./*?if >=1.21.2 {*/getToastManager/*?} else {*//*getToasts*//*?}*/(),
+			Minecraft.getInstance()./*? if >=1.21.2 {*/getToastManager/*?} else {*//*getToasts*//*?}*/(),
 			error
-				? SystemToast./*?if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PACK_LOAD_FAILURE
-				: SystemToast./*?if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PERIODIC_NOTIFICATION,
+				? SystemToast./*? if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PACK_LOAD_FAILURE
+				: SystemToast./*? if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PERIODIC_NOTIFICATION,
 			head,
 			desc
 		);
@@ -231,7 +231,7 @@ public class ChatPatches implements ClientModInitializer {
 		} else {
 			logReportMsg(new NullPointerException("Expected existing client world"));
 		}
-		//? }
+		//?}
 		return /*? if >=1.20.5 {*/(RegistryOps<T>)/*?}*/ ops;
 	}
 }

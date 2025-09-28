@@ -60,10 +60,11 @@ dependencies {
         modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabric.api")}+$minecraft")
     }
 
-    if(minecraft == "1.20.2")
+    if(minecraft == "1.20.2") {
         modstitchModImplementation("dev.isxander.yacl:yet-another-config-lib-fabric:${d("yacl")}")
-    else
+    } else {
         modstitchModImplementation("dev.isxander:yet-another-config-lib:${d("yacl")}-fabric")
+    }
 
     //modstitchModImplementation("eu.pb4:placeholder-api:${d("placeholder")}")
     modstitchModImplementation("com.terraformersmc:modmenu:${d("modmenu")}")
@@ -202,6 +203,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         match(loader, "fabric", "neo", "forge")
         //put("forge", loader != "fabric") //prepub forgelike maybe?
     }
+
     dependencies {
         put("java", java.toString())
     }
