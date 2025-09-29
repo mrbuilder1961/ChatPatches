@@ -560,7 +560,7 @@ public class ContextMenu implements GuiEventListener {
 		int i = visibleMessageIndex - access.chatpatches$getScrolledLines();
 		int hoveredY = sH - (i * lH) - shift;
 
-		//$ pushStack
+		//$ push_stack
 		graphics.pose().pushMatrix();
 		graphics.pose().scale((float) s, (float) s /*? if <=1.21.5 {*//*, 1.0f*//*?}*/);
 
@@ -575,7 +575,7 @@ public class ContextMenu implements GuiEventListener {
 		graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));
 		graphics.disableScissor();
 
-		//$ popStack
+		//$ pop_stack
 		graphics.pose().popMatrix();
 	}
 

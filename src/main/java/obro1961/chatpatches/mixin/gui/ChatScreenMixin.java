@@ -212,7 +212,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
 	private void renderCustomWidgets(GuiGraphics graphics, int mX, int mY, float delta, CallbackInfo ci) {
-		//$ pushStack
+		//$ push_stack
 		graphics.pose().pushMatrix();
 
 		// 1.21.6+ automatically renders everything z=0.1+ relative to the last element :D
@@ -227,7 +227,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), /*?if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.DARK_RED.getColor()));
+				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), /*? if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.DARK_RED.getColor()));
 				// todo: that option to disable text shadows - raw calls can have the boolean plugged right in, elsewhere needs injectors
 			}
 		}
@@ -248,7 +248,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			regexButton.render(graphics, mX, mY, delta);
 		}
 
-		//$ popStack
+		//$ pop_stack
 		graphics.pose().popMatrix(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
 		contextMenu.render(graphics, mX, mY, delta);

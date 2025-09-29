@@ -209,10 +209,10 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     swaps {
-        //prepub: make this data-driven from gradle.properties
+        //prepub: make this data-driven from gradle.properties..?
         val v1216 = eval(minecraft, ">=1.21.6")
-        put("pushStack", if(v1216) "graphics.pose().pushMatrix();" else "graphics.pose().pushPose();")
-        put("popStack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
+        put("push_stack", if(v1216) "graphics.pose().pushMatrix();" else "graphics.pose().pushPose();")
+        put("pop_stack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
     }
 
     replacements {

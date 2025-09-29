@@ -449,20 +449,20 @@ public class ChatUtils {
 	 */
 	private static Component tryCondenseDupes(Component incoming) {
 		// prepub: make this method save to the chat log too (so no redundant messages)!
-		ChatComponent chathud = mc().gui.getChat();
-		ChatHudAccess chat = (ChatHudAccess) chathud;
-		List<GuiMessage> messages = chat.chatpatches$getMessages();
+		ChatComponent hud = mc().gui.getChat();
+		ChatHudAccess access = (ChatHudAccess) hud;
+		List<GuiMessage> messages = access.chatpatches$getMessages();
 
 		if(!config.counter || messages.isEmpty()) {
 			return incoming;
 		}
 
 		ObjectList<Component> siblings = new ObjectArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
-		List<GuiMessage.Line> visibles = chat.chatpatches$getVisibleMessages();
+		List<GuiMessage.Line> visibles = access.chatpatches$getVisibleMessages();
 		int attemptDistance =
 			switch(config.compactChat ? config.compactDistance : 1) {
 				case -1 -> messages.size();
-				case 0 -> chathud.getLinesPerPage();
+				case 0 -> hud.getLinesPerPage();
 				case 1 -> 1; // only check more messages if compact chat is enabled
 				default -> Math.min(config.compactDistance, messages.size()); // max checked = # of messages in chat, else config option
 			};
@@ -473,9 +473,11 @@ public class ChatUtils {
 			Component msg = messages.get(i).content();
 
 			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) ) {
-				continue; // if the incoming message is different from the iterated message, don't try to condense (delete) it
+				// if the incoming message is different from the iterated message, don't try to condense it
+				continue;
 			} else if( config.counterCheckStyle && !withoutContent(incoming).equals(withoutContent(msg)) ) {
-				continue; // if the incoming message has different metadata from the iterated message, skip it
+				// if the incoming message has different metadata from the iterated message, skip it
+				continue;
 			}
 
 			// remove all number formatting codes and non-digits, then replace empty strings with 1 to prevent NumberFormatExceptions

@@ -2,6 +2,7 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.GuiMessage;
@@ -21,10 +22,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
 import java.util.List;
-
 import static obro1961.chatpatches.ChatPatches.config;
+//? if >=1.20.2 {
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+//?}
+//? if <=1.20.4 {
+//?}
 
 /**
  * The main entrypoint mixin for technical chat modifications,
@@ -208,8 +212,8 @@ public abstract class ChatHudMixin implements ChatHudAccess {
         //?}
         at = @At("HEAD"),
         argsOnly = true
-    ) // stonecutter: remove qualifier when import optimizer fix is available
-    private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @com.llamalad7.mixinextras.sugar.Local(argsOnly = true) boolean refreshing *//*?}*/) {
+    )
+    private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @Local(argsOnly = true) boolean refreshing *//*?}*/) {
         return /*? if <=1.20.4 {*/ /*refreshing ? m : *//*?}*/ ChatUtils.modifyMessage(m);
     }
 
@@ -235,7 +239,7 @@ public abstract class ChatHudMixin implements ChatHudAccess {
      *
      * @since 1.20.2, mod WHEN
      */
-    @com.llamalad7.mixinextras.injector.v2.WrapWithCondition( // stonecutter: remove qualifier when import optimizer fix is available
+    @WrapWithCondition(
         method = "addRecentChat",
         at = @At(
             value = "INVOKE",
@@ -255,7 +259,7 @@ public abstract class ChatHudMixin implements ChatHudAccess {
      * Cancels logging chat messages if the chat log is restoring or if the tag is
      * {@link ChatLog#RESTORED_INDICATOR}.
      */
-    @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true) // stonecutter: remove qualifier when import optimizer fix is available
+    @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
     //? if <=1.20.4 {
     /*private void ignoreRestoredMessages(Component message, net.minecraft.client.GuiMessageTag tag, CallbackInfo ci) {
     *///?} else {
