@@ -134,7 +134,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	protected ChatScreenMixin(Component title) { super(title); }
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void chatScreenInit(String originalChatText, boolean isDraft, CallbackInfo ci) {
+	private void chatScreenInit(String originalChatText, /*? if >=1.21.9 {*/ boolean isDraft, /*?}*/ CallbackInfo ci) {
 		// FIXME: 1.21.9 also implements config.onlyInvasiveDrafting; do away with that (version wise) as needed
 		if(config.messageDrafting && !messageDraft.isBlank()) {
 			if(FabricLoader.getInstance().isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$")) {
