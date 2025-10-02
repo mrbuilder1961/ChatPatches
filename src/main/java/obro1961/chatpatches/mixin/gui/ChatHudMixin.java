@@ -2,7 +2,12 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+//? if >=1.20.2 {
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+//?}
+//? if <=1.20.4 {
+//import com.llamalad7.mixinextras.sugar.Local;
+//?}
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.GuiMessage;
@@ -23,12 +28,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
+
 import static obro1961.chatpatches.ChatPatches.config;
-//? if >=1.20.2 {
-import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-//?}
-//? if <=1.20.4 {
-//?}
 
 /**
  * The main entrypoint mixin for technical chat modifications,
@@ -118,7 +119,7 @@ public abstract class ChatHudMixin implements ChatHudAccess {
         if(!config.vanillaClearing) {
             // Clear message using F3+D
             if(!clearHistory) {
-                minecraft.getChatListener().clearQueue();
+                minecraft.getChatListener()./*? if >=1.21.9 {*/flushQueue/*?} else {*//*clearQueue*//*?}*/();
                 messageDeletionQueue.clear();
                 allMessages.clear();
                 trimmedMessages.clear();

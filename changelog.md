@@ -1,9 +1,16 @@
 # Changelog
 
-## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
+## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.9 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
   data is lost
 - The chat input box will now be grayed out while the chat log is loading to prevent sent messages being moved to the end of chat history ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263))
+- Now compatible with 1.21.9!
+  - Going forward, the `onlyInvasiveDrafting` option will be ignored and reflected as such in the config screen, as it's been implemented in vanilla (also, 
+    it will probably be renamed for older versions)
+- **Dev notes:**
+  - For IntelliJ users or anyone using an IDE with import optimization, YOU NOW MUST DISABLE IT BEFORE PROPOSING CHANGES. Stonecutter currently doesn't have 
+    a working fix, and typing the entire qualifier EVERYWHERE (especially for swaps) is simply unreadable. You may manually trigger optimizing **IF** you
+  - **ensure** all is well with the stonecutter directives *BEFORE* pushing changes, but the automatic system WILL DELETE THEM!!
 
 ## Chat Patches `8.0-alpha.4` for Minecraft 1.20.1-1.21.8 on Fabric, Quilt
 - ACTUALLY fixed 'Disallowed character' toast and log spam ([#246](https://www.github.com/mrbuilder1961/ChatPatches/issues/246))

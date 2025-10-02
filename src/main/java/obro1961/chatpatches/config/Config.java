@@ -78,7 +78,7 @@ public class Config {
 
     public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColor();
     public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean vanillaClearing = false, chatHidePacket = true, dynamicChatShift = true, messageDrafting = false,
-        onlyInvasiveDrafting = false;
+        onlyInvasiveDrafting = false; // prepub - onlyInvasiveDrafting -> nonInvasiveDrafting / smartDrafting? also it's useless >=1.21.9
     public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
         caseSensitive = true, regex = false;
@@ -172,15 +172,17 @@ public class Config {
      */
     public MutableComponent formatPlayername(GameProfile profile) {
         Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
+		String name = profile != null ? profile./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/() : "<null>";
+
         try {
-            PlayerTeam team = mc().level.getScoreboard().getPlayersTeam(profile.getName());
+            PlayerTeam team = mc().level.getScoreboard().getPlayersTeam(name);
             Style hoverStyle = new RemotePlayer(mc().level, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
                 .applyTo(style); // fills in the color with nameColor if not specified by the team
             String[] configFormat = nameFormat.equals(PLACEHOLDER) ? new String[] {"", ""} : nameFormat.split("\\$"); // note: changing placeholder requires removing the backslashes in the split regex
             ObjectList<Component> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
             components.add(text( configFormat[0] ));                   // config prefix
-            components.add(text( profile.getName() ));                 // playername
+            components.add(text( name ));                 // playername
             components.add(text( configFormat[1] + " " )); // config suffix
 
             if(team != null) {
@@ -195,7 +197,7 @@ public class Config {
 				hoverStyle
 			);
         } catch(RuntimeException e) {
-            LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", profile.getName());
+            LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", name);
 
             if(mc().level == null) {
 				e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
@@ -205,7 +207,7 @@ public class Config {
 			pushErrorToast("Playername formatting error", e.getMessage());
         }
 
-        return makeText(nameFormat, profile.getName(), "", " ", style.getColor().getValue()).withStyle(style);
+        return makeText(nameFormat, name, "", " ", style.getColor().getValue()).withStyle(style);
     }
 
     public MutableComponent makeDupeCounter(int dupes) {

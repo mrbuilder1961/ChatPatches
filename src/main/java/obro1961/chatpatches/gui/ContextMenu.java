@@ -19,11 +19,21 @@ import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
+//? if >=1.21.9 {
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
+//? if >=1.21.9 {
+import net.minecraft.world.entity.player.PlayerSkin;
+//?} elif >=1.20.2 {
+//import net.minecraft.client.resources.PlayerSkin;
+//?}
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import obro1961.chatpatches.ChatPatches;
@@ -165,7 +175,7 @@ public class ContextMenu implements GuiEventListener {
 	 * populates, configures, and positions the button widgets.
 	 *
 	 * @see ChatScreenMixin#contextMenu
-	 * @see ChatScreenMixin#mouseClickedEvents(double, double, int, CallbackInfoReturnable)
+	 * @see ChatScreenMixin#mouseClickedEvents(MouseButtonEvent, boolean, CallbackInfoReturnable)
 	 */
 	public ContextMenu(ChatScreen screen, double mX, double mY) {
 		if(!config.contextMenu || mX < 0 || mY < 0)
@@ -234,7 +244,7 @@ public class ContextMenu implements GuiEventListener {
 	 * @param col      The column in the grid menu where the button should be
 	 *                 placed. Main buttons are always in column 0, and hover
 	 *                 buttons are in columns ≥1.
-	 * @param renderObject An {@link Item} or {@link net.minecraft.client.resources.PlayerSkin} object to
+	 * @param renderObject An {@link Item} or {@link PlayerSkin} object to
 	 *                     render over the leftmost button area, or {@code null}
 	 *                     to not render anything extra.
 	 */
@@ -266,7 +276,7 @@ public class ContextMenu implements GuiEventListener {
 			button = new AbstractButton(button.getX(), button.getY(), button.getWidth() + 16, button.getHeight(), Component.literal("    ").append(id)) {
 				final Button.CreateNarration narrationSupplier = Supplier::get;
 
-				@Override public void onPress() { src.onPress(); }
+				@Override public void onPress(/*? if >=1.21.9 {*/InputWithModifiers i/*?}*/) { src.onPress(/*? if >=1.21.9 {*/i/*?}*/); }
 
 				@Override
 				protected void renderWidget(GuiGraphics graphics, int mX, int mY, float delta) {
@@ -276,7 +286,7 @@ public class ContextMenu implements GuiEventListener {
 						graphics.renderFakeItem(icon.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
 
 					//stonecutter: remove qualifier when import optimizer fix is available
-					} else if(renderObject instanceof /*? if >=1.20.2 {*/net.minecraft.client.resources.PlayerSkin/*?} else {*//*net.minecraft.resources.ResourceLocation*//*?}*/ playerSkin) {
+					} else if(renderObject instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*net.minecraft.resources.ResourceLocation*//*?}*/ playerSkin) {
 						PlayerFaceRenderer.draw(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 					}
 				}
@@ -318,7 +328,7 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		// copies the proxy button's text by executing its press action instead
-		registerButton(id, localRow, col, null, me -> grid.get(proxyId).button.onPress(), renderObject);
+		registerButton(id, localRow, col, null, me -> grid.get(proxyId).button.onPress(/*? if >=1.21.9 {*/null/*?}*/), renderObject);
 	}
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
@@ -417,7 +427,7 @@ public class ContextMenu implements GuiEventListener {
 		int strRow = 0; // current row for string and text buttons
 		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
 			registerCopyButton(RAW_TEXT, strRow++, text); // 0
-			registerCopyButton(FORMATTED_STR, strRow++, Component.literal(TextUtils.toCodedString(text))); // 1
+			registerCopyButton(FORMATTED_STR, strRow++, Component.literal(TextUtils.toStyledCodedString(text))); // 1
 			if(timestamped) {
 				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			}
@@ -492,7 +502,7 @@ public class ContextMenu implements GuiEventListener {
 				return Optional.empty();
 			}, Style.EMPTY));
 		if(!webLinks.isEmpty() || !filePaths.isEmpty()) {
-			registerProxyButton(MENU_LINKS, LINK_N.apply(1), Items.CHAIN);
+			registerProxyButton(MENU_LINKS, LINK_N.apply(1), Items./*? if >=1.21.9 {*/IRON_CHAIN/*?} else {*//*CHAIN*//*?}*/);
 
 			for(int i = 0; i < filePaths.size(); i++) {
 				registerCopyButton(LINK_N.apply(i + 1), i, Component.nullToEmpty("§6§n" + filePaths.get(i)));
@@ -506,16 +516,19 @@ public class ContextMenu implements GuiEventListener {
 
 		// sender buttons - conditional
 		if( !messageSender.equals(NIL_MESSAGE_DATA.sender()) ) {
+			var name = messageSender./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/();
+			var id = (messageSender./*? if >=1.21.9 {*/id/*?} else {*//*getId*//*?}*/()).toString();
+
 			registerProxyActionButton(MENU_SENDER, NAME, 0, 0, Items.NAME_TAG);
-				registerCopyButton(NAME, 0, Component.nullToEmpty(messageSender.getName()));
-				registerCopyButton(UUID, 1, Component.nullToEmpty(messageSender.getId().toString()));
+				registerCopyButton(NAME, 0, Component.nullToEmpty(name));
+				registerCopyButton(UUID, 1, Component.nullToEmpty(id));
 
 			registerButton(
 				MENU_REPLY,
 				0, 0,
 				null,
-				me -> ((ChatScreenAccess) screen).chatpatches$getChatField().setValue(TextUtils.fillVars(config.contextReplyFormat, messageSender.getName())),
-				mc().getSkinManager()./*? if >=1.20.2 {*/getInsecureSkin/*?} else {*//*getInsecureSkinLocation*//*?}*/(messageSender)
+				me -> ((ChatScreenAccess) screen).chatpatches$getChatField().setValue(TextUtils.fillVars(config.contextReplyFormat, name)),
+				mc().getSkinManager()./*? if >=1.21.9 {*/createLookup(messageSender, false)/*?} elif >=1.20.2 {*//*getInsecureSkin(messageSender)*//*?} else {*//*getInsecureSkinLocation(messageSender)*//*?}*/
 			);
 		}
 
@@ -572,7 +585,7 @@ public class ContextMenu implements GuiEventListener {
 
 		// cuts off any of the selection rect that goes past the chat hud
 		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
-		graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));
+		graphics./*? if >=1.21.9 {*/submitOutline/*?} else {*//*renderOutline*//*?}*/(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));
 		graphics.disableScissor();
 
 		//$ pop_stack
@@ -595,17 +608,16 @@ public class ContextMenu implements GuiEventListener {
 	 * or if a button was pressed, otherwise {@code false} if the
 	 * menu is {@linkplain #noOp disabled}.
 	 *
-	 * @see ChatScreenMixin#allowContextMenuKeyPressing(int, int, int, CallbackInfoReturnable)
+	 * @see ChatScreenMixin#allowContextMenuKeyPressing(KeyEvent, CallbackInfoReturnable)
 	 */
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(/*$ key_event {*/ KeyEvent key /*$}*/) {
 		if(noOp) {
-			return false; // failed - did nothing
+			return false;
 		}
 
 		GuiEventListener focused = screen.getFocused();
-
-		if(keyCode == GLFW.GLFW_KEY_TAB) {
+		if(/*? if >=1.21.9 {*/ key.key() /*?} else {*//*keyCode*//*?}*/ == GLFW.GLFW_KEY_TAB) {
 			if(focused instanceof AbstractButton tabbed && grid.contains(tabbed)) {
 				updateButtons(Optional.of(tabbed));
 				return true; // true - extra KeyCodes.isToggle check does NOT pass
@@ -613,7 +625,7 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		// true - extra KeyCodes.isToggle check DOES pass
-		return grid.contains(focused) && focused.keyPressed(keyCode, scanCode, modifiers);
+		return grid.contains(focused) && focused.keyPressed(/*$ key_args {*/ key /*$}*/);
 	}
 
 	/**
@@ -623,14 +635,19 @@ public class ContextMenu implements GuiEventListener {
 	 * @return {@code true} if any of the menu buttons were
 	 * 			clicked, {@code false} otherwise.
 	 *
-	 * @see ChatScreenMixin#mouseClicked(double, double, int)
+	 * @see ChatScreenMixin#mouseClicked(MouseButtonEvent, boolean)
 	 */
 	@Override
-	public boolean mouseClicked(double mX, double mY, int button) {
+	public boolean mouseClicked(/*$ mouse_event {*/ MouseButtonEvent mouse, boolean bl /*$}*/) {
+		//? if >=1.21.9 {
+		double mX = mouse.x(), mY = mouse.y();
+		int button = mouse.button();
+		//?}
+
 		if(!noOp && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
 			Optional<AbstractButton> opt = getHoveredButton(mX, mY);
 			// whether the button at (mX, mY) was clicked or not, otherwise return false and close the menu
-			return opt.isPresent() && opt.get().mouseClicked(mX, mY, button);
+			return opt.isPresent() && opt.get().mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/);
 		}
 
 		return false; // signifies that the menu should be closed (clicked off)
@@ -735,7 +752,7 @@ public class ContextMenu implements GuiEventListener {
 	 * button in each group if it exists.
 	 *
 	 * @see #mouseMoved(double, double)
-	 * @see #keyPressed(int, int, int)
+	 * @see #keyPressed(KeyEvent)
 	 *
 	 * @implNote
 	 * <ol>
@@ -768,7 +785,7 @@ public class ContextMenu implements GuiEventListener {
 					itr.button.visible = group.contains(grid.get( hoveredButton.getMessage() ));
 
 				// proceed with underlining if the hovered button is in the iterated group and the group has a hover button
-				if(itr.button == hoveredButton && group.size() > 1 && /*?if java: <21 {*//*(Object)*//*?}*/ group.get(1).button instanceof AbstractButton firstHoverButton) {
+				if(itr.button == hoveredButton && group.size() > 1 && /*? if java: <21 {*//*(Object)*//*?}*/ group.get(1).button instanceof AbstractButton firstHoverButton) {
 					// remove if iterated button is in the group and the message is already underlined
 					boolean hide = itr.col > 0 && itr.row == group.getFirst().row;
 

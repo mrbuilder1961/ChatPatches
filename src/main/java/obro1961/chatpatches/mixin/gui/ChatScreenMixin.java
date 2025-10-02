@@ -16,9 +16,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
-import net.minecraft.client.gui.navigation.CommonInputs;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
+//? if >=1.21.9 {
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?} else {
+//import net.minecraft.client.gui.navigation.CommonInputs;
+//?}
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -77,7 +83,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	// context menu
 	@Unique private static ContextMenu contextMenu = new ContextMenu(null, -1, -1);
 	/**
-	 * @see #charTyped(char, int)
+	 * @see #charTyped(CharacterEvent)
 	 */
 	@Unique private /*static*/ boolean blockSpaceConsumption = false;
 	// search stuff
@@ -128,7 +134,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	protected ChatScreenMixin(Component title) { super(title); }
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void chatScreenInit(String originalChatText, CallbackInfo ci) {
+	private void chatScreenInit(String originalChatText, boolean isDraft, CallbackInfo ci) {
+		// FIXME: 1.21.9 also implements config.onlyInvasiveDrafting; do away with that (version wise) as needed
 		if(config.messageDrafting && !messageDraft.isBlank()) {
 			if(FabricLoader.getInstance().isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$")) {
 				// if message drafting is enabled, a draft exists, and SMWYG sent an item message: clear the draft to avoid crashing
@@ -172,7 +179,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		if(ChatLog.isRestoring()) { // fixes #257
 			input.setEditable(false);
-			input.setValue("Chat log not yet available - try reopening the chat");
+			input.setValue("Chat log not available - try reopening the chat");
 		}
 
 		caseSensitiveButton = makeSettingButton("caseSensitive", 0); // todo redo this thing
@@ -292,26 +299,39 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	/**
-	 * Empties the message draft if the screen was closed manually and only
-	 * invasive drafting is enabled.
-	 * Injects at the super method call because it closes the screen if the
-	 * key is an escape key, which is beaten out by the chat screen's redundant
-	 * functionality also provided.
-	 */
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed(III)Z"))
-	private void emptyNonInvasiveDrafts(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+	 * Empties the message draft if the screen was closed manually and only invasive
+	 * drafting is enabled.
+	 *
+	 * @implNote Injects at the super method call because it closes the screen if
+	 * the key is {@link GLFW#GLFW_KEY_ESCAPE}, which is beaten out by the chat
+	 * screen's redundant functionality also provided. (?)
+	 *
+	 * @version Until 1.21.9, when Mojang natively provided this functionality.
+	 */ //FIXME: CAN I KEEP THIS COMMENTED OUT POST 1.21.9 OR DO I NEED TO DO MORE COMPLEX SHIT W IT?
+	//? if <=1.21.8 {
+	/*@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed(III)Z"))
+	private void emptyInvasiveDrafts(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
 		if(config.onlyInvasiveDrafting && keyCode == GLFW.GLFW_KEY_ESCAPE) {
 			input.setValue(""); // required to empty both the chat field and the messageDraft (later on in #onScreenClose)
 		}
-	}
+	}*/
+	//?}
 
 	/**
 	 * Clears the message draft <b>after</b> a message has been
 	 * (successfully) sent. Uses {@link At.Shift#AFTER} to ensure
 	 * we don't clear if an error occurs.
 	 */
-	@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V", ordinal = 1, shift = At.Shift.AFTER))
-	private void onMessageSentEmptyDraft(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+	@Inject(
+		method = "keyPressed",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V",
+			/*? if <=1.21.8 {*//*ordinal = 1,*//*?}*/ // post 1.21.9 partial drafting feature, only one call exists
+			shift = At.Shift.AFTER
+		)
+	)
+	private void onMessageSentEmptyDraft(/*$ key_event {*/KeyEvent key/*$}*/, CallbackInfoReturnable<Boolean> cir) {
 		messageDraft = "";
 	}
 
@@ -323,11 +343,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * @return {@code (showSearchBar && config.search) ?
 	 * false : input.mouseClicked(x, y, button)}
 	 */
-	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;mouseClicked(DDI)Z"))
+	// FIXME: this seems to, at a glance, not need any interference bc it's simply not called here.. and shouldn't need redirecting?
+	/*? if <=1.21.8 {*/
+	/*@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;mouseClicked(DDI)Z"))
 	private boolean disableChatFieldFocus(EditBox chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
 		// return false (not clicked) if the search field is showing, otherwise delegate to input
 		return (!config.search || !showSearchBar) && mouseClicked.call(chatField, mX, mY, button);
-	}
+	}*/
+	//?}
+
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;handleChatQueueClicked(DD)Z"))
 	private boolean fixMenuClickthroughClick(ChatComponent chatHud, double mX, double mY, Operation<Boolean> mouseClicked) {
 		// return false (not clicked) if the context menu is showing and the mouse is over it, otherwise delegate to chatHud
@@ -350,10 +374,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * possible.
 	 */
 	@WrapMethod(method = "mouseClicked")
-	private boolean fixContextMenuNotClosing(double mX, double mY, int button, Operation<Boolean> mouseClicked) {
-		boolean clicked = mouseClicked.call(mX, mY, button);
+	private boolean fixContextMenuNotClosing(/*$ mouse_event {*/ MouseButtonEvent mouse, boolean bl /*$}*/, Operation<Boolean> mouseClicked) {
+		boolean clicked = mouseClicked.call(/*$ mouse_args {*/ mouse, bl /*$}*/);
 
-		if(button != GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+		if(/*? if >=1.21.9 {*/ mouse.button() /*?} else {*//*button*//*?}*/ != GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
 			contextMenu.close(this::removeWidget); // closes the menu if it wasn't just created, we don't care if anything was actually clicked
 		}
 
@@ -373,7 +397,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * 			<li>The {@linkplain #regexButton regex button}</li>
 	 * 		</ol>
 	 * 		<li>Otherwise, anything encapsulated by the
-	 * 		{@linkplain ContextMenu#mouseClicked(double, double, int)
+	 * 		{@linkplain ContextMenu#mouseClicked(MouseButtonEvent, boolean)
 	 * 		context menu}</li>
 	 * 		<li>Finally, the chat box in an attempt to make a new context
 	 * 		menu. If the mouse clicked successfully:</li>
@@ -386,22 +410,27 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * </ol>
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
-	public void mouseClickedEvents(double mX, double mY, int button, CallbackInfoReturnable<Boolean> cir) {
+	public void mouseClickedEvents(/*$ mouse_event {*/ MouseButtonEvent mouse, boolean bl /*$}*/, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValueZ()) {
 			return;
 		}
 
-		if(searchField.mouseClicked(mX, mY, button)) {
+		//? if >=1.21.9 {
+		double mX = mouse.x(), mY = mouse.y();
+		int button = mouse.button();
+		//?}
+
+		if(searchField.mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/)) {
 			cir.setReturnValue(true);
 		}
 
 		if(isMouseOverSettingsMenu(mX, mY)) {
-			if(caseSensitiveButton.mouseClicked(mX, mY, button)) {
+			if(caseSensitiveButton.mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/)) {
 				cir.setReturnValue(true);
-			} else if(regexButton.mouseClicked(mX, mY, button)) {
+			} else if(regexButton.mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/)) {
 				cir.setReturnValue(true);
 			}
-		} else if(contextMenu.mouseClicked(mX, mY, button)) {
+		} else if(contextMenu.mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/)) {
 			contextMenu.close(this::removeWidget);
 			cir.setReturnValue(true);
 		} else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
@@ -424,13 +453,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * accessibility tabbing and registering button clicks
 	 * properly (closing the menu after successful keystrokes).
 	 *
-	 * @see ContextMenu#keyPressed(int, int, int)
-	 * @see #charTyped(char, int)
+	 * @see ContextMenu#keyPressed(KeyEvent)
+	 * @see #charTyped(CharacterEvent)
 	 */
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-	private void allowContextMenuKeyPressing(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-		// keyPressed must be called first otherwise tabbing will not work
-		if(contextMenu.keyPressed(keyCode, scanCode, modifiers) && CommonInputs.selected(keyCode)) {
+	private void allowContextMenuKeyPressing(/*$ key_event {*/ KeyEvent key /*$}*/, CallbackInfoReturnable<Boolean> cir) {
+		// keyPressed must be called first, otherwise tabbing will not work
+		if(contextMenu.keyPressed(/*? if >=1.21.9 {*/ key /*?} else {*//*keyCode, scanCode, modifiers*//*?}*/) && /*? if >=1.21.9 {*/ key.isSelection() /*?} else {*//*CommonInputs.selected(keyCode)*//*?}*/) {
 			contextMenu.close(this::removeWidget);
 			blockSpaceConsumption = true; // see #charTyped
 			cir.setReturnValue(true);
@@ -445,11 +474,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *
 	 * @implNote If {@link #blockSpaceConsumption} is true, the character is a space, and the chat field
 	 * is focused, sets {@link #blockSpaceConsumption} to false and returns such. Otherwise, delegates to
-	 * {@linkplain Screen#charTyped(char, int) <code>super#charTyped</code>}.
+	 * {@linkplain Screen#charTyped(CharacterEvent) <code>super#charTyped</code>}.
 	 */
 	@Override
-	public boolean charTyped(char chr, int modifiers) {
-		return (blockSpaceConsumption && chr == ' ' && input.isFocused()) ? (blockSpaceConsumption = false) : super.charTyped(chr, modifiers);
+	public boolean charTyped(/*? if >=1.21.9 {*/ CharacterEvent chr /*?} else {*//*char chr, int mods*//*?}*/) {
+		return (blockSpaceConsumption && chr/*? if >=1.21.9 {*/.codepoint()/*?}*/ == ' ' && input.isFocused()) ? (blockSpaceConsumption = false) : super.charTyped(chr /*? if <=1.21.8 {*//*, mods*//*?}*/);
 	}
 
 	@Override

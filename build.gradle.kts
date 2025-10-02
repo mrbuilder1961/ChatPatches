@@ -105,7 +105,7 @@ modstitch {
             put("java", java.toString())
             put("mod_source", m("source"))
             put("mod_modrinth", m("modrinth"))
-            put("minecraft_range", m("range", "")
+            put("minecraft_range", m("range", "") // todo: make snapshots compatible with this (if snapshot, = *)
                 .takeIf { it.contains(",") } // if there are multiple versions...
                 ?.split(",") // parse them into a list
                 ?.map { "\"$it\"" } // add quotes to ensure valid JSON syntax
@@ -213,6 +213,12 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         val v1216 = eval(minecraft, ">=1.21.6")
         put("push_stack", if(v1216) "graphics.pose().pushMatrix();" else "graphics.pose().pushPose();")
         put("pop_stack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
+
+        val v1219 = eval(minecraft, ">=1.21.9")
+        put("key_event", if(v1219) "KeyEvent key" else "int keyCode, int scanCode, int modifiers")
+        put("key_args", if(v1219) "key" else "keyCode, scanCode, modifiers")
+        put("mouse_event", if(v1219) "MouseButtonEvent mouse, boolean bl" else "double mX, double mY, int button")
+        put("mouse_args", if(v1219) "mouse, bl" else "mX, mY, button")
     }
 
     replacements {
