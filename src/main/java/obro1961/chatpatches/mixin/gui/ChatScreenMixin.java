@@ -122,7 +122,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@SuppressWarnings("MissingUnique") //@Shadow
 	@NotNull protected Minecraft minecraft = Minecraft.getInstance(); // removes NPE warnings
 	@Shadow	protected EditBox input;
-	@Shadow private String initial;
+	@Shadow protected String initial;
 	@Shadow private int historyPos;
 
 	/**
@@ -134,13 +134,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	protected ChatScreenMixin(Component title) { super(title); }
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void chatScreenInit(String originalChatText, /*? if >=1.21.9 {*/ boolean isDraft, /*?}*/ CallbackInfo ci) {
-		// FIXME: 1.21.9 also implements config.onlyInvasiveDrafting; do away with that (version wise) as needed
+	private void chatScreenInit(String initialChat, /*? if >=1.21.9 {*/ boolean isDraft, /*?}*/ CallbackInfo ci) {
+		// don't touch this unless you're a pro at drafts or have 4+ free hours
+
 		if(config.messageDrafting && !messageDraft.isBlank()) {
-			if(FabricLoader.getInstance().isModLoaded("smwyg") && originalChatText.matches("^\\[[\\w\\s]+]$")) {
+			if(FabricLoader.getInstance().isModLoaded("smwyg") && initialChat.matches("^\\[[\\w\\s]+]$")) {
 				// if message drafting is enabled, a draft exists, and SMWYG sent an item message: clear the draft to avoid crashing
-				messageDraft = originalChatText;
-			} else if(!originalChatText.equals("/")) {
+				messageDraft = initialChat;
+			} else if(!initialChat.equals("/")) {
 				// otherwise, if message drafting is enabled, a draft exists, and this is not triggered by command key: update the draft
 				initial = messageDraft;
 			}
