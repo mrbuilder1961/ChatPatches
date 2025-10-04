@@ -3,6 +3,7 @@ package obro1961.chatpatches;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -388,6 +389,7 @@ public class ChatLog {
 
     public static void restore() {
         if(messageCount() > 0 && historyCount() > 0) {
+			RenderSystem.assertOnRenderThread();
 			ChatComponent chat = mc().gui.getChat();
 			ChatHudAccess access = (ChatHudAccess) chat;
 
@@ -449,13 +451,15 @@ public class ChatLog {
 	 *
 	 * @param force {@code true} to force loading the chat log even if it's been
 	 * loaded in the current session, {@code false} otherwise.
+	 *
+	 * @implNote Since 1.21.9, {@link #restore()} must be executed on the main render
+	 * thread, presumably due to accessing the chat HUD. This is currently achieved through
+	 * {@link Minecraft}'s implementation of {@link java.util.concurrent.Executor}, which
+	 * assumes the render thread will always be used.
      */
     public static void load(boolean force) {
         if(config.chatlog && ((messages == EMPTY_LIST && history == EMPTY_LIST) || force)) {
-			ChatPatches.executeIoTask(() -> {
-				deserialize();
-				restore(); // doesn't need to be executed on the I/O thread but requires sequential execution
-			});
+			ChatPatches.executeIoTask(ChatLog::deserialize).thenAcceptAsync(x -> restore(), mc());
         }
     }
 

@@ -32,8 +32,8 @@ import net.minecraft.util.StringUtil;
 //? if >=1.21.9 {
 import net.minecraft.world.entity.player.PlayerSkin;
 //?} elif >=1.20.2 {
-//import net.minecraft.client.resources.PlayerSkin;
-//?}
+/*import net.minecraft.client.resources.PlayerSkin;
+*//*?}*/
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import obro1961.chatpatches.ChatPatches;
@@ -585,7 +585,7 @@ public class ContextMenu implements GuiEventListener {
 
 		// cuts off any of the selection rect that goes past the chat hud
 		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
-		graphics./*? if >=1.21.9 {*/submitOutline/*?} else {*//*renderOutline*//*?}*/(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));
+		graphics./*? if >=1.21.9 {*/submitOutline/*?} else {*//*renderOutline*//*?}*/(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor)); // FIXME: renders over buttons for some reason 1.21.9+
 		graphics.disableScissor();
 
 		//$ pop_stack
@@ -611,7 +611,7 @@ public class ContextMenu implements GuiEventListener {
 	 * @see ChatScreenMixin#allowContextMenuKeyPressing(KeyEvent, CallbackInfoReturnable)
 	 */
 	@Override
-	public boolean keyPressed(/*$ key_event {*/ KeyEvent key /*$}*/) {
+	public boolean keyPressed(/*$ key_event {*/ KeyEvent key/*$}*/) {
 		if(noOp) {
 			return false;
 		}
@@ -625,7 +625,7 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		// true - extra KeyCodes.isToggle check DOES pass
-		return grid.contains(focused) && focused.keyPressed(/*$ key_args {*/ key /*$}*/);
+		return grid.contains(focused) && focused.keyPressed(/*$ key_args {*/ key/*$}*/);
 	}
 
 	/**
@@ -638,7 +638,7 @@ public class ContextMenu implements GuiEventListener {
 	 * @see ChatScreenMixin#mouseClicked(MouseButtonEvent, boolean)
 	 */
 	@Override
-	public boolean mouseClicked(/*$ mouse_event {*/ MouseButtonEvent mouse, boolean bl /*$}*/) {
+	public boolean mouseClicked(/*$ mouse_event {*/ MouseButtonEvent mouse, boolean bl/*$}*/) {
 		//? if >=1.21.9 {
 		double mX = mouse.x(), mY = mouse.y();
 		int button = mouse.button();
@@ -647,7 +647,7 @@ public class ContextMenu implements GuiEventListener {
 		if(!noOp && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
 			Optional<AbstractButton> opt = getHoveredButton(mX, mY);
 			// whether the button at (mX, mY) was clicked or not, otherwise return false and close the menu
-			return opt.isPresent() && opt.get().mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/);
+			return opt.isPresent() && opt.get().mouseClicked(/*$ mouse_args {*/ mouse, bl/*$}*/);
 		}
 
 		return false; // signifies that the menu should be closed (clicked off)

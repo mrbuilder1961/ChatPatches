@@ -1,5 +1,8 @@
 package obro1961.chatpatches.mixin.gui;
 
+//? if >=1.21.9 {
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+//?}
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -70,6 +73,11 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	// search text
 	@Unique private static final String SEARCH_SUGGESTION = I18n.get("text.chatpatches.search.suggestion");
 	@Unique private static final Component SEARCH_TOOLTIP = Component.translatable("text.chatpatches.search.desc");
+	/**
+	 * @see #chatScreenInit(String, boolean, CallbackInfo)
+	 */
+	@Unique private static final Matcher SMWYG_ITEM_PATTERN = Pattern.compile("^\\[[\\w\\s]+]$").matcher("");
+
 	// coordinates and positioning // todo: remove magic numbers from the math where these are used
 	@Unique private static final int SEARCH_X = 22,
 									 SEARCH_Y_OFFSET = -31,
@@ -80,15 +88,18 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 									 MENU_HEIGHT = 76,
 									 MENU_X = 2,
 									 MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
+
 	// context menu
 	@Unique private static ContextMenu contextMenu = new ContextMenu(null, -1, -1);
 	/**
 	 * @see #charTyped(CharacterEvent)
 	 */
 	@Unique private /*static*/ boolean blockSpaceConsumption = false;
+
 	// search stuff
 	/**
 	 * Avoids costly disk writes when messing with search settings.
+	 *
 	 * @see #onScreenClose(CallbackInfo)
 	 */
 	@Unique private static final BooleanList searchSettings = new BooleanArrayList(List.of(config.caseSensitive, config.regex));
@@ -97,6 +108,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * @see ContextMenu#ContextMenu(ChatScreen, double, double)
 	 */
 	@Unique private static final List<GuiMessage> searchResults = new ObjectArrayList<>();
+	@Unique private static boolean showSearchBar = true;
 	/**
 	 * Caches the compiled pattern matcher to slightly optimize the search regex, so
 	 * it can be reused during the search. Initialized to a pattern that lazily
@@ -107,10 +119,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private static String searchDraft = "";
 	@Unique private static String messageDraft = "";
 
-	@Unique private boolean showSearchBar = true;
 	@Unique private EditBox searchField;
 	@Unique private SearchButton searchButton;
 	@Unique private PatternSyntaxException searchError;
+
 	// search settings
 	@Unique private boolean showSettingsMenu = false;
 	/** @see Config#caseSensitive */
@@ -138,7 +150,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		// don't touch this unless you're a pro at drafts or have 4+ free hours
 
 		if(config.messageDrafting && !messageDraft.isBlank()) {
-			if(FabricLoader.getInstance().isModLoaded("smwyg") && initialChat.matches("^\\[[\\w\\s]+]$")) {
+			if(FabricLoader.getInstance().isModLoaded("smwyg") && SMWYG_ITEM_PATTERN.reset(initialChat).matches()) {
 				// if message drafting is enabled, a draft exists, and SMWYG sent an item message: clear the draft to avoid crashing
 				messageDraft = initialChat;
 			} else if(!initialChat.equals("/")) {
@@ -146,7 +158,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				initial = messageDraft;
 			}
 		}
+
+		//? if >=1.21.9 {
+		else if(!config.messageDrafting && !minecraft.options.saveChatDrafts().get()) {
+			// finally, if message drafting is disabled and save unsent messages is too, delete the draft
+			initial = "";
+		}
+		/*?}*/
 	}
+
 
 	/**
 	 * @implNote
@@ -299,6 +319,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		}
 	}
 
+	//? if >=1.21.9 {
+	@ModifyReturnValue(method = "shouldDiscardDraft", at = @At("RETURN"))
+	protected boolean allowMessageDrafting(boolean vanillaCheck) {
+		return !config.messageDrafting && vanillaCheck; // if regular drafting is enabled, never discard the draft - we fix the side effects from this in #chatScreenInit and #emptyInvasive/SentDraft
+	}
+	//?}
+
 	/**
 	 * Empties the message draft if the screen was closed manually and only invasive
 	 * drafting is enabled.
@@ -306,17 +333,27 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * @implNote Injects at the super method call because it closes the screen if
 	 * the key is {@link GLFW#GLFW_KEY_ESCAPE}, which is beaten out by the chat
 	 * screen's redundant functionality also provided. (?)
-	 *
-	 * @version Until 1.21.9, when Mojang natively provided this functionality.
-	 */ //FIXME: CAN I KEEP THIS COMMENTED OUT POST 1.21.9 OR DO I NEED TO DO MORE COMPLEX SHIT W IT?
-	//? if <=1.21.8 {
-	/*@Inject(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed(III)Z"))
-	private void emptyInvasiveDrafts(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-		if(config.onlyInvasiveDrafting && keyCode == GLFW.GLFW_KEY_ESCAPE) {
+	 */
+	@Inject(
+		method = "keyPressed",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed("
+				+ /*? if <=1.21.8 {*//*"III"*//*?} else {*/ "Lnet/minecraft/client/input/KeyEvent;" /*?}*/
+				+ ")Z"
+		)
+	)
+	private void emptyInvasiveDrafts(/*$ key_event {*/ KeyEvent key /*$}*/, CallbackInfoReturnable<Boolean> cir) {
+		if(
+			//? if >=1.21.9 {
+			minecraft.options.saveChatDrafts().get() && key.isEscape()
+			//?} else {
+			/*config.onlyInvasiveDrafting && keyCode == GLFW.GLFW_KEY_ESCAPE*/
+			/*?}*/
+		) {
 			input.setValue(""); // required to empty both the chat field and the messageDraft (later on in #onScreenClose)
 		}
-	}*/
-	//?}
+	}
 
 	/**
 	 * Clears the message draft <b>after</b> a message has been
@@ -327,31 +364,37 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		method = "keyPressed",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V",
-			/*? if <=1.21.8 {*//*ordinal = 1,*//*?}*/ // post 1.21.9 partial drafting feature, only one call exists
-			shift = At.Shift.AFTER
+			target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"
+			/*? if <=1.21.8 {*/
+			/*, ordinal = 1, // post 1.21.9 partial drafting feature, only one call exists
+			shift = At.Shift.AFTER // not important post 1.21.9 either
+			*//*?}*/
 		)
 	)
-	private void onMessageSentEmptyDraft(/*$ key_event {*/KeyEvent key/*$}*/, CallbackInfoReturnable<Boolean> cir) {
+	private void emptySentDrafts(CallbackInfoReturnable<Boolean> cir) {
 		messageDraft = "";
+		//? if >=1.21.9 {
+		input.setValue("");
+		//?}
 	}
 
 	/**
-	 * Lets the {@link #input} widget be focused as intended
-	 * when the search field is visible. Seems counterintuitive,
-	 * but it works.
+	 * Lets the {@link #input} widget be focused as intended when the search
+	 * field is visible. Seems counterintuitive, but it works.
 	 *
-	 * @return {@code (showSearchBar && config.search) ?
-	 * false : input.mouseClicked(x, y, button)}
+	 * @return {@code (showSearchBar && config.search) ? false :
+	 * input.mouseClicked(x, y, button)}
+	 *
+	 * @apiNote Since 1.21.9, the call to wrap is gone, so the method can be
+	 * safely stone-cut out.
 	 */
-	// FIXME: this seems to, at a glance, not need any interference bc it's simply not called here.. and shouldn't need redirecting?
 	/*? if <=1.21.8 {*/
 	/*@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/EditBox;mouseClicked(DDI)Z"))
 	private boolean disableChatFieldFocus(EditBox chatField, double mX, double mY, int button, Operation<Boolean> mouseClicked) {
 		// return false (not clicked) if the search field is showing, otherwise delegate to input
 		return (!config.search || !showSearchBar) && mouseClicked.call(chatField, mX, mY, button);
 	}*/
-	//?}
+	/*?}*/
 
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;handleChatQueueClicked(DD)Z"))
 	private boolean fixMenuClickthroughClick(ChatComponent chatHud, double mX, double mY, Operation<Boolean> mouseClicked) {

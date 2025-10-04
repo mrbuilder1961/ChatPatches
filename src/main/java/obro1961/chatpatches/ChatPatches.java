@@ -169,9 +169,9 @@ public class ChatPatches implements ClientModInitializer {
 	 * @apiNote Methods such as {@link CompletableFuture#orTimeout(long, TimeUnit)},
 	 * by nature, <b>will block</b>, and as such should <b>probably not be used</b>.
 	 */
-	public static /*CompletableFuture<Void>*/ void executeIoTask(Runnable task) {
+	public static CompletableFuture<Void> executeIoTask(Runnable task) {
 		final var IO_POOL = Util.ioPool(); // var for stonecutter!
-		/*return*/ CompletableFuture.runAsync(task, IO_POOL).exceptionallyAsync(e -> {
+		return CompletableFuture.runAsync(task, IO_POOL).exceptionallyAsync(e -> {
 			logReportMsg(e);
 			return null;
 		}, IO_POOL);
