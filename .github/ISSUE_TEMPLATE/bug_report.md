@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a bug report to get it fixed as soon as possible.
-title: Bug summary - Mod version
+title: Bug summary - Mod version - MC version
 labels: bug
 assignees: ''
 
@@ -27,6 +27,7 @@ Logs are located in your Minecraft directory under `/logs` and `/crash-reports`.
 ### Specs and Details
 Required information:
 - Computer OS
+- Minecraft version
 - Mod version
 - Fabric, Fabric API, and YetAnotherConfigLib versions
 - Mod Menu / Catalogue and Menulogue versions (if installed)
