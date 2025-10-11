@@ -446,14 +446,15 @@ public class ContextMenu implements GuiEventListener {
 		if(timestamped) {
 			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP, Items.CLOCK);
 				registerCopyButton(TIMESTAMP, 0, timestamp);
-				registerCopyButton(TIMESTAMP_HOVER, 1, 1, () -> {
-					HoverEvent hoverEvent = timestamp.getStyle().getHoverEvent();
-					//? if >=1.21.5 {
-					return hoverEvent instanceof HoverEvent.ShowText(Component value) ? value : EMPTY;
- 					//?} else {
-					/*return hoverEvent != null ? hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT) : EMPTY;
-					*///?}
-				}, null);
+
+				// registers TIMESTAMP_HOVER if the timestamp has hover text in its style
+				HoverEvent event = timestamp.getStyle().getHoverEvent();
+				Optional<Component> optional =
+				//? if >=1.21.5 {
+				event instanceof HoverEvent.ShowText(Component value) ? Optional.of(value) : Optional.empty();
+				//?} else {
+				/*event != null ? Optional.of(event.getValue(HoverEvent.Action.SHOW_TEXT)) : Optional.empty();*//*?}*/
+				optional.ifPresent(hoverText -> registerCopyButton(TIMESTAMP_HOVER, 1, hoverText));
 		}
 
 		// dupe counter buttons - conditional
@@ -585,7 +586,17 @@ public class ContextMenu implements GuiEventListener {
 
 		// cuts off any of the selection rect that goes past the chat hud
 		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
-		graphics./*? if >=1.21.9 {*/submitOutline/*?} else {*//*renderOutline*//*?}*/(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor)); // FIXME: renders over buttons for some reason 1.21.9+
+		//? if <1.21.9 {
+		/*graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));*/
+		//?} else {
+		int color = RenderUtils.opaque(config.contextOutlineColor);
+		graphics.fill(0, selectionY1, borderW, selectionY1 + 1, color);
+		graphics.fill(0, selectionY1 + selectionH - 1, borderW, selectionY1 + selectionH, color);
+		graphics.fill(0, selectionY1 + 1, 1, selectionY1 + selectionH - 1, color);
+		graphics.fill(borderW - 1, selectionY1 + 1, borderW, selectionY1 + selectionH - 1, color);
+		// prepub AW GuiGraphics.OutlineBox
+		// new GuiGraphics.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor)).render(graphics);
+		//?}
 		graphics.disableScissor();
 
 		//$ pop_stack

@@ -77,8 +77,8 @@ public class Config {
     public boolean chatlog = true; public int chatlogSaveInterval = 0;
 
     public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColor();
-    public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean vanillaClearing = false, chatHidePacket = true, dynamicChatShift = true, messageDrafting = false,
-        onlyInvasiveDrafting = false; // prepub - onlyInvasiveDrafting -> nonInvasiveDrafting / smartDrafting? also it's useless >=1.21.9
+    public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean dynamicChatShift = true, vanillaClearing = false, chatHidePacket = true,
+		messageDrafting = false, onlyInvasiveDrafting = false; // prepub - messageDrafting -> chatDrafting?
     public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
         caseSensitive = true, regex = false;
