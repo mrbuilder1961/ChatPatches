@@ -3,7 +3,7 @@
 ## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
   data is lost
-- The chat input box will now be grayed out while the chat log is loading to prevent sent messages being moved to the end of chat history ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263))
+- The chat input box will now be grayed out while the chat log is loading to prevent sent messages being moved to the end of chat history
 - Now compatible with 1.21.9-10! ([#269](https://www.github.com/mrbuilder1961/ChatPatches/issues/269))
   - Going forward, the `onlyInvasiveDrafting` option will be ignored and reflected as such in the config screen, as it's been implemented in vanilla
 - Doesn't show the 'Hover Text' button in the context menu if there is none to show
