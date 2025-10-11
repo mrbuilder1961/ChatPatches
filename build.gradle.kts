@@ -66,7 +66,10 @@ dependencies {
         modstitchModImplementation("dev.isxander:yet-another-config-lib:${d("yacl")}-fabric")
     }
 
-    //modstitchModImplementation("eu.pb4:placeholder-api:${d("placeholder")}")
+    dep("placeholder") { // prepub - this is always fine, but in listed dependencies, mod menu only provides it since 9.2.0 (1.20.4) and w/o MM it needs to
+        // be installed manually
+        modstitchModImplementation("eu.pb4:placeholder-api:$it")
+    }
     modstitchModImplementation("com.terraformersmc:modmenu:${d("modmenu")}")
 
     implementation(kotlin("stdlib-jdk8"))
