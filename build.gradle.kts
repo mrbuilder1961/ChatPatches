@@ -16,7 +16,9 @@ val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prep
 val currentIsActive = minecraft == stonecutter.active?.version
 val java = if(stonecutter.eval(minecraft, ">1.20.4")) 21 else 17
 
-var allowPublish = false // prepub: abolish somehow
+var publish = providers.gradleProperty("publish").getOrElse("true").toBoolean() // prepub: abolish bc this is annoying bc the default is
+// that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
+// if we just had a `testPublishMods` task
 var changes = "No changelog specified."
 
 /**
@@ -184,8 +186,8 @@ tasks {
             // considered "malformed" if it doesn't end with any word characters, whitespace, or newlines
             if( !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)$")) || newIndex == -1 ) {
                 println("Warning: Changelog appears malformed, this is probably caused by an invalid version ($v).")
-                if(allowPublish) {
-                    allowPublish = false
+                if(publish) {
+                    publish = false
                 }
             }
         }
@@ -271,7 +273,7 @@ publishMods {
         else -> ReleaseType.STABLE
     }
     modLoaders = propList("loaders") // todo: vers-specific for forge/neo version cutoffs
-    dryRun = !allowPublish
+    dryRun = !publish
 
     curseforge {
         accessToken = token("curseforge")
