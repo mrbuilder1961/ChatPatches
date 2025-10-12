@@ -181,11 +181,11 @@ tasks {
             val newIndex = fileText.indexOf(newEntryTitle)
             val prevEntryIndex = fileText.replaceFirst(newEntryTitle, "").indexOf("## Chat Patches `") + newEntryTitle.length - 2
 
-            changes = fileText.substring(if(newIndex >= 0) newIndex else 0, prevEntryIndex)
+            changes = (if(newIndex > prevEntryIndex) "" else fileText.substring(if(newIndex >= 0) newIndex else 0, prevEntryIndex))
 
-            // considered "malformed" if it doesn't end with any word characters, whitespace, or newlines
+            // considered "malformed" if it doesn't end with any word characters, whitespace, or newlines - or changes were emptied bc the indices were bad
             if( !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)$")) || newIndex == -1 ) {
-                println("Warning: Changelog appears malformed, this is probably caused by an invalid version ($v).")
+                println("Warning: Changelog appears malformed, this is probably caused by an invalid or outdated version ($v).")
                 if(publish) {
                     publish = false
                 }
