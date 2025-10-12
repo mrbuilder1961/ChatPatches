@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `8.0-alpha.6` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
+- Fixed player heads not rendering in the context menu on 1.21.9+
+
 ## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
   data is lost
