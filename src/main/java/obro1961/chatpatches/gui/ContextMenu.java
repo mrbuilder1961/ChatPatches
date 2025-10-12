@@ -27,6 +27,9 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.*;
+//? if <1.20.2 {
+//import net.minecraft.resources.ResourceLocation;
+//?}
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
 //? if >=1.21.9 {
@@ -285,8 +288,7 @@ public class ContextMenu implements GuiEventListener {
 					if(renderObject instanceof Item icon) {
 						graphics.renderFakeItem(icon.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
 
-					//stonecutter: remove qualifier when import optimizer fix is available
-					} else if(renderObject instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*net.minecraft.resources.ResourceLocation*//*?}*/ playerSkin) {
+					} else if(renderObject instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*ResourceLocation*//*?}*/ playerSkin) {
 						PlayerFaceRenderer.draw(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 					}
 				}
@@ -529,7 +531,7 @@ public class ContextMenu implements GuiEventListener {
 				0, 0,
 				null,
 				me -> ((ChatScreenAccess) screen).chatpatches$getChatField().setValue(TextUtils.fillVars(config.contextReplyFormat, name)),
-				mc().getSkinManager()./*? if >=1.21.9 {*/createLookup(messageSender, false)/*?} elif >=1.20.2 {*//*getInsecureSkin(messageSender)*//*?} else {*//*getInsecureSkinLocation(messageSender)*//*?}*/
+				mc().getSkinManager()./*? if >=1.21.9 {*/createLookup(messageSender, false).get()/*?} elif >=1.20.2 {*//*getInsecureSkin(messageSender)*//*?} else {*//*getInsecureSkinLocation(messageSender)*//*?}*/
 			);
 		}
 
