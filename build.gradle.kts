@@ -282,7 +282,9 @@ publishMods {
         minecraftVersions.addAll(targets)
 
         required.forEach(::requires)
-        optionals.forEach(::optional)
+        // FIXME TEMP FIX BC PLACEHOLDER IS ANNOYINGGGG
+        optionals.toList().map { if(it.contains("placeholder")) "text-placeholder-api" else it }.forEach(::optional)
+        //optionals.forEach(::optional)
         incompatibles.forEach(::incompatible)
         embedded.forEach(::embeds)
     }
@@ -314,8 +316,7 @@ publishMods {
         }
     }*/
 
-    // only announce the version once (if it's the active version)
-    if(currentIsActive) {
+    if(currentIsActive) { // only announce the version once
         discord {
             webhookUrl = token("discord") // official
             dryRunWebhookUrl = token("discord_debug") // testing
