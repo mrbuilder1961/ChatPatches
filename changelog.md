@@ -7,6 +7,8 @@
 - Now compatible with 1.21.9-10! ([#269](https://www.github.com/mrbuilder1961/ChatPatches/issues/269))
   - Going forward, the `onlyInvasiveDrafting` option will be ignored and reflected as such in the config screen, as it's been implemented in vanilla
 - Doesn't show the 'Hover Text' button in the context menu if there is none to show
+- Now requires [Placeholder API](https://modrinth.com/mod/placeholder-api). Mod Menu also requires it since 9.2.0 (1.20.4) so this shouldn't be an issue; but <1.20.4 or on non-ModMenu installs, 
+  you will need to install it manually
 - **Dev notes:**
   - For IntelliJ users or anyone using an IDE with import optimization, YOU NOW MUST DISABLE IT BEFORE PROPOSING CHANGES. Stonecutter currently doesn't have 
     a working fix, and typing the entire qualifier EVERYWHERE (especially for swaps) is simply unreadable. You may manually trigger optimizing **IF** you 
