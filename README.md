@@ -52,9 +52,14 @@ Many of these features were adopted or inspired from the following existing mods
     - Installing either [Mod Menu](https://modrinth.com/mod/modmenu/versions) or [Catalogue](https://www.curseforge.com/minecraft/mc-mods/catalogue-fabric) with [Menulogue](https://www.curseforge.com/minecraft/mc-mods/menulogue) will allow you to edit the config in-game!
     - Otherwise, if you still cannot access the config, [open an issue on GitHub](https://github.com/mrbuilder1961/ChatPatches/issues/new/choose), and 
       provide any logged errors if they exist.
-  - <u>For 1.18.x:</u> You need the latest versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu]
-    (https://modrinth.com/mod/modmenu/versions?l=fabric&c=release).
+  - <u>For 1.18.x:</u> You need the latest versions of both [Cloth Config](https://modrinth.com/mod/cloth-config/versions?l=fabric&c=release) and [Mod Menu](https://modrinth.com/mod/modmenu/versions?l=fabric&c=release).
   - Regardless of Minecraft version, you can **always** edit the config at `(directory)/config/chatpatches.json`.
+- How do I enable/disable/change X feature?
+  1. Open the config menu. How you do this depends on the menu mod(s) you have installed, but it typically involves **<kbd>Esc</kbd> -> Mods -> Chat Patches -> 3 sliders/Config button** !
+  2. Look through each category and see if the option is there - make sure to read the descriptions.
+  3. If you still can't find it, scroll down on this page and see if it's listed in the option table. Note this refers to the latest version.
+  4. If it's not in any of those, then check on the [suggestion page](https://github.com/mrbuilder1961/ChatPatches/issues?q=is%3Aissue%20state%3Aopen%20label%3Asuggestion); chances are someone already suggested your idea.
+  5. Finally, it's not in the mod yet, so open a suggestion!
 - My config is broken/not working!
   - When you load one of the more recent mod versions, it makes a creates a new file with your old settings and resets the main file. You can access this
     copy at `(directory)/config/chatpatches_old.json`. By then opening both the new and old configs at the same time, you can copy and paste over the values.
