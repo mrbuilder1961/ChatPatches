@@ -149,12 +149,16 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	private void chatScreenInit(String initialChat, /*? if >=1.21.9 {*/ boolean isDraft, /*?}*/ CallbackInfo ci) {
 		// don't touch this unless you're a pro at drafts or have 4+ free hours
 
-		if(config.messageDrafting && !messageDraft.isBlank()) {
+		if(initialChat.equals("/")) {
+			return; // no reason to mess with or draft blank commands - emptied in #onScreenClose
+		}
+
+		if((config.messageDrafting || config.onlyInvasiveDrafting) && !messageDraft.isBlank()) {
 			if(FabricLoader.getInstance().isModLoaded("smwyg") && SMWYG_ITEM_PATTERN.reset(initialChat).matches()) {
 				// if message drafting is enabled, a draft exists, and SMWYG sent an item message: clear the draft to avoid crashing
 				messageDraft = initialChat;
-			} else if(!initialChat.equals("/")) {
-				// otherwise, if message drafting is enabled, a draft exists, and this is not triggered by command key: update the draft
+			} else {
+				// otherwise if message drafting is enabled and a draft exists: update the draft
 				initial = messageDraft;
 			}
 		}
@@ -294,15 +298,18 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 
-	/**
-	 * Either resets or saves the drafts for the search and chat fields, depending on
-	 * {@link Config#searchDrafting} and {@link Config#messageDrafting}.
-	 * Additionally, resets the chat if needed, and closes the context menu.
-	 */
 	@Inject(method = "removed", at = @At("TAIL"))
 	public void onScreenClose(CallbackInfo ci) {
 		// we always save the drafts here, we can decide to use them according to the config
-		messageDraft = input.getValue();
+
+		if(input.getValue().equals("/")) {
+			messageDraft = ""; // don't retain blank commands
+			//? if >=1.21.9 {
+			minecraft.gui.getChat().discardDraft(); // un-fucks the vanilla system
+			//?}
+		} else {
+			messageDraft = input.getValue();
+		}
 		searchDraft = searchField.getValue();
 
 		if(!searchField.getValue().isEmpty()) {
@@ -327,8 +334,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	//?}
 
 	/**
-	 * Empties the message draft if the screen was closed manually and only invasive
-	 * drafting is enabled.
+	 * Empties the message draft if the screen was closed manually and <s>only invasive
+	 * drafting</s> {@linkplain net.minecraft.client.Options#saveChatDrafts save chat
+	 * drafts} is enabled.
 	 *
 	 * @implNote Injects at the super method call because it closes the screen if
 	 * the key is {@link GLFW#GLFW_KEY_ESCAPE}, which is beaten out by the chat
@@ -343,7 +351,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				+ ")Z"
 		)
 	)
-	private void emptyInvasiveDrafts(/*$ key_event {*/ KeyEvent key /*$}*/, CallbackInfoReturnable<Boolean> cir) {
+	private void emptyManualDrafts(/*$ key_event {*/ KeyEvent key /*$}*/, CallbackInfoReturnable<Boolean> cir) {
 		if(
 			//? if >=1.21.9 {
 			minecraft.options.saveChatDrafts().get() && key.isEscape()

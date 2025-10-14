@@ -112,7 +112,7 @@
     "text.chatpatches.desc.chatShift": "Shifts the chat interface according to the provided value (negative values shift downward). Default is 0 with dynamic shift enabled; to emulate vanilla behavior make sure to disable dynamic shift.",
     "text.chatpatches.desc.dynamicChatShift": "Should the chat be shifted dynamically based on armor and health? If disabled, the chat is simply shifted according to the chat shifting constant.",
     "text.chatpatches.desc.messageDrafting": "Should any text in the chat field persist after closing and reopening the chat?",
-    "text.chatpatches.desc.onlyInvasiveDrafting": "Should the text in the chat field only persist when chat is closed unexpectedly? For example when chat is closed by the server opening a GUI, the player is moved to another dimension, or the player dies. §l§dSince 1.21.9, this is natively supported through 'Save Unsent Chats' in chat settings.§r",
+    "text.chatpatches.desc.onlyInvasiveDrafting": "Should the text in the chat field only persist when chat is closed unexpectedly? For example when chat is closed by the server opening a GUI, the player is moved to another dimension, or the player dies. §l§dOn 1.21.9+, this is natively supported via 'Save Unsent Chats' in the vanilla chat settings.§r",
     "text.chatpatches.desc.searchDrafting": "Should any text in the search field persist after closing and reopening the chat?",
     "text.chatpatches.desc.search": "Should the search button be shown? Note that if disabled, all search functionality will also be disabled.",
     "text.chatpatches.desc.vanillaClearing": "Should chat messages clear after leaving a world/server like vanilla? Note that this completely erases the chat and effectively disables the chat log.",

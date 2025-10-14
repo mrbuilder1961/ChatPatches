@@ -2,6 +2,9 @@
 
 ## Chat Patches `8.0-alpha.6` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
 - Fixed player heads not rendering in the context menu on 1.21.9+
+- Fixed the command key not placing a slash in the chat input box on 1.21.9+
+- Fixed chat drafts not always saving if both `messageDrafting` and `saveChatDrafts` were enabled
+- Fixed `onlyInvasiveDrafting` not working when `messageDrafting` was disabled
 
 ## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
