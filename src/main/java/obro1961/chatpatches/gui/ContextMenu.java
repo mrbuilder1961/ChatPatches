@@ -535,7 +535,7 @@ public class ContextMenu implements GuiEventListener {
 			);
 		}
 
-		grid.updateButtonPositions();
+		grid.updateButtonMetadata();
 		grid.buttons().forEach(addSelectableChild);
 	}
 
@@ -932,12 +932,12 @@ public class ContextMenu implements GuiEventListener {
 		 * Aligns all buttons in a grid pattern in accordance
 		 * with {@link GridLayout#arrangeElements()}.
 		 * Synchronizes the widths of the main buttons (col 0)
-		 * unconditionally, and the hover buttons (col 1) by
-		 * group, so that they are all the same width.
-		 * Additionally, ensures the entire grid menu is visible
-		 * on-screen by shifting it up and/or left if necessary.
+		 * together, and the hover buttons (col 1) by group,
+		 * so they are all the same width. Additionally, ensures
+		 * the entire grid menu is visible on-screen
+		 * by shifting it up and/or left if necessary.
 		 */
-		public void updateButtonPositions() {
+		public void updateButtonMetadata() {
 			widget.arrangeElements();
 
 			// sync main button widths
