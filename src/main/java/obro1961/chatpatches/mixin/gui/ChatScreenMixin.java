@@ -353,6 +353,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	)
 	private void emptyManualDrafts(/*$ key_event {*/ KeyEvent key /*$}*/, CallbackInfoReturnable<Boolean> cir) {
 		if(
+			!config.messageDrafting && // if both are enabled, assume all drafts are wanted
+
 			//? if >=1.21.9 {
 			minecraft.options.saveChatDrafts().get() && key.isEscape()
 			//?} else {
