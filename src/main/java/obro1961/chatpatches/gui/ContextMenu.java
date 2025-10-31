@@ -507,13 +507,14 @@ public class ContextMenu implements GuiEventListener {
 		if(!webLinks.isEmpty() || !filePaths.isEmpty()) {
 			registerProxyButton(MENU_LINKS, LINK_N.apply(1), Items./*? if >=1.21.9 {*/IRON_CHAIN/*?} else {*//*CHAIN*//*?}*/);
 
-			for(int i = 0; i < filePaths.size(); i++) {
-				registerCopyButton(LINK_N.apply(i + 1), i, Component.nullToEmpty("§6§n" + filePaths.get(i)));
+			int l = 0; // link index
+			for(; l < filePaths.size(); l++) {
+				registerCopyButton(LINK_N.apply(l + 1), l, literal(ChatFormatting.GOLD + "" + ChatFormatting.UNDERLINE + filePaths.get(l)));
 			}
 
-			for(int i = filePaths.size(); i < webLinks.size() + filePaths.size(); i++) {
-				// creates link buttons starting at link 1 up to link n, with ids following the same pattern (LINK_1 - LINK_N)
-				registerCopyButton(LINK_N.apply(i + 1), i, Component.nullToEmpty("§9§n" + webLinks.get(i)));
+			int filePathOffset = l; // ensures we're not trying to access out-of-bounds indices bc these are separate lists
+			for(; l - filePathOffset < webLinks.size(); l++) {
+				registerCopyButton(LINK_N.apply(l + 1), l, literal(ChatFormatting.BLUE + "" + ChatFormatting.UNDERLINE + webLinks.get(l - filePathOffset)));
 			}
 		}
 
