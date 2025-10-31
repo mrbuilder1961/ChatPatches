@@ -1,11 +1,15 @@
 package obro1961.chatpatches.util;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.network.chat.*;
+import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,20 +43,60 @@ public class TextUtils {
 		return map;
 	});
 
-	/**
-	 * Returns a {@link Codec} for {@link Component} objects.
-	 * Used for the stonecutter system so different
-	 * versions can all access the correct codec in a
-	 * simple and short way.
-	 */
-	public static Codec<Component> textCodec() { // stonecutter: replace with a swap to del unnecessary method (* micro optimization :D *)
+	public static final Codec<Component> CODEC = Util.make(() -> { // stonecutter: replace with a swap to del unnecessary method (* micro optimization :D *)
 		return
 			//? if <=1.20.2 {
-			/*net.minecraft.util.ExtraCodecs.COMPONENT;
-			*///?} else {
+			/*net.minecraft.util.ExtraCodecs.COMPONENT;*/
+			//?} else {
 			net.minecraft.network.chat.ComponentSerialization.CODEC;
- 			//?}
-	}
+		//?}
+	});
+
+	/**
+	 * A wrapped {@link Codec} for {@link Component} objects that will not
+	 * throw an exception when serializing click events with unsafe
+	 * ({@link ClickEvent.Action#OPEN_FILE}) actions. Done by disabling the
+	 * {@linkplain #safeCodec safety serialization check} that is used by
+	 * {@link ClickEvent$ActionMixin} to temporarily allow all
+	 * messages to be serialized.
+	 *
+	 * @see ClickEvent$ActionMixin#allowConditionalSerialization(boolean)
+	 * @see obro1961.chatpatches.ChatLog#CODEC
+	 */
+	public static final Codec<Component> UNSAFE_CODEC = new Codec<>() {
+		@Override
+		public <T> DataResult<T> encode(Component input, DynamicOps<T> ops, T prefix) {
+			safeCodec.set(false);
+			var result = CODEC.encode(input, ops, prefix);
+			safeCodec.set(true);
+			return result;
+		}
+
+		@Override
+		public <T> DataResult<Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
+			safeCodec.set(false);
+			var result = CODEC.decode(ops, input);
+			safeCodec.set(true);
+			return result;
+		}
+
+		@Override
+		public String toString() {
+			return "UnsafeTextCodec[safe=" + safeCodec.get() + ", codec=" + CODEC + "]";
+		}
+	};
+
+	/**
+	 * Thread-local because
+	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1387226885867704401">
+	 * TheWhyEvenHow</a> suggested this, and they also made this implementation
+	 * successful, so I trust them.
+	 *
+	 * @see ClickEvent$ActionMixin#allowConditionalSerialization(boolean)
+	 */
+	private static final ThreadLocal<Boolean> safeCodec = ThreadLocal.withInitial(() -> true);
+
+	public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; } // prepub: keep..?
 
 
 	/**

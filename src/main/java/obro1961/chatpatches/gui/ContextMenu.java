@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
@@ -64,10 +65,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
+import static net.minecraft.network.chat.Component.literal;
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.logReportMsg;
 import static obro1961.chatpatches.util.ChatUtils.*;
-import static obro1961.chatpatches.util.TextUtils.textCodec;
 
 /**
  * Represents the context menu that appears when a chat message is right-clicked.
@@ -276,7 +277,7 @@ public class ContextMenu implements GuiEventListener {
 			final AbstractButton src = button;
 			// idea: make the button *not* adjust the text if it doesnt need to
 			// accounts for the 16x16 icon on the left with the +16 and prefixed 4 spaces (each of width 4) in the id label
-			button = new AbstractButton(button.getX(), button.getY(), button.getWidth() + 16, button.getHeight(), Component.literal("    ").append(id)) {
+			button = new AbstractButton(button.getX(), button.getY(), button.getWidth() + 16, button.getHeight(), literal("    ").append(id)) {
 				final Button.CreateNarration narrationSupplier = Supplier::get;
 
 				@Override public void onPress(/*? if >=1.21.9 {*/InputWithModifiers i/*?}*/) { src.onPress(/*? if >=1.21.9 {*/i/*?}*/); }
@@ -429,7 +430,7 @@ public class ContextMenu implements GuiEventListener {
 		int strRow = 0; // current row for string and text buttons
 		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
 			registerCopyButton(RAW_TEXT, strRow++, text); // 0
-			registerCopyButton(FORMATTED_STR, strRow++, Component.literal(TextUtils.toCodedString(text))); // 1
+			registerCopyButton(FORMATTED_STR, strRow++, literal(TextUtils.toCodedString(text))); // 1
 			if(timestamped) {
 				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			}
@@ -437,7 +438,7 @@ public class ContextMenu implements GuiEventListener {
 				registerCopyButton(NO_DUPE_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
 			}
 			registerCopyButton(JSON_STR,
-				strRow, textCodec().encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
+				strRow, TextUtils.UNSAFE_CODEC.encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.map(NbtUtils::toPrettyComponent)
 					.orElse(UNKNOWN.apply(JSON_STR))
@@ -463,7 +464,7 @@ public class ContextMenu implements GuiEventListener {
 		if(duped) {
 			registerProxyButton(MENU_DUPE_COUNTER, COUNTER_TEXT, Items.MAP);
 				registerCopyButton(COUNTER_TEXT, 0, counter);
-				registerCopyButton(COUNTER_VALUE, 1, Component.literal(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
+				registerCopyButton(COUNTER_VALUE, 1, literal(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
 		}
 
 		// unix timestamp button - unconditional

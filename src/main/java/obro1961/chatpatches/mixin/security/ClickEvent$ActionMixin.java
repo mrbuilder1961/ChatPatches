@@ -2,7 +2,7 @@ package obro1961.chatpatches.mixin.security;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.network.chat.ClickEvent;
-import obro1961.chatpatches.ChatLog;
+import obro1961.chatpatches.util.TextUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class ClickEvent$ActionMixin {
 	/**
 	 * Allows the serialization of {@link ClickEvent.Action#OPEN_FILE} click events
-	 * by disabling the validation check while {@link ChatLog#isCodecSafe()} is {@code
+	 * by disabling the validation check while {@link TextUtils#isCodecSafe()} is {@code
 	 * false}. This prevents crashes during serialization and errors when using the
 	 * context menu, and the additional check stops malicious click events from being
 	 * unilaterally accepted. <b>However, players are still responsible for being
@@ -18,6 +18,6 @@ public abstract class ClickEvent$ActionMixin {
 	 */
 	@ModifyReturnValue(method = "isAllowedFromServer", at = @At("RETURN"))
 	private boolean allowConditionalSerialization(boolean safe) {
-		return safe || !ChatLog.isCodecSafe().get(); // safe ? true : !ChatLog.isCodecSafe().get()
+		return safe || !TextUtils.isCodecSafe().get(); // safe ? true : !ChatLog.isCodecSafe().get()
 	}
 }

@@ -7,7 +7,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
@@ -50,65 +49,30 @@ import static obro1961.chatpatches.ChatPatches.*;
  */
 public class ChatLog {
     /**
-     * Serializes as a {@link Pair} to avoid needing a dedicated class. {@link
-	 * #messages} are first and {@link #history} is second, and the native list
-	 * is mapped to a {@linkplain ChatLog#newSyncedObjectList(List) synchronized
-	 * mutable object list}. The horrible abomination that is its reimplementation
-	 * allows the codec to automatically disable the {@linkplain #safeCodec safety
-	 * serialization check} while in use to allow all messages to be serialized.
+     * Serializes as a {@link Pair} to avoid needing a dedicated class.
+	 * {@link #messages} are first and {@link #history} is second, and the native
+	 * list is mapped to a {@linkplain ChatLog#newSyncedObjectList(List) synchronized
+	 * mutable object list}. Uses the {@linkplain TextUtils#UNSAFE_CODEC unsafe codec}
+	 * to ensure all messages can be serialized.
 	 *
 	 * @see ClickEvent$ActionMixin#allowConditionalSerialization(boolean)
      */
-    public static final Codec<Pair<ObjectList<Component>, ObjectList<String>>> CODEC = Util.make(() -> {
-		var CODEC = Codec.pair(
-			TextUtils.textCodec()
-				.listOf()
-				.xmap(ChatLog::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
-				.fieldOf("messages") // with a default value, errors are silently ignored
-				.codec(),
-			Codec.STRING
-				.listOf()
-				.xmap(ChatLog::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
-				.fieldOf("history") // with a default value, errors are silently ignored
-				.codec()
-		);
-
-		return new Codec<>() {
-			@Override
-			public <T> DataResult<T> encode(Pair<ObjectList<Component>, ObjectList<String>> input, DynamicOps<T> ops, T prefix) {
-				safeCodec.set(false);
-				var result = CODEC.encode(input, ops, prefix);
-				safeCodec.set(true);
-				return result;
-			}
-
-			@Override
-			public <T> DataResult<Pair<Pair<ObjectList<Component>, ObjectList<String>>, T>> decode(DynamicOps<T> ops, T input) {
-				safeCodec.set(false);
-				var result = CODEC.decode(ops, input);
-				safeCodec.set(true);
-				return result;
-			}
-
-			@Override
-			public String toString() {
-				return "WrappedChatLogCodec[safe=" + safeCodec.get() + ", codec=" + CODEC + "]";
-			}
-		};
-	});
+    public static final Codec<Pair<ObjectList<Component>, ObjectList<String>>> CODEC = Codec.pair(
+		TextUtils.UNSAFE_CODEC
+			.listOf()
+			.xmap(ChatLog::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
+			.fieldOf("messages") // with a default value, errors are silently ignored
+			.codec(),
+		Codec.STRING
+			.listOf()
+			.xmap(ChatLog::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
+			.fieldOf("history") // with a default value, errors are silently ignored
+			.codec()
+	);
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
 	// prepub can't use an AW. i can use this lib Fabric-ASM but the docs are INSANE (derogatory), so last resort is reflection i think? idfk
     public static final GuiMessageTag RESTORED_INDICATOR = new GuiMessageTag(0x382FB5, null, Component.translatable("text.chatpatches.restored"), "Restored");
 
-	/**
-	 * Thread-local because
-	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1387226885867704401">
-	 * TheWhyEvenHow</a> suggested this, and they also made this implementation
-	 * successful, so I trust them.
-	 *
-	 * @see ClickEvent$ActionMixin#allowConditionalSerialization(boolean)
-	 */
-	private static final ThreadLocal<Boolean> safeCodec = ThreadLocal.withInitial(() -> true);
     private static final int DEFAULT_SIZE = 100;
 	private static final int IO_THRESHOLD_SUGGESTION = 1000;
 	private static final String EMPTY_JSON = "{\"messages\":[],\"history\":[]}";
@@ -142,7 +106,6 @@ public class ChatLog {
 
 
     public static boolean isRestoring() { return restoring; }
-    public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; }
 
     public static void addMessage(Component message) {
         if(restoring) {

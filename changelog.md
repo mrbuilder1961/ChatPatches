@@ -6,6 +6,7 @@
 - Fixed chat drafts not always saving if both `messageDrafting` and `saveChatDrafts` were enabled
 - Fixed `onlyInvasiveDrafting` not working when `messageDrafting` was disabled
 - Fixed a crash that could occur when clicking on a chat message with both a website and file link
+- Fixed (again) a crash that could occur when clicking on the JSON copy button if the message contained a non-serializable click event
 
 ## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
