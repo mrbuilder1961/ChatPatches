@@ -91,7 +91,7 @@ public class ContextMenu implements GuiEventListener {
 	 * to not include file links. Memoized to avoid recompiling the regex every time, and so
 	 * it's only compiled once when needed.
 	 */
-	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("\\b(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
+	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
 	private static Minecraft mc() { return Minecraft.getInstance(); }
 
