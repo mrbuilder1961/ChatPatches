@@ -25,6 +25,7 @@ import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 //?}
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.*;
@@ -522,18 +523,18 @@ public class ContextMenu implements GuiEventListener {
 		// sender buttons - conditional
 		if( !messageSender.equals(NIL_MESSAGE_DATA.sender()) ) {
 			var name = messageSender./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/();
-			var id = (messageSender./*? if >=1.21.9 {*/id/*?} else {*//*getId*//*?}*/()).toString();
+			var id = (messageSender./*? if >=1.21.9 {*/id/*?} else {*//*getId*//*?}*/());
 
 			registerProxyActionButton(MENU_SENDER, NAME, 0, 0, Items.NAME_TAG);
 				registerCopyButton(NAME, 0, Component.nullToEmpty(name));
-				registerCopyButton(UUID, 1, Component.nullToEmpty(id));
+				registerCopyButton(UUID, 1, Component.nullToEmpty(id.toString()));
 
 			registerButton(
 				MENU_REPLY,
 				0, 0,
 				null,
 				me -> ((ChatScreenAccess) screen).chatpatches$getChatField().setValue(TextUtils.fillVars(config.contextReplyFormat, name)),
-				mc().getSkinManager()./*? if >=1.21.9 {*/createLookup(messageSender, false).get()/*?} elif >=1.20.2 {*//*getInsecureSkin(messageSender)*//*?} else {*//*getInsecureSkinLocation(messageSender)*//*?}*/
+				(Object)mc().getConnection().getPlayerInfo(id) instanceof PlayerInfo info ? info./*? if >=1.20.2 {*/getSkin/*?} else {*//*getSkinLocation*//*?}*/() : null // prefer real skin; else nothing
 			);
 		}
 
@@ -795,9 +796,10 @@ public class ContextMenu implements GuiEventListener {
 		screen.setFocused(hoveredButton); // allows much more efficient update checks, see #mouseMoved(int, int)
 		for(ObjectList<Grid.Entry> group : grid.groups) {
 			for(Grid.Entry itr : group) {
-				if(itr.col > 0)
+				if(itr.col > 0) {
 					// if the hovered button is in the group, show all other buttons; otherwise hide them bc they're irrelevant
 					itr.button.visible = group.contains(grid.get( hoveredButton.getMessage() ));
+				}
 
 				// proceed with underlining if the hovered button is in the iterated group and the group has a hover button
 				if(itr.button == hoveredButton && group.size() > 1 && /*? if java: <21 {*//*(Object)*//*?}*/ group.get(1).button instanceof AbstractButton firstHoverButton) {
