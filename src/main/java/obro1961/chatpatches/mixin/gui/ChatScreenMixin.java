@@ -490,14 +490,18 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		} else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
 			ContextMenu newMenu = new ContextMenu((ChatScreen)(Object)this, mX, mY);
 			// if the mouse right-clicked elsewhere and that location can load a context menu, use it
-			if(contextMenu.clickPos.x != mX || contextMenu.clickPos.y != mY && newMenu.isFunctional()) {
-				contextMenu.close(this::removeWidget);
+			if(newMenu.isFunctional()) {
+				contextMenu.close(this::removeWidget); // close the old
 
 				newMenu.init(this::addWidget); // load the new menu
 				setFocused(newMenu); // shift focus from the chat field
 				contextMenu = newMenu;
 
 				cir.setReturnValue(true);
+			} else {
+				contextMenu = newMenu; // save the no-op menu for later
+				setFocused(input); // refocus the input box since there's no usable menu to focus instead
+				cir.setReturnValue(false); // we didn't click anything
 			}
 		}
 	}
