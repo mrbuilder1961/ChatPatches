@@ -12,6 +12,8 @@
 - Updated Gradle to 9.1.0 and fixed a subsequent `build.gradle.kts` issue
 - Removed `compactDistance`'s special option for `-1`, which previously made the dupe counter check the entire message list: this is extremely inefficient 
   and not practical either
+- Clarify some config option buttons
+- 
 
 ## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 

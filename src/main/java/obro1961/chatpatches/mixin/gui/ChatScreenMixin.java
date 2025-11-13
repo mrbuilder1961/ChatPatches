@@ -70,6 +70,7 @@ import static obro1961.chatpatches.ChatPatches.id;
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess {
+	@Unique private static final String CHAT_LOG_UNAVAILABLE = I18n.get("text.chatpatches.chatlog.unavailable");
 	// search text
 	@Unique private static final String SEARCH_SUGGESTION = I18n.get("text.chatpatches.search.suggestion");
 	@Unique private static final Component SEARCH_TOOLTIP = Component.translatable("text.chatpatches.search.desc");
@@ -204,7 +205,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		if(ChatLog.isRestoring()) { // fixes #257
 			input.setEditable(false);
-			input.setValue("Chat log not available - try reopening the chat");
+			input.setValue(CHAT_LOG_UNAVAILABLE);
 		}
 
 		caseSensitiveButton = makeSettingButton("caseSensitive", 0); // todo redo this thing
