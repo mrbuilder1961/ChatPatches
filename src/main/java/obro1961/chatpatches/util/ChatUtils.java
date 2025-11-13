@@ -415,9 +415,8 @@ public class ChatUtils {
 	 *     <li>Calculates the attempt distance for condensing the incoming message:</li>
 	 *     <ol>
 	 *         <li>If {@linkplain Config#compactChat CompactChat} is enabled, takes
-	 *         {@link Config#compactDistance} and parses {@code -1} as {@code
-	 *         messages.size()}, {@code 0} as {@code chatHud.getVisibleLineCount()},
-	 *         else its value as it is.</li>
+	 *         {@link Config#compactDistance} and parses {@code 0} as {@code
+	 *         chatHud.getVisibleLineCount()}, otherwise its absolute value.</li>
 	 *         <li>Else uses 1, which is the default and corresponds to the most recent
 	 *         message only.</li>
 	 *     </ol>
@@ -460,8 +459,7 @@ public class ChatUtils {
 		ObjectList<Component> siblings = new ObjectArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
 		List<GuiMessage.Line> visibles = access.chatpatches$getVisibleMessages();
 		int attemptDistance =
-			switch(config.compactChat ? config.compactDistance : 1) {
-				case -1 -> messages.size();
+			switch(config.compactChat ? Math.abs(config.compactDistance) : 1) {
 				case 0 -> hud.getLinesPerPage();
 				case 1 -> 1; // only check more messages if compact chat is enabled
 				default -> Math.min(config.compactDistance, messages.size()); // max checked = # of messages in chat, else config option

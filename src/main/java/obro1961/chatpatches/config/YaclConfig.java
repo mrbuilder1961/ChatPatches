@@ -336,8 +336,7 @@ public class YaclConfig extends Config {
     private static int getMinOrMax(String key, boolean min) {
         if(min) {
             return switch(key) {
-                case "compactDistance" -> -1;
-                case "chatHeight", "chatWidth", "chatShift", "chatlogSaveInterval" -> 0;
+                case "compactDistance", "chatHeight", "chatWidth", "chatShift", "chatlogSaveInterval" -> 0;
 				case "chatMaxMessages" -> 1;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No minimum value specified for option '" + key + "'"));
@@ -350,7 +349,7 @@ public class YaclConfig extends Config {
                 case "chatWidth" -> mc().getWindow().getGuiScaledWidth();
                 case "chatHeight" -> mc().getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
-                case "compactDistance" -> /*? if java: <21 {*//*(Object)*//*?}*/ mc().gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25;
+                case "compactDistance" -> (Object)mc().gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25; //prepub: chatMaxMessages ?
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
