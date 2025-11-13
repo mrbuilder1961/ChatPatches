@@ -1,6 +1,6 @@
 # Changelog
 
-## Chat Patches `8.0-alpha.6` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
+## Chat Patches `8.0-alpha.6` for Minecraft 1.20.1–1.21.10 on Fabric, Quilt
 - Fixed player heads not rendering in the context menu on 1.21.9+
 - Fixed the command key not placing a slash in the chat input box on 1.21.9+ ([#270](https://www.github.com/mrbuilder1961/ChatPatches/issues/270))
 - Fixed chat drafts not always saving if both `messageDrafting` and `saveChatDrafts` were enabled
@@ -8,13 +8,14 @@
 - Fixed a crash that could occur when clicking on a chat message with both a website and file link
 - Fixed (again) a crash that could occur when clicking on the JSON copy button if the message contained a non-serializable click event
 - Fixed some links not being detected in the context menu
-- Fixed right-clicking outside the chat area deselecting the chat input box (##279)
+- Fixed right-clicking outside the chat area deselecting the chat input box ([#279](https://www.github.com/mrbuilder1961/ChatPatches/issues/279))
+- Updated Gradle to 9.1.0 and fixed a subsequent `build.gradle.kts` issue
 
 ## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
   data is lost
 - The chat input box will now be grayed out while the chat log is loading to prevent sent messages being moved to the end of chat history
-- Now compatible with 1.21.9-10! ([#269](https://www.github.com/mrbuilder1961/ChatPatches/issues/269))
+- Now compatible with 1.21.9–10! ([#269](https://www.github.com/mrbuilder1961/ChatPatches/issues/269))
   - Going forward, the `onlyInvasiveDrafting` option will be ignored and reflected as such in the config screen, as it's been implemented in vanilla
 - Doesn't show the 'Hover Text' button in the context menu if there is none to show
 - Now requires [Placeholder API](https://modrinth.com/mod/placeholder-api). Mod Menu also requires it since 9.2.0 (1.20.4) so this shouldn't be an issue; but <1.20.4 or on non-ModMenu installs, 
