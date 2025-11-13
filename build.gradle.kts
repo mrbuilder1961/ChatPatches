@@ -93,8 +93,6 @@ modstitch {
 
     // applies to any files inside the templates folder
     metadata {
-        fun <K, V> MapProperty<K, V>.populate(block: MapProperty<K, V>.() -> Unit) { block() }
-
         modId = id
         modVersion = v
         modName = m("name")
@@ -106,19 +104,19 @@ modstitch {
         //todo forge: uses mods.toml instead of neoforge.mods.toml
         // also todo with FMJ: remove fabric api and use arch api or sm
 
-        replacementProperties.populate {
-            put("java", java.toString())
-            put("mod_source", m("source"))
-            put("mod_modrinth", m("modrinth"))
-            put("minecraft_range", m("range", "") // todo: make snapshots compatible with this (if snapshot, = *)
+        replacementProperties.putAll(mapOf(
+            "java" to java.toString(),
+            "mod_source" to m("source"),
+            "mod_modrinth" to m("modrinth"),
+            "minecraft_range" to (m("range", "") // todo: make snapshots compatible with this (if snapshot, = *)
                 .takeIf { it.contains(",") } // if there are multiple versions...
-                ?.split(",") // parse them into a list
-                ?.map { "\"$it\"" } // add quotes to ensure valid JSON syntax
-                ?.toString()
+                    ?.split(",") // parse them into a list
+                    ?.map { "\"$it\"" } // add quotes to ensure valid JSON syntax
+                    ?.toString()
                 ?: "\"$minecraft\"" // else only one version
                 //if(!isLoom) [list.getFirst(),list.getLast()] // version ranges should all be consecutive
             )
-        }
+        ))
     }
 
     // Fabric
