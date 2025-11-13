@@ -51,6 +51,11 @@ public class YaclConfig extends Config {
     public static final String HELP_PREFIX = LANG_PREFIX + "help.";
     public static final String SEARCH_PREFIX = LANG_PREFIX + "search.";
 
+    /**
+     * Matches if the compared string ends with {@code Str}, {@code Date}, or {@code Format}.
+     */
+    private static final Matcher STRING_DATE_FORMAT_OPTION = Pattern.compile(".*(?:Str|Date|Format)$").matcher("");
+
 
     @Override
     public Screen getConfigScreen(Screen parent) {
@@ -265,7 +270,7 @@ public class YaclConfig extends Config {
     private static <T> ControllerBuilder<T> getController(Option<T> opt, String key) {
         ControllerBuilder<?> builder;
 
-        if( key.matches("^.*(?:Str|Date|Format)$") ) { // endsWith "Str" "Date" or "Format"
+        if( STRING_DATE_FORMAT_OPTION.reset(key).matches() ) {
             builder = StringControllerBuilder.create((Option<String>) opt);
         } else if( key.contains("Color") ) {
             builder = ColorControllerBuilder.create((Option<Color>) opt);
@@ -283,20 +288,21 @@ public class YaclConfig extends Config {
     private static BiConsumer<YACLScreen, ButtonOption> getAction(String key) {
         return (screen, option) -> {
             if(key.contains("Clear")) {
-                if(!key.contains("History"))
-                    ChatLog.clearMessages(); // if key is "ClearMessages" or "Clear"
-                if(!key.contains("Messages"))
-                    ChatLog.clearHistory(); // if key is "ClearHistory" or "Clear"
-            } else if(key.equals("chatlogLoad")) {
-                ChatLog.load(true); // queues the deserialization and restoration tasks together
-            } else if(key.equals("chatlogSave")) {
-                ChatLog.serialize();
-            } else if(key.equals("chatlogBackup")) {
-                ChatLog.backup();
-            } else if(key.equals("chatlogOpenFolder")) {
-                Util.getPlatform().openFile(ChatLog.PATH.getParent().toFile());
-            } else if(key.equals("help.reloadConfig")) {
-                deserialize();
+                if(key.endsWith("History")) {
+					ChatLog.clearHistory(); // if key is "ClearHistory" or "Clear"
+				}
+                // no else, regular clear should do BOTH
+                if(key.endsWith("Messages")) {
+					ChatLog.clearMessages(); // if key is "ClearMessages" or "Clear"
+				}
+            } else {
+                switch(key) {
+                    case "chatlogLoad" -> ChatLog.load(true); // queues the deserialization and restoration tasks together
+                    case "chatlogSave" -> ChatLog.serialize();
+                    case "chatlogBackup" -> ChatLog.backup();
+                    case "chatlogOpenFolder" -> Util.getPlatform().openFile(ChatLog.PATH.getParent().toFile());
+                    case "help.reloadConfig" -> deserialize();
+                }
             }
         };
     }
