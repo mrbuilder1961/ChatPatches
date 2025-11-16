@@ -93,7 +93,7 @@ public class YaclConfig extends Config {
 
                     @Override
                     public void set(Object value) {
-						super.set(RenderUtils.opaque(((Color)value).getRGB()));
+						super.set(RenderUtils.smartOpaque( ((Color)value).getRGB() ));
                     }
                 };
             }
@@ -113,7 +113,7 @@ public class YaclConfig extends Config {
                             : new OptionFlag[0]
                     )
                     /*? if >=1.21.9 {*/
-                    .available( !key.equals("onlyInvasiveDrafting") ) /*?}*/ // disables onlyInvasiveDrafting in 1.21.9+ due to it's native implementation //prepub: note this in the option table
+                    .available( !key.equals("onlyInvasiveDrafting") ) /*?}*/ // disables onlyInvasiveDrafting in 1.21.9+ due to it's native implementation
                     .build();
 
 
@@ -355,7 +355,8 @@ public class YaclConfig extends Config {
                 case "chatWidth" -> mc().getWindow().getGuiScaledWidth();
                 case "chatHeight" -> mc().getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
-                case "compactDistance" -> (Object)mc().gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25; //prepub: chatMaxMessages ?
+                case "compactDistance" -> //noinspection ConstantValue: Stonecutter :D
+					(Object)mc().gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25; //prepub: chatMaxMessages ?
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));

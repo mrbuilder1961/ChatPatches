@@ -260,7 +260,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), /*? if >=1.21.6 {*/RenderUtils.opaque/*?}*/(ChatFormatting.DARK_RED.getColor()));
+				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtils.smartOpaque(ChatFormatting.DARK_RED));
 				// todo: that option to disable text shadows - raw calls can have the boolean plugged right in, elsewhere needs injectors
 			}
 		}
@@ -693,7 +693,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				}
 			}
 
-			searchField.setTextColor(/*? if >=1.21.6 {*/RenderUtils.opaque/*?}*/( status.getColor() ));
+			searchField.setTextColor(RenderUtils.smartOpaque(status));
 		} else {
 			searchError = null;
 			searchField.setTextColor(EditBox.DEFAULT_TEXT_COLOR);
