@@ -13,7 +13,7 @@
 - Removed `compactDistance`'s special option for `-1`, which previously made the dupe counter check the entire message list: this is extremely inefficient 
   and not practical either
 - Clarify some config option buttons
-- 
+- Fixed the playername color option not persisting on some older Minecraft versions ([#265](https://www.github.com/mrbuilder1961/ChatPatches/issues/265))
 
 ## Chat Patches `8.0-alpha.5` for Minecraft 1.20.1-1.21.10 on Fabric, Quilt
 - Chat log dumps can now be loaded in-game by renaming them to `chatlog.json`. Note that this does not perfectly restore the original log, as most style 
