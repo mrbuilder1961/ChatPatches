@@ -29,7 +29,6 @@ import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
-import obro1961.chatpatches.util.ChatUtils;
 import obro1961.chatpatches.util.TextUtils;
 
 import java.io.IOException;
@@ -132,7 +131,8 @@ public class Config {
 	 * suffix}, and {@code rgbColor} are then applied accordingly.
      */
     private MutableComponent makeText(String formatStr, String varStr, String prefix, String suffix, int rgbColor) {
-        return text(prefix + fillVars(formatStr, varStr) + suffix).withColor(rgbColor);
+        return text(prefix + fillVars(formatStr, varStr) + suffix)
+			./*? if >1.20.2 {*/withColor(rgbColor)/*?} else {*//*setStyle(Style.EMPTY.withColor(rgbColor))*//*?}*/;
     }
 
 	private MutableComponent makeText(String formatStr, String varStr, int rgbColor) {
