@@ -21,6 +21,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/;
+//? if >1.20.1 && <=1.20.4 {
+//import net.minecraft.util.ExtraCodecs;
+//?}
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -203,9 +207,8 @@ public class Config {
                 components.add(3, team.getPlayerSuffix()); // team suffix
             }
 
-			// stonecutter: remove qualifiers when import optimizer fix is available
             return TextUtils.newText(
-				net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/.EMPTY,
+				/*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/.EMPTY,
 				components,
 				hoverStyle
 			);
@@ -460,9 +463,6 @@ public class Config {
             });
     }
 
-	/**
-	 * PREPUB!
-	 */
 	protected void resetValues() {
 		config = (config instanceof YaclConfig) ? new YaclConfig() : DEFAULTS;
 	}
@@ -602,8 +602,7 @@ public class Config {
 				// parses int -> TextColor (migration) and String <-> TextColor (default); the final result is always of type int
 				// thx to TheWhyEvenHow: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
 				codec =
-					//stonecutter: remove qualifier when import optimizer fix is available
-					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*net.minecraft.util.ExtraCodecs*//*?} else {*/Codec/*?}*/
+					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*ExtraCodecs*//*?} else {*/Codec/*?}*/
 					.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
 					.xmap(TextColor::getValue, TextColor::fromRgb);
 			} else {
@@ -644,7 +643,7 @@ public class Config {
 			return ((Codec<T>) codec).optionalFieldOf(key, def);
         }
 
-		//prepub move elsewhere (new CodecUtils?) if u want idrc or just wait it out until i discontinue this version?
+		//prepub move elsewhere (new CodecUtils?) or wait it out until discontinued?
 		//? if <=1.20.1 {
 		/*static <T> Codec<T> withAlternative(Codec<T> codec, Codec<? extends T> alternative) {
 			return Codec.either(codec, alternative).xmap(either -> either.map(Function.identity(), Function.identity()), com.mojang.datafixers.util.Either::left);

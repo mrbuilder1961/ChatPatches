@@ -210,7 +210,6 @@ public class ChatPatches implements ClientModInitializer {
 		pushToast(false, header, description);
 	}
 
-	//prepub: move this stuff to a util class?
 	/** @see #regBack(DynamicOps) */
 	public static DynamicOps<JsonElement> regJsonOps() {
 		return regBack(JsonOps.INSTANCE);

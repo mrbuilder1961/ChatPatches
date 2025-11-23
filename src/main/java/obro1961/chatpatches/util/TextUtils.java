@@ -96,7 +96,7 @@ public class TextUtils {
 	 */
 	private static final ThreadLocal<Boolean> safeCodec = ThreadLocal.withInitial(() -> true);
 
-	public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; } // prepub: keep..?
+	public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; } // prepub: keep this method..?
 
 
 	/**
@@ -133,7 +133,7 @@ public class TextUtils {
 				if(len[0] >= max) {
 					return Optional.empty(); // if the text is the perfect length, don't add anything
 				}
-				// warning: might throw an error but the math seems right?
+
 				str = str.substring(0, max - len[0]); // truncate the string to the max length
 			}
 
@@ -263,6 +263,7 @@ public class TextUtils {
 	// prepub: alright here is the deal. this method is always gonna have some issue bc of lots of edge cases and etc etc.
 	//  so we're switching to QuickText/MiniMessage and if players want the old style, i'll just convert the QT to the old style
 	//  aka strip complex styles and convert hex & formatting colors to ampersand codes
+	// so new warning: string -> Component [works] , Component -> string [not supported]
 	/**
 	 * Returns the formatting codes of the {@link Style} provided, excluding any already
 	 * applied ones according to {@code last}. Returns an empty string if the style is

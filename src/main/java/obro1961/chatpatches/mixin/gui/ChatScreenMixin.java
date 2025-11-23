@@ -28,6 +28,11 @@ import net.minecraft.client.input.MouseButtonEvent;
 //?} else {
 //import net.minecraft.client.gui.navigation.CommonInputs;
 //?}
+//? if >=1.21.6 {
+import net.minecraft.client.renderer.RenderPipelines;
+//?} else if >=1.21.2 {
+//import net.minecraft.client.renderer.RenderType;
+//?}
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -267,10 +272,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		// renders the bg and the buttons for the settings menu
 		if(showSettingsMenu && config.search) {
-			// prepub use demo_background.png instead, but idk how to make it nine-sliced bc by default it's too big. also once done update preview photos in config and on cf/mr
+			// prepub use demo_background.png instead, but idk how to make it nine-sliced bc by default it's too big -> update preview photos (config & cf/mr)
 			graphics.blit(
-				// stonecutter: remove qualifier when import optimizer fix is available
-				/*? if >=1.21.6 {*/net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,/*?} elif >=1.21.2 {*//*net.minecraft.client.renderer.RenderType::guiTextured,*//*?}*/
+				/*? if >=1.21.6 {*/RenderPipelines.GUI_TEXTURED,/*?} elif >=1.21.2 {*//*RenderType::guiTextured,*//*?}*/
 				id("textures/gui/search_settings_panel.png"),
 				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);

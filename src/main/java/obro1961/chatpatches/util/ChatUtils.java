@@ -215,7 +215,7 @@ public class ChatUtils {
 	 * @param second {@link #MESSAGE_INDEX} or {@link #MSG_SENDER_INDEX}
 	 * @param third {@link #DUPE_INDEX} or {@link #MSG_CONTENT_INDEX}
 	 */
-	@NotNull //prepub: this is giving TextUtils??? idk all these util methods need to be refactored and re-evaluated
+	@NotNull //prepub: this is giving TextUtils??? idk all these util methods need to be shuffled around
 	public static MutableComponent buildMessage(@Nullable Style rootStyle, @Nullable Component first, @Nullable Component second, @Nullable Component third) {
 		MutableComponent root = Component.empty();
 
@@ -478,7 +478,7 @@ public class ChatUtils {
 				continue;
 			} else if( config.counterCheckStyle && !withoutContent(incoming).equals(withoutContent(msg)) ) {
 				// if the incoming message has different metadata from the iterated message, skip it
-				continue;
+				continue; //FIXME: THIS DOES NOT WORK AT ALL - calling a style compiler method again aka getFormattingcodes! RUGGHGHSDKFJH
 			}
 
 			// remove all number formatting codes and non-digits, then replace empty strings with 1 to prevent NumberFormatExceptions
