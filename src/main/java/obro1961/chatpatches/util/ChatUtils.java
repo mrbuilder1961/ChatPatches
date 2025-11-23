@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
@@ -293,6 +294,7 @@ public class ChatUtils {
 		}
 
 		boolean lastEmpty = messageData.equals(NIL_MESSAGE_DATA); // also signifies that this is a system message (when true)
+		boolean boundary = Boundary.isBoundaryLine(m);
 		Date now = lastEmpty ? new Date() : messageData.timestamp;
 		Style style = m.getStyle();
 
@@ -301,7 +303,7 @@ public class ChatUtils {
 		// dupe counter is always empty at this stage
 
 		try {
-			timestamp = config.makeTimestamp(now, lastEmpty);
+			timestamp = config.makeTimestamp(now, lastEmpty, boundary);
 
 			// reconstruct the player message if it's in the vanilla format & it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
@@ -374,16 +376,17 @@ public class ChatUtils {
 			LOGGER.error("\tBody:");
 
 			if(content.getSiblings().size() == 3 && !content.equals(m)) { // modified vanilla message
-				LOGGER.error("\t\tTeam: {}", optimizeEmpties(getMsgPart(m, MSG_TEAM_INDEX)));
-				LOGGER.error("\t\tSender: {}", optimizeEmpties(getMsgPart(m, MSG_SENDER_INDEX)));
-				LOGGER.error("\t\tContent: {}", optimizeEmpties(getMsgPart(m, MSG_CONTENT_INDEX)));
+				// i know these are technically the wrong fields to use but they make sense so leave me alone
+				LOGGER.error("\t\tTeam: {}", optimizeEmpties(getPart(content, MSG_TEAM_INDEX)));
+				LOGGER.error("\t\tSender: {}", optimizeEmpties(getPart(content, MSG_SENDER_INDEX)));
+				LOGGER.error("\t\tContent: {}", optimizeEmpties(getPart(content, MSG_CONTENT_INDEX)));
 			} else { // literally everything else
 				LOGGER.error("\t\tRoot: {}", optimizeEmpties(content.getContents()));
 				for(int i = 0; i < content.getSiblings().size(); i++) {
 					LOGGER.error("\t\tSibling {}: {}", i, optimizeEmpties(getPart(content, i)));
 				}
 			}
-			if(m.getSiblings().size() > DUPE_INDEX) {
+			if(m.getSiblings().size() == DUPE_INDEX + 1) {
 				LOGGER.error("\tDupes: {}", optimizeEmpties(getPart(m, DUPE_INDEX)));
 			}
 
@@ -396,7 +399,7 @@ public class ChatUtils {
 		}
 
 		// assembles constructed message and tries to add a dupe counter
-		Component modified = tryCondenseDupes( buildMessage(null, timestamp, content, null) ); // style is null bc only the message content should take on the original style
+		Component modified = tryCondenseDupes(buildMessage(null, timestamp, content, null)); // style is null bc only the message content should take on the original style
 		ChatLog.addMessage(modified);
 		messageData = NIL_MESSAGE_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;

@@ -14,17 +14,18 @@ import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.PlayerTeam;
+import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
@@ -59,7 +60,7 @@ public class Config {
     protected static Minecraft mc() { return Minecraft.getInstance(); }
 
     /** @see #sendBoundaryLine() */
-    protected static String lastWorld = "";
+    protected static Boundary lastBoundary = Boundary.UNKNOWN;
 
 
     // todo #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
@@ -105,7 +106,6 @@ public class Config {
 		return config;
     }
 
-
     public Screen getConfigScreen(Screen parent) {
 		//stonecutter: make a const for whether the config is YACL or cloth or nothing aka yacl
         boolean suggestYACL = SharedConstants.getProtocolVersion() >= 759; // 1.19 or higher
@@ -126,30 +126,42 @@ public class Config {
         );
     }
 
-
     /**
      * Creates a new {@link MutableComponent} based on {@code formatStr} with all
 	 * instances of {@value #PLACEHOLDER} replaced with {@code varStr}. {@code prefix}, {@code
 	 * suffix}, and {@code rgbColor} are then applied accordingly.
      */
     private MutableComponent makeText(String formatStr, String varStr, String prefix, String suffix, int rgbColor) {
-        return text(prefix + fillVars(formatStr, varStr) + suffix).withStyle(s -> s.withColor(rgbColor));
+        return text(prefix + fillVars(formatStr, varStr) + suffix).withColor(rgbColor);
     }
 
+	private MutableComponent makeText(String formatStr, String varStr, int rgbColor) {
+		return makeText(formatStr, varStr, "", "", rgbColor);
+	}
+
+
     /**
-	 * Creates a timestamp from the given time and formats it according to {@link
-	 * #timeFormat}, {@link #timeDate}, and {@link #timeColor}. If {@link
-	 * #timeSystemMessages} is false, only populates the timestamp if {@code system}
-	 * is false. The timestamp's style is specified by {@link #hoverFormat}, {@link
-	 * #hoverDate}, and {@link #hoverColor} (if {@link #hover} is true). An insertion
-	 * is always added with a string representation of the given time so the context
-	 * menu can always provide timestamp info.
+	 * Creates a timestamp from the given time and formats it according to
+	 * {@link #timeFormat}, {@link #timeDate}, and {@link #timeColor}. The
+	 * timestamp's style is specified by {@link #hoverFormat}, {@link #hoverDate},
+	 * and {@link #hoverColor} (if {@link #hover} is true). An insertion is always
+	 * added with a string representation of the given time so the context menu can
+	 * always provide timestamp info.
+	 * <br><br>
+	 * If the following expression is true, the returned component will contain
+	 * a timestamp; otherwise, empty styled component:
+	 *
+	 * <PRE>{@link #time} && !boundary && ({@link #timeSystemMessages} ? true : !system)</PRE>
+	 *
+	 * So if this is a boundary line, timestamps are disabled, or system messages
+	 * shouldn't be timestamped and this is a system message, no timestamp will be
+	 * returned.
      */
-    public MutableComponent makeTimestamp(Date when, boolean system) {
-		MutableComponent timestamp = time && (timeSystemMessages || !system)
+    public MutableComponent makeTimestamp(Date when, boolean system, boolean boundary) {
+		MutableComponent timestamp = time && !boundary && (timeSystemMessages || !system)
 			? makeText(timeFormat, new SimpleDateFormat(timeDate).format(when), "", " ", timeColor)
 			: Component.empty();
-		MutableComponent hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), "", "", hoverColor);
+		MutableComponent hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), hoverColor);
 
 		return timestamp.withStyle(s ->
 			s.withHoverEvent( hover ? TextUtils.showText(hoverText) : null )
@@ -173,16 +185,17 @@ public class Config {
     public MutableComponent formatPlayername(GameProfile profile) {
         Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
 		String name = profile != null ? profile./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/() : "<null>";
+		var level = mc().level;
 
         try {
-            PlayerTeam team = mc().level.getScoreboard().getPlayersTeam(name);
-            Style hoverStyle = new RemotePlayer(mc().level, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
+            PlayerTeam team = level.getScoreboard().getPlayersTeam(name);
+            Style hoverStyle = new RemotePlayer(level, profile).getDisplayName().getStyle() // gets the correct style (hover/click/insertion)
                 .applyTo(style); // fills in the color with nameColor if not specified by the team
             String[] configFormat = nameFormat.equals(PLACEHOLDER) ? new String[] {"", ""} : nameFormat.split("\\$"); // note: changing placeholder requires removing the backslashes in the split regex
             ObjectList<Component> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
             components.add(text( configFormat[0] ));                   // config prefix
-            components.add(text( name ));                 // playername
+            components.add(text( name ));							   // playername
             components.add(text( configFormat[1] + " " )); // config suffix
 
             if(team != null) {
@@ -199,7 +212,7 @@ public class Config {
         } catch(RuntimeException e) {
             LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", name);
 
-            if(mc().level == null) {
+            if(level == null) {
 				e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
 			}
 
@@ -215,47 +228,50 @@ public class Config {
     }
 
     /**
-     * Sends a boundary line in chat when the player
-     * switches worlds. This only runs if
-     * {@link #boundary} is enabled,
-     * {@link #vanillaClearing} is disabled, and
-     * the chat isn't empty.
-     *
-     * <p>Grabs the level name from the current world
-     * (singleplayer) or server entry (multiplayer),
-     * the latter of which uses the server IP if the
-     * name is blank. The boundary line will not send
-     * if the server hasn't changed since the last
-     * boundary line was sent.
+     * Sends a boundary line in chat when the player switches worlds. This only
+	 * happens if {@link #boundary} is enabled, {@link #vanillaClearing} is disabled,
+	 * and the chat isn't empty. If the last message received was a different
+	 * boundary line from another level, it will be deleted and replaced with the
+	 * current level.
+	 *
+	 * @see #lastBoundary
+	 * @see Boundary
      */
     public void sendBoundaryLine() {
-        if(!boundary || vanillaClearing) {
-			return;
+        if(!boundary || vanillaClearing) return;
+
+		ChatComponent chat = mc().gui.getChat();
+		ChatHudAccess access = (ChatHudAccess) chat;
+        List<GuiMessage> messages = access.chatpatches$getMessages();
+		Boundary currentLevel = Boundary.createFromCurrentLevel();
+
+		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return;
+
+		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
+		Component lastMessage = messages.getFirst().content();
+		boolean lastWasBoundary = Boundary.isBoundaryLine(lastMessage);
+
+		try {
+			// if the last message received was a different boundary line, we can delete it - no messages were sent
+			if(lastWasBoundary && !lastMessage.getString().equals(boundaryLine.getString())) {
+				// todo: delete message method - call here! should delete both real and visible message(s), and update search results however possible (if extra needs to be done)
+				messages.removeFirst(); // deletes the useless boundary line
+
+				var visibles = access.chatpatches$getVisibleMessages();
+				// removes all associated visible messages (99% of the time this should run once)
+				do visibles.removeFirst();
+				while(!visibles.isEmpty() && !visibles.getFirst().endOfEntry());
+			} else if(lastWasBoundary) {
+				return; // if the last message received was the same boundary line we want to send, it's already there
+			}
+
+			lastBoundary = currentLevel;
+			chat.addMessage(boundaryLine);
+
+		} catch(RuntimeException e) {
+			LOGGER.warn("[Config.sendBoundaryLine] An error occurred while sending the boundary line:", e);
 		}
-
-        List<GuiMessage> messages = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getMessages();
-		String world = mc().hasSingleplayerServer() // this check prevents NPEs for both if branches
-            ? "C_" + mc().getSingleplayerServer().getWorldData().getLevelName()
-            : /*? if java: <21 {*//*(Object)*//*?}*/ mc().getCurrentServer() instanceof ServerData entry
-                ? "S_" + (entry.name.isBlank() ? entry.ip : entry.name) // if the name is blank, uses the address instead
-                : "?_?"; // prevents weird game states (ex. from ReplayMod) from throwing IOOBEs from the substring call below
-		Component boundary = ChatUtils.buildMessage(null, null, null, makeText(boundaryFormat, world.substring(2), "", "", boundaryColor));
-
-		// continues if chat isn't empty, the most recent message isn't a boundary line, and if the world is different from the last one (not including servers)
-        if( !messages.isEmpty() && !messages.getFirst().content().getString().equals(boundary.getString()) && (!world.startsWith("S_") || !lastWorld.startsWith("S_") || !world.equals(lastWorld)) ) {
-            try {
-                boolean time = config.time;
-
-                lastWorld = world; // updates #lastWorld
-
-                config.time = false; // disables the timestamp just for the boundary line
-                mc().gui.getChat().addMessage(boundary);
-                config.time = time;
-            } catch(RuntimeException e) {
-                LOGGER.warn("[Config.sendBoundaryLine] An error occurred while adding the boundary line:", e);
-            }
-        }
-    }
+	}
 
 	/**
 	 * Calculates the appropriate chat shifting offset to use if
@@ -635,4 +651,5 @@ public class Config {
 		}*/
 		//?}
     }
+
 }
