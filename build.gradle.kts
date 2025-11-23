@@ -229,6 +229,11 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
             direction = java < 21
             replace(".getFirst()", ".get(0)")
         }
+
+        string {
+            direction = java < 21
+            replace(".removeFirst()", ".remove(0)")
+        }
     }
 }
 
