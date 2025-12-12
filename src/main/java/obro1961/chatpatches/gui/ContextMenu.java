@@ -44,7 +44,6 @@ import net.minecraft.world.item.Items;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
-import obro1961.chatpatches.mixin.accessor.GridWidgetAccessor;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtils;
 import obro1961.chatpatches.util.TextUtils;
@@ -141,8 +140,8 @@ public class ContextMenu implements GuiEventListener {
 	 */
 	@Nullable
 	private final ChatScreen screen;
-	private final ChatComponent hud;
-	private final ChatHudAccess access;
+	private final ChatComponent chat;
+	//private final ChatHudAccess access;
 
 	// variables derived from selected message
 	public final RenderUtils.MousePos clickPos;
@@ -191,15 +190,15 @@ public class ContextMenu implements GuiEventListener {
 		this.grid = new Grid();
 
 		// reference and optimization fields
-		this.hud = mc().gui.getChat();
-		this.access = (ChatHudAccess) hud;
+		this.chat = mc().gui.getChat();
+		var access = (ChatHudAccess) chat;
 		this.screen = noOp ? null : screen;
 
 		// selected fields
 		// ensures the search results are copied properly, when present
 		var searchResults = noOp ? ObjectList.<GuiMessage>of() : ((ChatScreenAccess) screen).getSearchResults();
-		var messages = searchResults.isEmpty() ? access.chatpatches$getMessages() : searchResults;
-		int messageIndex = noOp ? -1 : access.getChatHudLineIndex(mX, mY);
+		var messages = searchResults.isEmpty() ? chat.allMessages : searchResults;
+		int messageIndex = noOp ? -1 : access.getGuiMessageIndex(mX, mY);
 
 		if(messageIndex == -1) {
 			noOp = true;
@@ -208,7 +207,7 @@ public class ContextMenu implements GuiEventListener {
 		this.selectedLine = noOp ? NIL_HUD_LINE : Iterables.get(messages, messageIndex, NIL_HUD_LINE);
 		this.visibleMessageIndex = noOp ? -1 : access.getEoEIndex(mX, mY); // returns the index of the EoE line at the mouse position
 		this.visibleLines = noOp ? 0 : Util.make(() -> {
-			var visibles = access.chatpatches$getVisibleMessages();
+			var visibles = chat.trimmedMessages;
 
 			// if the line before (+) this visible message isn't EoE, we need to account for it(them?)
 			int l = 1; // minimum of one line
@@ -235,25 +234,25 @@ public class ContextMenu implements GuiEventListener {
 
 
 	/**
-	 * Registers a button in the {@linkplain Grid#widget button grid} and
+	 * Registers a button in the {@linkplain Grid#layout button grid} and
 	 * {@linkplain #grid associated data lookup manager}. This is done
 	 * by creating a new {@link Button} (or similarly-implemented
-	 * {@link AbstractButton} if {@code renderObject} is specified)
+	 * {@link AbstractButton} if {@code icon} is specified)
 	 * according to the passed id, copy text supplier, press action, and
 	 * coordinates (the local row and absolute column).
 	 *
 	 * @param localRow The row relative to the current row, which is
-	 *                 specified by the last main button added. The
-	 *                 absolute row is automatically calculated and
-	 *                 {@linkplain Grid#currentRow kept track of}.
-	 * @param col      The column in the grid menu where the button should be
-	 *                 placed. Main buttons are always in column 0, and hover
-	 *                 buttons are in columns ≥1.
-	 * @param renderObject An {@link Item} or {@link PlayerSkin} object to
-	 *                     render over the leftmost button area, or {@code null}
-	 *                     to not render anything extra.
+	 * specified by the last main button added. The
+	 * absolute row is automatically calculated and
+	 * {@linkplain Grid#currentRow kept track of}.
+	 * @param col The column in the grid menu where the button should be
+	 * placed. Main buttons are always in column 0, and hover
+	 * buttons are in columns ≥1.
+	 * @param icon An {@link Item} or {@link PlayerSkin} object to
+	 * render over the leftmost button area, or {@code null}
+	 * to not render anything extra.
 	 */
-	private void registerButton(Component id, int localRow, int col, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction, Object renderObject) {
+	private void registerButton(Component id, int localRow, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction) {
 		int w = mc().font.width(id) + 2 * BUTTON_PADDING;
 		int h = BUTTON_HEIGHT + BUTTON_PADDING;
 
@@ -274,7 +273,7 @@ public class ContextMenu implements GuiEventListener {
 			}
 		}).bounds(clickPos.xInt(), clickPos.yInt(), w, h).build();
 
-		if(renderObject != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
+		if(icon != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
 			final AbstractButton src = button;
 			// idea: make the button *not* adjust the text if it doesnt need to
 			// accounts for the 16x16 icon on the left with the +16 and prefixed 4 spaces (each of width 4) in the id label
@@ -287,10 +286,10 @@ public class ContextMenu implements GuiEventListener {
 				protected void renderWidget(GuiGraphics graphics, int mX, int mY, float delta) {
 					super.renderWidget(graphics, mX, mY, delta);
 
-					if(renderObject instanceof Item icon) {
-						graphics.renderFakeItem(icon.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
+					if(icon instanceof Item item) {
+						graphics.renderFakeItem(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
 
-					} else if(renderObject instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*ResourceLocation*//*?}*/ playerSkin) {
+					} else if(icon instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*ResourceLocation*//*?}*/ playerSkin) {
 						PlayerFaceRenderer.draw(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 					}
 				}
@@ -298,7 +297,7 @@ public class ContextMenu implements GuiEventListener {
 				@Override
 				public String toString() {
 					// hopefully helps with debugging
-					return "ContextMenu.ButtonWidget[id=" + id.getString() + ", renderObject=" + renderObject + "]";
+					return "ContextMenu.ButtonWidget[id=" + id.getString() + ", icon=" + icon + "]";
 				}
 
 				// pulled from ButtonWidget
@@ -307,7 +306,7 @@ public class ContextMenu implements GuiEventListener {
 			};
 		}
 
-		// set here so buttons with a renderObject don't have theirs deleted
+		// set here so buttons with an icon don't have theirs deleted
 		if(tooltipCopyTextSupplier != null) {
 			button.setTooltip(Tooltip.create( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace(Formatting.FORMATTING_CODE_PREFIX, '&') )
 		}
@@ -319,20 +318,20 @@ public class ContextMenu implements GuiEventListener {
 	 * Registers a <b>main</b> button that gets its copy text
 	 * from {@code proxyId}, does <b>not</b> perform an extra
 	 * press action, and <b>can</b> override this button's
-	 * renderObject.
+	 * icon.
 	 *
 	 * @see #registerProxyButton(Component, Component, Object)
-	 * @see #registerActionButton(Component, int, Button.OnPress)
+	 * @see #registerActionButton(Component, int, Object, Button.OnPress)
 	 * @see #MENU_SENDER
 	 */
-	private void registerProxyActionButton(Component id, Component proxyId, int localRow, int col, Object renderObject) {
+	private void registerProxyActionButton(Component id, Component proxyId, int localRow, int col, Object icon) {
 		if(id.equals(proxyId)) {
 			logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
 			return;
 		}
 
 		// copies the proxy button's text by executing its press action instead
-		registerButton(id, localRow, col, null, me -> grid.get(proxyId).button.onPress(/*? if >=1.21.9 {*/null/*?}*/), renderObject);
+		registerButton(id, localRow, col, icon, null, me -> grid.get(proxyId).button.onPress(/*? if >=1.21.9 {*/null/*?}*/));
 	}
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
@@ -345,8 +344,8 @@ public class ContextMenu implements GuiEventListener {
 	 * @see #MENU_TIMESTAMP
 	 * @see #MENU_LINKS
 	 */
-	private void registerProxyButton(Component id, Component proxyId, Object renderObject) {
-		registerProxyActionButton(id, proxyId, 0, 0, renderObject);
+	private void registerProxyButton(Component id, Component proxyId, Object icon) {
+		registerProxyActionButton(id, proxyId, 0, 0, icon);
 	}
 	/**
 	 * Registers a <b>main</b> button that <b>does</b> perform
@@ -354,8 +353,8 @@ public class ContextMenu implements GuiEventListener {
 	 *
 	 * @see #MENU_REPLY
 	 */
-	private void registerActionButton(Component id, int localRow, Button.OnPress pressAction) {
-		registerButton(id, localRow, 0, null, pressAction, null);
+	private void registerActionButton(Component id, int localRow, Object icon, Button.OnPress pressAction) {
+		registerButton(id, localRow, 0, icon, null, pressAction);
 	}
 	/**
 	 * Registers a button that gets its copy text from
@@ -367,17 +366,17 @@ public class ContextMenu implements GuiEventListener {
 	 * @see #TIMESTAMP_HOVER
 	 * @see #MENU_UNIX
 	 */
-	private void registerCopyButton(Component id, int localRow, int col, Supplier<Component> tooltipCopyTextSupplier, Object renderObject) {
-		registerButton(id, localRow, col, tooltipCopyTextSupplier, null, renderObject);
+	private void registerCopyButton(Component id, int localRow, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier) {
+		registerButton(id, localRow, col, icon, tooltipCopyTextSupplier, null);
 	}
 	/**
 	 * Registers a <b>hover</b> button with <b>precalculated</b>
 	 * copy text that does <b>not</b> perform an extra press action.
 	 *
-	 * @see #registerCopyButton(Component, int, int, Supplier, Object)
+	 * @see #registerCopyButton(Component, int, int, Object, Supplier)
 	 */
 	private void registerCopyButton(Component id, int localRow, Component tooltipCopyText) {
-		registerButton(id, localRow, 1, () -> tooltipCopyText, null, null);
+		registerButton(id, localRow, 1, null, () -> tooltipCopyText, null);
 	}
 
 
@@ -469,10 +468,10 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		// unix timestamp button - unconditional
-		registerCopyButton(MENU_UNIX, 0, 0, () -> {
+		registerCopyButton(MENU_UNIX, 0, 0, Items.REDSTONE, () -> {
 			String time = timestamp.getStyle().getInsertion();
 			return time != null && !time.isEmpty() ? Component.nullToEmpty(time) : UNKNOWN.apply(MENU_UNIX);
-		}, Items.REDSTONE);
+		});
 
 		// link buttons - conditional
 		ObjectList<String> webLinks = Util.make(new ObjectArrayList<>(), l -> {
@@ -532,9 +531,9 @@ public class ContextMenu implements GuiEventListener {
 			registerButton(
 				MENU_REPLY,
 				0, 0,
-				null,
-				me -> ((ChatScreenAccess) screen).chatpatches$getChatField().setValue(TextUtils.fillVars(config.contextReplyFormat, name)),
-				(Object)mc().getConnection().getPlayerInfo(id) instanceof PlayerInfo info ? info./*? if >=1.20.2 {*/getSkin/*?} else {*//*getSkinLocation*//*?}*/() : null // prefer real skin; else nothing
+				(Object)mc().getConnection().getPlayerInfo(id) instanceof PlayerInfo info ? info./*? if >=1.20.2 {*/getSkin/*?} else {*//*getSkinLocation*//*?}*/() : null, null,
+				me -> screen.input.setValue(TextUtils.fillVars(config.contextReplyFormat, name))
+				// prefer real skin; else nothing
 			);
 		}
 
@@ -571,12 +570,12 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		int hoveredParts = visibleLines;
-		double s = hud.getScale();
-		int lH = access.chatpatches$getLineHeight();
-		int sW = Mth.ceil(hud.getWidth() / s); // scaled width
+		double s = chat.getScale();
+		int lH = chat.getLineHeight();
+		int sW = Mth.ceil(chat.getWidth() / s); // scaled width
 		int sH = Mth.floor((mc().getWindow().getGuiScaledHeight() - 40) / s); // scaled height
 		int shift = Mth.floor(config.calcDynamicChatShift() / s);
-		int i = visibleMessageIndex - access.chatpatches$getScrolledLines();
+		int i = visibleMessageIndex - chat.chatScrollbarPos;
 		int hoveredY = sH - (i * lH) - shift;
 
 		//$ push_stack
@@ -584,7 +583,7 @@ public class ContextMenu implements GuiEventListener {
 		graphics.pose().scale((float) s, (float) s /*? if <=1.21.5 {*//*, 1.0f*//*?}*/);
 
 		int borderW = sW + 8;
-		int scissorY1 = Mth.floor((sH - (hud.getLinesPerPage() * lH) - shift - 1) * s);
+		int scissorY1 = Mth.floor((sH - (chat.getLinesPerPage() * lH) - shift - 1) * s);
 		int scissorY2 = Mth.floor((sH - shift + 1) * s);
 		int selectionY1 = hoveredY - (lH * hoveredParts);
 		int selectionH = (lH * hoveredParts) + 1;
@@ -692,8 +691,8 @@ public class ContextMenu implements GuiEventListener {
 
 	public boolean isMouseOver(double mX, double mY) {
 		return !noOp &&
-			   mX >= grid.widget.getX() && mX <= grid.widget.getX() + grid.widget.getWidth()
-			&& mY >= grid.widget.getY() && mY <= grid.widget.getY() + grid.widget.getHeight();
+			   mX >= grid.layout.getX() && mX <= grid.layout.getX() + grid.layout.getWidth()
+			&& mY >= grid.layout.getY() && mY <= grid.layout.getY() + grid.layout.getHeight();
 	}
 
 	/**
@@ -713,7 +712,7 @@ public class ContextMenu implements GuiEventListener {
 		noOp = true;
 		grid.buttons().forEach(remove);
 		grid.clear();
-		screen.setFocused( ((ChatScreenAccess) screen).chatpatches$getChatField() );
+		screen.setFocused(screen.input);
 	}
 
 	/**
@@ -842,7 +841,7 @@ public class ContextMenu implements GuiEventListener {
 	 * intended locations.
 	 */
 	class Grid {
-		private final GridLayout widget;
+		private final GridLayout layout;
 		private final ObjectList<Entry> entries;
 		/**
 		 * Holds a list of buttons at each index (group number)
@@ -859,7 +858,7 @@ public class ContextMenu implements GuiEventListener {
 		private int groupCount = 0;
 
 		public Grid() {
-			this.widget = new GridLayout(clickPos.xInt(), clickPos.yInt());
+			this.layout = new GridLayout(clickPos.xInt(), clickPos.yInt());
 			this.entries = new ObjectArrayList<>(MAX_ROWS * MAX_COLUMNS);
 			this.groups = new ObjectArrayList<>(MAX_ROWS);
 		}
@@ -874,7 +873,7 @@ public class ContextMenu implements GuiEventListener {
 
 			Entry entry = new Entry(absRow, col, groupId, button, tooltipCopyTextSupplier, pressAction);
 
-			widget.addChild(button, absRow, col);
+			layout.addChild(button, absRow, col);
 			entries.add(entry);
 			if(groups.size() > groupId) {
 				groups.get(groupId).add(entry);
@@ -909,23 +908,21 @@ public class ContextMenu implements GuiEventListener {
 		public void clear() {
 			entries.clear();
 			groups.clear();
-			((GridWidgetAccessor) widget).getChildren().clear();
+			layout.children.clear();
 		}
 
 		/**
-		 * @return The widgets stored in this Grid's internal
-		 * {@link GridLayout} object, cast to
-		 * <code>{@link List}<{@link AbstractButton}></code>.
-		 * Will log a {@link ClassCastException} and return an
-		 * empty list if any of the widgets are not of the correct
-		 * type. However, this should never happen, per the
-		 * {@linkplain ContextMenu#registerButton(Component, int, int, Supplier, Button.OnPress, Object)
-		 * button registering methods}.
+		 * @return The widgets stored in this Grid's internal {@link GridLayout}
+		 * object, cast to <code>{@link List}<{@link AbstractButton}></code>.
+		 * Will log a {@link ClassCastException} and return an empty list if any
+		 * of the widgets are not of the correct type. However, this should
+		 * never happen, per the {@linkplain ContextMenu#registerButton(Component,
+		 * int, int, Object, Supplier, Button.OnPress) button registering methods}.
 		 */
 		@SuppressWarnings("unchecked")
 		public List<AbstractButton> buttons() {
 			try {
-				return (List<AbstractButton>) (Object) ((GridWidgetAccessor) widget).getChildren();
+				return (List<AbstractButton>) (Object) layout.children;
 			} catch(ClassCastException e) {
 				logReportMsg(e);
 				return ObjectList.of();
@@ -942,7 +939,7 @@ public class ContextMenu implements GuiEventListener {
 		 * by shifting it up and/or left if necessary.
 		 */
 		public void updateButtonMetadata() {
-			widget.arrangeElements();
+			layout.arrangeElements();
 
 			// sync main button widths
 			int mainWidth = entries.stream()
@@ -971,16 +968,16 @@ public class ContextMenu implements GuiEventListener {
 
 
 			// if the grid menu goes off the screen, shift it up
-			int y = widget.getY(), h = mc().getWindow().getGuiScaledHeight();
-			if(widget.getHeight() + y > h) {
+			int h = mc().getWindow().getGuiScaledHeight();
+			if(layout.getHeight() + layout.getY() > h) {
 				// moves the menu up by the amount it goes off the screen, plus a padding buffer
-				widget.setY(y - ((widget.getHeight() + y) - h) - BUTTON_PADDING);
+				layout.setY(h - layout.getHeight() - BUTTON_PADDING);
 			}
 			// if the grid menu goes off the screen, shift it left
-			int x = widget.getX(), w = mc().getWindow().getGuiScaledWidth();
-			if(widget.getWidth() + x > w) {
+			int w = mc().getWindow().getGuiScaledWidth();
+			if(layout.getWidth() + layout.getX() > w) {
 				// moves the menu left by the amount it goes off the screen, plus a padding buffer
-				widget.setX(x - ((widget.getWidth() + x) - w) - BUTTON_PADDING);
+				layout.setX(w - layout.getWidth() - BUTTON_PADDING);
 			}
 		}
 

@@ -32,7 +32,6 @@ import net.minecraft.world.scores.PlayerTeam;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.util.TextUtils;
 
 import java.io.IOException;
@@ -207,7 +206,7 @@ public class Config {
                 components.add(3, team.getPlayerSuffix()); // team suffix
             }
 
-            return TextUtils.newText(
+            return new MutableComponent(
 				/*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/.EMPTY,
 				components,
 				hoverStyle
@@ -244,8 +243,7 @@ public class Config {
         if(!boundary || vanillaClearing) return;
 
 		ChatComponent chat = mc().gui.getChat();
-		ChatHudAccess access = (ChatHudAccess) chat;
-        List<GuiMessage> messages = access.chatpatches$getMessages();
+        List<GuiMessage> messages = chat.allMessages;
 		Boundary currentLevel = Boundary.createFromCurrentLevel();
 
 		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return;
@@ -260,7 +258,7 @@ public class Config {
 				// todo: delete message method - call here! should delete both real and visible message(s), and update search results however possible (if extra needs to be done)
 				messages.removeFirst(); // deletes the useless boundary line
 
-				var visibles = access.chatpatches$getVisibleMessages();
+				var visibles = chat.trimmedMessages;
 				// removes all associated visible messages (99% of the time this should run once)
 				do visibles.removeFirst();
 				while(!visibles.isEmpty() && !visibles.getFirst().endOfEntry());

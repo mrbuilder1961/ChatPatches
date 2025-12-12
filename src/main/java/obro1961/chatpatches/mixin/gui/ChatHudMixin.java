@@ -32,69 +32,62 @@ import java.util.List;
 import static obro1961.chatpatches.ChatPatches.config;
 
 /**
- * The main entrypoint mixin for technical chat modifications,
- * notably expansive and complex changes to the way messages
- * are stored, logged, and modified in the chat.
- * Implements {@link ChatHudAccess} to widen access to
- * extra fields and methods used elsewhere.
+ * The main entrypoint mixin for technical chat modifications, notably expansive
+ * and complex changes to the way messages are stored, logged, and modified.
+ * Note that said changes are called but not necessarily implemented here.
+ * <p>
+ * {@link ChatHudAccess} allows accessing some custom public methods outside of
+ * this mixin.
  */
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatComponent.class, priority = 500)
 public abstract class ChatHudMixin implements ChatHudAccess {
+    @Shadow @Final public List<GuiMessage> allMessages;
+    @Shadow @Final public List<GuiMessage.Line> trimmedMessages;
+
     @Shadow @Final private Minecraft minecraft;
-    @Shadow @Final private List<GuiMessage> allMessages;
-    @Shadow @Final private List<GuiMessage.Line> trimmedMessages;
     @Shadow @Final private List<?> messageDeletionQueue;
-    @Shadow private int chatScrollbarPos;
 
     @Shadow protected abstract double screenToChatX(double x);
     @Shadow protected abstract double screenToChatY(double y);
-    @Shadow protected abstract int getLineHeight();
     @Shadow protected abstract int getMessageEndIndexAt(double chatLineX, double chatLineY);
 
     @Shadow public abstract boolean isChatFocused();
 
+
     // ChatHudAccess methods used outside this mixin
-    // @Intrinsic > @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
-    @Intrinsic public List<GuiMessage> chatpatches$getMessages() { return allMessages; }
-    @Intrinsic public List<GuiMessage.Line> chatpatches$getVisibleMessages() { return trimmedMessages; }
-    @Intrinsic public int chatpatches$getScrolledLines() { return chatScrollbarPos; }
-    @Intrinsic public int chatpatches$getLineHeight() { return getLineHeight(); }
 
-
-    /**
-     * Returns the index of the chat line at the given mouse position.
+	/**
+     * Returns the index of the {@link GuiMessage} at the given mouse position.
      *
-     * @implNote Unfortunately, Yarn's name choice for the {@link #getMessageEndIndexAt}
-     * method (called in {@link #getEoEIndex(double, double)}) is <b>extremely
-     * misleading and inaccurate, because it implies a return value corresponding
-     * to {@link ChatComponent#allMessages}, which is not true</b>. In reality, the method
-     * returns the index of a {@linkplain GuiMessage.Line#endOfEntry EoE} line
-     * in {@link ChatComponent#trimmedMessages} at the given mouse position. But when
-     * used with {@code allMessages}, it will return inaccurate indices for all messages
-     * after the first multiline message (because the two message lists are no longer
-     * 1:1).
-     * <br>
-     * <i>To fix this, we subtract the number of non-EoE messages before the
-     * checked index from the index itself, to make it effectively 1:1 again.</i>
+     * @implNote Different from {@link #getMessageEndIndexAt}, which does <i>not</i>
+	 * return a value corresponding to {@link ChatComponent#allMessages}, but returns
+	 * the index of a {@linkplain GuiMessage.Line#endOfEntry EoE} line in
+	 * {@link ChatComponent#trimmedMessages} at the given mouse position. But when
+     * used with {@code allMessages}, it will return inaccurate indices for all
+     * messages after the first multiline message (because the two message lists are
+     * no longer 1:1).
+     * <p>
+     * <b>To fix this, we subtract the number of non-EoE messages before the
+     * checked index from the index itself, to make it effectively 1:1 again.</b>
      *
      * @see ChatUtils#visible2Message(int)
      * @see #moveChat(int)
      * @see #moveChatLineY(double)
      */
     @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
-    public int getChatHudLineIndex(double mouseX, double mouseY) {
+    public int getGuiMessageIndex(double mouseX, double mouseY) {
         return ChatUtils.visible2Message(getEoEIndex(mouseX, mouseY));
     }
 
     /**
      * Simply calls {@link #getMessageEndIndexAt(double, double)} with
      * {@link #screenToChatX(double)} and {@link #screenToChatY(double)} as
-     * arguments. Returns the {@link GuiMessage.Line} that is {@linkplain
-     * GuiMessage.Line#endOfEntry EoE} at the given mouse position. In
-     * other words, returns the index of the last line that makes up the
-     * visible message at the given mouse position. Automatically accounts
-     * for any {@link Config#chatShift} offsets with injectors
+     * arguments. Returns the {@link GuiMessage.Line} that is
+     * {@linkplain GuiMessage.Line#endOfEntry EoE} at the given mouse position.
+	 * In other words, returns the index of the last line that makes up the
+     * visible message at the given mouse position. Automatically accounts for
+     * any {@link Config#chatShift} offsets with injectors
      * {@link #moveChat(int)} and {@link #moveChatLineY(double)}.
      */
     @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs

@@ -9,6 +9,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.network.chat.*;
+//? if >1.20.2 {
+import net.minecraft.network.chat.contents.PlainTextContents;
+//?}
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 
 import java.util.List;
@@ -148,37 +151,26 @@ public class TextUtils {
 	}
 
 	/**
-	 * Creates a new MutableText object with explicit
-	 * sibling and style data specified. Behaves
-	 * effectively the same as the private constructor
-	 * {@link MutableComponent#MutableComponent(ComponentContents, List, Style)}.
-	 */
-	public static MutableComponent newText(ComponentContents content, List<Component> siblings, Style style) {
-		MutableComponent text = MutableComponent.create(content).setStyle(style);
-		siblings.forEach(text::append);
-		return text;
-	}
-
-	/**
 	 * Returns a copy of {@code text} with the specified {@code siblings}
 	 * parameter replacing the original siblings. The passed {@code text}'s
 	 * content and style are preserved.
 	 */
 	public static MutableComponent newSiblings(Component text, List<Component> siblings) {
-		return newText(text.getContents(), siblings, text.getStyle());
+		return new MutableComponent(text.getContents(), siblings, text.getStyle());
 	}
 
+	@Deprecated // sole use case is comparing styles for dupe counter - should be replaced w getformattingcodes aggregator or a new method to compile contents + sibs into one comparable list
 	/**
 	 * Returns a copy of {@code text} with an empty content.
 	 * Useful for comparing {@link Component} objects'
 	 * metadata (style and siblings) only.
 	 * */
 	public static MutableComponent withoutContent(Component text) {
-		//stonecutter: remove qualifier when import optimizer fix is available
-		return newText(/*? if <=1.20.2 {*//*ComponentContents.EMPTY*//*?} else {*/net.minecraft.network.chat.contents.PlainTextContents.EMPTY/*?}*/, text.getSiblings(), text.getStyle());
+		return new MutableComponent(/*? if >1.20.2 {*/PlainTextContents/*?} else {*//*ComponentContents*//*?}*/.EMPTY, text.getSiblings(), text.getStyle());
 	}
 
 
+	// prepub - these guys should either be inlined or turned into swaps bc this is agonizing to look at
 	public static ClickEvent/*? if >=1.21.5 {*/.OpenUrl/*?}*/ openUrl(String url) {
 		return new
 			//? if >=1.21.5 {

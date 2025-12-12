@@ -356,7 +356,7 @@ public class YaclConfig extends Config {
                 case "chatHeight" -> mc().getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
                 case "compactDistance" -> //noinspection ConstantValue: Stonecutter :D
-					(Object)mc().gui.getChat() instanceof ChatComponent chatHud ? chatHud.getLinesPerPage() : 25; //prepub: chatMaxMessages ?
+					(Object)mc().gui.getChat() instanceof ChatComponent chat ? chat.getLinesPerPage() : 25; //prepub: chatMaxMessages ?
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));

@@ -23,7 +23,6 @@ import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.GsonHelper;
-import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 import obro1961.chatpatches.util.TextUtils;
@@ -354,14 +353,13 @@ public class ChatLog {
         if(messageCount() > 0 && historyCount() > 0) {
 			RenderSystem.assertOnRenderThread();
 			ChatComponent chat = mc().gui.getChat();
-			ChatHudAccess access = (ChatHudAccess) chat;
 
 			// copy and clear the current chat so delayed restoration doesn't drown existing messages
 			// i think we just need to mixin to the delayed message queue thing, and here we cache the current setting, set it to ~5s delay, and mark some flag field true to be used in the mixin(s)!
 			var prevHistory = List.copyOf(chat.getRecentChat());
-			var prevMessages = List.copyOf(access.chatpatches$getMessages());
+			var prevMessages = List.copyOf(chat.allMessages);
 			chat.getRecentChat().clear();
-			access.chatpatches$getMessages().clear();
+			chat.allMessages.clear();
 
 			restoring = true;
 			history.forEach(chat::addRecentChat);
@@ -369,7 +367,7 @@ public class ChatLog {
 			restoring = false;
 
 			chat.getRecentChat().addAll(prevHistory);
-			access.chatpatches$getMessages().addAll(prevMessages);
+			chat.allMessages.addAll(prevMessages);
 
 			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
 			hideRecentMessages();
@@ -388,7 +386,7 @@ public class ChatLog {
 	public static void hideRecentMessages() {
 		if(messageCount() > 0 && historyCount() > 0) {
 			int ticks = mc().gui.getGuiTicks();
-			var visibles = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages();
+			var visibles = mc().gui.getChat().trimmedMessages;
 
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering! (#42)
 			// now adds the message's addedTime to account for any extra offsets from the deserialization desync from the main game thread

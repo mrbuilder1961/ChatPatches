@@ -38,7 +38,6 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import obro1961.chatpatches.ChatLog;
-import obro1961.chatpatches.accessor.ChatHudAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
@@ -57,7 +56,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -75,6 +73,13 @@ import static obro1961.chatpatches.ChatPatches.id;
 @Environment(EnvType.CLIENT)
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess {
+	@Shadow	public EditBox input;
+	@SuppressWarnings("MissingUnique") //@Shadow
+	@NotNull protected Minecraft minecraft = Minecraft.getInstance(); // removes NPE warnings
+	@Shadow protected String initial;
+	@Shadow private int historyPos;
+
+
 	@Unique private static final String CHAT_LOG_UNAVAILABLE = I18n.get("text.chatpatches.chatlog.unavailable");
 	// search text
 	@Unique private static final String SEARCH_SUGGESTION = I18n.get("text.chatpatches.search.suggestion");
@@ -135,19 +140,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private Button caseSensitiveButton;
 	/** @see Config#regex */
 	@Unique private Button regexButton;
-
-	// ChatScreen fields
-	@SuppressWarnings("MissingUnique") //@Shadow
-	@NotNull protected Minecraft minecraft = Minecraft.getInstance(); // removes NPE warnings
-	@Shadow	protected EditBox input;
-	@Shadow protected String initial;
-	@Shadow private int historyPos;
-
-	/**
-	 * Allows access to {@link #input}. Notably used in {@link
-	 * ContextMenu#init(Consumer)} for the {@link ContextMenu#MENU_REPLY} action.
-	 */
-	public EditBox chatpatches$getChatField() { return input; }
 
 	protected ChatScreenMixin(Component title) { super(title); }
 
@@ -412,9 +404,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/*?}*/
 
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;handleChatQueueClicked(DD)Z"))
-	private boolean fixMenuClickthroughClick(ChatComponent chatHud, double mX, double mY, Operation<Boolean> mouseClicked) {
-		// return false (not clicked) if the context menu is showing and the mouse is over it, otherwise delegate to chatHud
-		return !isMouseOverSettingsMenu(mX, mY) && !contextMenu.isMouseOver(mX, mY) && mouseClicked.call(chatHud, mX, mY);
+	private boolean fixMenuClickthroughClick(ChatComponent chat, double mX, double mY, Operation<Boolean> mouseClicked) {
+		// return false (not clicked) if the context menu is showing and the mouse is over it, otherwise delegate to chat
+		return !isMouseOverSettingsMenu(mX, mY) && !contextMenu.isMouseOver(mX, mY) && mouseClicked.call(chat, mX, mY);
 	}
 
 	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/ChatScreen;getComponentStyleAt(DD)Lnet/minecraft/network/chat/Style;"))
@@ -639,7 +631,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			return; // prevent useless updates
 		}
 
-		ChatComponent chatHud = minecraft.gui.getChat();
+		ChatComponent chat = minecraft.gui.getChat();
 		if(!text.isEmpty() || refresh) {
 			if(!text.isEmpty()) { // ensures the suggestion is kept when there is no query
 				searchField.setSuggestion(null);
@@ -656,14 +648,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					searchError = e;
 					// red = invalid regex
 					status = ChatFormatting.RED;
-					chatHud.rescaleChat();
+					chat.rescaleChat();
 				}
 			} else {
 				searchError = null; // no errors possible, only lack of match(es)!
 			}
 
 			if(searchError == null) {
-				var messages = ((ChatHudAccess) chatHud).chatpatches$getMessages();
+				var messages = chat.allMessages;
 				var copy = List.copyOf(messages);
 
 				messages.removeIf(Predicate.not(msg -> {
@@ -682,7 +674,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					// save the full, filtered messages for the context menu
 					searchResults.addAll(messages);
 					// generate the visible messages from the filtered messages
-					chatHud.rescaleChat();
+					chat.rescaleChat();
 					// add the real messages back; doesn't affect the visible messages
 					messages.clear();
 					messages.addAll(copy);
@@ -691,7 +683,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				} else {
 					// already empty
 					messages.addAll(copy);
-					chatHud.rescaleChat(); // we need the visible messages back
+					chat.rescaleChat(); // we need the visible messages back
 
 					status = ChatFormatting.YELLOW; // no matches but valid search
 				}
@@ -703,7 +695,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			searchField.setTextColor(EditBox.DEFAULT_TEXT_COLOR);
 			searchField.setSuggestion(SEARCH_SUGGESTION);
 			searchResults.clear();
-			chatHud.rescaleChat();
+			chat.rescaleChat();
 		}
 
 		searchDraft = text;

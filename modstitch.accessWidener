@@ -1,0 +1,27 @@
+accessWidener v1 named
+
+# see EasyText
+accessible method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
+#? if >=1.21.11 {
+#extendable method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
+#?}
+
+
+## ChatHud (ChatComponent)
+
+accessible field net/minecraft/client/gui/components/ChatComponent allMessages Ljava/util/List;
+accessible field net/minecraft/client/gui/components/ChatComponent trimmedMessages Ljava/util/List;
+accessible field net/minecraft/client/gui/components/ChatComponent chatScrollbarPos I
+accessible method net/minecraft/client/gui/components/ChatComponent getLineHeight ()I
+
+
+## ChatScreen
+
+# see ContextMenu #init(.) , #close(.)
+accessible field net/minecraft/client/gui/screens/ChatScreen input Lnet/minecraft/client/gui/components/EditBox;
+
+
+## GridLayout
+
+# see ContextMenu.Grid
+accessible field net/minecraft/client/gui/layouts/GridLayout children Ljava/util/List;

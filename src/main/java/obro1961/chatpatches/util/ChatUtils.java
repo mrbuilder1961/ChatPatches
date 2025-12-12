@@ -102,7 +102,7 @@ public class ChatUtils {
 	 * @see #visible2Message(int)
 	 */
 	public static int message2Visible(int messageIndex) {
-		var visibles = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages();
+		var visibles = mc().gui.getChat().trimmedMessages;
 
 		if(messageIndex == -1) {
 			return -1; // avoids iterating through the entire list
@@ -135,12 +135,12 @@ public class ChatUtils {
 	 * correspond 1:1 after the first multiline message, which caused a myriad of
 	 * frustrating issues.
 	 *
-	 * @see ChatHudMixin#getChatHudLineIndex(double, double)
+	 * @see ChatHudMixin#getGuiMessageIndex(double, double)
 	 *
 	 * @see #message2Visible(int)
 	 */
 	public static int visible2Message(int visibleIndex) {
-		var visibles = ((ChatHudAccess) mc().gui.getChat()).chatpatches$getVisibleMessages();
+		var visibles = mc().gui.getChat().trimmedMessages;
 
 		if(visibleIndex == -1 || visibleIndex >= visibles.size()) {
 			return -1;
@@ -451,19 +451,18 @@ public class ChatUtils {
 	 */
 	private static Component tryCondenseDupes(Component incoming) {
 		// prepub: make this method save to the chat log too (so no redundant messages)!
-		ChatComponent hud = mc().gui.getChat();
-		ChatHudAccess access = (ChatHudAccess) hud;
-		List<GuiMessage> messages = access.chatpatches$getMessages();
+		ChatComponent chat = mc().gui.getChat();
+		List<GuiMessage> messages = chat.allMessages;
 
 		if(!config.counter || messages.isEmpty()) {
 			return incoming;
 		}
 
 		ObjectList<Component> siblings = new ObjectArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
-		List<GuiMessage.Line> visibles = access.chatpatches$getVisibleMessages();
+		List<GuiMessage.Line> visibles = chat.trimmedMessages;
 		int attemptDistance =
 			switch(config.compactChat ? Math.abs(config.compactDistance) : 1) {
-				case 0 -> hud.getLinesPerPage();
+				case 0 -> chat.getLinesPerPage();
 				case 1 -> 1; // only check more messages if compact chat is enabled
 				default -> Math.min(config.compactDistance, messages.size()); // max checked = # of messages in chat, else config option
 			};
@@ -507,7 +506,7 @@ public class ChatUtils {
 			}
 		}
 
-		return TextUtils.newText(incoming.getContents(), siblings, incoming.getStyle());
+		return TextUtils.newSiblings(incoming, siblings);
 	}
 
 
