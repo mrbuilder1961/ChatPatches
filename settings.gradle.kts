@@ -3,12 +3,14 @@ pluginManagement {
     val kotlin: String by settings
     val stonecutter: String by settings
     val modstitch: String by settings
+    val loom: String by settings
     val mpp: String by settings
 
     plugins {
         kotlin("jvm") version kotlin
-        id("dev.kikugie.stonecutter") version stonecutter
         id("dev.isxander.modstitch.base") version modstitch
+        id("dev.kikugie.stonecutter") version stonecutter
+        id("fabric-loom") version loom apply false
         id("me.modmuss50.mod-publish-plugin") version mpp
     }
 

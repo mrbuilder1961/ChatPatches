@@ -3,9 +3,10 @@ import kotlinx.serialization.json.jsonObject
 import me.modmuss50.mpp.ReleaseType
 
 plugins { // versions in gradle.properties + settings.gradle.kts
-    id("dev.isxander.modstitch.base")
-    id("me.modmuss50.mod-publish-plugin")
     kotlin("jvm")
+    id("dev.isxander.modstitch.base")
+    id("fabric-loom") apply false
+    id("me.modmuss50.mod-publish-plugin")
 }
 
 
@@ -16,7 +17,7 @@ val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prep
 val currentIsActive = minecraft == stonecutter.active?.version
 val java = if(stonecutter.eval(minecraft, ">1.20.4")) 21 else 17
 
-var publish = providers.gradleProperty("publish").getOrElse("true").toBoolean() // prepub: abolish bc this is annoying bc the default is
+var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
 // if we just had a `testPublishMods` task
 var changes = "No changelog specified."
@@ -124,10 +125,9 @@ modstitch {
         fabricLoaderVersion = p("fabric.loader")
 
 
-        // Configure loom like normal in this block.
+        // Configure loom like normal here
         configureLoom {
-            //todo ?? blank unless i need to edit something like AW (aka disable validation for versioning)
-            // also note that AW/ATs are now automatically translated to the other by modstitch >:) see stonecutter website for using them together :D
+            mixin.useLegacyMixinAp = false // todo doesn't seem to work but idk how to disable the warning
         }
     }
 
@@ -225,13 +225,13 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     replacements {
+        val j17 = java < 21
         string {
-            direction = java < 21
+            direction = j17
             replace(".getFirst()", ".get(0)")
         }
-
         string {
-            direction = java < 21
+            direction = j17
             replace(".removeFirst()", ".remove(0)")
         }
     }
