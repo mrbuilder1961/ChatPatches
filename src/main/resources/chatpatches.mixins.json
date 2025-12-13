@@ -10,7 +10,7 @@
   "mixins": [],
   "client": [
     "codec.ExtraCodecsMixin",
-    "gui.ChatHudMixin",
+    "gui.ChatComponentMixin",
     "gui.ChatScreenMixin",
     "gui.ScreenMixin",
     "listener.MessageHandlerMixin",

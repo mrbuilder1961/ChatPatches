@@ -9,7 +9,7 @@ import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.util.StringDecomposer;
-import obro1961.chatpatches.mixin.gui.ChatHudMixin;
+import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
 import obro1961.chatpatches.util.ChatUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +27,7 @@ import static obro1961.chatpatches.util.ChatUtils.*;
 /**
  * A mixin used to cache the metadata of the most recent message
  * received by the client. This is used in
- * {@link ChatHudMixin#modifyMessage(Component)}
+ * {@link ChatComponentMixin#modifyMessage(Component)}
  * to provide more accurate timestamp data, the correct player
  * name, and the player's UUID.
  */

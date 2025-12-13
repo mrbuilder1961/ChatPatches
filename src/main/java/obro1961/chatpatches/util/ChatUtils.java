@@ -13,9 +13,9 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.accessor.ChatHudAccess;
+import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.mixin.gui.ChatHudMixin;
+import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
 import obro1961.chatpatches.mixin.listener.MessageHandlerMixin;
 import org.apache.logging.log4j.core.util.Integers;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +135,7 @@ public class ChatUtils {
 	 * correspond 1:1 after the first multiline message, which caused a myriad of
 	 * frustrating issues.
 	 *
-	 * @see ChatHudMixin#getGuiMessageIndex(double, double)
+	 * @see ChatComponentMixin#getGuiMessageIndex(double, double)
 	 *
 	 * @see #message2Visible(int)
 	 */
@@ -241,7 +241,7 @@ public class ChatUtils {
 	 * Reformats the incoming message {@code m} according to configured settings,
 	 * message data, {@link #tryCondenseDupes(Component)}, and more.
 	 *
-	 * @see ChatHudMixin#modifyMessage(Component)
+	 * @see ChatComponentMixin#modifyMessage(Component)
 	 *
 	 * @implNote
 	 * <ol>

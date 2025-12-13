@@ -42,7 +42,7 @@ import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.accessor.ChatHudAccess;
+import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtils;
@@ -141,7 +141,6 @@ public class ContextMenu implements GuiEventListener {
 	@Nullable
 	private final ChatScreen screen;
 	private final ChatComponent chat;
-	//private final ChatHudAccess access;
 
 	// variables derived from selected message
 	public final RenderUtils.MousePos clickPos;
@@ -191,7 +190,7 @@ public class ContextMenu implements GuiEventListener {
 
 		// reference and optimization fields
 		this.chat = mc().gui.getChat();
-		var access = (ChatHudAccess) chat;
+		var access = (ChatComponentAccess) chat;
 		this.screen = noOp ? null : screen;
 
 		// selected fields

@@ -16,7 +16,7 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import obro1961.chatpatches.ChatLog;
-import obro1961.chatpatches.accessor.ChatHudAccess;
+import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtils;
 import org.spongepowered.asm.mixin.Final;
@@ -36,12 +36,12 @@ import static obro1961.chatpatches.ChatPatches.config;
  * and complex changes to the way messages are stored, logged, and modified.
  * Note that said changes are called but not necessarily implemented here.
  * <p>
- * {@link ChatHudAccess} allows accessing some custom public methods outside of
+ * {@link ChatComponentAccess} allows accessing some custom public methods outside of
  * this mixin.
  */
 @Environment(EnvType.CLIENT)
 @Mixin(value = ChatComponent.class, priority = 500)
-public abstract class ChatHudMixin implements ChatHudAccess {
+public abstract class ChatComponentMixin implements ChatComponentAccess {
     @Shadow @Final public List<GuiMessage> allMessages;
     @Shadow @Final public List<GuiMessage.Line> trimmedMessages;
 
@@ -55,7 +55,7 @@ public abstract class ChatHudMixin implements ChatHudAccess {
     @Shadow public abstract boolean isChatFocused();
 
 
-    // ChatHudAccess methods used outside this mixin
+    // ChatComponentAccess methods used outside this mixin
 
 	/**
      * Returns the index of the {@link GuiMessage} at the given mouse position.
