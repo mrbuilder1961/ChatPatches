@@ -510,6 +510,5 @@ public class ChatUtils {
 	}
 
 
-	/** Represents the metadata of a chat message. */
 	public record MessageData(GameProfile sender, Date timestamp, boolean vanilla) {}
 }

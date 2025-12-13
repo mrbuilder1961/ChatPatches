@@ -96,7 +96,7 @@ public class ContextMenu implements GuiEventListener {
 	private static Minecraft mc() { return Minecraft.getInstance(); }
 
 	// region text constants
-	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", TextUtils.asText(id));
+	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", TextUtils.asText(id)).withStyle(ChatFormatting.RED);
 	static final Component MENU_STRING = Component.translatable(LANG_PREFIX + "copyText");
 	static final Component RAW_TEXT = Component.translatable(LANG_PREFIX + "rawText");
 	static final Component FORMATTED_STR = Component.translatable(LANG_PREFIX + "formattedString");
@@ -265,7 +265,7 @@ public class ContextMenu implements GuiEventListener {
 			String copyStr = StringUtil.stripColor(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc().keyboardHandler.setClipboard(copyStr);
-				ChatPatches.pushInfoToast(Component.translatable(LANG_PREFIX + "copied"), copyText);
+				ChatPatches.pushInfoToast(Component.translatable(LANG_PREFIX + "copied").withStyle(ChatFormatting.GREEN), copyText);
 			}
 
 			if(pressAction != null) {

@@ -10,7 +10,7 @@
     "text.chatpatches.category.time": "Timestamp",
     "text.chatpatches.category.hover": "Timestamp Hover Info",
     "text.chatpatches.category.counter": "Duplicate counter",
-    "text.chatpatches.category.compact": "§9CompactChat§r",
+    "text.chatpatches.category.compact": "CompactChat",
     "text.chatpatches.category.boundary": "Session Boundary",
     "text.chatpatches.category.chatlog": "Chat Log",
     "text.chatpatches.category.chatlog.actions": "Actions",
@@ -128,10 +128,10 @@
     "text.chatpatches.help.regex": "For regular expression information, click me!",
     "text.chatpatches.help.regexTester": "For testing regular expressions, click me!",
     "text.chatpatches.help.reloadConfig": "Reload config",
-    "text.chatpatches.help.missing": "§cCannot open config screen",
+    "text.chatpatches.help.missing": "Cannot open config screen",
     "text.chatpatches.desc.logMessageStructures": "When enabled, logs the structure of all modified messages. Useful for diagnosing chat issues, but quickly inflates the log size, so this is disabled by default.",
     "text.chatpatches.desc.help.reloadConfig": "Press to read the config file and load any changes. §c§lThis will override any unsaved changes made here!§r§f You need to exit and re-open this screen to see the changes take effect.",
-    "text.chatpatches.desc.help.missing": "§7Please install %s §7to access the config in-game!",
+    "text.chatpatches.desc.help.missing": "Please install %s to access the config in-game!",
 
     "text.chatpatches.search.suggestion": "Search...",
     "text.chatpatches.search.caseSensitive": "Case sensitive",
@@ -146,7 +146,7 @@
     "text.chatpatches.desc.contextReplyFormat": "The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the context menu. Requires '$' as a placeholder for the message sender's name.",
     "text.chatpatches.desc.contextOutlineColor": "The color of the selection box that surrounds a chat message after right-clicking.",
 
-    "text.chatpatches.context.copied": "§aSuccessfully copied to clipboard!",
+    "text.chatpatches.context.copied": "Successfully copied to clipboard!",
     "text.chatpatches.context.copyText": "Copy Text",
     "text.chatpatches.context.rawText": "Raw",
     "text.chatpatches.context.formattedString": "Formatted",
@@ -166,7 +166,7 @@
     "text.chatpatches.context.name": "Username",
     "text.chatpatches.context.uuid": "UUID",
     "text.chatpatches.context.reply": "Reply",
-    "text.chatpatches.context.unknown": "§c/§e!§c\\ §r§7Unknown data for '§6%s§7', please report this issue!",
+    "text.chatpatches.context.unknown": "/§e!§r\\ Unknown data for '§6%s§r', please report this issue!",
 
     "text.chatpatches.restored": "Restored message"
 }

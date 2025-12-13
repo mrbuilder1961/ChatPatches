@@ -10,6 +10,7 @@ import dev.isxander.yacl3.api.Option;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.client.GuiMessage;
@@ -121,8 +122,8 @@ public class Config {
 					mc().setScreen(parent);
 				}
             },
-            Component.translatable(YaclConfig.HELP_PREFIX + "missing"),
-            Component.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", (suggestYACL ? "YACL" : "Cloth Config")),
+            Component.translatable(YaclConfig.HELP_PREFIX + "missing").withStyle(ChatFormatting.RED),
+            Component.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", (suggestYACL ? "YACL" : "Cloth Config")).withStyle(GRAY),
             CommonComponents.GUI_CONTINUE,
             CommonComponents.GUI_BACK
         );
