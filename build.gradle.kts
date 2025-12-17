@@ -69,10 +69,6 @@ dependencies {
         modstitchModImplementation("dev.isxander:yet-another-config-lib:${d("yacl")}-fabric")
     }
 
-    dep("placeholder") { // prepub - this is always fine, but in listed dependencies, mod menu only provides it since 9.2.0 (1.20.4) and w/o MM it needs to
-        // be installed manually
-        modstitchModImplementation("eu.pb4:placeholder-api:$it")
-    }
     modstitchModImplementation("com.terraformersmc:modmenu:${d("modmenu")}")
 
     implementation(kotlin("stdlib-jdk8"))
@@ -82,7 +78,9 @@ repositories {
     mavenCentral()
     maven("https://maven.isxander.dev/releases")
     maven("https://maven.terraformersmc.com/releases/")
-    maven("https://maven.nucleoid.xyz/") // Placeholder API, for us and Mod Menu
+    if(minecraft == "1.20.4") {
+        maven("https://maven.nucleoid.xyz/") // Placeholder API for Mod Menu -_-
+    }
 }
 
 modstitch {
@@ -143,6 +141,7 @@ modstitch {
                 disableIdeRun()
             }
             //todo https://projects.neoforged.net/neoforged/moddevgradle # Runs
+            // + https://discord.com/channels/780023008668287017/780485575194312704/1402249054179688468
         }*/
     }
 
@@ -285,9 +284,7 @@ publishMods {
         minecraftVersions.addAll(targets)
 
         required.forEach(::requires)
-        // FIXME TEMP FIX BC PLACEHOLDER IS ANNOYINGGGG
-        optionals.toList().map { if(it.contains("placeholder")) "text-placeholder-api" else it }.forEach(::optional)
-        //optionals.forEach(::optional)
+        optionals.forEach(::optional)
         incompatibles.forEach(::incompatible)
         embedded.forEach(::embeds)
     }

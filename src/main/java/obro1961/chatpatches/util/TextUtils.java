@@ -252,10 +252,7 @@ public class TextUtils {
 		return DUPLICATE_COLOR_AMPERSAND_REGEX.reset(builder.toString()).replaceAll("$1&$2");
 	}
 
-	// prepub: alright here is the deal. this method is always gonna have some issue bc of lots of edge cases and etc etc.
-	//  so we're switching to QuickText/MiniMessage and if players want the old style, i'll just convert the QT to the old style
-	//  aka strip complex styles and convert hex & formatting colors to ampersand codes
-	// so new warning: string -> Component [works] , Component -> string [not supported]
+	// so new warning: string -> Component [works] , Component -> string [not supported].. back to the drawing (white) board..
 	/**
 	 * Returns the formatting codes of the {@link Style} provided, excluding any already
 	 * applied ones according to {@code last}. Returns an empty string if the style is

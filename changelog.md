@@ -2,6 +2,8 @@
 
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
 - Updated to 1.21.11
+- Removed optional dependency for Placeholder API/QuickText - it doesn't support the main feature I thought it did :(
+- Marked [MoreChatHistory](https://modrinth.com/mod/morechathistory) as incompatible - it won't crash your game, but it's useless with Chat Patches
 - **Dev notes:**
   - Chat Patches now uses an access widener to limit unnecessary code overhead - definitely not because I finally realized they're cool and useful (although 
     thanks to modstitch they automatically transpile to access transformers when needed!)

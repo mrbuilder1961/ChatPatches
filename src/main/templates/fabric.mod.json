@@ -35,5 +35,8 @@
     "menulogue": "*",
 
     "nochatreports": "*"
+  },
+  "conflicts": {
+    "morechathistory": "*"
   }
 }
