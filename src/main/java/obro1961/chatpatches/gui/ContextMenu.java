@@ -45,8 +45,8 @@ import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
-import obro1961.chatpatches.util.RenderUtils;
-import obro1961.chatpatches.util.TextUtils;
+import obro1961.chatpatches.util.RenderUtil;
+import obro1961.chatpatches.util.TextUtil;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +67,7 @@ import java.util.regex.Pattern;
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static net.minecraft.network.chat.Component.literal;
 import static obro1961.chatpatches.ChatPatches.*;
-import static obro1961.chatpatches.util.ChatUtils.*;
+import static obro1961.chatpatches.util.ChatUtil.*;
 
 /**
  * Represents the context menu that appears when a chat message is right-clicked.
@@ -95,7 +95,7 @@ public class ContextMenu implements GuiEventListener {
 	private static Minecraft mc() { return Minecraft.getInstance(); }
 
 	// region text constants
-	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", TextUtils.asText(id)).withStyle(ChatFormatting.RED);
+	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", TextUtil.asText(id)).withStyle(ChatFormatting.RED);
 	static final Component MENU_STRING = Component.translatable(LANG_PREFIX + "copyText");
 	static final Component RAW_TEXT = Component.translatable(LANG_PREFIX + "rawText");
 	static final Component FORMATTED_STR = Component.translatable(LANG_PREFIX + "formattedString");
@@ -142,7 +142,7 @@ public class ContextMenu implements GuiEventListener {
 	private final ChatComponent chat;
 
 	// variables derived from selected message
-	public final RenderUtils.MousePos clickPos;
+	public final RenderUtil.MousePos clickPos;
 	private final GuiMessage selectedLine;
 	private final GameProfile messageSender;
 	/**
@@ -184,7 +184,7 @@ public class ContextMenu implements GuiEventListener {
 			noOp = true;
 
 		// critical fields
-		this.clickPos = RenderUtils.MousePos.of(mX, mY);
+		this.clickPos = RenderUtil.MousePos.of(mX, mY);
 		this.grid = new Grid();
 
 		// reference and optimization fields
@@ -428,15 +428,15 @@ public class ContextMenu implements GuiEventListener {
 		int strRow = 0; // current row for string and text buttons
 		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
 			registerCopyButton(RAW_TEXT, strRow++, text); // 0
-			registerCopyButton(FORMATTED_STR, strRow++, literal(TextUtils.toCodedString(text))); // 1
+			registerCopyButton(FORMATTED_STR, strRow++, literal(TextUtil.toCodedString(text))); // 1
 			if(timestamped) {
-				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
+				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtil.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			}
 			if(duped) {
-				registerCopyButton(NO_DUPE_TEXT, strRow++, TextUtils.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
+				registerCopyButton(NO_DUPE_TEXT, strRow++, TextUtil.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
 			}
 			registerCopyButton(JSON_STR,
-				strRow, TextUtils.UNSAFE_CODEC.encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
+				strRow, TextUtil.UNSAFE_CODEC.encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.map(NbtUtils::toPrettyComponent)
 					.orElse(UNKNOWN.apply(JSON_STR))
@@ -530,7 +530,7 @@ public class ContextMenu implements GuiEventListener {
 				MENU_REPLY,
 				0, 0,
 				(Object)mc().getConnection().getPlayerInfo(id) instanceof PlayerInfo info ? info./*? if >=1.20.2 {*/getSkin/*?} else {*//*getSkinLocation*//*?}*/() : null, null,
-				me -> screen.input.setValue(TextUtils.fillVars(config.contextReplyFormat, name))
+				me -> screen.input.setValue(TextUtil.fillVars(config.contextReplyFormat, name))
 				// prefer real skin; else nothing
 			);
 		}
@@ -589,15 +589,15 @@ public class ContextMenu implements GuiEventListener {
 		// cuts off any of the selection rect that goes past the chat hud
 		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
 		//? if <1.21.9 {
-		/*graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor));*/
+		/*graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));*/
 		//?} else {
-		int color = RenderUtils.opaque(config.contextOutlineColor);
+		int color = RenderUtil.opaque(config.contextOutlineColor);
 		graphics.fill(0, selectionY1, borderW, selectionY1 + 1, color);
 		graphics.fill(0, selectionY1 + selectionH - 1, borderW, selectionY1 + selectionH, color);
 		graphics.fill(0, selectionY1 + 1, 1, selectionY1 + selectionH - 1, color);
 		graphics.fill(borderW - 1, selectionY1 + 1, borderW, selectionY1 + selectionH - 1, color);
 		// prepub AW GuiGraphics.OutlineBox
-		// new GuiGraphics.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtils.opaque(config.contextOutlineColor)).render(graphics);
+		// new GuiGraphics.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor)).render(graphics);
 		//?}
 		graphics.disableScissor();
 

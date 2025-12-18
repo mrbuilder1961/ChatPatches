@@ -18,7 +18,7 @@ import net.minecraft.network.chat.Component;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.ChatUtils;
+import obro1961.chatpatches.util.ChatUtil;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Intrinsic;
 import org.spongepowered.asm.mixin.Mixin;
@@ -71,13 +71,13 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * <b>To fix this, we subtract the number of non-EoE messages before the
      * checked index from the index itself, to make it effectively 1:1 again.</b>
      *
-     * @see ChatUtils#visible2Message(int)
+     * @see ChatUtil#visible2Message(int)
      * @see #moveChat(int)
      * @see #moveChatLineY(double)
      */
     @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
     public int getGuiMessageIndex(double mouseX, double mouseY) {
-        return ChatUtils.visible2Message(getEoEIndex(mouseX, mouseY));
+        return ChatUtil.visible2Message(getEoEIndex(mouseX, mouseY));
     }
 
     /**
@@ -195,8 +195,8 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * @implNote Only modifies the message if the chat is not
      * refreshing the hud.
      *
-     * @see ChatUtils#modifyMessage(Component)
-     * @see ChatUtils#tryCondenseDupes(Component)
+     * @see ChatUtil#modifyMessage(Component)
+     * @see ChatUtil#tryCondenseDupes(Component)
      */
     @ModifyVariable(
         //? if <=1.20.4 {
@@ -208,7 +208,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
         argsOnly = true
     )
     private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @Local(argsOnly = true) boolean refreshing *//*?}*/) {
-        return /*? if <=1.20.4 {*/ /*refreshing ? m : *//*?}*/ ChatUtils.modifyMessage(m);
+        return /*? if <=1.20.4 {*/ /*refreshing ? m : *//*?}*/ ChatUtil.modifyMessage(m);
     }
 
     @Inject(

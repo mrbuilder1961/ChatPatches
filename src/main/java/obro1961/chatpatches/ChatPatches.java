@@ -17,7 +17,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import obro1961.chatpatches.config.Config;
-import obro1961.chatpatches.util.TextUtils;
+import obro1961.chatpatches.util.TextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static obro1961.chatpatches.util.TextUtils.asText;
+import static obro1961.chatpatches.util.TextUtil.asText;
 
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
@@ -179,8 +179,8 @@ public class ChatPatches implements ClientModInitializer {
 
 	private static void pushToast(boolean error, Object header, Object description) {
 		final int MAX_LEN = 60; // minimizes errors going off-screen
-		MutableComponent head = TextUtils.truncate(asText(header), MAX_LEN);
-		MutableComponent desc = TextUtils.truncate(asText(description), MAX_LEN);
+		MutableComponent head = TextUtil.truncate(asText(header), MAX_LEN);
+		MutableComponent desc = TextUtil.truncate(asText(description), MAX_LEN);
 
 		if(!head.equals(asText(header))) {
 			head.append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
@@ -189,7 +189,7 @@ public class ChatPatches implements ClientModInitializer {
 			desc.append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
 		}
 		/*if(ChatFormatting.stripFormatting(desc.getString()).length() > MAX_LEN) {
-			desc = TextUtils.truncate(desc, MAX_LEN).append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
+			desc = TextUtil.truncate(desc, MAX_LEN).append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
 		}*/
 
 		SystemToast.add(

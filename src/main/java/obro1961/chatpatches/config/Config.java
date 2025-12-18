@@ -33,7 +33,7 @@ import net.minecraft.world.scores.PlayerTeam;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.util.TextUtils;
+import obro1961.chatpatches.util.TextUtil;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -50,8 +50,8 @@ import java.util.function.Function;
 
 import static net.minecraft.ChatFormatting.*;
 import static obro1961.chatpatches.ChatPatches.*;
-import static obro1961.chatpatches.util.TextUtils.fillVars;
-import static obro1961.chatpatches.util.TextUtils.text;
+import static obro1961.chatpatches.util.TextUtil.fillVars;
+import static obro1961.chatpatches.util.TextUtil.text;
 
 public class Config {
     public static final Config DEFAULTS = new Config();
@@ -168,8 +168,8 @@ public class Config {
 		MutableComponent hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), hoverColor);
 
 		return timestamp.withStyle(s ->
-			s.withHoverEvent( hover ? TextUtils.showText(hoverText) : null )
-			.withClickEvent( hover ? TextUtils.suggestCommand(hoverText.getString()) : null )
+			s.withHoverEvent( hover ? TextUtil.showText(hoverText) : null )
+			.withClickEvent( hover ? TextUtil.suggestCommand(hoverText.getString()) : null )
 			.withInsertion(String.valueOf( when.getTime() ))
 			.withColor(timeColor)
 		);

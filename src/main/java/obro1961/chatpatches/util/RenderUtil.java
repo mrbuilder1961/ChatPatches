@@ -2,7 +2,7 @@ package obro1961.chatpatches.util;
 
 import net.minecraft.ChatFormatting;
 
-public class RenderUtils {
+public class RenderUtil {
 	/**
 	 * @return {@code rgb} with the alpha channel set to 255 ({@code argb})
 	 *

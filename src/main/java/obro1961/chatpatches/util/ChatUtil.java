@@ -30,9 +30,9 @@ import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static obro1961.chatpatches.ChatPatches.*;
-import static obro1961.chatpatches.util.TextUtils.withoutContent;
+import static obro1961.chatpatches.util.TextUtil.withoutContent;
 
-public class ChatUtils {
+public class ChatUtil {
 	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, EMPTY, null, null);
 	public static final MessageData NIL_MESSAGE_DATA = new MessageData(new GameProfile(Util.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
 
@@ -200,7 +200,7 @@ public class ChatUtils {
 	 */
 	public static MutableComponent getArg(TranslatableContents content, int index) {
 		// intentionally doesn't do a bounds check bc if that happens I need to know
-		return TextUtils.asText( content.getArgs()[index] );
+		return TextUtil.asText( content.getArgs()[index] );
 	}
 
 	/**
@@ -282,7 +282,7 @@ public class ChatUtils {
 	 * 	 <li>Assemble the message, despite any changes, and {@linkplain
 	 * 	 #tryCondenseDupes(Component) add a duplicate counter}.</li>
 	 * 	 <li>Log the modified message in the {@link ChatLog}.</li>
-	 * 	 <li>Reset {@link ChatUtils#messageData} to prevent a rare bug.</li>
+	 * 	 <li>Reset {@link ChatUtil#messageData} to prevent a rare bug.</li>
 	 * 	 <li>Return the built message.</li>
 	 * </ol>
 	 */
@@ -369,7 +369,7 @@ public class ChatUtils {
 				throw new AssertionError("Time to log those message structures!", null);
 			}
 		} catch(RuntimeException | AssertionError e) {
-			LOGGER.error("[ChatUtils.modifyMessage] An error occurred while modifying '{}'", m.getString());
+			LOGGER.error("[ChatUtil.modifyMessage] An error occurred while modifying '{}'", m.getString());
 			LOGGER.error("\tTimestamp: {}", optimizeEmpties(timestamp));
 			LOGGER.error("\tBody:");
 
@@ -388,7 +388,7 @@ public class ChatUtils {
 				LOGGER.error("\tDupes: {}", optimizeEmpties(getPart(m, DUPE_INDEX)));
 			}
 
-			LOGGER.error("[ChatUtils.modifyMessage] -- End of message structure --");
+			LOGGER.error("[ChatUtil.modifyMessage] -- End of message structure --");
 
 			if(e instanceof RuntimeException) { // don't log forced errors
 				logReportMsg(e);
@@ -504,7 +504,7 @@ public class ChatUtils {
 			}
 		}
 
-		return TextUtils.newSiblings(incoming, siblings);
+		return TextUtil.newSiblings(incoming, siblings);
 	}
 
 

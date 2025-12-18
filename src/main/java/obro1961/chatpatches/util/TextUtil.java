@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 /**
  * A class containing various string and {@link Component} related utilities.
  */
-public class TextUtils {
+public class TextUtil {
 	/**
 	 * @see ChatFormatting#PREFIX_CODE
 	 */

@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.util.StringDecomposer;
 import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
-import obro1961.chatpatches.util.ChatUtils;
+import obro1961.chatpatches.util.ChatUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Date;
 import java.util.UUID;
 
-import static obro1961.chatpatches.util.ChatUtils.*;
+import static obro1961.chatpatches.util.ChatUtil.*;
 
 /**
  * A mixin used to cache the metadata of the most recent message
@@ -47,7 +47,7 @@ public abstract class MessageHandlerMixin {
      */
     @Inject(method = "handlePlayerChatMessage", at = @At("HEAD"))
     private void cacheChatData(PlayerChatMessage message, GameProfile sender, ChatType.Bound params, CallbackInfo ci) {
-        ChatUtils.messageData = PARSEABLE_MESSAGE_KEYS.reset(
+        ChatUtil.messageData = PARSEABLE_MESSAGE_KEYS.reset(
             /*? if <1.20.5 {*/ /*params.chatType().chat().translationKey() *//*?} else {*/params.chatType().value().chat().translationKey()/*?}*/
         ).matches()
             ? new MessageData(sender, Date.from(message.timeStamp()), isVanilla(params.decorate(message.decoratedContent())))
@@ -63,7 +63,7 @@ public abstract class MessageHandlerMixin {
         String name = StringUtils.substringBetween(StringDecomposer.getPlainText(message), "<", ">");
         UUID id = guessChatUUID(message);
 
-        ChatUtils.messageData = !id.equals(Util.NIL_UUID)
+        ChatUtil.messageData = !id.equals(Util.NIL_UUID)
             ? new MessageData(new GameProfile(id, name), new Date(), isVanilla(message))
             : NIL_MESSAGE_DATA;
     }
@@ -71,10 +71,10 @@ public abstract class MessageHandlerMixin {
 
     /**
      * Returns true if the given Text is a vanilla message,
-     * as specified by {@link ChatUtils#VANILLA_FORMAT}.
+     * as specified by {@link ChatUtil#VANILLA_FORMAT}.
      * This should be true for every message sent by a player,
      * which are the only messages that need to be heavily
-     * modified in {@link ChatUtils#modifyMessage(Component)}}.
+     * modified in {@link ChatUtil#modifyMessage(Component)}}.
      *
      * @apiNote When called in the chat message handler, the
      * message passed should be

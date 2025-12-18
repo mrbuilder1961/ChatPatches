@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.StringUtil;
-import obro1961.chatpatches.util.TextUtils;
+import obro1961.chatpatches.util.TextUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,7 +19,7 @@ public abstract class ExtraCodecsMixin {
 
 	/**
 	 * Allows all chat strings to be serialized despite any section signs present.
-	 * Unfortunately, a sole check to {@link TextUtils#isCodecSafe()} will still break
+	 * Unfortunately, a sole check to {@link TextUtil#isCodecSafe()} will still break
 	 * context menu clicks on said messages, so a more comprehensive check is
 	 * required. Fixes
 	 * <a href="https://github.com/mrbuilder1961/ChatPatches/issues/246">#246</a>,

@@ -4,9 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import obro1961.chatpatches.util.ChatUtils;
-import org.apache.commons.lang3.StringUtils;
+import obro1961.chatpatches.util.ChatUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -46,7 +44,7 @@ public record Boundary(String levelName, @NotNull Side side) {
 	 */
 	public static boolean isBoundaryLine(Component message) {
 		String insertion = Objects.requireNonNullElse(
-			ChatUtils.getPart(message, ChatUtils.MESSAGE_INDEX), // first checks the message component of the whole message
+			ChatUtil.getPart(message, ChatUtil.MESSAGE_INDEX), // first checks the message component of the whole message
 			message // alternatively checks the root style, although this will probably never work
 		).getStyle().getInsertion();
 

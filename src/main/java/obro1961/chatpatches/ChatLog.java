@@ -25,7 +25,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.GsonHelper;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
-import obro1961.chatpatches.util.TextUtils;
+import obro1961.chatpatches.util.TextUtil;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,13 +51,13 @@ public class ChatLog {
      * Serializes as a {@link Pair} to avoid needing a dedicated class.
 	 * {@link #messages} are first and {@link #history} is second, and the native
 	 * list is mapped to a {@linkplain ChatLog#newSyncedObjectList(List) synchronized
-	 * mutable object list}. Uses the {@linkplain TextUtils#UNSAFE_CODEC unsafe codec}
+	 * mutable object list}. Uses the {@linkplain TextUtil#UNSAFE_CODEC unsafe codec}
 	 * to ensure all messages can be serialized.
 	 *
 	 * @see ClickEvent$ActionMixin#allowConditionalSerialization(boolean)
      */
     public static final Codec<Pair<ObjectList<Component>, ObjectList<String>>> CODEC = Codec.pair(
-		TextUtils.UNSAFE_CODEC
+		TextUtil.UNSAFE_CODEC
 			.listOf()
 			.xmap(ChatLog::newSyncedObjectList, Function.identity()) // makes the lists synchronized and mutable
 			.fieldOf("messages") // with a default value, errors are silently ignored
@@ -303,7 +303,7 @@ public class ChatLog {
 							// codec is unusable here
 							.map(Component::getString) // some message with "quotes"
 							.map(ChatLog::escapeAndSurround) // "some message with \"quotes\""
-							.map(str -> "{\"extra\":[\"\"," + str + ",\"\"],\"text\":\"\"}") // equivalent to ChatUtils.buildMessage(null, null, str, null)
+							.map(str -> "{\"extra\":[\"\"," + str + ",\"\"],\"text\":\"\"}") // equivalent to ChatUtil.buildMessage(null, null, str, null)
 							.toList() + ","
 						)
 						.replace/*All*/("[]}", history.stream()

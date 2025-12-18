@@ -42,8 +42,8 @@ import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
-import obro1961.chatpatches.util.ChatUtils;
-import obro1961.chatpatches.util.RenderUtils;
+import obro1961.chatpatches.util.ChatUtil;
+import obro1961.chatpatches.util.RenderUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -186,7 +186,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchButton.setTooltip(Tooltip.create(SEARCH_TOOLTIP));
 
 		searchField = new EditBox(minecraft.font, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_HEIGHT, Component.translatable("chat.editBox"));
-		searchField.setMaxLength(ChatUtils.MAX_MESSAGE_LENGTH);
+		searchField.setMaxLength(ChatUtil.MAX_MESSAGE_LENGTH);
 		searchField.setBordered(false);
 		searchField.setSuggestion(SEARCH_SUGGESTION);
 		searchField.setResponder(newText -> onSearchFieldUpdate(newText, false));
@@ -200,7 +200,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			}
 		}
 
-		if(ChatLog.isRestoring()) { // fixes #257
+		if(ChatLog.isRestoring()) { // fixes #257 - except todo: no it fucking doesnt and it's really annoying
 			input.setEditable(false);
 			input.setValue(CHAT_LOG_UNAVAILABLE);
 		}
@@ -257,7 +257,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtils.smartOpaque(ChatFormatting.DARK_RED));
+				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(ChatFormatting.DARK_RED));
 				// todo: that option to disable text shadows - raw calls can have the boolean plugged right in, elsewhere needs injectors
 			}
 		}
@@ -689,7 +689,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				}
 			}
 
-			searchField.setTextColor(RenderUtils.smartOpaque(status));
+			searchField.setTextColor(RenderUtil.smartOpaque(status));
 		} else {
 			searchError = null;
 			searchField.setTextColor(EditBox.DEFAULT_TEXT_COLOR);

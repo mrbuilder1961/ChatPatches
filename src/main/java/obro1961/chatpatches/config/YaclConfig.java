@@ -18,8 +18,8 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.util.RenderUtils;
-import obro1961.chatpatches.util.TextUtils;
+import obro1961.chatpatches.util.RenderUtil;
+import obro1961.chatpatches.util.TextUtil;
 
 import java.awt.*;
 import java.io.File;
@@ -93,7 +93,7 @@ public class YaclConfig extends Config {
 
                     @Override
                     public void set(Object value) {
-						super.set(RenderUtils.smartOpaque( ((Color)value).getRGB() ));
+						super.set(RenderUtil.smartOpaque( ((Color)value).getRGB() ));
                     }
                 };
             }
@@ -151,7 +151,7 @@ public class YaclConfig extends Config {
                 subGroup("time", timeOpts, null),
                 subGroup("hover", hoverOpts, null),
                 subGroup("counter", counterOpts, null),
-                subGroup("compact", compactOpts, Style.EMPTY.withClickEvent( TextUtils.openUrl("https://modrinth.com/mod/compact-chat") ))
+                subGroup("compact", compactOpts, Style.EMPTY.withClickEvent( TextUtil.openUrl("https://modrinth.com/mod/compact-chat") ))
             ))
             .category( tabCat("boundary", boundaryOpts) )
             .category( tabCat("chatlog", chatlogOpts,
@@ -200,7 +200,7 @@ public class YaclConfig extends Config {
 
                                         ( d instanceof Integer i && k.contains("Color") )
                                             ? "`0x%06X`".formatted(i)
-                                                + ((Object)TextUtils.COLOR_TO_FORMATTING.get(i.intValue()) instanceof ChatFormatting f
+                                                + ((Object) TextUtil.COLOR_TO_FORMATTING.get(i.intValue()) instanceof ChatFormatting f
                                                     ? " ("+f.getName().toLowerCase(Locale.ROOT)+")"
                                                     : ""
                                                 )
@@ -457,7 +457,7 @@ public class YaclConfig extends Config {
     }
 
     private static Option<Component> label(MutableComponent labelText, String urlTooltip) {
-        return LabelOption.create(labelText.withStyle(style -> style.withClickEvent( TextUtils.openUrl(urlTooltip) ) ));
+        return LabelOption.create(labelText.withStyle(style -> style.withClickEvent( TextUtil.openUrl(urlTooltip) ) ));
     }
 
     private static ButtonOption action(String key, Object... args) {
