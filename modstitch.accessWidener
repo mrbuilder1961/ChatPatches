@@ -1,32 +1,35 @@
 accessWidener v1 named
 
-# Text
+# MutableComponent - Text
 
 accessible method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
 
 #? if >=1.21.11 {
-accessible method net/minecraft/client/gui/components/ChatComponent getWidth ()I
-accessible method net/minecraft/client/gui/components/ChatComponent getHeight ()I
+# when MutableComponent became final -_-
 extendable method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
 extendable class net/minecraft/network/chat/MutableComponent
 #?}
 
 
-## ChatComponent
+## ChatComponent - (Mixin)
 
 accessible field net/minecraft/client/gui/components/ChatComponent allMessages Ljava/util/List;
 accessible field net/minecraft/client/gui/components/ChatComponent trimmedMessages Ljava/util/List;
 accessible field net/minecraft/client/gui/components/ChatComponent chatScrollbarPos I
 accessible method net/minecraft/client/gui/components/ChatComponent getLineHeight ()I
 
+#? if >=1.21.11 {
+accessible method net/minecraft/client/gui/components/ChatComponent getWidth ()I
+accessible method net/minecraft/client/gui/components/ChatComponent getHeight ()I
+accessible method net/minecraft/client/gui/components/ChatComponent getScale ()D
+#?}
 
-## ChatScreen
 
-# see ContextMenu #init(.) , #close(.)
+## ChatScreen -  ContextMenu #init(.) , #close(.)
+
 accessible field net/minecraft/client/gui/screens/ChatScreen input Lnet/minecraft/client/gui/components/EditBox;
 
 
-## GridLayout
+## GridLayout - ContextMenu.Grid
 
-# see ContextMenu.Grid
 accessible field net/minecraft/client/gui/layouts/GridLayout children Ljava/util/List;
