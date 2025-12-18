@@ -2,6 +2,9 @@ accessWidener v1 named
 
 # MutableComponent - Text
 
+accessible field net/minecraft/network/chat/MutableComponent contents Lnet/minecraft/network/chat/ComponentContents;
+accessible field net/minecraft/network/chat/MutableComponent siblings Ljava/util/List;
+accessible field net/minecraft/network/chat/MutableComponent style Lnet/minecraft/network/chat/Style;
 accessible method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
 
 #? if >=1.21.11 {

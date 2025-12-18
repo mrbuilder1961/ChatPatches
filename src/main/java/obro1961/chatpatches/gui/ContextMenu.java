@@ -943,8 +943,8 @@ public class ContextMenu implements GuiEventListener {
 
 			// sync main button widths
 			int mainWidth = entries.stream()
-				.mapToInt(e -> e.button.getWidth())
 				.filter(Entry::isMain)
+				.mapToInt(e -> e.button.getWidth())
 				.max().orElse(8 * BUTTON_PADDING);
 			entries.stream().filter(Entry::isMain).forEach(e -> e.button.setWidth(mainWidth));
 
@@ -994,6 +994,5 @@ public class ContextMenu implements GuiEventListener {
 				return button.getMessage();
 			}
 		}
-	}
 	}
 }

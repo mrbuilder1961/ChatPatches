@@ -13,7 +13,6 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
 import obro1961.chatpatches.mixin.listener.MessageHandlerMixin;

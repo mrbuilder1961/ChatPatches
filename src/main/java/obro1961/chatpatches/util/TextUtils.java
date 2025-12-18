@@ -159,7 +159,6 @@ public class TextUtils {
 		return new MutableComponent(text.getContents(), siblings, text.getStyle());
 	}
 
-	@Deprecated // sole use case is comparing styles for dupe counter - should be replaced w getformattingcodes aggregator or a new method to compile contents + sibs into one comparable list
 	/**
 	 * Returns a copy of {@code text} with an empty content.
 	 * Useful for comparing {@link Component} objects'

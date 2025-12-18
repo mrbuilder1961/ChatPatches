@@ -200,7 +200,7 @@ public class YaclConfig extends Config {
 
                                         ( d instanceof Integer i && k.contains("Color") )
                                             ? "`0x%06X`".formatted(i)
-                                                + (/*? if java: <21 {*//*(Object)*//*?}*/ TextUtils.COLOR_TO_FORMATTING.get(i.intValue()) instanceof ChatFormatting f
+                                                + ((Object)TextUtils.COLOR_TO_FORMATTING.get(i.intValue()) instanceof ChatFormatting f
                                                     ? " ("+f.getName().toLowerCase(Locale.ROOT)+")"
                                                     : ""
                                                 )
