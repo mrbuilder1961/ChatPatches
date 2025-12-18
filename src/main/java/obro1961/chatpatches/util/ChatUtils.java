@@ -215,7 +215,7 @@ public class ChatUtils {
 	 * @param second {@link #MESSAGE_INDEX} or {@link #MSG_SENDER_INDEX}
 	 * @param third {@link #DUPE_INDEX} or {@link #MSG_CONTENT_INDEX}
 	 */
-	@NotNull //prepub: this is giving TextUtils??? idk all these util methods need to be shuffled around
+	@NotNull
 	public static MutableComponent buildMessage(@Nullable Style rootStyle, @Nullable Component first, @Nullable Component second, @Nullable Component third) {
 		MutableComponent root = Component.empty();
 
@@ -230,8 +230,7 @@ public class ChatUtils {
 		return root.append(first).append(second).append(third);
 	}
 
-	// prepub keep or nah...
-	private static String optimizeEmpties(Object o) {
+	public static String optimizeEmpties(Object o) {
 		return (o instanceof String str ? str : String.valueOf(o))
 			.replace("literal{}", "empty")
 			.replace("[style={}]", "");

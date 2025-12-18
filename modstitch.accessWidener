@@ -1,9 +1,14 @@
 accessWidener v1 named
 
-# see EasyText
+# Text
+
 accessible method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
+
 #? if >=1.21.11 {
-#extendable method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
+accessible method net/minecraft/client/gui/components/ChatComponent getWidth ()I
+accessible method net/minecraft/client/gui/components/ChatComponent getHeight ()I
+extendable method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
+extendable class net/minecraft/network/chat/MutableComponent
 #?}
 
 

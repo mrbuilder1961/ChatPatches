@@ -233,6 +233,16 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
             direction = j17
             replace(".removeFirst()", ".remove(0)")
         }
+
+        val drop11 = eval(minecraft, ">=1.21.11")
+        string {
+            direction = drop11
+            replace("net.minecraft.Util", "net.minecraft.util.Util")
+        }
+        string {
+            direction = drop11
+            replace("ResourceLocation", "Identifier")
+        }
     }
 }
 

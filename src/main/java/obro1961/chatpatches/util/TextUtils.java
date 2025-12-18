@@ -243,8 +243,8 @@ public class TextUtils {
 			builder.delete(0, 2);
 		}
 
-		while(builder.toString().endsWith("&r&r")) { // removes duplicate trailing reset codes (leaves one if it exists just in case it's intended)
-			builder.setLength(builder.length() - 4);
+		while(builder.toString().endsWith("&r")) { // removes duplicate trailing reset codes (leaves one if it exists just in case it's intended)
+			builder.setLength(builder.length() - 2);
 		}
 
 		// removes the redundant code in a pair of color codes, optionally separated by whitespace, even including hex codes

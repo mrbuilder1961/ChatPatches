@@ -66,8 +66,7 @@ import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static net.minecraft.network.chat.Component.literal;
-import static obro1961.chatpatches.ChatPatches.config;
-import static obro1961.chatpatches.ChatPatches.logReportMsg;
+import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.ChatUtils.*;
 
 /**
@@ -282,7 +281,7 @@ public class ContextMenu implements GuiEventListener {
 				@Override public void onPress(/*? if >=1.21.9 {*/InputWithModifiers i/*?}*/) { src.onPress(/*? if >=1.21.9 {*/i/*?}*/); }
 
 				@Override
-				protected void renderWidget(GuiGraphics graphics, int mX, int mY, float delta) {
+				protected void /*? if <1.21.11 {*/renderWidget/*?} else {*//*renderContents*//*?}*/(GuiGraphics graphics, int mX, int mY, float delta) {
 					super.renderWidget(graphics, mX, mY, delta);
 
 					if(icon instanceof Item item) {
@@ -786,7 +785,7 @@ public class ContextMenu implements GuiEventListener {
 	 */
 	public void updateButtons(Optional<AbstractButton> widgetOptional) {
 		if(widgetOptional.isEmpty()) {
-			screen.setFocused(null); // removes the selected outline from the last hovered button.
+			screen.setFocused(null); // removes the selected outline from the last hovered button
 			return;
 		}
 
@@ -794,7 +793,7 @@ public class ContextMenu implements GuiEventListener {
 		screen.setFocused(hoveredButton); // allows much more efficient update checks, see #mouseMoved(int, int)
 		for(ObjectList<Grid.Entry> group : grid.groups) {
 			for(Grid.Entry itr : group) {
-				if(itr.col > 0) {
+				if(itr.isHover()) {
 					// if the hovered button is in the group, show all other buttons; otherwise hide them bc they're irrelevant
 					itr.button.visible = group.contains(grid.get( hoveredButton.getMessage() ));
 				}
@@ -802,11 +801,11 @@ public class ContextMenu implements GuiEventListener {
 				// proceed with underlining if the hovered button is in the iterated group and the group has a hover button
 				if(itr.button == hoveredButton && group.size() > 1 && /*? if java: <21 {*//*(Object)*//*?}*/ group.get(1).button instanceof AbstractButton firstHoverButton) {
 					// remove if iterated button is in the group and the message is already underlined
-					boolean hide = itr.col > 0 && itr.row == group.getFirst().row;
+					boolean hide = itr.isHover() && itr.row == group.getFirst().row;
 
 					// note: removed `&& group.size() > 1` bc it's already true according to firstHoverButton's null check
 					// show if iterated button is a main button and the message is not underlined
-					boolean show = itr.col == 0; // main buttons need to underline their copy source!
+					boolean show = itr.isMain(); // main buttons need to underline their copy source!
 
 					firstHoverButton.setMessage(firstHoverButton.getMessage().copy().withStyle( s -> s.withUnderlined(show || !hide) ));
 				}
@@ -911,12 +910,14 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		/**
-		 * @return The widgets stored in this Grid's internal {@link GridLayout}
-		 * object, cast to <code>{@link List}<{@link AbstractButton}></code>.
-		 * Will log a {@link ClassCastException} and return an empty list if any
-		 * of the widgets are not of the correct type. However, this should
-		 * never happen, per the {@linkplain ContextMenu#registerButton(Component,
-		 * int, int, Object, Supplier, Button.OnPress) button registering methods}.
+		 * @return The widgets stored in this Grid's internal
+		 * {@link GridLayout} object, cast to
+		 * <code>{@link List}<{@link AbstractButton}></code>.
+		 * Will log a {@link ClassCastException} and return an
+		 * empty list if any of the widgets are not of the correct
+		 * type. However, this should never happen, per the
+		 * {@linkplain ContextMenu#registerButton(Component, int, int, Object, Supplier, Button.OnPress)
+		 * button registering methods}.
 		 */
 		@SuppressWarnings("unchecked")
 		public List<AbstractButton> buttons() {
@@ -942,10 +943,10 @@ public class ContextMenu implements GuiEventListener {
 
 			// sync main button widths
 			int mainWidth = entries.stream()
-				.filter(e -> e.col == 0)
 				.mapToInt(e -> e.button.getWidth())
+				.filter(Entry::isMain)
 				.max().orElse(8 * BUTTON_PADDING);
-			entries.stream().filter(e -> e.col == 0).forEach(e -> e.button.setWidth(mainWidth));
+			entries.stream().filter(Entry::isMain).forEach(e -> e.button.setWidth(mainWidth));
 
 			// sync hover button widths
 			IntList groupWidths = IntArrayList.toList(
@@ -980,6 +981,19 @@ public class ContextMenu implements GuiEventListener {
 			}
 		}
 
-		record Entry(int row, int col, int groupId, AbstractButton button, @NotNull Supplier<Component> tooltipCopyTextSupplier, @Nullable Button.OnPress pressAction) {}
+		record Entry(int row, int col, int groupId, AbstractButton button, @NotNull Supplier<Component> tooltipCopyTextSupplier, @Nullable Button.OnPress pressAction) {
+			boolean isMain() {
+				return col == 0;
+			}
+
+			boolean isHover() {
+				return col > 0;
+			}
+
+			Component id() {
+				return button.getMessage();
+			}
+		}
+	}
 	}
 }

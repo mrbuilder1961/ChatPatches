@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.StringUtil;
-import obro1961.chatpatches.ChatLog;
+import obro1961.chatpatches.util.TextUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,13 +13,13 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(ExtraCodecs.class)
 public abstract class ExtraCodecsMixin {
 	//? if >=1.21.5 {
-	@Unique private static final String LAMBDA_METHOD_NAME = "method_66032";
+	@Unique private static final String LAMBDA_METHOD_NAME = "method_66032"; // todo: when Deobfuscation happens, this will change - see latest fblog
 	@Unique private static final String LAMBDA_METHOD_SIGNATURE = "(Ljava/lang/String;)Lcom/mojang/serialization/DataResult;";
 	@Unique private static final String TARGET_METHOD_SIGNATURE = "Lnet/minecraft/util/StringUtil;isAllowedChatCharacter(" + /*? if >=1.21.9 {*/"I"/*?} else {*//*"C"*//*?}*/ + ")Z";
 
 	/**
 	 * Allows all chat strings to be serialized despite any section signs present.
-	 * Unfortunately, a sole check to {@link ChatLog#isCodecSafe()} will still break
+	 * Unfortunately, a sole check to {@link TextUtils#isCodecSafe()} will still break
 	 * context menu clicks on said messages, so a more comprehensive check is
 	 * required. Fixes
 	 * <a href="https://github.com/mrbuilder1961/ChatPatches/issues/246">#246</a>,
