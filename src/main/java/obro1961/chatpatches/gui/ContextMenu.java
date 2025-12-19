@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -281,7 +281,7 @@ public class ContextMenu implements GuiEventListener {
 				@Override public void onPress(/*? if >=1.21.9 {*/InputWithModifiers i/*?}*/) { src.onPress(/*? if >=1.21.9 {*/i/*?}*/); }
 
 				@Override
-				protected void /*? if <1.21.11 {*/renderWidget/*?} else {*//*renderContents*//*?}*/(GuiGraphics graphics, int mX, int mY, float delta) {
+				protected void /*? if <1.21.11 {*//*renderWidget*//*?} else {*/renderContents/*?}*/(GuiGraphics graphics, int mX, int mY, float delta) {
 					super.renderWidget(graphics, mX, mY, delta);
 
 					if(icon instanceof Item item) {

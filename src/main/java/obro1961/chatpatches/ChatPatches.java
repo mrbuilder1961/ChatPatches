@@ -8,14 +8,14 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.RegistryOps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.TextUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +33,8 @@ public class ChatPatches implements ClientModInitializer {
 
 	public static Config config = Config.initialize();
 
-	public static ResourceLocation id(String path) {
-		return ResourceLocation.tryBuild(MOD_ID, path);
+	public static Identifier id(String path) {
+		return Identifier.tryBuild(MOD_ID, path);
 	}
 
 

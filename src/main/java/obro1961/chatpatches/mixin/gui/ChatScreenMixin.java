@@ -44,7 +44,7 @@ import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
 import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.RenderUtil;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
@@ -270,7 +270,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				id("textures/gui/search_settings_panel.png"),
 				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
-			//ResourceLocation DEMO = ResourceLocation.withDefaultNamespace("textures/gui/demo_background.png");
+			//Identifier DEMO = Identifier.withDefaultNamespace("textures/gui/demo_background.png");
 			//graphics.blit(RenderPipelines.GUI_TEXTURED, DEMO, MENU_X, MENU_Y_OFFSET + height, 0, 0, 248, 166, 256, 256); // too big
 
 			caseSensitiveButton.render(graphics, mX, mY, delta);
@@ -664,7 +664,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 						? searchMatcher.reset(m).matches()
 						: (config.caseSensitive)
 							? m.contains(text)
-							: StringUtils.containsIgnoreCase(m, text);
+							: Strings.CI.contains(m, text);
 				}));
 
 				searchResults.clear(); // either there are no results -> clear(), or there are new ones -> clear() + addAll()

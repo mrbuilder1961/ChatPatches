@@ -7,7 +7,7 @@ import com.mojang.serialization.DynamicOps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.network.chat.*;
 //? if >1.20.2 {
 import net.minecraft.network.chat.contents.PlainTextContents;
