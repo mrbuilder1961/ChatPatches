@@ -44,7 +44,7 @@ import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
 import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.RenderUtil;
-import org.apache.commons.lang3.Strings;
+import org.apache.commons.lang3./*? if >1.20.6 {*/Strings/*?} else {*//*StringUtils*//*?}*/;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
@@ -664,7 +664,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 						? searchMatcher.reset(m).matches()
 						: (config.caseSensitive)
 							? m.contains(text)
-							: Strings.CI.contains(m, text);
+							: /*? if >1.20.6 {*/Strings.CI.contains/*?} else {*//*StringUtils.containsIgnoreCase*//*?}*/(m, text);
 				}));
 
 				searchResults.clear(); // either there are no results -> clear(), or there are new ones -> clear() + addAll()
