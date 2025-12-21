@@ -44,7 +44,7 @@ import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
 import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.RenderUtil;
-import org.apache.commons.lang3./*? if >1.20.6 {*/Strings/*?} else {*//*StringUtils*//*?}*/;
+import org.apache.commons.lang3./*? if >=1.21.11 {*/Strings/*?} else {*//*StringUtils*//*?}*/;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;

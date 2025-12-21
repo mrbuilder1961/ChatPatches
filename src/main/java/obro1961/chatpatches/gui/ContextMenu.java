@@ -45,6 +45,7 @@ import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
+import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.RenderUtil;
 import obro1961.chatpatches.util.TextUtil;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -203,7 +204,7 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		this.selectedLine = noOp ? NIL_HUD_LINE : Iterables.get(messages, messageIndex, NIL_HUD_LINE);
-		this.visibleMessageIndex = noOp ? -1 : access.getEoEIndex(mX, mY); // returns the index of the EoE line at the mouse position
+		this.visibleMessageIndex = noOp ? -1 : ChatUtil.message2Visible(messageIndex);
 		this.visibleLines = noOp ? 0 : Util.make(() -> {
 			var visibles = chat.trimmedMessages;
 

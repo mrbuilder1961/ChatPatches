@@ -15,7 +15,7 @@ val v: String = m("version")
 val minecraft = stonecutter.current.version //name.substringBefore("-")
 val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prepub: does this cause any issues...
 val currentIsActive = minecraft == stonecutter.active?.version
-val java = if(stonecutter.eval(minecraft, ">1.20.4")) 21 else 17
+val java = if(sc.current.parsed > "1.20.4") 21 else 17
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
@@ -125,7 +125,7 @@ modstitch {
 
         // Configure loom like normal here
         configureLoom {
-            mixin.useLegacyMixinAp = false // todo doesn't seem to work but idk how to disable the warning
+            mixin.useLegacyMixinAp = false // todo doesn't work but idk how to disable the warning
         }
     }
 
@@ -211,12 +211,11 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     swaps {
-        //prepub: make this data-driven from gradle.properties..?
-        val v1216 = eval(minecraft, ">=1.21.6")
+        val v1216 = current.parsed >= "1.21.6"
         put("push_stack", if(v1216) "graphics.pose().pushMatrix();" else "graphics.pose().pushPose();")
         put("pop_stack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
 
-        val v1219 = eval(minecraft, ">=1.21.9")
+        val v1219 = current.parsed >= "1.21.9"
         put("key_event", if(v1219) "KeyEvent key" else "int keyCode, int scanCode, int modifiers")
         put("key_args", if(v1219) "key" else "keyCode, scanCode, modifiers")
         put("mouse_event", if(v1219) "MouseButtonEvent mouse, boolean bl" else "double mX, double mY, int button")
@@ -224,24 +223,24 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     replacements {
-        val j17 = java < 21
+        val notJ21 = java < 21
         string {
-            direction = j17
+            direction = notJ21
             replace(".getFirst()", ".get(0)")
         }
         string {
-            direction = j17
+            direction = notJ21
             replace(".removeFirst()", ".remove(0)")
         }
 
-        val drop11 = eval(minecraft, ">=1.21.11")
+        val v12111 = current.parsed >= "1.21.11"
         string {
-            direction = drop11
+            direction = v12111
             replace("net.minecraft.Util", "net.minecraft.util.Util")
         }
         string {
-            direction = drop11
-            replace("ResourceLocation", "Identifier")
+            direction = v12111
+            replace("ResourceLocation", "Identifier") // warning: on version change, this needs to be selectively disabled, as it messes with some comments
         }
     }
 }

@@ -7,8 +7,9 @@
 - **Dev notes:**
   - Chat Patches now uses an access widener to limit unnecessary code overhead - definitely not because I finally realized they're cool and useful (although 
     thanks to modstitch they automatically transpile to access transformers when needed!)
-  - Refactored a ton of nitpicky stuff, most notably `ChatUtil` and `TextUtil` of which are now singular and have had their methods redistributed, especially 
-    into `EasyText` which extends (thanks AW!) `MutableComponent` with critical functionality
+  - Refactored a ton of nitpicky stuff, most notably all util classes, which are now singular!
+  - Unfortunately, Mojang hates me (mod developers) personally, and multiple critical methods were removed - so I introduced `VersionUtil` for the random 
+    methods that have been removed or altered across versions to keep them constant between Stonecutter builds
 
 ## Chat Patches `8.0-alpha.6` for Minecraft 1.20.1–1.21.10 on Fabric, Quilt
 - Fixed player heads not rendering in the context menu on 1.21.9+

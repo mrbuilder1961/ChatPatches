@@ -19,6 +19,9 @@ import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtil;
+//? if >=1.21.11 {
+import obro1961.chatpatches.util.VersionUtil;
+//?}
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Intrinsic;
 import org.spongepowered.asm.mixin.Mixin;
@@ -95,7 +98,13 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      */
     @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
     public int getEoEIndex(double mouseX, double mouseY) {
-        return getMessageEndIndexAt(screenToChatX(mouseX), screenToChatY(mouseY));
+        return
+		    //? if >=1.21.11 {
+			VersionUtil.getEoEIndex(mouseX, mouseY)
+		    //?} else {
+			/*getMessageEndIndexAt(screenToChatX(mouseX), screenToChatY(mouseY))*/
+		    //?}
+		;
     }
 
 
@@ -128,13 +137,15 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
         }
     }
 
-    /** Increases the chat message limit */
     @ModifyExpressionValue(
-        //? if <=1.20.4 {
-        /*method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V", "addRecentChat"},
-        *///?} else {
-        method = {"addMessageToQueue(Lnet/minecraft/client/GuiMessage;)V", "addMessageToDisplayQueue", "addRecentChat"},
-        //?}
+        method = {
+            "addRecentChat", // sent history
+            /*? if >=1.20.5 {*/
+            "addMessageToQueue(Lnet/minecraft/client/GuiMessage;)V", "addMessageToDisplayQueue" // actual messages
+            /*?} else {*/
+            /*"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V"*/
+            /*?}*/
+        },
         at = @At(value = "CONSTANT", args = "intValue=100")
     )
     private int moreMessages(int hundred) {
@@ -168,7 +179,12 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      *
      * @see Config#calcDynamicChatShift()
      */
-    @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 7)
+    @ModifyVariable(
+		method = "render" /*? if >=1.21.11 {*/ + "(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"/*?}*/,
+		at = @At("STORE"), // targets ALL store insns for this variable
+		ordinal = /*? if >=1.21.11 {*/ 4 /*?} else {*//* 7 *//*?}*/,
+        name = "m"
+	)
     private int moveChat(int m) {
         return m - config.calcDynamicChatShift();
     }
@@ -184,10 +200,12 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      *
      * @see Config#calcDynamicChatShift()
      */
-    @ModifyVariable(method = "screenToChatY", argsOnly = true, at = @At("HEAD"))
+    /*? if <1.21.11 {*/
+    /*@ModifyVariable(method = "screenToChatY", argsOnly = true, at = @At("HEAD"))
     private double moveChatLineY(double y) {
         return y + config.calcDynamicChatShift();
-    }
+    }*/
+    /*?}*/ // moved to VersionUtil#screenToChatY(double)
 
 
     /**
@@ -202,27 +220,21 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * @see ChatUtil#tryCondenseDupes(Component)
      */
     @ModifyVariable(
-        //? if <=1.20.4 {
-        /*method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V",
-        *///?} else {
-        method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
-        //?}
+        method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;"
+            + /*? if <=1.20.4 {*//*"I" +*//*?}*/ "Lnet/minecraft/client/GuiMessageTag;"
+            + /*? if <=1.20.4 {*//*"Z" +*//*?}*/ ")V",
         at = @At("HEAD"),
         argsOnly = true
     )
-    private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @Local(argsOnly = true) boolean refreshing *//*?}*/) {
-        return /*? if <=1.20.4 {*/ /*refreshing ? m : *//*?}*/ ChatUtil.modifyMessage(m);
+    private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @Local(argsOnly = true) boolean refreshing*//*?}*/) {
+        return /*? if <=1.20.4 {*//* refreshing ? m : *//*?}*/ ChatUtil.modifyMessage(m);
     }
 
     @Inject(
         method = "addRecentChat",
         at = @At(
             value = "INVOKE",
-            //? if >=1.20.2 {
-            target = "Lnet/minecraft/util/ArrayListDeque;size()I"
-            //?} else {
-            /*target = "Ljava/util/List;add(Ljava/lang/Object;)Z"
-            *///?}
+            target = /*? if >=1.20.2 {*/"Lnet/minecraft/util/ArrayListDeque;size()I"/*?} else {*//*"Ljava/util/List;add(Ljava/lang/Object;)Z"*//*?}*/
         )
     )
     private void addHistory(String message, CallbackInfo ci) {
@@ -236,17 +248,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      *
      * @since 1.20.2, mod WHEN
      */
-    @WrapWithCondition(
-        method = "addRecentChat",
-        at = @At(
-            value = "INVOKE",
-            //? if >=1.20.2 {
-            target = "Lnet/minecraft/client/CommandHistory;addCommand(Ljava/lang/String;)V"
-            //?} else {
-            /*target = "Ljava/util/List;add(Ljava/lang/Object;)V"
-            *///?}
-        )
-    )
+    @WrapWithCondition(method = "addRecentChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/CommandHistory;addCommand(Ljava/lang/String;)V"))
     private boolean toggleCommandLog(net.minecraft.client.CommandHistory manager, String message) {
         return !config.chatlog;
     }
