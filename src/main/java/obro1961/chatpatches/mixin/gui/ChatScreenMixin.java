@@ -664,7 +664,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 						? searchMatcher.reset(m).matches()
 						: (config.caseSensitive)
 							? m.contains(text)
-							: /*? if >1.20.6 {*/Strings.CI.contains/*?} else {*//*StringUtils.containsIgnoreCase*//*?}*/(m, text);
+							: /*? if >=1.21.11 {*/Strings.CI.contains/*?} else {*//*StringUtils.containsIgnoreCase*//*?}*/(m, text);
 				}));
 
 				searchResults.clear(); // either there are no results -> clear(), or there are new ones -> clear() + addAll()

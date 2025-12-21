@@ -89,7 +89,7 @@ public class ContextMenu implements GuiEventListener {
 	 * Slightly modified from <a href="https://stackoverflow.com/a/163398">StackOverflow</a>
 	 * to not include file links. Memoized to avoid recompiling the regex every time, and so
 	 * it's only compiled once when needed.
-	 */
+	 */ //prepub: wwwww matches for some reaosn lmfao
 	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
 	private static Minecraft mc() { return Minecraft.getInstance(); }
@@ -281,12 +281,11 @@ public class ContextMenu implements GuiEventListener {
 				@Override public void onPress(/*? if >=1.21.9 {*/InputWithModifiers i/*?}*/) { src.onPress(/*? if >=1.21.9 {*/i/*?}*/); }
 
 				@Override
-				protected void /*? if <1.21.11 {*//*renderWidget*//*?} else {*/renderContents/*?}*/(GuiGraphics graphics, int mX, int mY, float delta) {
-					super.renderWidget(graphics, mX, mY, delta);
+				protected void /*? if >=1.21.11 {*/renderContents/*?} else {*//*renderWidget*//*?}*/(GuiGraphics graphics, int mX, int mY, float delta) {
+					/*? if <1.21.11 {*//*super.renderWidget(graphics, mX, mY, delta);*//*?}*/
 
 					if(icon instanceof Item item) {
 						graphics.renderFakeItem(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
-
 					} else if(icon instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*ResourceLocation*//*?}*/ playerSkin) {
 						PlayerFaceRenderer.draw(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 					}

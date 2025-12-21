@@ -295,8 +295,7 @@ public class Config {
 			return chatShift;
 		}
         // don't shift the chat if there are no hearts visible (not in survival or adventure)
-        // also note that player is always non-null by this point
-        if(/*? if java: <21 {*//*(Object)*//*?}*/ mc().getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival()) {
+        if((Object)mc().getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival()) {
 			return chatShift;
 		}
 
@@ -312,6 +311,7 @@ public class Config {
 
 		//float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f}; // contingency
 		// currently uses a third-degree polynomial regression to calculate the health scale
+		// prepub: cache these values after identical for two ticks in a row or something - i feel like constant polynomial evaluation is not necessary
 		float healthScale = healthHeightMultiplier > 7
 			? 0.3f
 			: 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;

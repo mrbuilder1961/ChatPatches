@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 import java.util.List;
 
 import static obro1961.chatpatches.ChatPatches.config;
@@ -45,12 +46,14 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
     @Shadow @Final public List<GuiMessage> allMessages;
     @Shadow @Final public List<GuiMessage.Line> trimmedMessages;
 
-    @Shadow @Final private Minecraft minecraft;
+    @Shadow @Final /*? if <1.21.11 {*//*private*//*?}*/ Minecraft minecraft;
     @Shadow @Final private List<?> messageDeletionQueue;
 
-    @Shadow protected abstract double screenToChatX(double x);
+	//? if <1.21.11 {
+    /*@Shadow protected abstract double screenToChatX(double x);
     @Shadow protected abstract double screenToChatY(double y);
-    @Shadow protected abstract int getMessageEndIndexAt(double chatLineX, double chatLineY);
+    @Shadow protected abstract int getMessageEndIndexAt(double chatLineX, double chatLineY);*/
+    //?}
 
     @Shadow public abstract boolean isChatFocused();
 
