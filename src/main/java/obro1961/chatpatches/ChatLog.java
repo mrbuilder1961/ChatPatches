@@ -286,10 +286,6 @@ public class ChatLog {
 				Path path = PATH;
 
 				if(json == null) {
-					// FIXME: only assumption of wtf is happening with this bug is that every level has a diff registry that is somehow incompatible with others even if its the same world.
-					// however, bc this is just codec/gson hallucinations and it doesnt actually change the data written to disk, i think the only fix is to save the data on world change, and
-					// if that doesnt work (we alr do that i think) we need to go a step further and clear+restore the chat log too.
-
 					// noinspection Convert2MethodRef: makes stonecutter life easier
 					var err = result.error().map(e -> e.message()).orElse(ChatFormatting.RED + "Unknown cause");
 					path = PATH.resolveSibling("chatlog_dump_" + Util.getFilenameFormattedDateTime() + ".json");

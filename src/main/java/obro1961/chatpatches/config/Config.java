@@ -11,7 +11,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
-import net.minecraft.SharedConstants;
 import net.minecraft.util.Util;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
@@ -45,10 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 import static net.minecraft.ChatFormatting.*;
@@ -100,7 +96,6 @@ public class Config {
      */
     public static Config initialize() {
         FabricLoader f = FabricLoader.getInstance();
-		// todo: make this a const or enum on this class
 		boolean accessibleInGame = f.isModLoaded("modmenu") || (f.isModLoaded("catalogue") && f.isModLoaded("menulogue"));
 
 		// ensures yacl config is used if available
@@ -113,9 +108,8 @@ public class Config {
     }
 
     public Screen getConfigScreen(Screen parent) {
-		//stonecutter: make a const for whether the config is YACL or cloth or nothing aka yacl
-        boolean suggestYACL = SharedConstants.getProtocolVersion() >= 759; // 1.19 or higher
-        String link = "https://modrinth.com/mod/" + (suggestYACL ? "yacl" : "cloth-config");
+        String link = "https://modrinth.com/mod/" + /*? if config: =yacl {*/"yacl"/*?} else {*//*"cloth-config"*//*?}*/;
+		String modTitle = /*? if config: =yacl {*/"YACL"/*?} else {*//*"Cloth Config"*//*?}*/;
 
         return new ConfirmScreen(
             clicked -> {
@@ -126,7 +120,7 @@ public class Config {
 				}
             },
             Component.translatable(YaclConfig.HELP_PREFIX + "missing").withStyle(ChatFormatting.RED),
-            Component.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", (suggestYACL ? "YACL" : "Cloth Config")).withStyle(GRAY),
+            Component.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", modTitle).withStyle(GRAY),
             CommonComponents.GUI_CONTINUE,
             CommonComponents.GUI_BACK
         );

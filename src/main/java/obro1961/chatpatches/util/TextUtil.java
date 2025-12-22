@@ -46,15 +46,6 @@ public class TextUtil {
 		return map;
 	});
 
-	public static final Codec<Component> CODEC = Util.make(() -> { // stonecutter: replace with a swap to del unnecessary method (* micro optimization :D *)
-		return
-			//? if <=1.20.2 {
-			/*net.minecraft.util.ExtraCodecs.COMPONENT;*/
-			//?} else {
-			net.minecraft.network.chat.ComponentSerialization.CODEC;
-		//?}
-	});
-
 	/**
 	 * A wrapped {@link Codec} for {@link Component} objects that will not
 	 * throw an exception when serializing click events with unsafe
@@ -70,7 +61,7 @@ public class TextUtil {
 		@Override
 		public <T> DataResult<T> encode(Component input, DynamicOps<T> ops, T prefix) {
 			safeCodec.set(false);
-			var result = CODEC.encode(input, ops, prefix);
+			var result = /*$ text_codec {*/ComponentSerialization.CODEC/*$}*/.encode(input, ops, prefix);
 			safeCodec.set(true);
 			return result;
 		}
@@ -78,14 +69,14 @@ public class TextUtil {
 		@Override
 		public <T> DataResult<Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
 			safeCodec.set(false);
-			var result = CODEC.decode(ops, input);
+			var result = /*$ text_codec {*/ComponentSerialization.CODEC/*$}*/.decode(ops, input);
 			safeCodec.set(true);
 			return result;
 		}
 
 		@Override
 		public String toString() {
-			return "UnsafeTextCodec[safe=" + safeCodec.get() + ", codec=" + CODEC + "]";
+			return "UnsafeTextCodec[safe=" + safeCodec.get() + ", codec=" + /*$ text_codec {*/ComponentSerialization.CODEC/*$}*/ + "]";
 		}
 	};
 

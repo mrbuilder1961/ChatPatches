@@ -208,7 +208,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			}
 		}
 
-		caseSensitiveButton = makeSettingButton("caseSensitive", 0); // todo redo this thing
+		caseSensitiveButton = makeSettingButton("caseSensitive", 0);
 		regexButton = makeSettingButton("regex", 22);
 
 		if(config.search) {
@@ -625,7 +625,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}
 
 	@Unique
-	private Button makeSettingButton(String key, int yOffset) { // prepub this manual offset is grotesque.
+	private Button makeSettingButton(String key, int yOffset) { // fixme this manual offset is grotesque.
 		Config.Setting<Boolean> setting = config.getOption(key);
 		Component name = Component.translatable("text.chatpatches.search." + key);
 		Component text = CommonComponents.optionStatus(name, setting.get());

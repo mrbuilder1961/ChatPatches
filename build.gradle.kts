@@ -208,9 +208,18 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 
     dependencies {
         put("java", java.toString())
+        put("config", when {
+            current.parsed >= "1.19" -> "yacl"
+            else -> "cloth"
+        })
     }
 
     swaps {
+        put("text_codec", when {
+            current.parsed > "1.20.2" -> "net.minecraft.network.chat.ComponentSerialization.CODEC"
+            else -> "net.minecraft.util.ExtraCodecs.COMPONENT"
+        })
+
         val v1216 = current.parsed >= "1.21.6"
         put("push_stack", if(v1216) "graphics.pose().pushMatrix();" else "graphics.pose().pushPose();")
         put("pop_stack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")

@@ -1,7 +1,7 @@
 # Changelog
 
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
-- Updated to 1.21.11 (blame Mojang for the long wait - they redesigned the chat again 🤬)
+- Updated to 1.21.11 (blame Mojang for the long wait - they redesigned the chat again 🤬) ([#293](https://www.github.com/mrbuilder1961/ChatPatches/issues/293))
 - Removed optional dependency for Placeholder API/QuickText - it doesn't support the main feature I thought it did :(
 - Removed the annoying "Chat log not available" warning as it didn't fix what it was supposed to ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263) remains at large...)
 - Introduced what seems to be at least a temporary fix for [#252](https://www.github.com/mrbuilder1961/ChatPatches/issues/252)/[#180](https://www.github.com/mrbuilder1961/ChatPatches/issues/180), 

@@ -356,7 +356,7 @@ public class YaclConfig extends Config {
                 case "chatHeight" -> mc().getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
                 case "compactDistance" -> //noinspection ConstantValue: Stonecutter :D
-					(Object)mc().gui.getChat() instanceof ChatComponent chat ? chat.getLinesPerPage() : 25; //prepub: chatMaxMessages ?
+					(Object)mc().gui.getChat() instanceof ChatComponent chat ? chat.getLinesPerPage() : 25; // chatMaxMessages ?
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
@@ -416,7 +416,7 @@ public class YaclConfig extends Config {
             .build();
     }
 
-    //prepub currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues. not critical priority. if its not possible -> scrap
+    // idea: currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues. not critical priority. if its not possible -> scrap
     /*@SuppressWarnings("unchecked")
     private static ValueFormatter<?> getValueFormatter(String key) {
         Class<?> type = config.getOption(key).getType();
