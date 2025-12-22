@@ -283,7 +283,12 @@ public class ContextMenu implements GuiEventListener {
 
 				@Override
 				protected void /*? if >=1.21.11 {*/renderContents/*?} else {*//*renderWidget*//*?}*/(GuiGraphics graphics, int mX, int mY, float delta) {
-					/*? if <1.21.11 {*//*super.renderWidget(graphics, mX, mY, delta);*//*?}*/
+					/*? if >=1.21.11 {*/
+					renderDefaultSprite(graphics); // both lines pulled from Button.Plain
+					renderDefaultLabel(graphics.textRendererForWidget(this, GuiGraphics.HoveredTextEffects.NONE));
+					/*?} else {*/
+					/*super.renderWidget(graphics, mX, mY, delta);*/
+					/*?}*/
 
 					if(icon instanceof Item item) {
 						graphics.renderFakeItem(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
@@ -571,7 +576,7 @@ public class ContextMenu implements GuiEventListener {
 		double s = chat.getScale();
 		int lH = chat.getLineHeight();
 		int sW = Mth.ceil(chat.getWidth() / s); // scaled width
-		int sH = Mth.floor((mc().getWindow().getGuiScaledHeight() - 40) / s); // scaled height
+		int sH = Mth.floor((mc().getWindow().getGuiScaledHeight() - ChatComponent.BOTTOM_MARGIN) / s); // scaled height
 		int shift = Mth.floor(config.calcDynamicChatShift() / s);
 		int i = visibleMessageIndex - chat.chatScrollbarPos;
 		int hoveredY = sH - (i * lH) - shift;
@@ -588,16 +593,10 @@ public class ContextMenu implements GuiEventListener {
 
 		// cuts off any of the selection rect that goes past the chat hud
 		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
-		//? if <1.21.9 {
-		/*graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));*/
+		//? if !=1.21.10 {
+		graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));
 		//?} else {
-		int color = RenderUtil.opaque(config.contextOutlineColor);
-		graphics.fill(0, selectionY1, borderW, selectionY1 + 1, color);
-		graphics.fill(0, selectionY1 + selectionH - 1, borderW, selectionY1 + selectionH, color);
-		graphics.fill(0, selectionY1 + 1, 1, selectionY1 + selectionH - 1, color);
-		graphics.fill(borderW - 1, selectionY1 + 1, borderW, selectionY1 + selectionH - 1, color);
-		// prepub AW GuiGraphics.OutlineBox
-		// new GuiGraphics.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor)).render(graphics);
+		/*new GuiGraphics.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor)).render(graphics);*/
 		//?}
 		graphics.disableScissor();
 
@@ -624,7 +623,7 @@ public class ContextMenu implements GuiEventListener {
 	 * @see ChatScreenMixin#allowContextMenuKeyPressing(KeyEvent, CallbackInfoReturnable)
 	 */
 	@Override
-	public boolean keyPressed(/*$ key_event {*/ KeyEvent key/*$}*/) {
+	public boolean keyPressed(/*$ key_event {*/ KeyEvent key /*$}*/) {
 		if(noOp) {
 			return false;
 		}

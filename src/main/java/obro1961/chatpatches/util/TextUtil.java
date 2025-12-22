@@ -99,7 +99,7 @@ public class TextUtil {
 	 */
 	private static final ThreadLocal<Boolean> safeCodec = ThreadLocal.withInitial(() -> true);
 
-	public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; } // prepub: keep this method..?
+	public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; } // prepub: keep?
 
 
 	/**

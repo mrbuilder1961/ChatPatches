@@ -310,8 +310,6 @@ public class ChatLog {
 							.map(ChatLog::escapeAndSurround)
 							.toList() + "}"
 						);
-
-					// warning: when QuickText is implemented, this can be changed to use that (assuming it doesn't use codecs itself)
 				}
 
 				// always in UTF-8

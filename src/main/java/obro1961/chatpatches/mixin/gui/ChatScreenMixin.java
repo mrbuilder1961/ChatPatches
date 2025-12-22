@@ -3,7 +3,9 @@ package obro1961.chatpatches.mixin.gui;
 //? if >=1.21.9 {
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 //?}
-import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+//? if <=1.21.10 {
+//import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+//?}
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -16,7 +18,11 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
+//? if >=1.21.11 {
+import net.minecraft.client.gui.ActiveTextCollector;
+//?} else {
+//import net.minecraft.client.gui.Font;
+//?}
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -36,7 +42,9 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
+//? if <=1.21.10 {
+//import net.minecraft.network.chat.Style;
+//?}
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
@@ -47,6 +55,7 @@ import obro1961.chatpatches.util.RenderUtil;
 import org.apache.commons.lang3./*? if >=1.21.11 {*/Strings/*?} else {*//*StringUtils*//*?}*/;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
+import org.spongepowered.asm.mixin.Intrinsic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -80,7 +89,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Shadow private int historyPos;
 
 
-	@Unique private static final String CHAT_LOG_UNAVAILABLE = I18n.get("text.chatpatches.chatlog.unavailable");
 	// search text
 	@Unique private static final String SEARCH_SUGGESTION = I18n.get("text.chatpatches.search.suggestion");
 	@Unique private static final Component SEARCH_TOOLTIP = Component.translatable("text.chatpatches.search.desc");
@@ -200,11 +208,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			}
 		}
 
-		if(ChatLog.isRestoring()) { // fixes #257 - except todo: no it fucking doesnt and it's really annoying
-			input.setEditable(false);
-			input.setValue(CHAT_LOG_UNAVAILABLE);
-		}
-
 		caseSensitiveButton = makeSettingButton("caseSensitive", 0); // todo redo this thing
 		regexButton = makeSettingButton("regex", 22);
 
@@ -289,10 +292,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * {@code true} if the mouse is NOT hovering over the <i>opened</i> settings
 	 * menu or the <i>shown</i> context menu.
 	 * */
-	@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;renderComponentHoverEffect(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Style;II)V"))
+	/*? if <=1.21.10 {*/
+	/*@WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;renderComponentHoverEffect(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Style;II)V"))
 	public boolean renderTooltipSmartly(GuiGraphics graphics, Font textRenderer, Style style, int mX, int mY) {
 		return !isMouseOverSettingsMenu(mX, mY) && !contextMenu.isMouseOver(mX, mY);
-	}
+	}*/
+	/*?}*/
 
 
 	@Inject(method = "removed", at = @At("TAIL"))
@@ -403,17 +408,37 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	}*/
 	/*?}*/
 
-	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;handleChatQueueClicked(DD)Z"))
+	/*? if <=1.21.10 {*/
+	/*@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;handleChatQueueClicked(DD)Z"))
 	private boolean fixMenuClickthroughClick(ChatComponent chat, double mX, double mY, Operation<Boolean> mouseClicked) {
 		// return false (not clicked) if the context menu is showing and the mouse is over it, otherwise delegate to chat
 		return !isMouseOverSettingsMenu(mX, mY) && !contextMenu.isMouseOver(mX, mY) && mouseClicked.call(chat, mX, mY);
-	}
+	}*/
+	/*?}*/
 
-	@WrapOperation(method = "mouseClicked", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/ChatScreen;getComponentStyleAt(DD)Lnet/minecraft/network/chat/Style;"))
-	private Style fixStyleClickthrough(ChatScreen screen, double mX, double mY, Operation<Style> getTextStyleAt) {
+	@WrapOperation(
+		method = "mouseClicked",
+		at = @At(
+			value = "INVOKE",
+			target =
+				/*? if >=1.21.11 {*/
+				"Lnet/minecraft/client/gui/components/ChatComponent;captureClickableText(Lnet/minecraft/client/gui/ActiveTextCollector;IIZ)V"
+				/*?} else {*/
+				/*"Lnet/minecraft/client/gui/screens/ChatScreen;getComponentStyleAt(DD)Lnet/minecraft/network/chat/Style;"*/
+				/*?}*/
+		)
+	)
+	/*? if >=1.21.11 {*/
+	private void fixStyleClickthrough(ChatComponent chat, ActiveTextCollector styleFinder, int h, int ticks, boolean focused, Operation<Void> captureClickableText, MouseButtonEvent mouse) {
+		if(!isMouseOverSettingsMenu(mouse.x(), mouse.y()) && !contextMenu.isMouseOver(mouse.x(), mouse.y())) {
+			captureClickableText.call(chat, styleFinder, h, ticks, focused);
+		}
+	/*?} else {*/
+	/*private Style fixStyleClickthrough(ChatScreen screen, double mX, double mY, Operation<Style> getTextStyleAt) {
 		return (isMouseOverSettingsMenu(mX, mY) || contextMenu.isMouseOver(mX, mY))
 			? null
-			: getTextStyleAt.call(screen, mX, mY);
+			: getTextStyleAt.call(screen, mX, mY);*/
+	/*?}*/
 	}
 
 	/**
@@ -583,8 +608,19 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 	// New/Unique methods
 
-	@Unique
-	private boolean isMouseOverSettingsMenu(double mX, double mY) {
+	@Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+	public ContextMenu getContextMenu() {
+		return contextMenu;
+	}
+
+	@Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+	public List<GuiMessage> getSearchResults() {
+		// returns the search results, used by the context menu to display the search results
+		return searchResults;
+	}
+
+	@Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+	public boolean isMouseOverSettingsMenu(double mX, double mY) {
 		return showSettingsMenu && (mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT);
 	}
 
@@ -606,13 +642,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			)
 			.tooltip(Tooltip.create( Component.translatable("text.chatpatches.search.desc." + key) ))
 			.build();
-	}
-
-	@Unique
-	@SuppressWarnings("AddedMixinMembersNamePattern") // unique method
-	public List<GuiMessage> getSearchResults() {
-		// returns the search results, used by the context menu to display the search results
-		return searchResults;
 	}
 
 	/**

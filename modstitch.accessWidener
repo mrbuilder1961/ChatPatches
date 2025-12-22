@@ -16,6 +16,7 @@ extendable class net/minecraft/network/chat/MutableComponent
 
 ## ChatComponent - (Mixin)
 
+accessible field net/minecraft/client/gui/components/ChatComponent BOTTOM_MARGIN I
 accessible field net/minecraft/client/gui/components/ChatComponent allMessages Ljava/util/List;
 accessible field net/minecraft/client/gui/components/ChatComponent trimmedMessages Ljava/util/List;
 accessible field net/minecraft/client/gui/components/ChatComponent chatScrollbarPos I
@@ -36,3 +37,12 @@ accessible field net/minecraft/client/gui/screens/ChatScreen input Lnet/minecraf
 ## GridLayout - ContextMenu.Grid
 
 accessible field net/minecraft/client/gui/layouts/GridLayout children Ljava/util/List;
+
+
+## GuiGraphics - ScreenMixin
+
+accessible field net/minecraft/client/gui/GuiGraphics hoveredTextStyle Lnet/minecraft/network/chat/Style;
+accessible field net/minecraft/client/gui/GuiGraphics deferredTooltip Ljava/lang/Runnable;
+#? if 1.21.10 {
+accessible class net/minecraft/client/gui/GuiGraphics$OutlineBox
+#?}

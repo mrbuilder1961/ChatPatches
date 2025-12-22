@@ -86,8 +86,6 @@
     "text.chatpatches.desc.chatlogBackup": "Press to backup the chat log to disk. This will create a new file with 'backup_' plus the current date formatted in the 'yyyy-MM-dd_HH.mm.ss' pattern as the name; located in the same directory as the regular chat log.",
     "text.chatpatches.desc.chatlogOpenFolder": "Press to open §9<minecraft directory>/logs/§f§r§f, the folder where the chat log and any backups of it are stored.",
 
-    "text.chatpatches.chatlog.unavailable": "Chat log not available - if this persists, disable the chat log and report this",
-
     "text.chatpatches.chatHidePacket": "Ignore hide message packet",
     "text.chatpatches.chatWidth": "Override chat width",
     "text.chatpatches.chatHeight": "Override focused chat height",

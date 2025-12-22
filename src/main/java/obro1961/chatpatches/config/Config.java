@@ -34,6 +34,9 @@ import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.TextUtil;
+//? if <=1.20.1 {
+//import obro1961.chatpatches.util.VersionUtil;
+//?}
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -601,7 +604,7 @@ public class Config {
 				// parses int -> TextColor (migration) and String <-> TextColor (default); the final result is always of type int
 				// thx to TheWhyEvenHow: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
 				codec =
-					/*? if <=1.20.1 {*//*Setting*//*?} elif <=1.20.4 {*//*ExtraCodecs*//*?} else {*/Codec/*?}*/
+					/*? if <=1.20.1 {*//*VersionUtil*//*?} elif <=1.20.4 {*//*ExtraCodecs*//*?} else {*/Codec/*?}*/
 					.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
 					.xmap(TextColor::getValue, TextColor::fromRgb);
 			} else {
@@ -641,13 +644,6 @@ public class Config {
 
 			return ((Codec<T>) codec).optionalFieldOf(key, def);
         }
-
-		//prepub move elsewhere (new CodecUtils?) or wait it out until discontinued?
-		//? if <=1.20.1 {
-		/*static <T> Codec<T> withAlternative(Codec<T> codec, Codec<? extends T> alternative) {
-			return Codec.either(codec, alternative).xmap(either -> either.map(Function.identity(), Function.identity()), com.mojang.datafixers.util.Either::left);
-		}*/
-		//?}
     }
 
 }

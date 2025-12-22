@@ -1,5 +1,9 @@
 package obro1961.chatpatches.util;
 
+//? if <=1.20.1 {
+//import com.mojang.datafixers.util.Either;
+//import com.mojang.serialization.Codec;
+//?}
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.util.Mth;
@@ -7,6 +11,10 @@ import net.minecraft.world.entity.player.ChatVisiblity;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
+
+//? if <=1.20.1 {
+//import java.util.function.Function;
+//?}
 
 /**
  * Contains methods present in some versions but not others - whether because
@@ -93,8 +101,15 @@ public class VersionUtil {
 	 *
 	 * @see ChatComponentMixin#getEoEIndex(double, double)
 	 */
-	public static int getEoEIndex(double mouseX, double mouseY) {
-		return getMessageEndIndexAt(screenToChatX(mouseX), screenToChatY(mouseY));
+	public static int getEoEIndex(double mX, double mY) {
+		return getMessageEndIndexAt(screenToChatX(mX), screenToChatY(mY));
 	}
 	//?}
+
+
+	/*? if <=1.20.1 {*/
+	/*public static <T> Codec<T> withAlternative(Codec<T> codec, Codec<? extends T> alternative) {
+		return Codec.either(codec, alternative).xmap(either -> either.map(Function.identity(), Function.identity()), Either::left);
+	}*/
+	/*?}*/
 }
