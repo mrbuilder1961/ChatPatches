@@ -261,7 +261,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
 				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(ChatFormatting.DARK_RED));
-				// todo: that option to disable text shadows - raw calls can have the boolean plugged right in, elsewhere needs injectors
 			}
 		}
 

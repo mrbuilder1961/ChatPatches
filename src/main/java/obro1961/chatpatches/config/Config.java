@@ -81,7 +81,8 @@ public class Config {
 
     public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColor();
     public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean dynamicChatShift = true, vanillaClearing = false, chatHidePacket = true,
-		messageDrafting = false, onlyInvasiveDrafting = false; // prepub - messageDrafting -> chatDrafting?
+		// idea: messageDrafting -> chatDrafting?
+		messageDrafting = false, onlyInvasiveDrafting = false;
     public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
         caseSensitive = true, regex = false;
@@ -377,7 +378,7 @@ public class Config {
 			LOGGER.info("[Config.serialize] Saving...");
 
 			try {
-				JsonElement json = config.encodeStart(JsonOps.INSTANCE)
+				JsonElement json = config.encodeStart(JsonOps.INSTANCE) // FIXME: i dont like that it doesn't write the config to disk when it's default anymore - not good practice
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.orElseThrow();
 
@@ -630,7 +631,7 @@ public class Config {
 						}
 					}
 					default -> {
-						logReportMsg(new IllegalStateException("Option '" + key + "' is not a valid type for serialization"));
+						logReportMsg(new IllegalStateException(String.format("Option '%s' (of type %s) is not a valid type for serialization", key, getType().getName())));
 						yield Codec.STRING;
 					}
 				};
