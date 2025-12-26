@@ -94,28 +94,30 @@ public class ContextMenu implements GuiEventListener {
 	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 
 	private static Minecraft mc() { return Minecraft.getInstance(); }
+	private static MutableComponent translate(String key, Object... args) { return Component.translatable(LANG_PREFIX + key, args); }
 
 	// region text constants
-	static final Function<Object, Component> UNKNOWN = (id) -> Component.translatable(LANG_PREFIX + "unknown", TextUtil.asText(id)).withStyle(ChatFormatting.RED);
-	static final Component MENU_STRING = Component.translatable(LANG_PREFIX + "copyText");
-	static final Component RAW_TEXT = Component.translatable(LANG_PREFIX + "rawText");
-	static final Component FORMATTED_STR = Component.translatable(LANG_PREFIX + "formattedString");
-	static final Component NO_TIMESTAMP_TEXT = Component.translatable(LANG_PREFIX + "noTimestampText");
-	static final Component NO_DUPE_TEXT = Component.translatable(LANG_PREFIX + "noCounterText");
-	static final Component JSON_STR = Component.translatable(LANG_PREFIX + "jsonString");
-	static final Component MENU_TIMESTAMP = Component.translatable(LANG_PREFIX + "timestamp");
-	static final Component TIMESTAMP = Component.translatable(LANG_PREFIX + "timestampText");
-	static final Component TIMESTAMP_HOVER = Component.translatable(LANG_PREFIX + "timestampHoverText");
-	static final Component MENU_DUPE_COUNTER = Component.translatable(LANG_PREFIX + "counter");
-	static final Component COUNTER_TEXT = Component.translatable(LANG_PREFIX + "counterText");
-	static final Component COUNTER_VALUE = Component.translatable(LANG_PREFIX + "counterValue");
-	static final Component MENU_UNIX = Component.translatable(LANG_PREFIX + "unix");
-	static final Component MENU_LINKS = Component.translatable(LANG_PREFIX + "links");
-	static final Int2ObjectFunction<Component> LINK_N = (n) -> Component.translatable(LANG_PREFIX + "linkN", n);
-	static final Component MENU_SENDER = Component.translatable(LANG_PREFIX + "sender");
-	static final Component NAME = Component.translatable(LANG_PREFIX + "name");
-	static final Component UUID = Component.translatable(LANG_PREFIX + "uuid");
-	static final Component MENU_REPLY = Component.translatable(LANG_PREFIX + "reply");
+	static final Function<Object, Component> UNKNOWN = (id) -> translate("unknown", TextUtil.asText(id)).withStyle(ChatFormatting.RED);
+	static final Component MENU_STRING = translate("copyText");
+	static final Component RAW_TEXT = translate("rawText");
+	static final Component FORMATTED_STR = translate("formattedString");
+	static final Component NO_TIMESTAMP_TEXT = translate("noTimestampText");
+	static final Component NO_DUPE_TEXT = translate("noCounterText");
+	static final Component JSON_STR = translate("jsonString");
+	static final Component MENU_TIMESTAMP = translate("timestamp");
+	static final Component TIMESTAMP = translate("timestampText");
+	static final Component TIMESTAMP_HOVER = translate("timestampHoverText");
+	static final Component MENU_DUPE_COUNTER = translate("counter");
+	static final Component COUNTER_TEXT = translate("counterText");
+	static final Component COUNTER_VALUE = translate("counterValue");
+	static final Component MENU_UNIX = translate("unix");
+	static final Component MENU_LINKS = translate("links");
+	static final Int2ObjectFunction<Component> LINK_N = (n) -> translate("linkN", n);
+	static final Component MENU_SENDER = translate("sender");
+	static final Component NAME = translate("name");
+	static final Component UUID = translate("uuid");
+	static final Component MENU_REPLY = translate("reply");
+	static final Component MENU_DELETE = translate("delete");
 	// endregion
 
 	/**
@@ -264,7 +266,7 @@ public class ContextMenu implements GuiEventListener {
 			String copyStr = StringUtil.stripColor(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc().keyboardHandler.setClipboard(copyStr);
-				ChatPatches.pushInfoToast(Component.translatable(LANG_PREFIX + "copied").withStyle(ChatFormatting.GREEN), copyText);
+				ChatPatches.pushInfoToast(translate("copied").withStyle(ChatFormatting.GREEN), copyText);
 			}
 
 			if(pressAction != null) {
