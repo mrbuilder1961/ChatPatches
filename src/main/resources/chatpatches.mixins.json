@@ -11,6 +11,7 @@
   "client": [
     "codec.ExtraCodecsMixin",
     "codec.RegistryFixedCodecMixin",
+    "codec.RegistryFileCodecMixin",
     "gui.ChatComponentMixin",
     "gui.ChatScreenMixin",
     "gui.ScreenMixin",

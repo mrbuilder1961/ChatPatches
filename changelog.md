@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `8.0-alpha.8` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
+- Added *another* band-aid esque patch for [#252](https://www.github.com/mrbuilder1961/ChatPatches/issues/252), again thanks to [SkyNotTheLimit](https://discord.com/channels/507304429255393322/1452165613756879044/1452516265330475085)!
+
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
 - Updated to 1.21.11 (blame Mojang for the long wait - they redesigned the chat again 🤬) ([#293](https://www.github.com/mrbuilder1961/ChatPatches/issues/293))
 - Removed optional dependency for Placeholder API/QuickText - it doesn't support the main feature I thought it did :(
