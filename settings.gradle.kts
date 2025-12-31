@@ -10,7 +10,7 @@ pluginManagement {
         kotlin("jvm") version kotlin
         id("dev.isxander.modstitch.base") version modstitch
         id("dev.kikugie.stonecutter") version stonecutter
-        id("fabric-loom") version loom apply false
+        id("net.fabricmc.fabric-loom") version loom apply false
         id("me.modmuss50.mod-publish-plugin") version mpp
     }
 

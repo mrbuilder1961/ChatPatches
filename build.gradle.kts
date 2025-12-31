@@ -5,7 +5,7 @@ import me.modmuss50.mpp.ReleaseType
 plugins { // versions in gradle.properties + settings.gradle.kts
     kotlin("jvm")
     id("dev.isxander.modstitch.base")
-    id("fabric-loom") apply false
+    id("net.fabricmc.fabric-loom") apply false
     id("me.modmuss50.mod-publish-plugin")
 }
 
@@ -15,13 +15,14 @@ val v: String = m("version")
 val minecraft = stonecutter.current.version //name.substringBefore("-")
 val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prepub: does this cause any issues...
 val currentIsActive = minecraft == stonecutter.active?.version
-val java = if(sc.current.parsed > "1.20.4") 21 else 17
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
 // if we just had a `testPublishMods` task
 var changes = "No changelog specified."
 
+fun java(): Int = modstitch.javaVersion.orNull ?: error("No Java version available (per Modstitch)")
+fun javaStr(): String = java().toString()
 /**
  * Returns the property with the given name. If it doesn't exist then returns the
  * fallback, but if that's null then throws an error.
@@ -53,9 +54,9 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 /*fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallback)*/
 
 
-kotlin {
-    jvmToolchain(java)
-}
+/*kotlin {
+    jvmToolchain(25) // can't use java() bc it's not available here - warning: commenting this out may cause issues
+}*/
 
 dependencies {
     // fabric only
@@ -104,7 +105,7 @@ modstitch {
         // also todo with FMJ: remove fabric api and use arch api or sm
 
         replacementProperties.putAll(mapOf(
-            "java" to java.toString(),
+            "java" to javaStr(),
             "mod_source" to m("source"),
             "mod_modrinth" to m("modrinth"),
             "minecraft_range" to (m("range", "") // todo: make snapshots compatible with this (if snapshot, = *)
@@ -124,9 +125,8 @@ modstitch {
 
 
         // Configure loom like normal here
-        configureLoom {
-            mixin.useLegacyMixinAp = false // todo doesn't work but idk how to disable the warning
-        }
+        /*configureLoom {
+        }*/
     }
 
     // NeoForge, Forge
@@ -207,7 +207,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     dependencies {
-        put("java", java.toString())
+        put("java", javaStr())
         put("config", when {
             current.parsed >= "1.19" -> "yacl"
             else -> "cloth"
@@ -232,7 +232,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     replacements {
-        val notJ21 = java < 21
+        val notJ21 = java() < 21
         string {
             direction = notJ21
             replace(".getFirst()", ".get(0)")
