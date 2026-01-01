@@ -607,18 +607,18 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 	// New/Unique methods
 
-	@Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+	@Intrinsic // prevents merging or discarding if a conflict unexpectedly occurs, unlike @Unique
 	public ContextMenu getContextMenu() {
 		return contextMenu;
 	}
 
-	@Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+	@Intrinsic // prevents merging or discarding if a conflict unexpectedly occurs, unlike @Unique
 	public List<GuiMessage> getSearchResults() {
 		// returns the search results, used by the context menu to display the search results
 		return searchResults;
 	}
 
-	@Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+	@Intrinsic // prevents merging or discarding if a conflict unexpectedly occurs, unlike @Unique
 	public boolean isMouseOverSettingsMenu(double mX, double mY) {
 		return showSettingsMenu && (mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT);
 	}

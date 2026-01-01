@@ -75,16 +75,18 @@ public class ChatLog {
     private static final int DEFAULT_SIZE = 100;
 	private static final int IO_THRESHOLD_SUGGESTION = 1000;
 	private static final String EMPTY_JSON = "{\"messages\":[],\"history\":[]}";
-	private static final ObjectList<?> EMPTY_LIST = newSyncedObjectList(null); // used for determining if the chat log has been deserialized yet
+	/**
+	 * Convenience object that's also used for determining if the chat log has
+	 * been deserialized yet.
+	 */
+	private static final ObjectList<?> EMPTY_LIST = newSyncedObjectList(null);
 
 	private static Minecraft mc() { return Minecraft.getInstance(); }
 
     /**
-     * Used to suspend the addition of messages
-     * and access to the chat log while restoring.
-     * Prevents log spam of restored messages and
-     * other related issues like {@link
-     * ConcurrentModificationException}s.
+     * Used to suspend the addition of messages and access to the chat log
+	 * while restoring. Prevents log spam of restored messages and other
+	 * related issues like {?}.
      */
     private static boolean restoring = false;
     private static int lastHistoryCount = -1, lastMessageCount = -1;
@@ -343,9 +345,13 @@ public class ChatLog {
 		});
 	}
 
+	/**
+	 * @see #deserialize()
+	 * @see #load(boolean)
+	 */
     public static void restore() {
-        if(messageCount() > 0 && historyCount() > 0) {
-			RenderSystem.assertOnRenderThread();
+        if(messageCount() > 0 || historyCount() > 0) {
+			/*? if >=1.21.9 {*/RenderSystem.assertOnRenderThread();/*?}*/ // see #load(.)
 			ChatComponent chat = mc().gui.getChat();
 
 			// copy and clear the current chat so delayed restoration doesn't drown existing messages

@@ -81,7 +81,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * @see #moveChat(int)
      * @see #moveChatLineY(double)
      */
-    @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+    @Intrinsic // prevents merging or discarding if a conflict unexpectedly occurs, unlike @Unique
     public int getGuiMessageIndex(double mouseX, double mouseY) {
         return ChatUtil.visible2Message(getEoEIndex(mouseX, mouseY));
     }
@@ -96,7 +96,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * any {@link Config#chatShift} offsets with injectors
      * {@link #moveChat(int)} and {@link #moveChatLineY(double)}.
      */
-    @Intrinsic // better than @Unique bc it prevents merging or discarding if a conflict unexpectedly occurs
+    @Intrinsic // prevents merging or discarding if a conflict unexpectedly occurs, unlike @Unique
     public int getEoEIndex(double mouseX, double mouseY) {
         return
 		    //? if >=1.21.11 {

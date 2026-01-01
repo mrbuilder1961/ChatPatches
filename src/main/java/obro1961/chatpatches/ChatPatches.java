@@ -29,7 +29,7 @@ import static obro1961.chatpatches.util.TextUtil.asText;
 
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
-	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches"); //prepub: custom impl that overrides everything to call #getBracedCaller(.) to simplify log messages??
+	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches");
 
 	public static Config config = Config.initialize();
 
@@ -49,7 +49,7 @@ public class ChatPatches implements ClientModInitializer {
 		//stonecutter: * events *
 		ClientPlayConnectionEvents.DISCONNECT.register((network, client) -> ChatLog.serialize());
 		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> ChatLog.saveIfPaused(screen));
-		ClientTickEvents.END_WORLD_TICK.register(world -> ChatLog.tickSaveCounter());
+		ClientTickEvents./*? if >= 26.1 {*//*END_LEVEL_TICK*//*?} else {*/END_WORLD_TICK/*?}*/.register(world -> ChatLog.tickSaveCounter());
 
 		// -- chat log loader and boundary sender --
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
@@ -60,7 +60,7 @@ public class ChatPatches implements ClientModInitializer {
 			ChatLog.hideRecentMessages();
 		});
 
-		LOGGER.info("[ChatPatches()] Finished setup!");
+		LOGGER.info("Finished Chat Patches setup!");
 	}
 
 
