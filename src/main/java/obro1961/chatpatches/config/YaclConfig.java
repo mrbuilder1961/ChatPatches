@@ -209,7 +209,7 @@ public class YaclConfig extends Config {
                                                 : "`" + d + "`",
 
                                         I18n.get(prefix + DESCRIPTION_KEY + k).replace("\n", ""),
-                                        prefix + k
+                                        prefix.replace(LANG_PREFIX, "") + k
 									));
                                 });
 
