@@ -61,7 +61,10 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 dependencies {
     // fabric only
     modstitch.loom {
-        modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabric.api")}+$minecraft")
+        val fapi = p("fabric.api") + "+" + minecraft
+        modstitchModImplementation(fabricApi.module("fabric-networking-api-v1", fapi))
+        modstitchModImplementation(fabricApi.module("fabric-screen-api-v1", fapi))
+        modstitchModImplementation(fabricApi.module("fabric-lifecycle-events-v1", fapi))
     }
 
     if(minecraft == "1.20.2") {
