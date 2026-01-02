@@ -211,10 +211,10 @@ public class Config {
 				hoverStyle
 			);
         } catch(RuntimeException e) {
-            LOGGER.error("[Config.formatPlayername] /!\\ An error occurred while trying to format '{}'s playername /!\\", name);
+            LOGGER.error("An error occurred while trying to format '{}'s playername", name);
 
             if(level == null) {
-				e.addSuppressed(new IllegalStateException("[Config#formatPlayername] Expected existing ClientWorld"));
+				e.addSuppressed(new IllegalStateException("Expected existing ClientLevel"));
 			}
 
             logReportMsg(e);
@@ -269,7 +269,7 @@ public class Config {
 			chat.addMessage(boundaryLine);
 
 		} catch(RuntimeException e) {
-			LOGGER.warn("[Config.sendBoundaryLine] An error occurred while sending the boundary line:", e);
+			LOGGER.warn("An error occurred while sending the boundary line:", e);
 		}
 	}
 
@@ -334,11 +334,11 @@ public class Config {
      */
     public static void deserialize() {
 		long start = System.currentTimeMillis();
-		LOGGER.info("[Config.deserialize] Reading...");
+		LOGGER.info("Reading...");
 
 		if(!Files.exists(PATH)) {
 			config.resetValues();
-			LOGGER.info("[Config.deserialize] No config file found; using default values");
+			LOGGER.info("No config file found; using default values");
 			return;
 		}
 
@@ -352,15 +352,15 @@ public class Config {
 				.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 				.orElseThrow();
 
-			LOGGER.info("[Config.deserialize] Read config data from '{}'!", PATH);
+			LOGGER.info("Read config data from '{}'!", PATH);
 		} catch(IOException | NoSuchElementException e) {
 			config.resetValues();
 			String action = e instanceof NoSuchElementException ? "decode" : "read";
-			LOGGER.error("[Config.deserialize] An error occurred while trying to {} config data from '{}', backing up and using default settings:", action, PATH, e);
+			LOGGER.error("An error occurred while trying to {} config data from '{}', backing up and using default settings:", action, PATH, e);
 			backup();
 		} catch(RuntimeException e) {
 			config.resetValues();
-			LOGGER.error("[Config.deserialize] An unexpected error occurred, backing up and using default settings");
+			LOGGER.error("An unexpected error occurred, backing up and using default settings");
 			logReportMsg(e);
 			backup();
 		}
@@ -375,7 +375,7 @@ public class Config {
     public static void serialize() {
 		executeIoTask(() -> {
 			long start = System.currentTimeMillis();
-			LOGGER.info("[Config.serialize] Saving...");
+			LOGGER.info("Saving...");
 
 			try {
 				JsonElement json = config.encodeStart(JsonOps.INSTANCE) // FIXME: i dont like that it doesn't write the config to disk when it's default anymore - not good practice
@@ -391,11 +391,11 @@ public class Config {
 
 				Files.writeString(PATH, pretty, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-				LOGGER.info("[Config.serialize] Saved config data to '{}'!", PATH);
+				LOGGER.info("Saved config data to '{}'!", PATH);
 			} catch(IOException | NoSuchElementException e) {
 				String action = e instanceof NoSuchElementException ? "encode" : "save";
 
-				LOGGER.error("[Config.serialize] An error occurred while trying to {} config data to '{}'", action, PATH);
+				LOGGER.error("An error occurred while trying to {} config data to '{}'", action, PATH);
 				logReportMsg(e);
 			}
 			logDuration(start, IO_THRESHOLD_SUGGESTION);
@@ -414,7 +414,7 @@ public class Config {
 			try {
 				Files.copy(PATH, PATH.resolveSibling(MOD_ID + "_" + Util.getFilenameFormattedDateTime() + ".json"));
 			} catch(IOException e) {
-				LOGGER.warn("[Config.backup] An error occurred trying to back up the original config file:", e);
+				LOGGER.warn("An error occurred trying to back up the original config file:", e);
 			}
 		});
 	}
@@ -512,7 +512,7 @@ public class Config {
 
             if(result.error().isPresent() || result.result().isEmpty()) {
 				//noinspection Convert2MethodRef: if >=1.20.5 DataResult.PartialResult no longer exists
-				String message = "[Config.parse] Failed to parse field '" + opt.key + "': " + result.error().map(e -> e.message()).orElse("<unknown>");
+				String message = "Failed to parse field '" + opt.key + "': " + result.error().map(e -> e.message()).orElse("<unknown>");
                 logReportMsg(new IllegalStateException(message));
                 return DataResult.error(() -> message);
             }
@@ -576,7 +576,7 @@ public class Config {
                     this.val = inc;
                 }
             } catch(NoSuchFieldException | IllegalAccessException | ClassCastException e) {
-                LOGGER.error("[Setting.set({})] An error occurred trying to change config option '{}'", obj, key);
+                LOGGER.error("An error occurred trying to set config option '{}' to {}", key, obj);
                 logReportMsg(e);
             }
         }

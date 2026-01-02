@@ -214,7 +214,7 @@ public class YaclConfig extends Config {
                                 });
 
                                 mc().keyboardHandler.setClipboard(str.toString());
-                                LOGGER.warn("[YaclConfig.exportGithubTables] {}", str);
+                                LOGGER.warn("{}", str);
                             })
                             .build(),
 
@@ -249,12 +249,12 @@ public class YaclConfig extends Config {
 											}
 											Files.writeString(f.toPath(), content);
 
-											LOGGER.info("[YaclConfig.revertIdArrays] Reverted {} id arrays in '{}'", n, f.getAbsolutePath());
+											LOGGER.info("Reverted {} id arrays in '{}'", n, f.getAbsolutePath());
 										} catch(IOException e) {
-											LOGGER.warn("[YaclConfig.revertIdArrays] An error occurred reading '{}'.. good luck with this guy:", f.getAbsolutePath(), e);
+											LOGGER.warn("An error occurred reading '{}'.. good luck with this guy:", f.getAbsolutePath(), e);
 										}
 									},
-									() -> LOGGER.warn("[YaclConfig.revertIdArrays] No log files found")
+									() -> LOGGER.warn("No log files found")
 								))
                             .build()
                     )
@@ -318,7 +318,7 @@ public class YaclConfig extends Config {
                     new SimpleDateFormat(inc.toString());
                     o.set(inc);
                 } catch(IllegalArgumentException e) {
-                    LOGGER.error("[YaclConfig.getBinding] Invalid date format '{}' provided for '{}'", inc, o.key);
+                    LOGGER.error("Invalid date format '{}' provided for '{}'", inc, o.key);
                 }
             });
         } else if(o.key.contains("Format")) {
@@ -450,7 +450,7 @@ public class YaclConfig extends Config {
                 builder.webpImage(id);
             }
         } catch(Throwable e) {
-            LOGGER.error("[YaclConfig.desc] An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
+            LOGGER.error("An error occurred while trying to use '{}:{}' :", ChatPatches.MOD_ID, image, e);
         }
 
         return builder.build();

@@ -369,7 +369,7 @@ public class ChatUtil {
 				throw new AssertionError("Time to log those message structures!", null);
 			}
 		} catch(RuntimeException | AssertionError e) {
-			LOGGER.error("[ChatUtil.modifyMessage] An error occurred while modifying '{}'", m.getString());
+			LOGGER.error("An error occurred while modifying '{}'", m.getString());
 			LOGGER.error("\tTimestamp: {}", optimizeEmpties(timestamp));
 			LOGGER.error("\tBody:");
 
@@ -388,7 +388,7 @@ public class ChatUtil {
 				LOGGER.error("\tDupes: {}", optimizeEmpties(getPart(m, DUPE_INDEX)));
 			}
 
-			LOGGER.error("[ChatUtil.modifyMessage] -- End of message structure --");
+			LOGGER.error("-- End of message structure --");
 
 			if(e instanceof RuntimeException) { // don't log forced errors
 				logReportMsg(e);
