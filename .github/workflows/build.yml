@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '21' # Build everything with 21, even older 17 files
+          java-version: '25' # Build everything with 25, even older 17 files
           distribution: temurin
 
       - uses: gradle/actions/setup-gradle@v4
