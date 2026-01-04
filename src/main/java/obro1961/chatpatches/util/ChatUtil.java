@@ -465,7 +465,7 @@ public class ChatUtil {
 
 		// assembles constructed message and tries to add a dupe counter
 		Component modified = tryCondenseDupes(buildMessage(null, timestamp, content, null)); // style is null bc only the message content should take on the original style
-		ChatLog.addMessage(modified, indicator);
+		ChatLog.addMessage(modified);
 		messageData = NIL_MESSAGE_DATA; // fixes messages that get around ChatListenerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
 	}
