@@ -2,6 +2,9 @@
 
 ## Chat Patches `8.0-alpha.8` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
 - Added *another* Band-Aid patch for [#252](https://www.github.com/mrbuilder1961/ChatPatches/issues/252), again thanks to [SkyNotTheLimit](https://discord.com/channels/507304429255393322/1452165613756879044/1452516265330475085)!
+- Fixed non-vanilla messages formatted like vanilla ones having an extra space between the name and message ([#233](https://www.github.com/mrbuilder1961/ChatPatches/issues/233))
+- Mostly fixed Chat Heads' `BEFORE_NAME` setting not working with Chat Patches on 1.21.9+, thanks mostly to
+  [Fourmisain](https://github.com/Fourmisain)! ([#285](https://www.github.com/mrbuilder1961/ChatPatches/issues/285)) 
 - Refactored a few parts of the buildscript in anticipation of The Deobfuscation (26.1)!
 
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt

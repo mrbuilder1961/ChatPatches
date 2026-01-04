@@ -49,6 +49,9 @@ import java.util.function.Function;
 
 import static net.minecraft.ChatFormatting.*;
 import static obro1961.chatpatches.ChatPatches.*;
+//? if >=1.21.9 {
+import static obro1961.chatpatches.integration.ChatHeadsIntegration.*;
+//?}
 import static obro1961.chatpatches.util.TextUtil.fillVars;
 import static obro1961.chatpatches.util.TextUtil.text;
 
@@ -196,9 +199,17 @@ public class Config {
             String[] configFormat = nameFormat.equals(PLACEHOLDER) ? new String[] {"", ""} : nameFormat.split("\\$"); // note: changing placeholder requires removing the backslashes in the split regex
             ObjectList<Component> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
-            components.add(text( configFormat[0] ));                   // config prefix
-            components.add(text( name ));							   // playername
+            components.add(text( configFormat[0] ));                    // config prefix
+            components.add(text( name ));							    // playername
             components.add(text( configFormat[1] + " " )); // config suffix
+
+			/*? if >=1.21.9 {*/
+			if(/*ChatHeadsIntegration.*/installed() && usingBeforeName()) {
+				// if installed and necessary, adds Chat Heads' custom head component to the playername
+				// see #285 / ChatHeads#83 for why it's easier for Chat Patches to do this
+				components.set(1, createChatHeadComponent(profile).append(components.get(1)));
+			}
+			/*?}*/
 
             if(team != null) {
                 components.add(1, team.getPlayerPrefix()); // team prefix
