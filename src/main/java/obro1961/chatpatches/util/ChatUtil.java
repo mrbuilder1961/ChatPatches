@@ -15,7 +15,7 @@ import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
-import obro1961.chatpatches.mixin.listener.MessageHandlerMixin;
+import obro1961.chatpatches.mixin.listener.ChatListenerMixin;
 import org.apache.logging.log4j.core.util.Integers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +51,7 @@ public class ChatUtil {
 	 * Contains the sender and timestamp data of the last received chat message.
 	 *
 	 * @see #modifyMessage(Component)
-	 * @see MessageHandlerMixin
+	 * @see ChatListenerMixin
 	 */
 	public static MessageData messageData = NIL_MESSAGE_DATA;
 
@@ -399,7 +399,7 @@ public class ChatUtil {
 		// assembles constructed message and tries to add a dupe counter
 		Component modified = tryCondenseDupes(buildMessage(null, timestamp, content, null)); // style is null bc only the message content should take on the original style
 		ChatLog.addMessage(modified);
-		messageData = NIL_MESSAGE_DATA; // fixes messages that get around MessageHandlerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
+		messageData = NIL_MESSAGE_DATA; // fixes messages that get around ChatListenerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
 	}
 

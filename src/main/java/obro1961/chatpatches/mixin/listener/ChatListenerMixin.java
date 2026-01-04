@@ -33,7 +33,7 @@ import static obro1961.chatpatches.util.ChatUtil.*;
  */
 @Environment(EnvType.CLIENT)
 @Mixin(ChatListener.class)
-public abstract class MessageHandlerMixin {
+public abstract class ChatListenerMixin {
 	@Shadow protected abstract UUID guessChatUUID(Component text);
 
     /**
@@ -63,7 +63,7 @@ public abstract class MessageHandlerMixin {
         String name = StringUtils.substringBetween(StringDecomposer.getPlainText(message), "<", ">");
         UUID id = guessChatUUID(message);
 
-        ChatUtil.messageData = !id.equals(Util.NIL_UUID)
+        ChatUtil.messageData = !Util.NIL_UUID.equals(id)
             ? new MessageData(new GameProfile(id, name), new Date(), isVanilla(message))
             : NIL_MESSAGE_DATA;
     }
