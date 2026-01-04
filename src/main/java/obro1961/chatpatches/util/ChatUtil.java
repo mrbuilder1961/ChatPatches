@@ -390,7 +390,7 @@ public class ChatUtil {
 					content.append(teamPart); // adds the team part or nothing to keep MSG_TEAM_INDEX constant
 
 					// adds the formatted playername and content for all message types
-					content.append( config.formatPlayername(messageData.sender) );
+					content.append( config.formatPlayername(m, messageData.sender) );
 					content.append( getArg(ttc, team ? MSG_CONTENT_INDEX : MESSAGE_INDEX) );
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
 					MutableComponent realContent = Component.empty();
@@ -425,7 +425,7 @@ public class ChatUtil {
 					}
 
 					content.append(EMPTY); // keeps MSG_TEAM_INDEX constant
-					content.append(config.formatPlayername(messageData.sender)); // sender data is already known
+					content.append(config.formatPlayername(m, messageData.sender)); // sender data is already known
 					content.append(realContent); // adds the reconstructed message content
 				}
 			}
