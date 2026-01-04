@@ -9,6 +9,7 @@ import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.util.StringDecomposer;
+import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
 import obro1961.chatpatches.util.ChatUtil;
 import org.apache.commons.lang3.StringUtils;
