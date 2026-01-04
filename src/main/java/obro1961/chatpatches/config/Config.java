@@ -211,7 +211,7 @@ public class Config {
 				hoverStyle
 			);
         } catch(RuntimeException e) {
-            LOGGER.error("An error occurred while trying to format '{}'s playername", name);
+            LOGGER.error("Failed to format playername '{}'", name);
 
             if(level == null) {
 				e.addSuppressed(new IllegalStateException("Expected existing ClientLevel"));

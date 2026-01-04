@@ -21,9 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,17 +31,39 @@ import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.TextUtil.withoutContent;
 
 public class ChatUtil {
+	public static final GameProfile NIL_SENDER = new GameProfile(Util.NIL_UUID, "");
 	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, EMPTY, null, null);
-	public static final MessageData NIL_MESSAGE_DATA = new MessageData(new GameProfile(Util.NIL_UUID, ""), Date.from(Instant.EPOCH), false);
+	public static final MessageData NIL_MESSAGE_DATA = new MessageData(NIL_SENDER, Date.from(Instant.EPOCH), false);
 
-	public static final int TIMESTAMP_INDEX = 0,   // contains the timestamp (can be empty)
-							MESSAGE_INDEX = 1,     // contains the actual chat message
-							DUPE_INDEX = 2;        // contains the duplicate counter (can be empty)
-	public static final int MSG_TEAM_INDEX = 0,    // contains the sender's team's name; used for `chat.type.team.*` messages (can be empty)
-							MSG_SENDER_INDEX = 1,  // contains the sender's name
-							MSG_CONTENT_INDEX = 2; // contains the content of the sender's message
+	/** Contains the timestamp (can be empty) */
+	public static final int TIMESTAMP_INDEX = 0;
+	/** Contains the actual chat message */
+	public static final int MESSAGE_INDEX = 1;
+	/**
+	 * Contains the duplicate counter (can be empty)
+	 */
+	public static final int DUPE_INDEX = 2;
 
-	public static final int MAX_MESSAGE_LENGTH = 256; // pulled from input's max length
+	/**
+	 * Contains the sender's team's name; used for `chat.type.team.*`
+	 * messages (can be empty). Held within {@link #MESSAGE_INDEX}
+	 */
+	public static final int MSG_TEAM_INDEX = 0;
+	/**
+	 * Contains the sender's name. Held within {@link #MESSAGE_INDEX}
+	 */
+	public static final int MSG_SENDER_INDEX = 1;
+	/**
+	 * Contains the content of the sender's message. Held
+	 * within {@link #MESSAGE_INDEX}
+	 */
+	public static final int MSG_CONTENT_INDEX = 2;
+
+	/**
+	 * Pulled from {@link ChatScreen#input}'s initializer in
+	 * {@link ChatScreen#init()}
+	 */
+	public static final int MAX_MESSAGE_LENGTH = 256;
 
 	private static Minecraft mc() { return Minecraft.getInstance(); }
 
@@ -229,6 +249,49 @@ public class ChatUtil {
 		return root.append(first).append(second).append(third);
 	}
 
+	/**
+	 * @return A {@link GameProfile} representing the sender of the passed
+	 * message. If the message doesn't have a sender, the style is empty, or
+	 * the {@link HoverEvent} contained within is not an entity type, returns
+	 * {@link Util#NIL_UUID}.
+	 *
+	 * @apiNote Since 1.21.5, the {@link HoverEvent.EntityTooltipInfo#name}
+	 * field is {@linkplain Optional optional}, meaning a sender
+	 * could have a {@link java.util.UUID} specified but no name.
+	 *
+	 * @param message The message to extract the sender from. Must be in the
+	 * Chat Patches message format, as created by
+	 * {@link #buildMessage(Style, Component, Component, Component)} or with
+	 * sibling components in line with the established indices.
+	 *
+	 * @see #MESSAGE_INDEX
+	 * @see #MSG_SENDER_INDEX
+	 */
+	public static GameProfile extractMessageSender(Component message) {
+		Style style = getMsgPart(message, MSG_SENDER_INDEX).getStyle();
+
+		/*? if >=1.21.5 {*/
+		if(style.getHoverEvent() instanceof HoverEvent.ShowEntity(HoverEvent.EntityTooltipInfo info)) {
+		/*?} else {*/
+		/*if(style.getHoverEvent() != null && (Object)style.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityTooltipInfo info) {*/
+		/*?}*/
+			String name = /*? if <=1.20.2 {*//*Optional.ofNullable*//*?}*/(info.name).orElse(EMPTY).getString();
+			UUID id = info./*? if >=1.21.5 {*/uuid/*?} else {*//*id*//*?}*/;
+			GameProfile result = new GameProfile(id, name);
+
+			// XOR - we'll accept partial senders, but we want to warn about them
+			if(name.isEmpty() ^ Util.NIL_UUID.equals(id)) {
+				LOGGER.warn("Extracted partial message sender {} from '{}'", result, message.getString());
+			}
+
+			if(!name.isEmpty() || !Util.NIL_UUID.equals(id)) {
+				return result;
+			}
+		}
+
+		return NIL_SENDER;
+	}
+
 	public static String optimizeEmpties(Object o) {
 		return (o instanceof String str ? str : String.valueOf(o))
 			.replace("literal{}", "empty")
@@ -351,7 +414,9 @@ public class ChatUtil {
 					// ignore everything before the '>' because it's the playername, which we already know
 					// adds the part after the closing bracket but before any remaining siblings, if it exists
 					if(!afterEndBracket.isEmpty()) {
-						realContent.append( Component.literal(afterEndBracket).setStyle(firstPart.getStyle()) );
+						// stripLeading() prevents the space between the '>' and the message from appearing in the message content
+						// also prevents the extra space from appearing with Chat Heads (prepub test: StyledChat too?)
+						realContent.append( Component.literal(afterEndBracket.stripLeading()).setStyle(firstPart.getStyle()) );
 					}
 
 					// we know everything remaining is message content parts, so add everything
@@ -370,6 +435,8 @@ public class ChatUtil {
 			}
 		} catch(RuntimeException | AssertionError e) {
 			LOGGER.error("An error occurred while modifying '{}'", m.getString());
+			LOGGER.error("(lastEmpty={}, boundary={}, messageData.vanilla={}, config.name={}, config.nameFormat='{}')",
+				lastEmpty, boundary, messageData.vanilla, config.name, config.nameFormat);
 			LOGGER.error("\tTimestamp: {}", optimizeEmpties(timestamp));
 			LOGGER.error("\tBody:");
 
@@ -398,7 +465,7 @@ public class ChatUtil {
 
 		// assembles constructed message and tries to add a dupe counter
 		Component modified = tryCondenseDupes(buildMessage(null, timestamp, content, null)); // style is null bc only the message content should take on the original style
-		ChatLog.addMessage(modified);
+		ChatLog.addMessage(modified, indicator);
 		messageData = NIL_MESSAGE_DATA; // fixes messages that get around ChatListenerMixin's data caching, usually thru ChatHud#addMessage (ex. open-to-lan message)
 		return modified;
 	}

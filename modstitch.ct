@@ -15,10 +15,11 @@ extendable class net/minecraft/network/chat/MutableComponent
 #?}
 
 
-## ChatComponent - (Mixin)
+## ChatComponent - (Mixin), ChatUtil
 
 accessible field net/minecraft/client/gui/components/ChatComponent BOTTOM_MARGIN I
 accessible field net/minecraft/client/gui/components/ChatComponent MESSAGE_INDENT I
+accessible field net/minecraft/client/gui/components/ChatComponent DELETED_CHAT_MESSAGE Lnet/minecraft/network/chat/Component; # modifyMessage()
 accessible field net/minecraft/client/gui/components/ChatComponent allMessages Ljava/util/List;
 accessible field net/minecraft/client/gui/components/ChatComponent trimmedMessages Ljava/util/List;
 accessible field net/minecraft/client/gui/components/ChatComponent chatScrollbarPos I
@@ -31,7 +32,7 @@ accessible method net/minecraft/client/gui/components/ChatComponent getScale ()D
 #?}
 
 
-## ChatScreen -  ContextMenu #init(.) , #close(.)
+## ChatScreen - ContextMenu #init(), #close()
 
 accessible field net/minecraft/client/gui/screens/ChatScreen input Lnet/minecraft/client/gui/components/EditBox;
 

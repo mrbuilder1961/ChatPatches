@@ -83,6 +83,13 @@ public abstract class ChatListenerMixin {
      */
     @Unique
     private boolean isVanilla(Component message) {
-        return VANILLA_FORMAT.reset(message.getString()).matches();
+        String str = message.getString();
+        boolean result = VANILLA_FORMAT.reset(str).matches();
+
+        if(ChatPatches.config.logMessageStructures) {
+            ChatPatches.LOGGER.error("ChatListener received message '{}' -> vanilla = {}", str, result);
+        }
+
+        return result;
     }
 }

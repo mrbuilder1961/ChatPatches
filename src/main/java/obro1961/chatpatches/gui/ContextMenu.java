@@ -219,18 +219,7 @@ public class ContextMenu implements GuiEventListener {
 			return l;
 		});
 
-
-		Style s = getMsgPart(selectedLine.content(), MSG_SENDER_INDEX).getStyle();
-		//? if <=1.21.4 {
-		/*this.messageSender = s.getHoverEvent() != null && (Object)s.getHoverEvent().getValue(HoverEvent.Action.SHOW_ENTITY) instanceof HoverEvent.EntityTooltipInfo info
-		*///?} else {
-		this.messageSender = s.getHoverEvent() instanceof HoverEvent.ShowEntity(HoverEvent.EntityTooltipInfo info)
-		//?}
-			? new GameProfile(
-				info./*? if >=1.21.5 {*/uuid/*?} else {*//*id*//*?}*/,
-				/*? if <=1.20.2 {*//*Optional.ofNullable*//*?}*/(info.name).orElse(UNKNOWN.apply( MENU_SENDER.copy().append(" " +info./*? if >=1.21.5 {*/uuid/*?} else {*//*id*//*?}*/) )).getString()
-			)
-			: NIL_MESSAGE_DATA.sender();
+		this.messageSender = ChatUtil.extractMessageSender(selectedLine.content());
 	}
 
 
@@ -525,13 +514,13 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		// sender buttons - conditional
-		if( !messageSender.equals(NIL_MESSAGE_DATA.sender()) ) {
+		if( !NIL_SENDER.equals(messageSender) ) {
 			var name = messageSender./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/();
-			var id = (messageSender./*? if >=1.21.9 {*/id/*?} else {*//*getId*//*?}*/());
+			var id = messageSender./*? if >=1.21.9 {*/id/*?} else {*//*getId*//*?}*/();
 
 			registerProxyActionButton(MENU_SENDER, NAME, 0, 0, Items.NAME_TAG);
-				registerCopyButton(NAME, 0, Component.nullToEmpty(name));
-				registerCopyButton(UUID, 1, Component.nullToEmpty(id.toString()));
+				registerCopyButton(NAME, 0, Component.literal(name));
+				registerCopyButton(UUID, 1, Component.literal(id.toString()));
 
 			registerButton(
 				MENU_REPLY,

@@ -35,7 +35,6 @@ import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.function.Function;
 
@@ -286,7 +285,8 @@ public class ChatLog {
 				JsonElement json = result.result().orElse(null);
 				String data = GsonHelper.toStableString(json);
 				Path path = PATH;
-
+//prepub: if possible, find erroring message and flatten it to a string literal with section signs but give it a message indicator of modified w the message "caused an error during serialization" - requires
+// custom text impl for that though, to store the message indicator
 				if(json == null) {
 					// noinspection Convert2MethodRef: makes stonecutter life easier
 					var err = result.error().map(e -> e.message()).orElse(ChatFormatting.RED + "Unknown cause");
@@ -351,23 +351,15 @@ public class ChatLog {
 	 */
     public static void restore() {
         if(messageCount() > 0 || historyCount() > 0) {
-			/*? if >=1.21.9 {*/RenderSystem.assertOnRenderThread();/*?}*/ // see #load(.)
+			/*? if >=1.21.9 {*/RenderSystem.assertOnRenderThread();/*?}*/
 			ChatComponent chat = mc().gui.getChat();
 
-			// copy and clear the current chat so delayed restoration doesn't drown existing messages
-			// i think we just need to mixin to the delayed message queue thing, and here we cache the current setting, set it to ~5s delay, and mark some flag field true to be used in the mixin(s)!
-			var prevHistory = List.copyOf(chat.getRecentChat());
-			var prevMessages = List.copyOf(chat.allMessages);
-			chat.getRecentChat().clear();
-			chat.allMessages.clear();
+			// todo i think we just need to mixin to the delayed message queue thing, and here we cache the current setting, set it to ~5s delay, and mark some flag field true to be used in the mixin(s)!
 
 			restoring = true;
 			history.forEach(chat::addRecentChat);
 			messages.forEach(msg -> chat.addMessage(msg, null, RESTORED_INDICATOR));
 			restoring = false;
-
-			chat.getRecentChat().addAll(prevHistory);
-			chat.allMessages.addAll(prevMessages);
 
 			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
 			hideRecentMessages();
