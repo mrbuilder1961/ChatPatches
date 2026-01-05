@@ -4,12 +4,13 @@ import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import net.minecraft.util.Util;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
@@ -28,6 +29,9 @@ import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static obro1961.chatpatches.ChatPatches.*;
+//? if >=1.21.9 {
+import static obro1961.chatpatches.integration.ChatHeadsIntegration.extractHeadComponent;
+//? }
 import static obro1961.chatpatches.util.TextUtil.withoutContent;
 
 public class ChatUtil {
@@ -97,7 +101,7 @@ public class ChatUtil {
 	 * however, when factoring in team pre- and
 	 * suf-fixes, this limit becomes irrelevant.
 	 */
-	public static final Matcher VANILLA_FORMAT = Pattern.compile("(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$").matcher("");
+	public static final Matcher VANILLA_FORMAT = Pattern.compile("^((-> )?\\[.+] )?<(\\w{1,16}|\\[(\\w{1,16}) head]\\4)>\\s.+$").matcher("");
 	public static final Matcher PARSEABLE_MESSAGE_KEYS = Pattern.compile("chat.type.(text|team.(text|sent))").matcher("");
 
 
@@ -369,8 +373,17 @@ public class ChatUtil {
 			// reconstruct the player message if it's in the vanilla format & it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			if(config.name && !lastEmpty && messageData.vanilla && VANILLA_FORMAT.reset(m.getString()).matches()) {
+			Matcher matcher = VANILLA_FORMAT.reset(m.getString());
+			if(config.name && !lastEmpty && messageData.vanilla && matcher.matches()) {
 				content = Component.empty().setStyle(style);
+
+				Optional<Component> head = Optional.empty();
+				//? if >=1.21.9 {
+				// when group 4 (the backreference) exists, "[playername head]playername" was matched
+				if (matcher.group(4) != null) {
+					head = extractHeadComponent(m);
+				}
+				//? }
 
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContents() instanceof TranslatableContents ttc && PARSEABLE_MESSAGE_KEYS.reset(ttc.getKey()).matches()) {
@@ -390,7 +403,7 @@ public class ChatUtil {
 					content.append(teamPart); // adds the team part or nothing to keep MSG_TEAM_INDEX constant
 
 					// adds the formatted playername and content for all message types
-					content.append( config.formatPlayername(m, messageData.sender) );
+					content.append( config.formatPlayername(head, messageData.sender) );
 					content.append( getArg(ttc, team ? MSG_CONTENT_INDEX : MESSAGE_INDEX) );
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
 					MutableComponent realContent = Component.empty();
@@ -425,7 +438,7 @@ public class ChatUtil {
 					}
 
 					content.append(EMPTY); // keeps MSG_TEAM_INDEX constant
-					content.append(config.formatPlayername(m, messageData.sender)); // sender data is already known
+					content.append(config.formatPlayername(head, messageData.sender)); // sender data is already known
 					content.append(realContent); // adds the reconstructed message content
 				}
 			}
