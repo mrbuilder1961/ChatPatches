@@ -222,9 +222,9 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * @see ChatUtil#modifyMessage(Component)
      * @see ChatUtil#tryCondenseDupes(Component)
      */
+	@ModifyVariable(method = VERSIONED_ADD_MESSAGE_TARGET_REFERENCE, at = @At("HEAD"), argsOnly = true)
     private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @Local(argsOnly = true) boolean refreshing*//*?}*/) {
         return /*? if <=1.20.4 {*//* refreshing ? m : *//*?}*/ ChatUtil.modifyMessage(m);
-    @ModifyVariable(method = VERSIONED_ADD_MESSAGE_TARGET_REFERENCE, at = @At("HEAD"), argsOnly = true)
     }
 
     @Inject(
