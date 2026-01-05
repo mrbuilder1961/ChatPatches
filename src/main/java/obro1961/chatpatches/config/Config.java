@@ -19,7 +19,7 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
-//? if <1.21.5
+//? if <1.21.5 {
 //import net.minecraft.client.multiplayer.PlayerInfo;
 //?}
 import net.minecraft.client.player.RemotePlayer;
