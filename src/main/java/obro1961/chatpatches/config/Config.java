@@ -7,6 +7,7 @@ import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.*;
 import dev.isxander.yacl3.api.Option;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
@@ -18,7 +19,9 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.multiplayer.PlayerInfo;
+//? if <1.21.5
+//import net.minecraft.client.multiplayer.PlayerInfo;
+//?}
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/;
@@ -66,6 +69,14 @@ public class Config {
 
     /** @see #sendBoundaryLine() */
     protected static Boundary lastBoundary = Boundary.UNKNOWN;
+	/**
+	 * Caches the hash of the armor, absorption, health, and chat scale values
+	 * alongside the shifted height value to avoid recalculating the same value
+	 * every render tick. Only used when {@link #dynamicChatShift} is enabled.
+	 *
+	 * @see #calcDynamicChatShift()
+	 */
+	protected static IntList lastShiftState = IntList.of(-1, -1);
 
 
     // todo #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
@@ -288,12 +299,15 @@ public class Config {
 
 	/**
 	 * Calculates the appropriate chat shifting offset to use if
-	 * {@link Config#dynamicChatShift} is enabled, which accounts
-	 * for the player's visible armor and health bars. If this
-	 * option is disabled or the player is null (shouldn't
-	 * ever happen), simply returns {@link Config#chatShift}.
-     * Doesn't dynamically shift if the player is in creative or
-     * spectator mode, as the health and armor bars are not visible.
+	 * {@link Config#dynamicChatShift} is enabled, which accounts for the player's
+	 * visible armor and health bars. If this option is disabled or the player is
+	 * null (shouldn't ever happen), simply returns {@link Config#chatShift}.
+     * Doesn't dynamically shift if the player is in creative or spectator mode,
+	 * as the health and armor bars are not visible.
+	 *
+	 * @implNote Thanks to {@link #lastShiftState}, only recalculates the shift
+	 * if values have changed - avoiding a third-degree polynomial and
+	 * floating-point multiplication many times a second!
 	 *
 	 * @author <a href="https://github.com/radioactive-exe">radioactive-exe</a>!
 	 * The majority of this code was contributed in
@@ -306,7 +320,11 @@ public class Config {
 			return chatShift;
 		}
         // don't shift the chat if there are no hearts visible (not in survival or adventure)
-        if((Object)mc().getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival()) {
+		/*? if >=1.21.5 {*/
+		if(player.gameMode() == null || !player.gameMode().isSurvival()) {
+		/*?} else {*/
+        /*if((Object)mc().getConnection().getPlayerInfo(player.getUUID()) instanceof PlayerInfo entry && !entry.getGameMode().isSurvival()) {*/
+		/*?}*/
 			return chatShift;
 		}
 
@@ -316,20 +334,25 @@ public class Config {
 		float health = player.getMaxHealth();
 		double scale = mc().gui.getChat().getScale();
 
+		int playerState = Objects.hash(armor, absorption, health, scale);
+		// if the last player state is the same as the current one and a shift value is available, use it
+		if(lastShiftState.getInt(0) == playerState && lastShiftState.getInt(1) >= 0) {
+			return lastShiftState.getInt(1); // avoids that pesky third-degree polynomial and floating-point multiplication every render tick!
+		}
+
 		// calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
-		int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / 20);
-		int healthHeightMultiplier = (int) (health + absorption - 1) / 20;
+		int armorHeightMultiplier = (armor == 0) ? 0 : 1 + ((armor - 1) / Player.MAX_HEALTH);
+		int healthHeightMultiplier = (int) (health + absorption - 1) / Player.MAX_HEALTH;
 
 		//float specificHealthScales[] = {0.75f, 0.6f, 0.5f, 0.45f, 0.3f, 0.3f, 0.3f, 0.3f}; // contingency
-		// currently uses a third-degree polynomial regression to calculate the health scale
-		// prepub: cache these values after identical for two ticks in a row or something - i feel like constant polynomial evaluation is not necessary
 		float healthScale = healthHeightMultiplier > 7
-			? 0.3f
+			? 0.3f // currently uses a third-degree polynomial regression to calculate the health scale for multipliers under 7
 			: 0.00583333f * (float)Math.pow(healthHeightMultiplier, 3) - 0.0722619f * (float)Math.pow(healthHeightMultiplier, 2) + 0.154048f * healthHeightMultiplier + 0.918571f;
 
-		return (armorHeightMultiplier * Mth.floor(10 / scale))
-			+ (healthHeightMultiplier * Mth.floor(10 * healthScale / scale))
-			+ chatShift;
+		int result = (armorHeightMultiplier * Mth.floor(10 / scale)) + (healthHeightMultiplier * Mth.floor(10 * healthScale / scale)) + chatShift;
+
+		lastShiftState = IntList.of(playerState, result);
+		return result;
 	}
 
 

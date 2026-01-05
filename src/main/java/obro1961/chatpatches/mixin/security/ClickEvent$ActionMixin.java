@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class ClickEvent$ActionMixin {
 	/**
 	 * Allows the serialization of {@link ClickEvent.Action#OPEN_FILE} click events
-	 * by disabling the validation check while {@link TextUtil#isCodecSafe()} is {@code
+	 * by disabling the validation check while {@link TextUtil#safeCodec} is {@code
 	 * false}. This prevents crashes during serialization and errors when using the
 	 * context menu, and the additional check stops malicious click events from being
 	 * unilaterally accepted. <b>However, players are still responsible for being
@@ -18,6 +18,6 @@ public abstract class ClickEvent$ActionMixin {
 	 */
 	@ModifyReturnValue(method = "isAllowedFromServer", at = @At("RETURN"))
 	private boolean allowConditionalSerialization(boolean safe) {
-		return safe || !TextUtil.isCodecSafe().get(); // safe ? true : !ChatLog.isCodecSafe().get()
+		return safe || !TextUtil.safeCodec.get(); // safe ? true : !TextUtil.safeCodec.get()
 	}
 }

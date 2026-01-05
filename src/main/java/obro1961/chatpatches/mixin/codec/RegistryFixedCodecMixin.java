@@ -13,6 +13,6 @@ public abstract class RegistryFixedCodecMixin {
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/core/Holder;canSerializeIn(Lnet/minecraft/core/HolderOwner;)Z")
 	)
 	private boolean silenceInvalidRegistryErrors(boolean use) {
-		return use || !TextUtil.isCodecSafe().get();
+		return use || !TextUtil.safeCodec.get();
 	}
 }

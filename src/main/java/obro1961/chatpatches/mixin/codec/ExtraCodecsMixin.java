@@ -19,7 +19,7 @@ public abstract class ExtraCodecsMixin {
 
 	/**
 	 * Allows all chat strings to be serialized despite any section signs present.
-	 * Unfortunately, a sole check to {@link TextUtil#isCodecSafe()} will still break
+	 * Unfortunately, a sole check to {@link TextUtil#safeCodec} will still break
 	 * context menu clicks on said messages, so a more comprehensive check is
 	 * required. Fixes
 	 * <a href="https://github.com/mrbuilder1961/ChatPatches/issues/246">#246</a>,

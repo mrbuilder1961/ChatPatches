@@ -415,7 +415,7 @@ public class ChatUtil {
 					// adds the part after the closing bracket but before any remaining siblings, if it exists
 					if(!afterEndBracket.isEmpty()) {
 						// stripLeading() prevents the space between the '>' and the message from appearing in the message content
-						// also prevents the extra space from appearing with Chat Heads (prepub test: StyledChat too?)
+						// also prevents the extra space from appearing with Chat Heads (test: StyledChat too?)
 						realContent.append( Component.literal(afterEndBracket.stripLeading()).setStyle(firstPart.getStyle()) );
 					}
 

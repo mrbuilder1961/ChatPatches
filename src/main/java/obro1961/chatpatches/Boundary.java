@@ -51,7 +51,7 @@ public record Boundary(String levelName, @NotNull Side side) {
 		return insertion != null && insertion.startsWith(ID_STRING);
 	}
 
-	// prepub ts is untested and probably doesn't work. but it will be used for copying the world name from boundary lines!
+	// need to copy the world name from boundary lines? this isn't finished but could do just that!
 	/*public static Boundary fromInsertion(String insertion) {
 		if(!insertion.startsWith(ID_STRING)) {
 			return UNKNOWN; // not a boundary line

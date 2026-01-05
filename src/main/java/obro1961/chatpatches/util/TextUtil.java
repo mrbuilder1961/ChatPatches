@@ -81,16 +81,18 @@ public class TextUtil {
 	};
 
 	/**
-	 * Thread-local because
-	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1387226885867704401">
-	 * TheWhyEvenHow</a> suggested this, and they also made this implementation
-	 * successful, so I trust them.
+	 * A boolean-wrapped holder that is {@code true} when safety mechanisms
+	 * <b>should</b> be used when serializing text components, and {@code false}
+	 * otherwise. Allows for the serialization of potentially unsafe objects
+	 * like {@link ClickEvent}s.
 	 *
 	 * @see ClickEvent$ActionMixin#allowConditionalSerialization(boolean)
+	 *
+	 * @implNote Thread-local because
+	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1387226885867704401">
+	 * TheWhyEvenHow</a> suggested this and its (successful) implementation.
 	 */
-	private static final ThreadLocal<Boolean> safeCodec = ThreadLocal.withInitial(() -> true);
-
-	public static ThreadLocal<Boolean> isCodecSafe() { return safeCodec; } // prepub: keep?
+	public static final ThreadLocal<Boolean> safeCodec = ThreadLocal.withInitial(() -> true);
 
 
 	/**

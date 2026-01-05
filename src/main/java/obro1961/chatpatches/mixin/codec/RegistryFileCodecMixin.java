@@ -2,7 +2,6 @@ package obro1961.chatpatches.mixin.codec;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.resources.RegistryFileCodec;
-import net.minecraft.resources.RegistryFixedCodec;
 import obro1961.chatpatches.util.TextUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,6 +13,6 @@ public abstract class RegistryFileCodecMixin {
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/core/Holder;canSerializeIn(Lnet/minecraft/core/HolderOwner;)Z")
 	)
 	private boolean silenceInvalidRegistryErrors(boolean use) {
-		return use || !TextUtil.isCodecSafe().get();
+		return use || !TextUtil.safeCodec.get();
 	}
 }
