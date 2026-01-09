@@ -101,7 +101,7 @@ public class ChatUtil {
 	 * however, when factoring in team pre- and
 	 * suf-fixes, this limit becomes irrelevant.
 	 */
-	public static final Matcher VANILLA_FORMAT = Pattern.compile("^((-> )?\\[.+] )?<(\\w{1,16}|\\[(\\w{1,16}) head]\\4)>\\s.+$").matcher("");
+	public static final Matcher VANILLA_FORMAT = Pattern.compile("^((-> )?\\[.+] )?<([^]>]*\\w{1,16}[^]>]*|\\[(\\w{1,16}) head][^]>]*\\4[^]>]*)>\\s.+$").matcher("");
 	public static final Matcher PARSEABLE_MESSAGE_KEYS = Pattern.compile("chat.type.(text|team.(text|sent))").matcher("");
 
 
