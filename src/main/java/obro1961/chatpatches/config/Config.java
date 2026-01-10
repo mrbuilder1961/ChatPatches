@@ -70,13 +70,21 @@ public class Config {
     /** @see #sendBoundaryLine() */
     protected static Boundary lastBoundary = Boundary.UNKNOWN;
 	/**
-	 * Caches the hash of the armor, absorption, health, and chat scale values
-	 * alongside the shifted height value to avoid recalculating the same value
+	 * The hash of the player's armor, absorption, health, and other values for
+	 * use with {@link #lastDynamicShift}. Avoids recalculating the same value
 	 * every render tick. Only used when {@link #dynamicChatShift} is enabled.
 	 *
 	 * @see #calcDynamicChatShift()
 	 */
-	protected static IntList lastShiftState = IntList.of(-1, -1);
+	protected static int lastShiftState = -1;
+	/**
+	 * The shifted height value for use with the current {@link #lastShiftState}
+	 * value. Avoids recalculating the same value every render tick. Only used
+	 * when {@link #dynamicChatShift} is enabled.
+	 *
+	 * @see #calcDynamicChatShift()
+	 */
+	protected static int lastDynamicShift = -1;
 
 
     // todo #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
@@ -336,8 +344,8 @@ public class Config {
 
 		int playerState = Objects.hash(armor, absorption, health, scale);
 		// if the last player state is the same as the current one and a shift value is available, use it
-		if(lastShiftState.getInt(0) == playerState && lastShiftState.getInt(1) >= 0) {
-			return lastShiftState.getInt(1); // avoids that pesky third-degree polynomial and floating-point multiplication every render tick!
+		if(lastShiftState == playerState && lastDynamicShift >= 0) {
+			return lastDynamicShift; // avoids that pesky third-degree polynomial and floating-point multiplication every render tick!
 		}
 
 		// calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
@@ -351,7 +359,8 @@ public class Config {
 
 		int result = (armorHeightMultiplier * Mth.floor(10 / scale)) + (healthHeightMultiplier * Mth.floor(10 * healthScale / scale)) + chatShift;
 
-		lastShiftState = IntList.of(playerState, result);
+		lastShiftState = playerState;
+		lastDynamicShift = result;
 		return result;
 	}
 

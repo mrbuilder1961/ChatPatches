@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.util.Util;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
