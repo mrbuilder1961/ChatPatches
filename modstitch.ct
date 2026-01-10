@@ -1,4 +1,5 @@
 accessWidener v1 named
+# warning: all versioning code in here doesn't do anything... not sure that it needs to tho?
 
 # MutableComponent - Text
 
@@ -7,15 +8,13 @@ accessible field net/minecraft/network/chat/MutableComponent siblings Ljava/util
 accessible field net/minecraft/network/chat/MutableComponent style Lnet/minecraft/network/chat/Style;
 accessible method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
 
-#prepub i dont think this does anything atm...
 #? if >=1.21.11 {
-# when MutableComponent became final -_-
 extendable method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
 extendable class net/minecraft/network/chat/MutableComponent
 #?}
 
 
-## ChatComponent - (Mixin), ChatUtil
+## ChatComponent - (Mixin), ChatUtil#modifyMessage()
 
 accessible field net/minecraft/client/gui/components/ChatComponent BOTTOM_MARGIN I
 accessible field net/minecraft/client/gui/components/ChatComponent MESSAGE_INDENT I
@@ -39,10 +38,14 @@ accessible field net/minecraft/client/gui/screens/ChatScreen input Lnet/minecraf
 
 ## GuiGraphics - ScreenMixin
 
-accessible field net/minecraft/client/gui/GuiGraphics hoveredTextStyle Lnet/minecraft/network/chat/Style;
+#? if >=1.21.6
 accessible field net/minecraft/client/gui/GuiGraphics deferredTooltip Ljava/lang/Runnable;
+#? if >=1.21.11
+accessible field net/minecraft/client/gui/GuiGraphics hoveredTextStyle Lnet/minecraft/network/chat/Style;
+
 #? if 1.21.10 {
 accessible class net/minecraft/client/gui/GuiGraphics$OutlineBox
+accessible method net/minecraft/client/gui/GuiGraphics$OutlineBox <init> (IIIII)V
 #?}
 
 
