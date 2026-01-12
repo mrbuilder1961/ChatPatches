@@ -25,18 +25,16 @@
   "depends": {
     "java": ">=${java}",
     "minecraft": ${minecraft_range},
-    "fabricloader": ">=0.18.0",
+    "fabricloader": ">=0.${fabric_loader_core}.0",
     "fabric-api": "*",
     "yet_another_config_lib_v3": "*"
   },
   "suggests": {
-    "modmenu": "*",
     "catalogue": "*",
     "menulogue": "*",
-
-    "nochatreports": "*"
+    ${optional_list}
   },
   "conflicts": {
-    "morechathistory": "*"
+    ${incompatible_list}
   }
 }
