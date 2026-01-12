@@ -54,6 +54,13 @@ accessible method net/minecraft/client/gui/GuiGraphics$OutlineBox <init> (IIIII)
 accessible field net/minecraft/client/gui/layouts/GridLayout children Ljava/util/List;
 
 
+## GridLayout$ChildContainer - ContextMenu#buttons()
+
+#? if >=26.1 {
+accessible class net/minecraft/client/gui/layouts/GridLayout$ChildContainer
+#?}
+
+
 ## TextColor - TextUtil
 
 accessible method net/minecraft/network/chat/TextColor formatValue ()Ljava/lang/String;

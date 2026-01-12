@@ -7,7 +7,6 @@ import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.*;
 import dev.isxander.yacl3.api.Option;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
@@ -277,7 +276,7 @@ public class Config {
         List<GuiMessage> messages = chat.allMessages;
 		Boundary currentLevel = Boundary.createFromCurrentLevel();
 
-		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return;
+		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return; // prepub: if we still want to impl that per-world history using boundary lines, we'll need to remove this isEmpty -> return condition
 
 		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
 		Component lastMessage = messages.getFirst().content();
