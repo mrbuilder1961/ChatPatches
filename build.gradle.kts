@@ -60,13 +60,14 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 
 
 /*kotlin {
-    jvmToolchain(25) // can't use java() bc it's not available here - warning: commenting this out may cause issues
+    jvmToolchain(25) // can't use java() bc it's not available here - warning: commenting this out may cause issues?
 }*/
 
 dependencies {
     // fabric only
     modstitch.loom {
-        val fapi = p("fabric.api") + "+" + minecraft
+        val fapi = p("fabric.api") + "+" +
+                minecraft.substringBefore('-') // todo: a better fix for snapshots?
         modstitchModImplementation(fabricApi.module("fabric-lifecycle-events-v1", fapi))
         modstitchModImplementation(fabricApi.module("fabric-networking-api-v1", fapi))
         modstitchModImplementation(fabricApi.module("fabric-screen-api-v1", fapi))

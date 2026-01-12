@@ -49,7 +49,8 @@ public class ChatPatches implements ClientModInitializer {
 		//stonecutter: * events *
 		ClientPlayConnectionEvents.DISCONNECT.register((network, client) -> ChatLog.serialize());
 		ScreenEvents.AFTER_INIT.register((client, screen, sW, sH) -> ChatLog.saveIfPaused(screen));
-		ClientTickEvents./*? if >= 26.1 {*//*END_LEVEL_TICK*//*?} else {*/END_WORLD_TICK/*?}*/.register(world -> ChatLog.tickSaveCounter());
+		//stonecutter:todo change back to >=26.1 when it actually releases
+		ClientTickEvents./*? if >1.21.11 {*//*END_LEVEL_TICK*//*?} else {*/END_WORLD_TICK/*?}*/.register(world -> ChatLog.tickSaveCounter());
 
 		// -- chat log loader and boundary sender --
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
