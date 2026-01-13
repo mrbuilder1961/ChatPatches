@@ -7,7 +7,6 @@ import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.*;
 import dev.isxander.yacl3.api.Option;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
@@ -70,13 +69,21 @@ public class Config {
     /** @see #sendBoundaryLine() */
     protected static Boundary lastBoundary = Boundary.UNKNOWN;
 	/**
-	 * Caches the hash of the armor, absorption, health, and chat scale values
-	 * alongside the shifted height value to avoid recalculating the same value
+	 * The hash of the player's armor, absorption, health, and other values for
+	 * use with {@link #lastDynamicShift}. Avoids recalculating the same value
 	 * every render tick. Only used when {@link #dynamicChatShift} is enabled.
 	 *
 	 * @see #calcDynamicChatShift()
 	 */
-	protected static IntList lastShiftState = IntList.of(-1, -1);
+	protected static int lastShiftState = -1;
+	/**
+	 * The shifted height value for use with the current {@link #lastShiftState}
+	 * value. Avoids recalculating the same value every render tick. Only used
+	 * when {@link #dynamicChatShift} is enabled.
+	 *
+	 * @see #calcDynamicChatShift()
+	 */
+	protected static int lastDynamicShift = -1;
 
 
     // todo #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
@@ -265,7 +272,7 @@ public class Config {
         List<GuiMessage> messages = chat.allMessages;
 		Boundary currentLevel = Boundary.createFromCurrentLevel();
 
-		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return;
+		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return; // prepub: if we still want to impl that per-world history using boundary lines, we'll need to remove this isEmpty -> return condition
 
 		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
 		Component lastMessage = messages.getFirst().content();
@@ -332,8 +339,8 @@ public class Config {
 
 		int playerState = Objects.hash(armor, absorption, health, scale);
 		// if the last player state is the same as the current one and a shift value is available, use it
-		if(lastShiftState.getInt(0) == playerState && lastShiftState.getInt(1) >= 0) {
-			return lastShiftState.getInt(1); // avoids that pesky third-degree polynomial and floating-point multiplication every render tick!
+		if(lastShiftState == playerState && lastDynamicShift >= 0) {
+			return lastDynamicShift; // avoids that pesky third-degree polynomial and floating-point multiplication every render tick!
 		}
 
 		// calculate health multiplier here to avoid an extra call to PlayerEntity#getHeartRows()
@@ -347,7 +354,8 @@ public class Config {
 
 		int result = (armorHeightMultiplier * Mth.floor(10 / scale)) + (healthHeightMultiplier * Mth.floor(10 * healthScale / scale)) + chatShift;
 
-		lastShiftState = IntList.of(playerState, result);
+		lastShiftState = playerState;
+		lastDynamicShift = result;
 		return result;
 	}
 

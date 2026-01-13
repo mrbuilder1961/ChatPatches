@@ -12,7 +12,7 @@ plugins { // versions in gradle.properties + settings.gradle.kts
 
 val id = m("id")
 val v: String = m("version")
-val minecraft = stonecutter.current.version //name.substringBefore("-")
+val minecraft = stonecutter.current.version
 val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prepub: does this cause any issues...
 val currentIsActive = minecraft == stonecutter.active?.version
 
@@ -40,6 +40,11 @@ fun prop(name: String, consumer: (prop: String) -> Unit) {
     if(p.isNotEmpty()) p.let(consumer)
 }
 
+/**
+ * See the `publishMods` and `modstitch.metadata` blocks
+ */
+fun propList(name: String): List<String> = p(name).split(",").filter { it.isNotBlank() }
+
 fun d(name: String, fallback: String? = null): String = p("dep.$name", fallback)
 fun dep(name: String, consumer: (prop: String) -> Unit) = prop("dep.$name", consumer)
 
@@ -55,16 +60,17 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 
 
 /*kotlin {
-    jvmToolchain(25) // can't use java() bc it's not available here - warning: commenting this out may cause issues
+    jvmToolchain(25) // can't use java() bc it's not available here - warning: commenting this out may cause issues?
 }*/
 
 dependencies {
     // fabric only
     modstitch.loom {
-        val fapi = p("fabric.api") + "+" + minecraft
+        val fapi = p("fabric.api") + "+" +
+                minecraft.substringBefore('-') // todo: a better fix for snapshots?
+        modstitchModImplementation(fabricApi.module("fabric-lifecycle-events-v1", fapi))
         modstitchModImplementation(fabricApi.module("fabric-networking-api-v1", fapi))
         modstitchModImplementation(fabricApi.module("fabric-screen-api-v1", fapi))
-        modstitchModImplementation(fabricApi.module("fabric-lifecycle-events-v1", fapi))
     }
 
     if(minecraft == "1.20.2") {
@@ -105,20 +111,27 @@ modstitch {
         modCredits = m("credits").split(",").map { "\"$it\"" }.toString() // transforms the invalid json into a valid list
         modLicense = m("license")
         //todo forge: uses mods.toml instead of neoforge.mods.toml
-        // also todo with FMJ: remove fabric api and use arch api or sm
+
+        fun dep2StringList(list: String): String = propList(list).joinToString(separator = ",\n\t", transform = { "\"$it\": \"*\"" })
 
         replacementProperties.putAll(mapOf(
             "java" to javaStr(),
             "mod_source" to m("source"),
             "mod_modrinth" to m("modrinth"),
-            "minecraft_range" to (m("range", "") // todo: make snapshots compatible with this (if snapshot, = *)
-                .takeIf { it.contains(",") } // if there are multiple versions...
-                    ?.split(",") // parse them into a list
-                    ?.map { "\"$it\"" } // add quotes to ensure valid JSON syntax
-                    ?.toString()
-                ?: "\"$minecraft\"" // else only one version
+
+            "minecraft_range" to m("range", minecraft).run {
+                if(contains(',')) {
+                    // parse versions into a list and then add quotes to ensure valid JSON syntax
+                    split(",").map { "\"$this\"" }.toString()
+                } else {
+                    "\"$this\""
+                }
                 //if(!isLoom) [list.getFirst(),list.getLast()] // version ranges should all be consecutive
-            )
+            },
+            "fabric_loader_core" to p("fabric.loader").substringAfter('.').substringBefore('.'), // ex. 0.18.4 -> 18
+            "optional_list" to dep2StringList("optionals"),
+            "incompatible_list" to dep2StringList("incompatibles"),
+            //"embed_list" to dep2StringList("embedded"), // currently empty
         ))
     }
 
@@ -260,8 +273,6 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 
 publishMods {
     val secrets = rootDir.toPath().resolve("secrets.json").toFile()
-
-    fun propList(name: String): List<String> = p(name).split(",").filter { it.isNotBlank() }
     fun token(name: String): String {
         return when {
             !secrets.exists() -> {
@@ -321,21 +332,6 @@ publishMods {
         incompatibles.forEach(::incompatible)
         embedded.forEach(::embeds)
     }
-
-    // temp disabled bc idk how to make stonecutter accumulate the versions (its not compiling)
-    /*github {
-        accessToken = token("github")
-
-        if(currentIsActive) {
-            repository = m("source")
-            commitish = "omnivers"
-            tagName = version
-
-            allowEmptyFiles = true // active version (parent) task only
-        } else {
-             //parent(stonecutter.tasks.named("publishMods").filter { it.version == minecraft })
-        }
-    }*/
 
     if(currentIsActive) { // only announce the version once
         discord {

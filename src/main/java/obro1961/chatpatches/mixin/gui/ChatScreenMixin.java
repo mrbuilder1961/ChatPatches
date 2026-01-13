@@ -45,7 +45,6 @@ import net.minecraft.network.chat.Component;
 //? if <=1.21.10 {
 //import net.minecraft.network.chat.Style;
 //?}
-import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;

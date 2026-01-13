@@ -912,7 +912,8 @@ public class ContextMenu implements GuiEventListener {
 		@SuppressWarnings("unchecked")
 		public List<AbstractButton> buttons() {
 			try {
-				return (List<AbstractButton>) (Object) layout.children;
+				// stonecutter: >=26.1
+				return (List<AbstractButton>) (Object) layout.children/*? if >1.21.11 {*//*.stream().map(wrapper -> wrapper.child).toList()*//*?}*/;
 			} catch(ClassCastException e) {
 				logReportMsg(e);
 				return ObjectList.of();
