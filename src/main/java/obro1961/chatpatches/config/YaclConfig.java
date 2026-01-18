@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.util.Util;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
@@ -24,6 +25,7 @@ import obro1961.chatpatches.util.TextUtil;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -151,7 +153,9 @@ public class YaclConfig extends Config {
                 subGroup("time", timeOpts, null),
                 subGroup("hover", hoverOpts, null),
                 subGroup("counter", counterOpts, null),
-                subGroup("compact", compactOpts, Style.EMPTY.withClickEvent( TextUtil.openUrl("https://modrinth.com/mod/compact-chat") ))
+                subGroup("compact", compactOpts,
+					Style.EMPTY.withClickEvent(new /*$ open_url '"https://modrinth.com/mod/compact-chat"' {*/ClickEvent.OpenUrl(URI.create("https://modrinth.com/mod/compact-chat"))/*$}*/)
+				)
             ))
             .category( tabCat("boundary", boundaryOpts) )
             .category( tabCat("chatlog", chatlogOpts,
@@ -457,7 +461,7 @@ public class YaclConfig extends Config {
     }
 
     private static Option<Component> label(MutableComponent labelText, String urlTooltip) {
-        return LabelOption.create(labelText.withStyle(style -> style.withClickEvent( TextUtil.openUrl(urlTooltip) ) ));
+        return LabelOption.create(labelText.withStyle(style -> style.withClickEvent(new /*$ open_url urlTooltip {*/ClickEvent.OpenUrl(URI.create(urlTooltip))/*$}*/) ));
     }
 
     private static ButtonOption action(String key, Object... args) {

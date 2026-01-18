@@ -34,7 +34,6 @@ import net.minecraft.world.scores.PlayerTeam;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.util.TextUtil;
 //? if <=1.20.1 {
 //import obro1961.chatpatches.util.VersionUtil;
 //?}
@@ -187,8 +186,8 @@ public class Config {
 		MutableComponent hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), hoverColor);
 
 		return timestamp.withStyle(s ->
-			s.withHoverEvent( hover ? TextUtil.showText(hoverText) : null )
-			.withClickEvent( hover ? TextUtil.suggestCommand(hoverText.getString()) : null )
+			s.withHoverEvent( hover ? new /*$ show_text hoverText {*/HoverEvent.ShowText(hoverText)/*$}*/ : null )
+			.withClickEvent( hover ? new /*$ suggest_command 'hoverText.getString()' {*/ClickEvent.SuggestCommand(hoverText.getString())/*$}*/ : null )
 			.withInsertion(String.valueOf( when.getTime() ))
 			.withColor(timeColor)
 		);

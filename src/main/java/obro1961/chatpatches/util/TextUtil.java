@@ -162,35 +162,6 @@ public class TextUtil {
 	}
 
 
-	// prepub - these guys should either be inlined or turned into swaps bc this is agonizing to look at
-	public static ClickEvent/*? if >=1.21.5 {*/.OpenUrl/*?}*/ openUrl(String url) {
-		return new
-			//? if >=1.21.5 {
-			ClickEvent.OpenUrl(java.net.URI.create(url));
-			//?} else {
-			/*ClickEvent(ClickEvent.Action.OPEN_URL, url);
- 			*///?}
-	}
-
-	public static ClickEvent/*? if >=1.21.5 {*/.SuggestCommand/*?}*/ suggestCommand(String command) {
-		return new
-			//? if >=1.21.5 {
-			ClickEvent.SuggestCommand(command);
-			//?} else {
-			/*ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, command);
-			*///?}
-	}
-
-	public static HoverEvent/*? if >=1.21.5 {*/.ShowText/*?}*/ showText(Component text) {
-		return new
-			//? if >=1.21.5 {
-			HoverEvent.ShowText(text);
-			//?} else {
-			/*HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
-			*///?}
-	}
-
-
 	/**
 	 * Formats a String with {@code &} formatting codes into a {@link Component}.
 	 * First replaces all {@code &<?>} codes with a section symbol ({@code §}),

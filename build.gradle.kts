@@ -236,6 +236,12 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
             else -> "net.minecraft.util.ExtraCodecs.COMPONENT"
         })
 
+        val v1215 = current.parsed >= "1.21.5"
+        // all of these require 'new' before them, regardless of version
+        put("open_url", if(v1215) "ClickEvent.OpenUrl(URI.create($1))" else "ClickEvent(ClickEvent.Action.OPEN_URL, $1)") // java.net.URI is always available
+        put("suggest_command", if(v1215) "ClickEvent.SuggestCommand($1)" else "ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, $1)")
+        put("show_text", if(v1215) "HoverEvent.ShowText($1)" else "HoverEvent(HoverEvent.Action.SHOW_TEXT, $1)")
+
         val v1216 = current.parsed >= "1.21.6"
         put("push_stack", if(v1216) "graphics.pose().pushMatrix();" else "graphics.pose().pushPose();")
         put("pop_stack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
