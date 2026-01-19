@@ -69,7 +69,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
 	/**
      * Returns the index of the {@link GuiMessage} at the given mouse position.
      *
-     * @implNote Different from {@link #getMessageEndIndexAt}, which does <i>not</i>
+     * @implNote Different from the now deleted {@code getMessageEndIndexAt}, which does <i>not</i>
 	 * return a value corresponding to {@link ChatComponent#allMessages}, but returns
 	 * the index of a {@linkplain GuiMessage.Line#endOfEntry EoE} line in
 	 * {@link ChatComponent#trimmedMessages} at the given mouse position. But when
@@ -82,7 +82,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      *
      * @see ChatUtil#visible2Message(int)
      * @see #moveChat(int)
-     * @see #moveChatLineY(double)
+     * //@see #moveChatLineY(double)
      */
     @Intrinsic // prevents merging or discarding if a conflict unexpectedly occurs, unlike @Unique
     public int getGuiMessageIndex(double mouseX, double mouseY) {
@@ -90,14 +90,14 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
     }
 
     /**
-     * Simply calls {@link #getMessageEndIndexAt(double, double)} with
-     * {@link #screenToChatX(double)} and {@link #screenToChatY(double)} as
+     * Simply calls {@link VersionUtil#getMessageEndIndexAt(double, double)} with
+     * {@link VersionUtil#screenToChatX(double)} and {@link VersionUtil#screenToChatY(double)} as
      * arguments. Returns the {@link GuiMessage.Line} that is
      * {@linkplain GuiMessage.Line#endOfEntry EoE} at the given mouse position.
 	 * In other words, returns the index of the last line that makes up the
      * visible message at the given mouse position. Automatically accounts for
      * any {@link Config#chatShift} offsets with injectors
-     * {@link #moveChat(int)} and {@link #moveChatLineY(double)}.
+     * {@link #moveChat(int)} and the now defunct {@code moveChatLineY(double)}.
      */
     @Intrinsic // prevents merging or discarding if a conflict unexpectedly occurs, unlike @Unique
     public int getEoEIndex(double mouseX, double mouseY) {
