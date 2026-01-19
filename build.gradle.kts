@@ -123,7 +123,7 @@ modstitch {
             "minecraft_range" to m("range", minecraft).run {
                 if(contains(',')) {
                     // parse versions into a list and then add quotes to ensure valid JSON syntax
-                    split(",").map { "\"$this\"" }.toString()
+                    split(",").map { "\"$it\"" }.toString()
                 } else {
                     "\"$this\""
                 }
