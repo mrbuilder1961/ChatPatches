@@ -5,7 +5,7 @@
 - Added *another* Band-Aid patch for [#252](https://www.github.com/mrbuilder1961/ChatPatches/issues/252), again thanks to [SkyNotTheLimit](https://discord.com/channels/507304429255393322/1452165613756879044/1452516265330475085)!
 - Fixed non-vanilla messages formatted like vanilla ones having an extra space between the name and message ([#233](https://www.github.com/mrbuilder1961/ChatPatches/issues/233))
 - Mostly fixed Chat Heads' `BEFORE_NAME` setting not working with Chat Patches on 1.21.9+, thanks mostly to
-  [Fourmisain](https://github.com/Fourmisain)! ([#285](https://www.github.com/mrbuilder1961/ChatPatches/issues/285))
+  [Fourmisain](https://github.com/Fourmisain)! ([#285](https://www.github.com/mrbuilder1961/ChatPatches/issues/285) and [#297](https://www.github.com/mrbuilder1961/ChatPatches/issues/297))
 - Fixed a 1.21.10 crash from right-clicking to open the context menu ([#298](https://www.github.com/mrbuilder1961/ChatPatches/issues/298))
 - Optimized the dynamic shift calculator - it no longer runs every render tick!
 - Fixed the config not writing default values to disk - to trigger this, change any value in-game or delete/move the current config file

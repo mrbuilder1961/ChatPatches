@@ -70,7 +70,7 @@ public abstract class ChatListenerMixin {
 
     /**
      * Returns true if the given Text is a vanilla message,
-     * as specified by {@link ChatUtil#VANILLA_FORMAT}.
+     * as specified by {@link ChatUtil#VANILLA_CHAT_HEADS_FORMAT}.
      * This should be true for every message sent by a player,
      * which are the only messages that need to be heavily
      * modified in {@link ChatUtil#modifyMessage(Component)}}.
@@ -83,7 +83,7 @@ public abstract class ChatListenerMixin {
     @Unique
     private boolean isVanilla(Component message) {
         String str = message.getString();
-        boolean result = VANILLA_FORMAT.reset(str).matches();
+        boolean result = VANILLA_CHAT_HEADS_FORMAT.reset(str).matches();
 
         if(ChatPatches.config.logMessageStructures) {
             ChatPatches.LOGGER.error("ChatListener received message '{}' -> vanilla = {}", str, result);

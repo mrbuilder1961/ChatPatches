@@ -2,8 +2,8 @@
 package obro1961.chatpatches.integration;
 
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.GuiMessageTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.ObjectContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.chat.contents.objects.PlayerSprite;
@@ -62,7 +62,8 @@ public class ChatHeadsIntegration {
 		return installed;
 	}
 
-	public static boolean usingBeforeName() {
+	// commented out while unused
+	/*public static boolean usingBeforeName() {
 		if(enabled) {
 			try {
 				// ChatHeads.CONFIG is static, but ConfigData.renderPosition is not
@@ -73,31 +74,32 @@ public class ChatHeadsIntegration {
 		}
 
 		return false; // assumes not installed or broken - aka do nothing
-	}
+	}*/
 
 	/**
 	 * Custom method created by one of the authors of Chat Heads!
 	 * @author <a href="https://github.com/Fourmisain">Fourmisain</a>!
 	 *
 	 * @return An {@link Optional} enclosing the component containing the head
-	 * object, or an empty Optional if
+	 * object, or an empty Optional if none was found.
 	 *
-	 * @param component The Component in which to look for a head component aka
-	 * {@link PlayerSprite} object. At the time of writing, Chat Heads adds such a head
-	 * after {@link MethodHead} of addMessage(...) but before the
-	 * {@link ChatComponentMixin#modifyMessage(Component, GuiMessageTag)}
-	 * injector is called.
-	 * Servers can add such head as they wish too.
+	 * @param message The Component in which to look for a head component aka
+	 * {@link PlayerSprite} object. At the time of writing, Chat Heads adds such
+	 * a head after {@link MethodHead} of addMessage(...) but before the
+	 * {@link ChatComponentMixin#modifyMessage(Component)} injector is called.
+	 * Servers can add such head as they wish too - whether Chat Patches should
+	 * handle that is up for debate, but if the format complies with this system,
+	 * it should work fine.
 	 *
 	 * @see <a href="https://github.com/dzwdz/chat_heads/issues/83">ChatHeads#83</a>
 	 * and <a href="https://github.com/mrbuilder1961/ChatPatches/issues/285">#285</a>.
 	 */
-	public static Optional<Component> extractHeadComponent(Component component) {
-		if(component.getContents() instanceof ObjectContents(PlayerSprite ignored)) {
-			return Optional.of(component);
+	public static Optional<MutableComponent> extractHeadComponent(Component message) {
+		if(message.getContents() instanceof ObjectContents(PlayerSprite ignored)) {
+			return Optional.of((MutableComponent) message);
 		}
 
-		if(component.getContents() instanceof TranslatableContents translatable) {
+		if(message.getContents() instanceof TranslatableContents translatable) {
 			for(var arg : translatable.getArgs()) {
 				if(arg instanceof Component c) {
 					var head = extractHeadComponent(c);
@@ -108,7 +110,7 @@ public class ChatHeadsIntegration {
 			}
 		}
 
-		for(var sibling : component.getSiblings()) {
+		for(var sibling : message.getSiblings()) {
 			var head = extractHeadComponent(sibling);
 			if(head.isPresent()) {
 				return head;

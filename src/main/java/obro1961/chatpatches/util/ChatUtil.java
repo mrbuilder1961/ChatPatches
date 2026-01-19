@@ -90,10 +90,18 @@ public class ChatUtil {
 	 * with a leading arrow ({@code -> }).
 	 *
 	 * @implNote The vanilla player name alone can only match
-	 * {@code /<[a-z0-9_]{3,16}>/}; however, when factoring in team pre- and
-	 * suf-fixes, this limit becomes irrelevant.
+	 * {@code /<[a-z0-9_]{3,16}>/} (not including legacy 1-2 letter names);
+	 * however, when factoring in team prefixes and suffixes, this limit becomes
+	 * irrelevant. To allow for flexibility with Chat Heads and still retain
+	 * functional parsing by Chat Patches, the regex has been updated to include
+	 * the {@linkplain net.minecraft.network.chat.contents.objects.PlayerSprite#description()
+	 * player head icon} and <b><i>most</i></b> team prefixes and suffixes. For more info,
+	 * <a href="https://github.com/mrbuilder1961/ChatPatches/pull/297">see the conversation</a>.
 	 */
-	public static final Matcher VANILLA_FORMAT = Pattern.compile("^((-> )?\\[.+] )?<([^]>]*\\w{1,16}[^]>]*|\\[(\\w{1,16}) head][^]>]*\\4[^]>]*)>\\s.+$").matcher("");
+	public static final Matcher VANILLA_CHAT_HEADS_FORMAT = Pattern.compile("^((-> )?\\[.+] )?<([^]>]*\\w{1,16}[^]>]*|\\[(\\w{1,16}) head][^]>]*\\4[^]>]*)>\\s.+$").matcher("");
+	// todo: decide whether we're doing this vanilla and chat heads vanilla regex thing or not
+	// needs some matchers for pre/suf-fixes that cant be walked over
+	//public static final Matcher VANILLA_FORMAT_OG = Pattern.compile("^((-> )?\\[[^<]+] )?<([^>]*)(\\w{1,16})([^>]*)>\\s.+$").matcher("");
 	public static final Matcher PARSEABLE_MESSAGE_KEYS = Pattern.compile("chat.type.(text|team.(text|sent))").matcher("");
 
 
@@ -306,7 +314,7 @@ public class ChatUtil {
 	 *   other issues. The only modification provided in this case is done by
 	 *   {@link #tryCondenseDupes(Component)}</li>
 	 * 	 <li>Reconstruct the message if {@linkplain Config#name it's wanted},
-	 * 	 it has player message data, and is {@linkplain #VANILLA_FORMAT in
+	 * 	 it has player message data, and is {@linkplain #VANILLA_CHAT_HEADS_FORMAT in
 	 * 	 the vanilla format}:
 	 *     	 <ol>
 	 *     	     <li>If the message is {@linkplain TranslatableContents
@@ -358,6 +366,7 @@ public class ChatUtil {
 		MutableComponent timestamp = null;
 		MutableComponent content = m.copy(); // default to the original message
 		// dupe counter is always empty at this stage
+		Optional<MutableComponent> head = Optional.empty();
 
 		try {
 			timestamp = config.makeTimestamp(now, lastEmpty, boundary);
@@ -365,17 +374,15 @@ public class ChatUtil {
 			// reconstruct the player message if it's in the vanilla format & it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			Matcher matcher = VANILLA_FORMAT.reset(m.getString());
+			Matcher matcher = VANILLA_CHAT_HEADS_FORMAT.reset(m.getString());
 			if(config.name && !lastEmpty && messageData.vanilla && matcher.matches()) {
 				content = Component.empty().setStyle(style);
 
-				Optional<Component> head = Optional.empty();
 				//? if >=1.21.9 {
-				// when group 4 (the backreference) exists, "[playername head]playername" was matched
-				if (matcher.group(4) != null) {
+				if(matcher.group(4) != null) { // when group 4 (the backreference) exists, "[playername head]playername" matched
 					head = extractHeadComponent(m);
 				}
-				//? }
+				//?}
 
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContents() instanceof TranslatableContents ttc && PARSEABLE_MESSAGE_KEYS.reset(ttc.getKey()).matches()) {

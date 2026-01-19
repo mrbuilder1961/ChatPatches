@@ -50,9 +50,6 @@ import java.util.function.Function;
 
 import static net.minecraft.ChatFormatting.*;
 import static obro1961.chatpatches.ChatPatches.*;
-//? if >=1.21.9 {
-import static obro1961.chatpatches.integration.ChatHeadsIntegration.*;
-//?}
 import static obro1961.chatpatches.util.TextUtil.fillVars;
 import static obro1961.chatpatches.util.TextUtil.text;
 
@@ -204,7 +201,7 @@ public class Config {
      * player entity and have both a valid name and UUID. Additionally,
      * the {@linkplain Minecraft#level client world} must exist.
      */
-    public MutableComponent formatPlayername(Optional<Component> head, GameProfile profile) {
+    public MutableComponent formatPlayername(Optional<MutableComponent> head, GameProfile profile) { // todo: accept message style formatting (re: EssentialsX formatting) and update jdoc
         Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
 		String name = profile != null ? profile./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/() : "<null>";
 		var level = mc().level;
@@ -221,9 +218,11 @@ public class Config {
             components.add(text( configFormat[1] + " " )); // config suffix
 
 			/*? if >=1.21.9 {*/
-			// adds a pre-existing head from the message's <%s> part to the playername!
-			// see #285 (ChatHeads#83) for why it's easier for Chat Patches to do this going forward
-			head.ifPresent(component -> components.set(1, Component.empty().append(component).append(components.get(1))));
+			//if(/*ChatHeadsIntegration.*/installed() && usingBeforeName()) { // warning: currently formats custom formats that are chat heads-like...
+			// adds a pre-existing head from the message to the playername!
+			// see #297 and ChatHeads#83 for why it's easier for Chat Patches to do this going forward
+			head.ifPresent(component -> components.set(1, component.append(components.get(1))));
+			//}
 			/*?}*/
 
             if(team != null) {
