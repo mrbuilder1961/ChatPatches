@@ -4,7 +4,6 @@ package obro1961.chatpatches.integration;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.ObjectContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.chat.contents.objects.PlayerSprite;
@@ -83,22 +82,22 @@ public class ChatHeadsIntegration {
 	 * @return An {@link Optional} enclosing the component containing the head
 	 * object, or an empty Optional if
 	 *
-	 * @param message The chat message to look for a head component aka
-	 * {@link PlayerSprite} object in. This message must be unmodified by
-	 * Chat Patches but modified by Chat Heads: so at the time of writing,
+	 * @param component The Component in which to look for a head component aka
+	 * {@link PlayerSprite} object. At the time of writing, Chat Heads adds such a head
 	 * after {@link MethodHead} of addMessage(...) but before the
 	 * {@link ChatComponentMixin#modifyMessage(Component, GuiMessageTag)}
 	 * injector is called.
+	 * Servers can add such head as they wish too.
 	 *
 	 * @see <a href="https://github.com/dzwdz/chat_heads/issues/83">ChatHeads#83</a>
 	 * and <a href="https://github.com/mrbuilder1961/ChatPatches/issues/285">#285</a>.
 	 */
-	public static Optional<MutableComponent> extractHeadComponent(Component message) {
-		if(message.getContents() instanceof ObjectContents(PlayerSprite ignored)) {
-			return Optional.of((MutableComponent) message);
+	public static Optional<Component> extractHeadComponent(Component component) {
+		if(component.getContents() instanceof ObjectContents(PlayerSprite ignored)) {
+			return Optional.of(component);
 		}
 
-		if(message.getContents() instanceof TranslatableContents translatable) {
+		if(component.getContents() instanceof TranslatableContents translatable) {
 			for(var arg : translatable.getArgs()) {
 				if(arg instanceof Component c) {
 					var head = extractHeadComponent(c);
@@ -109,7 +108,7 @@ public class ChatHeadsIntegration {
 			}
 		}
 
-		for(var sibling : message.getSiblings()) {
+		for(var sibling : component.getSiblings()) {
 			var head = extractHeadComponent(sibling);
 			if(head.isPresent()) {
 				return head;
