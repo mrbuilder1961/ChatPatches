@@ -73,11 +73,12 @@ dependencies {
         modstitchModImplementation(fabricApi.module("fabric-screen-api-v1", fapi))
     }
 
-    if(minecraft == "1.20.2") {
-        modstitchModImplementation("dev.isxander.yacl:yet-another-config-lib-fabric:${d("yacl")}")
-    } else {
-        modstitchModImplementation("dev.isxander:yet-another-config-lib:${d("yacl")}-fabric")
-    }
+    modstitchModImplementation(
+        if(minecraft == "1.20.2")
+            "dev.isxander.yacl:yet-another-config-lib-fabric:${d("yacl")}"
+        else
+            "dev.isxander:yet-another-config-lib:${d("yacl")}-fabric"
+    )
 
     modstitchModImplementation("com.terraformersmc:modmenu:${d("modmenu")}")
 
