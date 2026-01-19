@@ -382,6 +382,8 @@ public class Config {
 		if(!Files.exists(PATH)) {
 			config.resetValues();
 			LOGGER.info("No config file found; using default values");
+			LOGGER.info("Writing defaults to disk");
+			serialize();
 			return;
 		}
 
@@ -421,7 +423,7 @@ public class Config {
 			LOGGER.info("Saving...");
 
 			try {
-				JsonElement json = config.encodeStart(JsonOps.INSTANCE) // FIXME: i dont like that it doesn't write the config to disk when it's default anymore - not good practice
+				JsonElement json = config.encodeStart(JsonOps.INSTANCE)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.orElseThrow();
 
@@ -631,7 +633,9 @@ public class Config {
          * {@link MapCodec}, per this Setting's {@link #key} and {@linkplain #def
          * default value}. Provides required serialization checks, particularly for
          * {@link String}s and {@link Integer}s ({@link TextColor}s); however, no int
-		 * range checks are performed.
+		 * range checks are performed. Additionally, performs a manual, tweaked
+		 * implementation of {@link Codec#optionalFieldOf(String, Object, boolean)}
+		 * to still serialize unchanged values.
          */
         @SuppressWarnings("unchecked") // java is stupid about T casting
 		public MapCodec<T> getTypeCodec() {
@@ -680,7 +684,11 @@ public class Config {
 				};
 			}
 
-			return ((Codec<T>) codec).optionalFieldOf(key, def);
+			// replaces Optional.empty() w/ Optional.of(defaultValue) to serialize default values
+			return Codec.optionalField(key, (Codec<T>)codec/*? if >1.20.4 {*/, false/*?}*/).xmap(
+				o -> o.orElse(def),
+				a -> Objects.equals(a, def) ? Optional.of(def) : Optional.of(a)
+			);
         }
     }
 

@@ -77,25 +77,17 @@ public class ChatUtil {
 	public static MessageData messageData = NIL_MESSAGE_DATA;
 
 	/**
-	 * Matches only an entire vanilla player message.
-	 * By default, this is translated under the
-	 * {@code chat.type.text} and
-	 * {@code chat.type.team.*} keys, which resolve
-	 * to {@code <%s> %s} and {@code %s <%s> %s}*
-	 * respectively (assuming no resource
-	 * packs have modified them).
+	 * Matches only an entire vanilla player message. By default, this is
+	 * translated under the {@code chat.type.text} and {@code chat.type.team.*}
+	 * keys, which resolve to {@code <%s> %s} and {@code %s <%s> %s}*
+	 * respectively (assuming no resource packs have modified them).
 	 *
+	 * <p>*The first argument, the team name, is typically surrounded in square
+	 * brackets ({@code []}). Additionally, the {@code sent} team key resolves
+	 * with a leading arrow ({@code -> }).
 	 *
-	 * <p>*The first argument, the team name, is
-	 * typically surrounded in square brackets
-	 * ({@code []}). Additionally, the team key
-	 * ending in {@code sent} resolves with a
-	 * leading arrow ({@code -> }).
-	 *
-	 *
-	 * @implNote The vanilla player name alone
-	 * can only match {@code /<[a-z0-9_]{3,16}>/};
-	 * however, when factoring in team pre- and
+	 * @implNote The vanilla player name alone can only match
+	 * {@code /<[a-z0-9_]{3,16}>/}; however, when factoring in team pre- and
 	 * suf-fixes, this limit becomes irrelevant.
 	 */
 	public static final Matcher VANILLA_FORMAT = Pattern.compile("(?i)^((-> )?\\[.+] )?<.{3,}>\\s.+$").matcher("");
