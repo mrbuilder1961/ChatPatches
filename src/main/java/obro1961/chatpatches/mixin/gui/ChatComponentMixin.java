@@ -44,7 +44,7 @@ import static obro1961.chatpatches.ChatPatches.config;
 @Mixin(value = ChatComponent.class, priority = 500)
 public abstract class ChatComponentMixin implements ChatComponentAccess {
     @Unique
-    private static final String VERSIONED_ADD_MESSAGE_TARGET_REFERENCE =
+    private static final String ADD_MESSAGE_TARGET_REFERENCE =
         "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;"
             + /*? if <=1.20.4 {*//*"I" +*//*?}*/ "Lnet/minecraft/client/GuiMessageTag;"
             + /*? if <=1.20.4 {*//*"Z" +*//*?}*/ ")V";
@@ -222,9 +222,9 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * @see ChatUtil#modifyMessage(Component)
      * @see ChatUtil#tryCondenseDupes(Component)
      */
-	@ModifyVariable(method = VERSIONED_ADD_MESSAGE_TARGET_REFERENCE, at = @At("HEAD"), argsOnly = true)
     private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @Local(argsOnly = true) boolean refreshing*//*?}*/) {
         return /*? if <=1.20.4 {*//* refreshing ? m : *//*?}*/ ChatUtil.modifyMessage(m);
+    @ModifyVariable(method = ADD_MESSAGE_TARGET_REFERENCE, at = @At("HEAD"), argsOnly = true)
     }
 
     @Inject(
