@@ -34,6 +34,9 @@ import net.minecraft.world.scores.PlayerTeam;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
+//? if >=1.21.9 {
+import obro1961.chatpatches.integration.ChatHeadsIntegration;
+//?}
 //? if <=1.20.1 {
 //import obro1961.chatpatches.util.VersionUtil;
 //?}
@@ -196,12 +199,17 @@ public class Config {
      * the player's team color if set, otherwise {@link #nameColor}.
      * Hover and click events are sourced from the style of
      * {@link Player#getDisplayName()}.
+	 *
+	 * @param headComponent An {@link Optional} containing a message with a
+	 * player head icon in it. See
+	 * {@link ChatHeadsIntegration#getHeadIfEnabled(Component, java.util.regex.Matcher)}
+	 * for more info.
      *
      * @implNote {@code player} must reference a valid, existing
      * player entity and have both a valid name and UUID. Additionally,
      * the {@linkplain Minecraft#level client world} must exist.
      */
-    public MutableComponent formatPlayername(Optional<MutableComponent> head, GameProfile profile) { // todo: accept message style formatting (re: EssentialsX formatting) and update jdoc
+    public MutableComponent formatPlayername(Optional<MutableComponent> headComponent, GameProfile profile) { // todo: accept message style formatting (re: EssentialsX formatting) and update jdoc
         Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
 		String name = profile != null ? profile./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/() : "<null>";
 		var level = mc().level;
@@ -213,17 +221,17 @@ public class Config {
             String[] configFormat = nameFormat.equals(PLACEHOLDER) ? new String[] {"", ""} : nameFormat.split("\\$"); // note: changing placeholder requires removing the backslashes in the split regex
             ObjectList<Component> components = new ObjectArrayList<>(team != null ? 5 : 3);
 
-            components.add(text( configFormat[0] ));                    // config prefix
-            components.add(text( name ));							    // playername
-            components.add(text( configFormat[1] + " " )); // config suffix
+            components.add(text(configFormat[0]));                   // config prefix
+            components.add(text(name));							     // playername
+            components.add(text(configFormat[1] + " ")); // config suffix
 
 			/*? if >=1.21.9 {*/
-			//if(/*ChatHeadsIntegration.*/installed() && usingBeforeName()) { // warning: currently formats custom formats that are chat heads-like...
-			// adds a pre-existing head from the message to the playername!
-			// see #297 and ChatHeads#83 for why it's easier for Chat Patches to do this going forward
-			head.ifPresent(component -> components.set(1, component.append(components.get(1))));
-			//}
-			/*?}*/
+			if(ChatHeadsIntegration.usingBeforeName()) {
+				// adds a pre-existing head from the message to the playername!
+				// see #297 and ChatHeads#83 for why it's easier for Chat Patches to do this going forward
+				headComponent.ifPresent(head -> components.set(1, head.append(components.get(1))));
+			}
+			/*? }*/
 
             if(team != null) {
                 components.add(1, team.getPlayerPrefix()); // team prefix

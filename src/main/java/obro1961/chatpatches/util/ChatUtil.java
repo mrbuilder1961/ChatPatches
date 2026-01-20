@@ -15,6 +15,9 @@ import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
+//? if >=1.21.9 {
+import obro1961.chatpatches.integration.ChatHeadsIntegration;
+//? }
 import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
 import obro1961.chatpatches.mixin.listener.ChatListenerMixin;
 import org.apache.logging.log4j.core.util.Integers;
@@ -29,9 +32,6 @@ import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static obro1961.chatpatches.ChatPatches.*;
-//? if >=1.21.9 {
-import static obro1961.chatpatches.integration.ChatHeadsIntegration.extractHeadComponent;
-//? }
 import static obro1961.chatpatches.util.TextUtil.withoutContent;
 
 public class ChatUtil {
@@ -80,6 +80,17 @@ public class ChatUtil {
 	public static MessageData messageData = NIL_MESSAGE_DATA;
 
 	/**
+	 * A variant of {@link #VANILLA_FORMAT} that includes support for messages
+	 * containing a
+	 * {@linkplain net.minecraft.network.chat.contents.objects.PlayerSprite#description()
+	 * player head} in the chat message. This was split off from the original
+	 * because it has the unavoidable side effect of not being able to parse team
+	 * messages with prefixes or suffixes containing {@code ]} or {@code >}. For
+	 * more info, <a href="https://github.com/mrbuilder1961/ChatPatches/pull/297">see
+	 * the conversation (#297)</a>.
+	 */
+	public static final Matcher CHAT_HEADS_FORMAT = Pattern.compile("^((-> )?\\[.+] )?<([^]>]*\\w{1,16}[^]>]*|\\[(\\w{1,16}) head][^]>]*\\4[^]>]*)>\\s.+$").matcher("");
+	/**
 	 * Matches only an entire vanilla player message. By default, this is
 	 * translated under the {@code chat.type.text} and {@code chat.type.team.*}
 	 * keys, which resolve to {@code <%s> %s} and {@code %s <%s> %s}*
@@ -89,19 +100,25 @@ public class ChatUtil {
 	 * brackets ({@code []}). Additionally, the {@code sent} team key resolves
 	 * with a leading arrow ({@code -> }).
 	 *
-	 * @implNote The vanilla player name alone can only match
-	 * {@code /<[a-z0-9_]{3,16}>/} (not including legacy 1-2 letter names);
-	 * however, when factoring in team prefixes and suffixes, this limit becomes
-	 * irrelevant. To allow for flexibility with Chat Heads and still retain
-	 * functional parsing by Chat Patches, the regex has been updated to include
-	 * the {@linkplain net.minecraft.network.chat.contents.objects.PlayerSprite#description()
-	 * player head icon} and <b><i>most</i></b> team prefixes and suffixes. For more info,
-	 * <a href="https://github.com/mrbuilder1961/ChatPatches/pull/297">see the conversation</a>.
+	 * @apiNote The vanilla player name alone can only match
+	 * {@code /<[a-z0-9_]{3,16}>/} (not including legacy 1-2 letter names).
 	 */
-	public static final Matcher VANILLA_CHAT_HEADS_FORMAT = Pattern.compile("^((-> )?\\[.+] )?<([^]>]*\\w{1,16}[^]>]*|\\[(\\w{1,16}) head][^]>]*\\4[^]>]*)>\\s.+$").matcher("");
-	// todo: decide whether we're doing this vanilla and chat heads vanilla regex thing or not
-	// needs some matchers for pre/suf-fixes that cant be walked over
-	//public static final Matcher VANILLA_FORMAT_OG = Pattern.compile("^((-> )?\\[[^<]+] )?<([^>]*)(\\w{1,16})([^>]*)>\\s.+$").matcher("");
+	public static final Matcher VANILLA_FORMAT = Pattern.compile("^((-> )?\\[[^<]+] )?<[^>]*(\\w{1,16})[^>]*>\\s.+$").matcher("");
+	// ^ FIXME: edit and test this regex thoroughly (do both -fixes need the no >
+	//          charclass? particularly the last?)
+	/**
+	 * The vanilla message format used by {@link #modifyMessage(Component)}
+	 * and related methods. Depends on {@linkplain ChatHeadsIntegration#isActive()
+	 * whether Chat Heads is installed}: normally, Chat Patches shouldn't
+	 * reconstruct chat messages that aren't in the vanilla format, especially
+	 * when they've been customized by the server. However, Chat Heads is an
+	 * exception to this rule, because it is a client-side mod that operates in
+	 * a similar fashion to Chat Patches; not to mention its widespread support
+	 * for compatibility. <b>On Minecraft <1.21.9, this field is always equal to
+	 * {@link #VANILLA_FORMAT}, as before Chat Heads could do everything itself.</b>
+	 */
+	public static final Matcher MESSAGE_FORMAT = /*? if >=1.21.9 {*/ ChatHeadsIntegration.isActive() ? CHAT_HEADS_FORMAT : /*?}*/ VANILLA_FORMAT;
+
 	public static final Matcher PARSEABLE_MESSAGE_KEYS = Pattern.compile("chat.type.(text|team.(text|sent))").matcher("");
 
 
@@ -314,7 +331,7 @@ public class ChatUtil {
 	 *   other issues. The only modification provided in this case is done by
 	 *   {@link #tryCondenseDupes(Component)}</li>
 	 * 	 <li>Reconstruct the message if {@linkplain Config#name it's wanted},
-	 * 	 it has player message data, and is {@linkplain #VANILLA_CHAT_HEADS_FORMAT in
+	 * 	 it has player message data, and is {@linkplain #CHAT_HEADS_FORMAT in
 	 * 	 the vanilla format}:
 	 *     	 <ol>
 	 *     	     <li>If the message is {@linkplain TranslatableContents
@@ -366,6 +383,8 @@ public class ChatUtil {
 		MutableComponent timestamp = null;
 		MutableComponent content = m.copy(); // default to the original message
 		// dupe counter is always empty at this stage
+
+		//noinspection UnusedAssignment: will throw an error on <1.21.9
 		Optional<MutableComponent> head = Optional.empty();
 
 		try {
@@ -374,15 +393,10 @@ public class ChatUtil {
 			// reconstruct the player message if it's in the vanilla format & it should be reformatted
 			// the messageData vanilla means the original message was vanilla-formatted, and the regex check means it still is.
 			// see Xaero's Minimap waypoint sharing for more information (#158)
-			Matcher matcher = VANILLA_CHAT_HEADS_FORMAT.reset(m.getString());
+			Matcher matcher = MESSAGE_FORMAT.reset(m.getString());
 			if(config.name && !lastEmpty && messageData.vanilla && matcher.matches()) {
 				content = Component.empty().setStyle(style);
-
-				//? if >=1.21.9 {
-				if(matcher.group(4) != null) { // when group 4 (the backreference) exists, "[playername head]playername" matched
-					head = extractHeadComponent(m);
-				}
-				//?}
+				/*? if >=1.21.9 {*/head = ChatHeadsIntegration.getHeadIfEnabled(m, matcher);/*?}*/
 
 				// if the message is translatable, then we know exactly where everything is
 				if(m.getContents() instanceof TranslatableContents ttc && PARSEABLE_MESSAGE_KEYS.reset(ttc.getKey()).matches()) {

@@ -14,6 +14,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
+import java.util.regex.Matcher;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 
@@ -36,7 +37,7 @@ public class ChatHeadsIntegration {
 		enabled = true;
 
 		Method m1 = null; Field f1 = null; // java sometimes i really hate you.
-		if(installed()) {
+		if(isActive()) {
 			try {
 				f1 = Class.forName(CLASS_CHAT_HEADS).getDeclaredField(FIELD_CONFIG);
 				m1 = Class.forName(CLASS_CHAT_HEADS_CONFIG).getDeclaredMethod(METHOD_RENDER_POSITION);
@@ -53,17 +54,16 @@ public class ChatHeadsIntegration {
 	private static boolean enabled;
 
 
-	public static boolean installed() {
+	public static boolean isActive() {
 		boolean installed = FabricLoader.getInstance().isModLoaded("chat_heads");
 		if(enabled && !installed) {
 			LOGGER.info("Chat Heads not installed, disabling interoperability");
 			enabled = false;
 		}
-		return installed;
+		return enabled;
 	}
 
-	// commented out while unused
-	/*public static boolean usingBeforeName() {
+	public static boolean usingBeforeName() {
 		if(enabled) {
 			try {
 				// ChatHeads.CONFIG is static, but ConfigData.renderPosition is not
@@ -74,7 +74,7 @@ public class ChatHeadsIntegration {
 		}
 
 		return false; // assumes not installed or broken - aka do nothing
-	}*/
+	}
 
 	/**
 	 * Custom method created by one of the authors of Chat Heads!
@@ -115,6 +115,17 @@ public class ChatHeadsIntegration {
 			if(head.isPresent()) {
 				return head;
 			}
+		}
+
+		return Optional.empty();
+	}
+
+	// hey leave me alone what am i supposed to call this
+	public static Optional<MutableComponent> getHeadIfEnabled(Component message, Matcher matcher) {
+		// don't check the matcher if not enabled because then matcher will be ChatUtil.VANILLA_FORMAT not CHAT_HEADS_FORMAT -> IOOBE
+		if(enabled && matcher.group(4) != null) {
+			// when group 4 (the backreference) exists, "[playername head]playername" matched
+			return extractHeadComponent(message);
 		}
 
 		return Optional.empty();
