@@ -34,7 +34,7 @@ public class TextUtil {
 	 * formatting codes following backslashes
 	 */
 	public static final Matcher NO_BACKSLASH_AMPERSAND_REGEX = Pattern.compile("(?im)(?<!\\\\)&([0-9a-fk-or])").matcher("");
-	/** <a href="https://regex101.com/r/D9x2yv/1">Examples</a>*/
+	/** <a href="https://regex101.com/r/D9x2yv/latest">Examples</a>*/
 	public static final Matcher DUPLICATE_COLOR_AMPERSAND_REGEX = Pattern.compile("(?im)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])").matcher("");
 	public static final Int2ObjectMap<ChatFormatting> COLOR_TO_FORMATTING = Util.make(() -> {
 		Int2ObjectMap<ChatFormatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever

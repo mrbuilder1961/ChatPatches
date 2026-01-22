@@ -80,7 +80,7 @@ public class ChatUtil {
 	public static MessageData messageData = NIL_MESSAGE_DATA;
 
 	/**
-	 * A variant of {@link #VANILLA_FORMAT} that includes support for messages
+	 * Am extension of {@link #VANILLA_FORMAT} that includes support for messages
 	 * containing a
 	 * {@linkplain net.minecraft.network.chat.contents.objects.PlayerSprite#description()
 	 * player head} in the chat message. This was split off from the original
@@ -88,6 +88,8 @@ public class ChatUtil {
 	 * messages with prefixes or suffixes containing {@code ]} or {@code >}. For
 	 * more info, <a href="https://github.com/mrbuilder1961/ChatPatches/pull/297">see
 	 * the conversation (#297)</a>.
+	 *
+	 * @see <a href="https://github.com/mrbuilder1961/ChatPatches/pull/297#issuecomment-3724495903">Comment on #297</a>
 	 */
 	public static final Matcher CHAT_HEADS_FORMAT = Pattern.compile("^((-> )?\\[.+] )?<([^]>]*\\w{1,16}[^]>]*|\\[(\\w{1,16}) head][^]>]*\\4[^]>]*)>\\s.+$").matcher("");
 	/**
@@ -102,6 +104,8 @@ public class ChatUtil {
 	 *
 	 * @apiNote The vanilla player name alone can only match
 	 * {@code /<[a-z0-9_]{3,16}>/} (not including legacy 1-2 letter names).
+	 *
+	 * @see <a href="https://regex101.com/r/LGbGU9/latest">Vanilla Message Format</a>
 	 */
 	public static final Matcher VANILLA_FORMAT = Pattern.compile("^((-> )?\\[[^<]+] )?<[^>]*(\\w{1,16})[^>]*>\\s.+$").matcher("");
 	// ^ FIXME: edit and test this regex thoroughly (do both -fixes need the no >
