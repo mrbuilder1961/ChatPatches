@@ -1,6 +1,6 @@
 # Changelog
 
-## Chat Patches `8.0-alpha.8` for Minecraft 1.20.1–26.1-snapshot-4 on Fabric, Quilt
+## Chat Patches `8.0-alpha.8` for Minecraft 1.20.1–26.1-snapshot-6 on Fabric, Quilt
 - Requires Fabric Loader 0.18.0+ going forward
 - Added *another* Band-Aid patch for [#252](https://www.github.com/mrbuilder1961/ChatPatches/issues/252), again thanks to [SkyNotTheLimit](https://discord.com/channels/507304429255393322/1452165613756879044/1452516265330475085)!
 - Fixed non-vanilla messages formatted like vanilla ones having an extra space between the name and message ([#233](https://www.github.com/mrbuilder1961/ChatPatches/issues/233))
@@ -9,6 +9,7 @@
 - Fixed a 1.21.10 crash from right-clicking to open the context menu ([#298](https://www.github.com/mrbuilder1961/ChatPatches/issues/298))
 - Optimized the dynamic shift calculator - it no longer runs every render tick!
 - Fixed the config not writing default values to disk - to trigger this, change any value in-game or delete/move the current config file
+- Updated to 26.1! Like always with recent Minecraft drops, a lot has been changed under the hood, so be on the lookout for bugs!
 
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
 - Updated to 1.21.11 (blame Mojang for the long wait - they redesigned the chat again 🤬) ([#293](https://www.github.com/mrbuilder1961/ChatPatches/issues/293))
