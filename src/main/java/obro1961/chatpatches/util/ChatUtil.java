@@ -2,8 +2,10 @@ package obro1961.chatpatches.util;
 
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectObjectMutablePair;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
@@ -191,6 +193,48 @@ public class ChatUtil {
 		}
 
 		return (int)(visibleIndex - visibles.subList(0, visibleIndex).stream().filter(Predicate.not(GuiMessage.Line::endOfEntry)).count());
+	}
+
+	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(GuiMessage message) {
+		return deleteMessage(mc().gui.getChat().allMessages.indexOf(message));
+	}
+
+	/**
+	 * Deletes the message at the given index, which includes the actual message and
+	 * all associated visible messages. Can be used while searching (visible messages
+	 * are altered but the actual messages remain intact), but note the message is
+	 * still permanently deleted and will not reappear when the query is cleared/fails.
+	 *
+	 * @return A {@link Pair} containing the {@linkplain GuiMessage message} removed
+	 * along with the associated {@linkplain GuiMessage.Line visible messages}.
+	 *
+	 * @param messageIndex The {@link ChatComponent#allMessages} index of the message
+	 * to be removed.
+	 *
+	 * @throws ArrayIndexOutOfBoundsException If the message index provided is negative
+	 * or larger than the amount of messages present in {@link ChatComponent#allMessages}.
+	 */
+	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(int messageIndex) {
+		ChatComponent chat = mc().gui.getChat();
+		List<GuiMessage> messages = chat.allMessages;
+		List<GuiMessage.Line> visibles = chat.trimmedMessages;
+		// messages shown when searching don't have any issues (at least in terms of GuiMessage) because the index passed is based in #allMessages - perfect!
+
+		if(messageIndex < 0 || messageIndex >= messages.size()) {
+			throw new ArrayIndexOutOfBoundsException(messageIndex);
+		}
+
+		var deleted = messages.remove(messageIndex);
+		var deletedVisibles = new ObjectArrayList<GuiMessage.Line>();
+
+		// this call works fine here or before the message is removed bc it only accesses visible messages, not the actual ones
+		int v = message2Visible(messageIndex); // returns the EoE visible message corresponding to messageIndex
+
+		do deletedVisibles.add(visibles.remove(v)); // remove the visible message(s) of the message being condensed, starting with its own EoE
+		while(v < visibles.size() && !visibles.get(v).endOfEntry()); // continue removing them until the next message (EoE) is reached
+
+		LOGGER.debug("Deleted '{}' at index {} with {} visible(s)", deleted.content().getString(), messageIndex, deletedVisibles.size());
+		return ObjectObjectMutablePair.of(deleted, deletedVisibles);
 	}
 
 	/**

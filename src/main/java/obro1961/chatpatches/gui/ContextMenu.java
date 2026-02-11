@@ -225,16 +225,12 @@ public class ContextMenu implements GuiEventListener {
 
 	/**
 	 * Registers a button in the {@linkplain Grid#layout button grid} and
-	 * {@linkplain #grid associated data lookup manager}. This is done
+	 * {@linkplain #grid associated data manager}. This is done
 	 * by creating a new {@link Button} (or similarly-implemented
 	 * {@link AbstractButton} if {@code icon} is specified)
 	 * according to the passed id, copy text supplier, press action, and
 	 * coordinates (the local row and absolute column).
 	 *
-	 * @param localRow The row relative to the current row, which is
-	 * specified by the last main button added. The
-	 * absolute row is automatically calculated and
-	 * {@linkplain Grid#currentRow kept track of}.
 	 * @param col The column in the grid menu where the button should be
 	 * placed. Main buttons are always in column 0, and hover
 	 * buttons are in columns ≥1.
@@ -242,7 +238,7 @@ public class ContextMenu implements GuiEventListener {
 	 * render over the leftmost button area, or {@code null}
 	 * to not render anything extra.
 	 */
-	private void registerButton(Component id, int localRow, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction) {
+	private void registerButton(Component id, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction) {
 		int w = mc().font.width(id) + 2 * BUTTON_PADDING;
 		int h = BUTTON_HEIGHT + BUTTON_PADDING;
 
@@ -305,72 +301,64 @@ public class ContextMenu implements GuiEventListener {
 			button.setTooltip(Tooltip.create( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace(Formatting.FORMATTING_CODE_PREFIX, '&') )
 		}
 
-		grid.add(button, localRow, col, tooltipCopyTextSupplier, pressAction);
+		grid.add(button, col, tooltipCopyTextSupplier, pressAction);
 	}
 
-	/**
-	 * Registers a <b>main</b> button that gets its copy text
-	 * from {@code proxyId}, does <b>not</b> perform an extra
-	 * press action, and <b>can</b> override this button's
-	 * icon.
-	 *
-	 * @see #registerProxyButton(Component, Component, Object)
-	 * @see #registerActionButton(Component, int, Object, Button.OnPress)
-	 * @see #MENU_SENDER
-	 */
-	private void registerProxyActionButton(Component id, Component proxyId, int localRow, int col, Object icon) {
-		if(id.equals(proxyId)) {
-			logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
-			return;
-		}
-
-		// copies the proxy button's text by executing its press action instead
-		registerButton(id, localRow, col, icon, null, me -> grid.get(proxyId).button.onPress(/*? if >=1.21.9 {*/null/*?}*/));
-	}
 	/**
 	 * Registers a <b>main</b> button that gets its copy text
 	 * from {@code proxyId} and does <b>not</b> perform an
 	 * extra press action. If provided, it draws the given object
 	 * over the leftmost button area.
 	 *
-	 * @see #registerProxyActionButton(Component, Component, int, int, Object)
 	 * @see #MENU_STRING
 	 * @see #MENU_TIMESTAMP
 	 * @see #MENU_LINKS
+	 * @see #MENU_SENDER
 	 */
 	private void registerProxyButton(Component id, Component proxyId, Object icon) {
-		registerProxyActionButton(id, proxyId, 0, 0, icon);
+		if(id.equals(proxyId)) {
+			logReportMsg(new IllegalArgumentException("Cannot register proxy action button with own id '" + id.getString() + "'"));
+			return;
+		}
+
+		// copies the proxy button's text by executing its press action instead
+		registerButton(id, 0, icon, null, me -> grid.get(proxyId).button.onPress(/*? if >=1.21.9 {*/null/*?}*/));
 	}
+
 	/**
 	 * Registers a <b>main</b> button that <b>does</b> perform
-	 * an extra press action.
+	 * an extra press action. If provided, it draws the given
+	 * icon over the leftmost button area.
 	 *
 	 * @see #MENU_REPLY
+	 * @see #MENU_DELETE
 	 */
-	private void registerActionButton(Component id, int localRow, Object icon, Button.OnPress pressAction) {
-		registerButton(id, localRow, 0, icon, null, pressAction);
+	private void registerActionButton(Component id, Object icon, Button.OnPress pressAction) {
+		registerButton(id, 0, icon, null, pressAction);
 	}
+
 	/**
 	 * Registers a button that gets its copy text from
 	 * a <b>supplier</b> and does <b>not</b> perform an
 	 * extra press action. If provided, it draws the given
-	 * object over the leftmost button area.
+	 * icon over the leftmost button area.
 	 *
-	 * @see #registerCopyButton(Component, int, Component)
+	 * @see #registerCopyButton(Component, Component)
 	 * @see #TIMESTAMP_HOVER
 	 * @see #MENU_UNIX
 	 */
-	private void registerCopyButton(Component id, int localRow, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier) {
-		registerButton(id, localRow, col, icon, tooltipCopyTextSupplier, null);
+	private void registerCopyButton(Component id, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier) {
+		registerButton(id, col, icon, tooltipCopyTextSupplier, null);
 	}
+
 	/**
 	 * Registers a <b>hover</b> button with <b>precalculated</b>
 	 * copy text that does <b>not</b> perform an extra press action.
 	 *
-	 * @see #registerCopyButton(Component, int, int, Object, Supplier)
+	 * @see #registerCopyButton(Component, int, Object, Supplier)
 	 */
-	private void registerCopyButton(Component id, int localRow, Component tooltipCopyText) {
-		registerButton(id, localRow, 1, null, () -> tooltipCopyText, null);
+	private void registerCopyButton(Component id, Component tooltipCopyText) {
+		registerButton(id, 1, null, () -> tooltipCopyText, null);
 	}
 
 
@@ -402,6 +390,7 @@ public class ContextMenu implements GuiEventListener {
 	 *     <li>^^{@link #NAME}</li>
 	 *     <li>^^{@link #UUID}</li>
 	 *     <li>^^{@link #MENU_REPLY}</li>
+	 *     <li>{@link #MENU_DELETE}</li>
 	 * </ol>
 	 * Finally, updates and syncs the button positions and registers them
 	 * with the {@link Screen#addWidget(GuiEventListener)} method.
@@ -421,18 +410,17 @@ public class ContextMenu implements GuiEventListener {
 
 
 		// string buttons - unconditional
-		int strRow = 0; // current row for string and text buttons
 		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
-			registerCopyButton(RAW_TEXT, strRow++, text); // 0
-			registerCopyButton(FORMATTED_STR, strRow++, literal(TextUtil.toCodedString(text))); // 1
+			registerCopyButton(RAW_TEXT, text); // 0
+			registerCopyButton(FORMATTED_STR, literal(TextUtil.toCodedString(text))); // 1
 			if(timestamped) {
-				registerCopyButton(NO_TIMESTAMP_TEXT, strRow++, TextUtil.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
+				registerCopyButton(NO_TIMESTAMP_TEXT, text.copyWith(text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			}
 			if(duped) {
-				registerCopyButton(NO_DUPE_TEXT, strRow++, TextUtil.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
+				registerCopyButton(NO_DUPE_TEXT, text.copyWith(text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
 			}
 			registerCopyButton(JSON_STR,
-				strRow, TextUtil.UNSAFE_CODEC.encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
+				TextUtil.UNSAFE_CODEC.encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.map(NbtUtils::toPrettyComponent)
 					.orElse(UNKNOWN.apply(JSON_STR))
@@ -442,7 +430,7 @@ public class ContextMenu implements GuiEventListener {
 		// timestamp buttons - conditional (not on boundary lines)
 		if(timestamped) {
 			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP, Items.CLOCK);
-				registerCopyButton(TIMESTAMP, 0, timestamp);
+				registerCopyButton(TIMESTAMP, timestamp);
 
 				// registers TIMESTAMP_HOVER if the timestamp has hover text in its style
 				HoverEvent event = timestamp.getStyle().getHoverEvent();
@@ -451,18 +439,18 @@ public class ContextMenu implements GuiEventListener {
 				event instanceof HoverEvent.ShowText(Component value) ? Optional.of(value) : Optional.empty();
 				//?} else {
 				/*event != null ? Optional.of(event.getValue(HoverEvent.Action.SHOW_TEXT)) : Optional.empty();*//*?}*/
-				optional.ifPresent(hoverText -> registerCopyButton(TIMESTAMP_HOVER, 1, hoverText));
+				optional.ifPresent(hoverText -> registerCopyButton(TIMESTAMP_HOVER, hoverText));
 		}
 
 		// dupe counter buttons - conditional
 		if(duped) {
 			registerProxyButton(MENU_DUPE_COUNTER, COUNTER_TEXT, Items.MAP);
-				registerCopyButton(COUNTER_TEXT, 0, counter);
-				registerCopyButton(COUNTER_VALUE, 1, literal(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
+				registerCopyButton(COUNTER_TEXT, counter);
+				registerCopyButton(COUNTER_VALUE, literal(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
 		}
 
 		// unix timestamp button - unconditional
-		registerCopyButton(MENU_UNIX, 0, 0, Items.REDSTONE, () -> {
+		registerCopyButton(MENU_UNIX, 0, Items.REDSTONE, () -> {
 			String time = timestamp.getStyle().getInsertion();
 			return time != null && !time.isEmpty() ? Component.nullToEmpty(time) : UNKNOWN.apply(MENU_UNIX);
 		});
@@ -504,12 +492,12 @@ public class ContextMenu implements GuiEventListener {
 
 			int l = 0; // link index
 			for(; l < filePaths.size(); l++) {
-				registerCopyButton(LINK_N.apply(l + 1), l, literal(ChatFormatting.GOLD + "" + ChatFormatting.UNDERLINE + filePaths.get(l)));
+				registerCopyButton(LINK_N.apply(l + 1), literal(ChatFormatting.GOLD + "" + ChatFormatting.UNDERLINE + filePaths.get(l)));
 			}
 
 			int filePathOffset = l; // ensures we're not trying to access out-of-bounds indices bc these are separate lists
 			for(; l - filePathOffset < webLinks.size(); l++) {
-				registerCopyButton(LINK_N.apply(l + 1), l, literal(ChatFormatting.BLUE + "" + ChatFormatting.UNDERLINE + webLinks.get(l - filePathOffset)));
+				registerCopyButton(LINK_N.apply(l + 1), literal(ChatFormatting.BLUE + "" + ChatFormatting.UNDERLINE + webLinks.get(l - filePathOffset)));
 			}
 		}
 
@@ -518,18 +506,24 @@ public class ContextMenu implements GuiEventListener {
 			var name = messageSender./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/();
 			var id = messageSender./*? if >=1.21.9 {*/id/*?} else {*//*getId*//*?}*/();
 
-			registerProxyActionButton(MENU_SENDER, NAME, 0, 0, Items.NAME_TAG);
-				registerCopyButton(NAME, 0, Component.literal(name));
-				registerCopyButton(UUID, 1, Component.literal(id.toString()));
+			registerProxyButton(MENU_SENDER, NAME, Items.NAME_TAG);
+				registerCopyButton(NAME, Component.literal(name));
+				registerCopyButton(UUID, Component.literal(id.toString()));
 
-			registerButton(
+			registerActionButton(
 				MENU_REPLY,
-				0, 0,
-				(Object)mc().getConnection().getPlayerInfo(id) instanceof PlayerInfo info ? info./*? if >=1.20.2 {*/getSkin/*?} else {*//*getSkinLocation*//*?}*/() : null, null,
+				(Object)mc().getConnection().getPlayerInfo(id) instanceof PlayerInfo info ? info./*? if >=1.20.2 {*/getSkin/*?} else {*//*getSkinLocation*//*?}*/() : null, // prefer real skin; else nothing
 				me -> screen.input.setValue(TextUtil.fillVars(config.contextReplyFormat, name))
-				// prefer real skin; else nothing
 			);
 		}
+
+		registerActionButton(MENU_DELETE, Items.BARRIER, me -> {
+			if(config.contextDeletionWarning) {
+				mc().setScreen(DeletionWarningScreen.of(screen, selectedLine));
+			} else {
+				ChatUtil.deleteMessage(selectedLine);
+			}
+		});
 
 		grid.updateButtonMetadata();
 		grid.buttons().forEach(addSelectableChild);
@@ -759,17 +753,17 @@ public class ContextMenu implements GuiEventListener {
 	 *
 	 * @implNote
 	 * <ol>
-	 *	 <li>If the passed {@link Optional} is empty, ensures nothing is focused on in the
-	 *	 {@linkplain #screen chat screen} and returns</li>
+	 *	 <li>If the passed {@link Optional} is empty, ensures nothing is focused
+	 *	 on in the {@linkplain #screen chat screen} and returns</li>
 	 *	 <li>Otherwise, focuses the hovered button in the chat screen</li>
 	 *	 <li>Then iterates through every {@linkplain Grid#groups group} and every button in those groups:</li>
 	 *	 <ol>
-	 *	     <li>If the iterated button is not a main button ({@code col > 0}), sets its visibility based
-	 *	     on whether the hovered button is in the iterated group or not</li>
+	 *	     <li>If the iterated button is {@linkplain Grid.Entry#isHover not a main button},
+	 *	     sets its visibility based on whether the hovered button is in the iterated group or not</li>
 	 *	     <li>If the iterated button is the hovered button and the iterated group has at least one hover
 	 *	     button, toggles the {@link Style#underlined} attribute of the group's first hovered button
-	 *	     based on whether it should show (main) or hide (hover button aligned with its main
-	 *	     button).</li>
+	 *	     based on whether {@linkplain Grid.Entry#isMain it should show} or hide (hover button aligned
+	 *	     with its main button).</li>
 	 *	 </ol>
 	 * </ol>
 	 */
@@ -780,12 +774,16 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		AbstractButton hoveredButton = widgetOptional.get();
+		Component buttonText = hoveredButton.getMessage();
+		Grid.Entry hoveredEntry = grid.get(buttonText);
+
 		screen.setFocused(hoveredButton); // allows much more efficient update checks, see #mouseMoved(int, int)
+
 		for(ObjectList<Grid.Entry> group : grid.groups) {
 			for(Grid.Entry itr : group) {
 				if(itr.isHover()) {
 					// if the hovered button is in the group, show all other buttons; otherwise hide them bc they're irrelevant
-					itr.button.visible = group.contains(grid.get( hoveredButton.getMessage() ));
+					itr.button.visible = group.contains(hoveredEntry); // urgent: the arrow is messing up the id check - i think we should just uuid to this
 				}
 
 				// proceed with underlining if the hovered button is in the iterated group and the group has a hover button
@@ -832,18 +830,26 @@ public class ContextMenu implements GuiEventListener {
 		private final GridLayout layout;
 		private final ObjectList<Entry> entries;
 		/**
-		 * Holds a list of buttons at each index (group number)
-		 * in the root list.
-		 * The group number is used to determine which buttons
-		 * should be visible when a button is hovered over.
-		 * <p>NOTE: The only group that remains constant
-		 * regardless of message contents is the first
-		 * group, which contains basic copy options.
+		 * Holds a list of buttons at each index (group number) in the root list.
+		 * The group number is used to determine which buttons should be visible
+		 * when a button is hovered over.
+		 * <p>NOTE: The only group that remains constant regardless of message
+		 * contents is the first group ({@link #MENU_STRING}).
 		 */
 		private final ObjectList<ObjectList<Entry>> groups;
 
-		private int currentRow = -1;
-		private int groupCount = 0;
+		/**
+		 * The group index/id of the most recently added button. This is
+		 * incremented every time a new main button (col = 0) is added to the
+		 * grid. Incidentally, this field also refers to the current/absolute
+		 * row of the most recently added button, and is used as such too.
+		 *
+		 * <p>Initialized to {@code -1} to prevent less readable edge-case
+		 * carveouts in {@link #add(AbstractButton, int, Supplier, Button.OnPress)}
+		 * (ex. {@code if(currentGroupAndRow == 0) {...} else {...}}).
+		 */
+		private int currentGroupAndRow = -1;
+		private int localRow = 0;
 
 		public Grid() {
 			this.layout = new GridLayout(clickPos.xInt(), clickPos.yInt());
@@ -851,22 +857,27 @@ public class ContextMenu implements GuiEventListener {
 			this.groups = new ObjectArrayList<>(MAX_ROWS);
 		}
 
-		public void add(AbstractButton button, int localRow, int col, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction) {
-			boolean newGroup = button.visible = (col == 0); // this will only break things if >1 main buttons are grouped together
-			int groupId = newGroup ? groupCount++ : groupCount - 1;
+		public void add(AbstractButton button, int col, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction) {
+			boolean newGroup = button.visible = (col == 0); // if >1 main buttons are grouped together, things will break
+			int entryRow = currentGroupAndRow; // assignment here to make the below else branch cleaner
+
 			if(newGroup) {
-				currentRow++;
-			}
-			int absRow = currentRow + localRow;
-
-			Entry entry = new Entry(absRow, col, groupId, button, tooltipCopyTextSupplier, pressAction);
-
-			layout.addChild(button, absRow, col);
-			entries.add(entry);
-			if(groups.size() > groupId) {
-				groups.get(groupId).add(entry);
+				// main buttons signify a new group!
+				entryRow = (++currentGroupAndRow);
+				localRow = 0; // we don't need to add this to entryRow bc nothing would happen!
 			} else {
-				groups.add(groupId, new ObjectArrayList<>(ObjectArrayList.of(entry)));
+				// hover buttons just keep moving down
+				entryRow += (localRow++); // using the ++ here prevents every hover column from being shifted down one row!
+			}
+
+			Entry entry = new Entry(entryRow, col, currentGroupAndRow, button, tooltipCopyTextSupplier, pressAction);
+
+			layout.addChild(button, entryRow, col);
+			entries.add(entry);
+			if(groups.size() > currentGroupAndRow) {
+				groups.get(currentGroupAndRow).add(entry);
+			} else {
+				groups.add(currentGroupAndRow, new ObjectArrayList<>(ObjectArrayList.of(entry)));
 			}
 		}
 
@@ -900,13 +911,12 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		/**
-		 * @return The widgets stored in this Grid's internal
-		 * {@link GridLayout} object, cast to
-		 * <code>{@link List}<{@link AbstractButton}></code>.
-		 * Will log a {@link ClassCastException} and return an
-		 * empty list if any of the widgets are not of the correct
-		 * type. However, this should never happen, per the
-		 * {@linkplain ContextMenu#registerButton(Component, int, int, Object, Supplier, Button.OnPress)
+		 * @return The widgets stored in this Grid's internal {@link GridLayout}
+		 * object, cast to <code>{@link List}<{@link AbstractButton}></code>.
+		 * Will log a {@link ClassCastException} and return an empty list if any
+		 * of the widgets are not of the correct type. However, this should never
+		 * happen, per the {@linkplain
+		 * ContextMenu#registerButton(Component, int, Object, Supplier, Button.OnPress)
 		 * button registering methods}.
 		 */
 		@SuppressWarnings("unchecked")
@@ -921,13 +931,11 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		/**
-		 * Aligns all buttons in a grid pattern in accordance
-		 * with {@link GridLayout#arrangeElements()}.
-		 * Synchronizes the widths of the main buttons (col 0)
-		 * together, and the hover buttons (col 1) by group,
-		 * so they are all the same width. Additionally, ensures
-		 * the entire grid menu is visible on-screen
-		 * by shifting it up and/or left if necessary.
+		 * Aligns all buttons in a grid pattern in accordance with {@link
+		 * GridLayout#arrangeElements()}. Synchronizes the widths of the main
+		 * buttons (col 0) together, and the hover buttons (col 1) by group,
+		 * so they are all the same width. Additionally, ensures the entire
+		 * grid menu is visible on-screen by shifting it up and/or left if necessary.
 		 */
 		public void updateButtonMetadata() {
 			layout.arrangeElements();

@@ -103,7 +103,7 @@ public class Config {
     public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean dynamicChatShift = true, vanillaClearing = false, chatHidePacket = true,
 		// idea: messageDrafting -> chatDrafting?
 		messageDrafting = false, onlyInvasiveDrafting = false;
-    public boolean contextMenu = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";
+    public boolean contextMenu = true, contextDeletionWarning = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";//todo: make lang keys
     public boolean search = true, searchDrafting = true, searchPrefix = false,
         caseSensitive = true, regex = false;
 	public boolean logMessageStructures = false;
