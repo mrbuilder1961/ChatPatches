@@ -47,7 +47,7 @@ public class DeletionWarningScreen extends WarningScreen {
 	/**
 	 * Largely taken from {@link net.minecraft.client.gui.screens.multiplayer.SafetyScreen}
 	 */
-	@Override
+	/*? if >1.20.4 {*/@Override
 	protected Layout addFooterButtons() {
 		LinearLayout layout = LinearLayout.horizontal().spacing(8);
 		layout.addChild(Button.builder(CommonComponents.GUI_PROCEED, me -> {
@@ -60,4 +60,19 @@ public class DeletionWarningScreen extends WarningScreen {
 		layout.addChild(Button.builder(CommonComponents.GUI_CANCEL, me -> close()).build());
 		return layout;
 	}
+
+	// todo: move the button builders to their own methods to then call in this and the modern equivalent method so its less duplication
+	/*?} else {*/
+	/*@Override
+	protected void initButtons(int yOffset) {
+		this.addRenderableWidget(Button.builder(CommonComponents.GUI_PROCEED, me -> {
+            if(stopShowing.selected()) {
+				ChatPatches.config.contextDeletionWarning = false;
+            }
+			ChatUtil.deleteMessage(chatMessage);
+            close();
+        }).bounds(this.width / 2 - 155, 100 + yOffset, 150, 20).build());
+        this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, me -> close()).bounds(this.width / 2 - 155 + 160, 100 + yOffset, 150, 20).build());
+	}*/
+	//?}
 }
