@@ -901,7 +901,8 @@ public class ContextMenu implements GuiEventListener {
 
 		@Contract("null -> false")
 		public boolean contains(Object o) {
-			return o instanceof AbstractButton b && get(b.getMessage()) != null;
+			// || (o instanceof Entry e && entries.contains(e)) // don't bother for the time being, this method is only ever passed instances of GuiEventListener
+			return (o instanceof AbstractButton b && get(b.getMessage()) != null);
 		}
 
 		public void clear() {
