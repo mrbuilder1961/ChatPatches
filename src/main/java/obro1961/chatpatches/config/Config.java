@@ -688,10 +688,8 @@ public class Config {
 			}
 
 			// replaces Optional.empty() w/ Optional.of(defaultValue) to serialize default values
-			return Codec.optionalField(key, (Codec<T>)codec/*? if >1.20.4 {*/, false/*?}*/).xmap(
-				o -> o.orElse(def),
-				a -> Objects.equals(a, def) ? Optional.of(def) : Optional.of(a)
-			);
+			return Codec.optionalField(key, (Codec<T>)codec/*? if >1.20.4 {*/, false/*?}*/).xmap(o -> o.orElse(def), Optional::of);
+			//Objects.equals(o, def) ? Optional.of(def) : Optional.of(o) <-> Optional.of(o)
         }
     }
 
