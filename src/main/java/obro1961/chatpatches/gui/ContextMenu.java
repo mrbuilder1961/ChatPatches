@@ -519,7 +519,7 @@ public class ContextMenu implements GuiEventListener {
 
 		registerActionButton(MENU_DELETE, Items.BARRIER, me -> {
 			if(config.contextDeletionWarning) {
-				mc().setScreen(DeletionWarningScreen.of(screen, selectedLine));
+				mc().setScreen(new DeletionWarningScreen(screen, selectedLine));
 			} else {
 				ChatUtil.deleteMessage(selectedLine);
 			}

@@ -12,6 +12,9 @@ import net.minecraft.network.chat.Component;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.ChatUtil;
 import org.jetbrains.annotations.NotNull;
+//? if >=1.21.11 {
+import org.jspecify.annotations.NonNull;
+//?}
 
 import static obro1961.chatpatches.gui.ContextMenu.LANG_PREFIX;
 
@@ -27,16 +30,10 @@ public class DeletionWarningScreen extends WarningScreen {
 
 	private final GuiMessage chatMessage;
 
-	private DeletionWarningScreen(@NotNull Screen parent, @NotNull GuiMessage chatMessage, @NotNull Component MESSAGE_PREVIEW) {
-		super(TITLE, MESSAGE_PREVIEW, DISMISS, CommonComponents.joinForNarration(TITLE, MESSAGE_PREVIEW));
+	public DeletionWarningScreen(@NotNull Screen parent, @NotNull GuiMessage chatMessage) {
+		super(TITLE, chatMessage.content(), DISMISS, CommonComponents.joinForNarration(TITLE, chatMessage.content()));
 		this.parent = parent;
 		this.chatMessage = chatMessage;
-	}
-
-	public static DeletionWarningScreen of(Screen parent, GuiMessage chatMessage) {
-		// requires a factory method because java just NEEDS its constructor first! sigh.
-		Component messagePreview = CommonComponents.optionNameValue(Component.translatable("gui.socialInteractions.tooltip.hide"), chatMessage.content());
-		return new DeletionWarningScreen(parent, chatMessage, messagePreview);
 	}
 
 
@@ -47,32 +44,28 @@ public class DeletionWarningScreen extends WarningScreen {
 	/**
 	 * Largely taken from {@link net.minecraft.client.gui.screens.multiplayer.SafetyScreen}
 	 */
-	/*? if >1.20.4 {*/@Override
-	protected Layout addFooterButtons() {
-		LinearLayout layout = LinearLayout.horizontal().spacing(8);
-		layout.addChild(Button.builder(CommonComponents.GUI_PROCEED, me -> {
+	@Override
+	/*? if >=1.21.11 {*/@NonNull/*?}*/
+	protected /*? if >1.20.4 {*/ Layout addFooterButtons() /*?} else {*//*void initButtons(int yOffset)*//*?}*/ {
+		var proceedButton = Button.builder(CommonComponents.GUI_PROCEED, me -> {
 			if(stopShowing.selected()) {
 				ChatPatches.config.contextDeletionWarning = false;
 			}
 			ChatUtil.deleteMessage(chatMessage);
 			close();
-		}).build());
-		layout.addChild(Button.builder(CommonComponents.GUI_CANCEL, me -> close()).build());
-		return layout;
-	}
+		});
+		var cancelButton = Button.builder(CommonComponents.GUI_CANCEL, me -> close());
 
-	// todo: move the button builders to their own methods to then call in this and the modern equivalent method so its less duplication
-	/*?} else {*/
-	/*@Override
-	protected void initButtons(int yOffset) {
-		this.addRenderableWidget(Button.builder(CommonComponents.GUI_PROCEED, me -> {
-            if(stopShowing.selected()) {
-				ChatPatches.config.contextDeletionWarning = false;
-            }
-			ChatUtil.deleteMessage(chatMessage);
-            close();
-        }).bounds(this.width / 2 - 155, 100 + yOffset, 150, 20).build());
-        this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, me -> close()).bounds(this.width / 2 - 155 + 160, 100 + yOffset, 150, 20).build());
-	}*/
-	//?}
+		/*? if >1.20.4 {*/
+		var layout = LinearLayout.horizontal().spacing(8);
+
+		layout.addChild(proceedButton.build());
+		layout.addChild(cancelButton.build());
+
+		return layout;
+		/*?} else {*//*
+		addRenderableWidget(proceedButton.pos(width / 2 - 155, 120 + yOffset).build());
+        addRenderableWidget(cancelButton.pos(width / 2 - 155 + 160, 120 + yOffset).build());
+		*//*?}*/
+	}
 }

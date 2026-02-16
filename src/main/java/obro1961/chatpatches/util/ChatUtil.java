@@ -195,6 +195,8 @@ public class ChatUtil {
 		return (int)(visibleIndex - visibles.subList(0, visibleIndex).stream().filter(Predicate.not(GuiMessage.Line::endOfEntry)).count());
 	}
 
+	/** @see #deleteMessage(int) */
+	@SuppressWarnings("UnusedReturnValue") // follows the List convention
 	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(GuiMessage message) {
 		return deleteMessage(mc().gui.getChat().allMessages.indexOf(message));
 	}
@@ -203,7 +205,7 @@ public class ChatUtil {
 	 * Deletes the message at the given index, which includes the actual message and
 	 * all associated visible messages. Can be used while searching (visible messages
 	 * are altered but the actual messages remain intact), but note the message is
-	 * still permanently deleted and will not reappear when the query is cleared/fails.
+	 * still permanently deleted and will not reappear when the query is changed.
 	 *
 	 * @return A {@link Pair} containing the {@linkplain GuiMessage message} removed
 	 * along with the associated {@linkplain GuiMessage.Line visible messages}.
@@ -213,6 +215,8 @@ public class ChatUtil {
 	 *
 	 * @throws ArrayIndexOutOfBoundsException If the message index provided is negative
 	 * or larger than the amount of messages present in {@link ChatComponent#allMessages}.
+	 * Will also throw this error if visible message equivalents cannot be found for this
+	 * message; however, this should never happen.
 	 */
 	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(int messageIndex) {
 		ChatComponent chat = mc().gui.getChat();
@@ -221,7 +225,8 @@ public class ChatUtil {
 		// messages shown when searching don't have any issues (at least in terms of GuiMessage) because the index passed is based in #allMessages - perfect!
 
 		if(messageIndex < 0 || messageIndex >= messages.size()) {
-			throw new ArrayIndexOutOfBoundsException(messageIndex);
+			// prepub: just logReportMsg an error? idk if throwing errors is the best idea
+			throw new IndexOutOfBoundsException(messageIndex);
 		}
 
 		var deleted = messages.remove(messageIndex);
@@ -230,7 +235,12 @@ public class ChatUtil {
 		// this call works fine here or before the message is removed bc it only accesses visible messages, not the actual ones
 		int v = message2Visible(messageIndex); // returns the EoE visible message corresponding to messageIndex
 
-		do deletedVisibles.add(visibles.remove(v)); // remove the visible message(s) of the message being condensed, starting with its own EoE
+		if(v < 0 || v >= visibles.size()) {
+			// prepub: just logReportMsg an error? idk if throwing errors is the best idea
+			throw new IndexOutOfBoundsException(messageIndex); // should never happen because all messages should have a visible - this method is only called thru the helper of the same name
+		}
+
+		do deletedVisibles.add(visibles.remove(v)); // remove the visible message(s) of the message being deleted, starting with its own EoE
 		while(v < visibles.size() && !visibles.get(v).endOfEntry()); // continue removing them until the next message (EoE) is reached
 
 		LOGGER.debug("Deleted '{}' at index {} with {} visible(s)", deleted.content().getString(), messageIndex, deletedVisibles.size());
