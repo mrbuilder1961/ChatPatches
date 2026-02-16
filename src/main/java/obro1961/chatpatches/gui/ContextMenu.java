@@ -414,10 +414,10 @@ public class ContextMenu implements GuiEventListener {
 			registerCopyButton(RAW_TEXT, text); // 0
 			registerCopyButton(FORMATTED_STR, literal(TextUtil.toCodedString(text))); // 1
 			if(timestamped) {
-				registerCopyButton(NO_TIMESTAMP_TEXT, text.copyWith(text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
+				registerCopyButton(NO_TIMESTAMP_TEXT, TextUtil.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			}
 			if(duped) {
-				registerCopyButton(NO_DUPE_TEXT, text.copyWith(text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
+				registerCopyButton(NO_DUPE_TEXT, TextUtil.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
 			}
 			registerCopyButton(JSON_STR,
 				TextUtil.UNSAFE_CODEC.encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
