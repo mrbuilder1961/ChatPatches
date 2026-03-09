@@ -232,7 +232,8 @@ public class ChatLog {
                         })
                         .orElseGet(() -> Pair.of(newSyncedObjectList(null), newSyncedObjectList(null)));
 
-                messages = deserializedPair.getFirst(/*hey stonecutter this is not java 21's getFirst*/);
+				//~ !j21_get_first
+                messages = deserializedPair.getFirst();
                 history = deserializedPair.getSecond();
             }
 

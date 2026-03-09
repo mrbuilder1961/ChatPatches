@@ -1,3 +1,4 @@
+import dev.kikugie.stonecutter.build.config.ReplacementContainer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import me.modmuss50.mpp.ReleaseType
@@ -255,25 +256,27 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     replacements {
-        val notJ21 = java() < 21
-        string {
-            direction = notJ21
-            replace(".getFirst()", ".get(0)")
-        }
-        string {
-            direction = notJ21
-            replace(".removeFirst()", ".remove(0)")
+        fun str(dir: Boolean, from: String, to: String, nameId: String? = null, defaultEnabled: Boolean = true) {
+            val action: ReplacementContainer.StringReplacementSpec.() -> Unit = { replace(from, to) }
+            val id = (if(defaultEnabled) "!" else "") + nameId
+
+            if(nameId == null) {
+                if(!defaultEnabled) error("Replacement cannot be nameless and disabled by default: '$from' -> '$to'")
+                string(dir, action)
+            } else {
+                string(dir, id, action)
+            }
+            println("$id: '$from' ${if(dir) "->" else "<-"} '$to' (defaultEnabled = $defaultEnabled)")
         }
 
+        val j21 = java() >= 21
+        // FIXME: NOT WORKING UNLESS EXPLICITLY ENABLED - but the v1.21.11 ones seem to work just fine??
+        str(j21, ".get(0)", ".getFirst()", "j21_get_first")
+        str(j21, ".remove(0)", ".removeFirst()", "j21_remove_first")
+
         val v12111 = current.parsed >= "1.21.11"
-        string {
-            direction = v12111
-            replace("net.minecraft.Util", "net.minecraft.util.Util")
-        }
-        string {
-            direction = v12111
-            replace("ResourceLocation", "Identifier") // warning: on version change, this needs to be selectively disabled, as it messes with some comments
-        }
+        str(v12111, "net.minecraft.Util", "net.minecraft.util.Util")
+        str(v12111, "ResourceLocation", "Identifier", "yarnification", false) // selectively enabled
     }
 }
 

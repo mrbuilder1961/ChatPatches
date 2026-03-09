@@ -1,3 +1,4 @@
+//~ yarnification
 package obro1961.chatpatches.config;
 
 import dev.isxander.yacl3.api.*;
