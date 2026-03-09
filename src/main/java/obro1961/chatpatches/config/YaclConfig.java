@@ -148,7 +148,7 @@ public class YaclConfig extends Config {
         }
 
 
-        YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder().title(Component.translatable( LANG_PREFIX + "title"))
+        YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder().title(Component.translatable(LANG_PREFIX + "title"))
             .category( tabCat("message", ObjectList.of(),
                 subGroup("time", timeOpts, null),
                 subGroup("hover", hoverOpts, null),
