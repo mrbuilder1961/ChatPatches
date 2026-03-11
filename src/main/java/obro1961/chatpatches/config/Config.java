@@ -281,7 +281,6 @@ public class Config {
 		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return; // prepub: if we still want to impl that per-world history using boundary lines, we'll need to remove this isEmpty -> return condition
 
 		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
-		//~ j21_get_first
 		Component lastMessage = messages.getFirst().content();
 		boolean lastWasBoundary = Boundary.isBoundaryLine(lastMessage);
 

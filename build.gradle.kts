@@ -266,11 +266,11 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
             } else {
                 string(dir, id, action)
             }
-            println("$id: '$from' ${if(dir) "->" else "<-"} '$to' (defaultEnabled = $defaultEnabled)")
+
+            //println("REGISTERED STRING REPLACEMENT $id: '$from' ${if(dir) "->" else "<-"} '$to' (defaultEnabled = $defaultEnabled)")
         }
 
-        val j21 = java() >= 21
-        // FIXME: NOT WORKING UNLESS EXPLICITLY ENABLED - but the v1.21.11 ones seem to work just fine??
+        val j21 = java() >= 21 // todo: double check 0.9-beta.2 fixed these replacements not applying
         str(j21, ".get(0)", ".getFirst()", "j21_get_first")
         str(j21, ".remove(0)", ".removeFirst()", "j21_remove_first")
 
