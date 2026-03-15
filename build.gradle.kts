@@ -200,7 +200,7 @@ tasks {
 
             // considered "malformed" if it doesn't end with any word characters, whitespace, or newlines - or changes were emptied bc the indices were bad
             if( !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)$")) || newIndex == -1 ) {
-                println("Warning: Changelog appears malformed, this is probably caused by an invalid or outdated version ($v).")
+                println("Warning: Changelog appears malformed, this is typically caused by an outdated version ($v)")
                 if(publish) {
                     publish = false
                 }
