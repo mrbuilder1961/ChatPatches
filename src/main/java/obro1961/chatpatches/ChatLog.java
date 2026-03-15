@@ -277,7 +277,7 @@ public class ChatLog {
 			return; // don't write empty or old data
 		}
 
-		ChatPatches.executeIoTask(() -> {
+		executeIoTask(() -> {
 			long start = System.currentTimeMillis();
 			LOGGER.info("Saving...");
 
@@ -334,7 +334,7 @@ public class ChatLog {
      * to avoid freezing the render thread.</b>
      */
     public static void backup() {
-		ChatPatches.executeIoTask(() -> {
+		executeIoTask(() -> {
 			try {
 				Path backupPath = PATH.resolveSibling("chatlog_" + Util.getFilenameFormattedDateTime() + ".json");
 				Files.copy(PATH, backupPath);
@@ -413,7 +413,7 @@ public class ChatLog {
      */
     public static void load(boolean force) {
         if(config.chatlog && ((messages == EMPTY_LIST && history == EMPTY_LIST) || force)) {
-			ChatPatches.executeIoTask(ChatLog::deserialize).thenAcceptAsync(x -> restore(), mc());
+			executeIoTask(ChatLog::deserialize).thenAcceptAsync(x -> restore(), mc());
         }
     }
 

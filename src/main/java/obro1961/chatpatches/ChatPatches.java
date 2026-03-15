@@ -180,6 +180,7 @@ public class ChatPatches implements ClientModInitializer {
 	}
 
 	private static void pushToast(boolean error, Object header, Object description) {
+		//prepub: option to mute these. it should do the animated text tho like <original message> (wait 2 sec) 'Visit the config to mute toasts like this'
 		final int MAX_LEN = 60; // minimizes errors going off-screen
 		MutableComponent head = TextUtil.truncate(asText(header), MAX_LEN);
 		MutableComponent desc = TextUtil.truncate(asText(description), MAX_LEN);
@@ -194,13 +195,18 @@ public class ChatPatches implements ClientModInitializer {
 			desc = TextUtil.truncate(desc, MAX_LEN).append(CommonComponents.ELLIPSIS.copy().withStyle(ChatFormatting.GRAY));
 		}*/
 
-		SystemToast.add(
-			Minecraft.getInstance()./*? if >=1.21.2 {*/getToastManager/*?} else {*//*getToasts*//*?}*/(),
-			error
-				? SystemToast./*? if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PACK_LOAD_FAILURE
-				: SystemToast./*? if >=1.20.3 {*/SystemToastId/*?} else {*//*SystemToastIds*//*?}*/.PERIODIC_NOTIFICATION,
-			head,
-			desc
+		Minecraft mc = Minecraft.getInstance();
+		mc.execute(() ->
+			SystemToast.add(
+				mc./*? if >=1.21.2 {*/getToastManager/*?} else {*//*getToasts*//*?}*/(),
+				error
+					/*~ if <=1.20.2 'Id' -> 'Ids' {*/
+					? SystemToast.SystemToastId.PACK_LOAD_FAILURE
+					: SystemToast.SystemToastId.PERIODIC_NOTIFICATION,
+					/*~ }*/
+				head,
+				desc
+			)
 		);
 	}
 
