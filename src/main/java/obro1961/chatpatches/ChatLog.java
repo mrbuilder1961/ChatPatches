@@ -21,6 +21,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
+//? if >1.21.11 {
+//import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//?}
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.GsonHelper;
 import obro1961.chatpatches.config.Config;
@@ -235,6 +238,7 @@ public class ChatLog {
 				//~ !j21_get_first
                 messages = deserializedPair.getFirst();
                 history = deserializedPair.getSecond();
+				//~ j21_get_first
             }
 
             enforceLimits();
@@ -359,7 +363,7 @@ public class ChatLog {
 
 			restoring = true;
 			history.forEach(chat::addRecentChat);
-			messages.forEach(msg -> chat.addMessage(msg, null, RESTORED_INDICATOR));
+			messages.forEach(msg -> chat.addMessage(msg, null, /*? if >1.21.11 {*//*GuiMessageSource.SYSTEM_CLIENT,*//*?}*/ RESTORED_INDICATOR));
 			restoring = false;
 
 			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
@@ -384,9 +388,16 @@ public class ChatLog {
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering! (#42)
 			// now adds the message's addedTime to account for any extra offsets from the deserialization desync from the main game thread
 			for(int i = 0; i < visibles.size(); i++) {
-				var ln = visibles.get(i);
-				if(ticks - ln.addedTime() < 200) {
-					visibles.set(i, new GuiMessage.Line(-(200 + ln.addedTime()), ln.content(), ln.tag(), ln.endOfEntry()));
+				var l = visibles.get(i);
+				if(ticks - l.addedTime() < 200) {
+					int newTime = -(200 + l.addedTime());
+					/*? if >1.21.11 {*//*var lp = l.parent();*//*?}*/
+					visibles.set(i, new GuiMessage.Line(
+						/*? if >1.21.11 {*//*new GuiMessage(newTime, lp.content(), lp.signature(), lp.source(), lp.tag())*//*?} else {*/newTime/*?}*/,
+						l.content(),
+						/*? if <=1.21.11 {*/l.tag(),/*?}*/
+						l.endOfEntry()
+					));
 				} else {
 					break; // only the most recent messages need to be checked, the rest are guaranteed to be old enough
 					// note: this assumes the list is continuous, which should always be true, but who knows

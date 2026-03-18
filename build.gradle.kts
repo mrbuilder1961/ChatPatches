@@ -270,13 +270,21 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
             //println("REGISTERED STRING REPLACEMENT $id: '$from' ${if(dir) "->" else "<-"} '$to' (defaultEnabled = $defaultEnabled)")
         }
 
-        val j21 = java() >= 21 // todo: double check 0.9-beta.2 fixed these replacements not applying
+        //prepub rename these they ugly as freak
+        val j21 = java() >= 21
         str(j21, ".get(0)", ".getFirst()", "j21_get_first")
         str(j21, ".remove(0)", ".removeFirst()", "j21_remove_first")
 
         val v12111 = current.parsed >= "1.21.11"
         str(v12111, "net.minecraft.Util", "net.minecraft.util.Util")
         str(v12111, "ResourceLocation", "Identifier", "yarnification", false) // selectively enabled
+
+        val v261 = current.parsed > "1.21.11" // todo >= "26.1"
+        str(v261, "net.minecraft.client.GuiMessage", "net.minecraft.client.multiplayer.chat.GuiMessage") // also conveniently covers GuiMessageTag!
+        str(v261, "GuiGraphics", "GuiGraphicsExtractor")
+        str(v261, "render(", "extractRenderState(", "extract_render_state", true) // targets plain render(..) calls
+        str(v261, "\"render\"", "\"extractRenderState\"", "extract_render_state_target", true) // targets plain render(..) injectors
+        str(v261, "render", "extract", "render_extraction", false) // targets render<component>(..) calls
     }
 }
 

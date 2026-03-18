@@ -299,7 +299,7 @@ public class Config {
 			}
 
 			lastBoundary = currentLevel;
-			chat.addMessage(boundaryLine);
+			chat./*? if <=1.21.11 {*/addMessage/*?} else {*//*addClientSystemMessage*//*?}*/(boundaryLine);
 
 		} catch(RuntimeException e) {
 			LOGGER.warn("An error occurred while sending the boundary line:", e);

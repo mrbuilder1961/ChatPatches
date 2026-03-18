@@ -46,7 +46,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
     @Unique
     private static final String ADD_MESSAGE_TARGET_REFERENCE =
         "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;"
-            + /*? if <=1.20.4 {*//*"I" +*//*?}*/ "Lnet/minecraft/client/GuiMessageTag;"
+            + /*? if <=1.20.4 {*//*"I" +*//*?} elif >1.21.11 {*//*"Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;" +*//*?}*/ "Lnet/minecraft/client/" + /*? if >1.21.11 {*//*"multiplayer/chat/" +*//*?}*/ "GuiMessageTag;"
             + /*? if <=1.20.4 {*//*"Z" +*//*?}*/ ")V";
 
     @Shadow @Final public List<GuiMessage> allMessages;
@@ -144,7 +144,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
         method = {
             "addRecentChat", // sent history
             /*? if >=1.20.5 {*/
-            "addMessageToQueue(Lnet/minecraft/client/GuiMessage;)V", "addMessageToDisplayQueue" // actual messages
+            "addMessageToQueue", "addMessageToDisplayQueue" // actual messages
             /*?} else {*/
             /*"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V"*/
             /*?}*/
@@ -182,8 +182,9 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      *
      * @see Config#calcDynamicChatShift()
      */
-    @ModifyVariable(
-		method = "render" /*? if >=1.21.11 {*/ + "(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"/*?}*/,
+    @ModifyVariable(//stonecutter: 26.1
+		method = "render" /*? if >=1.21.11 {*/ +
+            /*~ if >1.21.11 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/"(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"/*~}*//*?}*/,
 		at = @At("STORE"), // targets ALL store insns for this variable
 		ordinal = /*? if >=1.21.11 {*/ 4 /*?} else {*//* 7 *//*?}*/,
         name = "m"

@@ -13,10 +13,18 @@ import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.gui.ContextMenu;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
+    @Unique // "render" -> "extract" is automatic
+	private static final String FIX_CLICKTHROUGH_TARGET_METHOD = "render" + "WithTooltipAndSubtitles";
+    @Unique // GuiGraphics -> Extractor is automatic, render -> extract is triggered below, argument change is explicitly specified
+    //~ render_extraction
+	private static final String FIX_CLICKTHROUGH_TARGET_REFERENCE = "Lnet/minecraft/client/gui/GuiGraphics;renderDeferredElements("/*? if >1.21.11 {*//*+ "IIF"*//*?}*/ + ")V"; // stonecutter: 26.1
+
+
     /**
      * Blocks switching focus between widget elements if the chat screen is open
      * and the button pressed was UP or DOWN
@@ -28,9 +36,9 @@ public abstract class ScreenMixin {
     }
 
     /*? if >=1.21.11 {*/
-    @WrapWithCondition(method = "renderWithTooltipAndSubtitles", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;renderDeferredElements()V"))
-    private boolean fixFuckassTooltipAndClickthrough(GuiGraphics instance, @Local(ordinal = 0, argsOnly = true) int mX, @Local(ordinal = 1, argsOnly = true) int mY) {
-        // should return false when mouse is over settings menu OR context menu
+    @WrapWithCondition(method = FIX_CLICKTHROUGH_TARGET_METHOD, at = @At(value = "INVOKE", target = FIX_CLICKTHROUGH_TARGET_REFERENCE))
+    private boolean fixFuckassTooltipAndClickthrough(/*? if 1.21.11 {*/GuiGraphics receiver,/*?}*/ GuiGraphics instance, int mX, int mY, float partialTick) {
+        //fixme: run on 1.21.11 to make sure sig change is fine (it should return false when mouse is over settings menu OR context menu)
         if(((Screen) (Object) this) instanceof ChatScreen chatScreen) {
             ChatScreenAccess access = (ChatScreenAccess) chatScreen;
             ContextMenu menu = access.getContextMenu();

@@ -247,10 +247,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		//$ push_stack
 		graphics.pose().pushMatrix();
 
-		// 1.21.6+ automatically renders everything z=0.1+ relative to the last element :D
 		//? if <1.21.6 {
-		/*graphics.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186)
-		*///?}
+		/*graphics.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186) - and 1.21.6+ kinda automatically does this
+		*/
+		//?}
 
 		if(showSearchBar && config.search) {
 			graphics.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_HEIGHT - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
@@ -259,7 +259,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				graphics.drawString(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(ChatFormatting.DARK_RED));
+				graphics./*? if >1.21.11 {*//*text*//*?} else {*/drawString/*?}*/(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(ChatFormatting.DARK_RED));
 			}
 		}
 
@@ -420,22 +420,26 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			value = "INVOKE",
 			target =
 				/*? if >=1.21.11 {*/
+				/*~ if >1.21.11 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/
 				"Lnet/minecraft/client/gui/components/ChatComponent;captureClickableText(Lnet/minecraft/client/gui/ActiveTextCollector;IIZ)V"
+				//~}
 				/*?} else {*/
 				/*"Lnet/minecraft/client/gui/screens/ChatScreen;getComponentStyleAt(DD)Lnet/minecraft/network/chat/Style;"*/
 				/*?}*/
 		)
 	)
 	/*? if >=1.21.11 {*/
-	private void fixStyleClickthrough(ChatComponent chat, ActiveTextCollector styleFinder, int h, int ticks, boolean focused, Operation<Void> captureClickableText, MouseButtonEvent mouse) {
+	private void fixStyleClickthrough(
+		ChatComponent chat,
+		ActiveTextCollector styleFinder, int h, int ticks, /*? if >1.21.11 {*//*ChatComponent.DisplayMode*//*?} else {*/boolean/*?}*/ focused,
+		Operation<Void> captureClickableText, MouseButtonEvent mouse, boolean doubleClick
+	) {
 		if(!isMouseOverSettingsMenu(mouse.x(), mouse.y()) && !contextMenu.isMouseOver(mouse.x(), mouse.y())) {
 			captureClickableText.call(chat, styleFinder, h, ticks, focused);
 		}
 	/*?} else {*/
 	/*private Style fixStyleClickthrough(ChatScreen screen, double mX, double mY, Operation<Style> getTextStyleAt) {
-		return (isMouseOverSettingsMenu(mX, mY) || contextMenu.isMouseOver(mX, mY))
-			? null
-			: getTextStyleAt.call(screen, mX, mY);*/
+		return (isMouseOverSettingsMenu(mX, mY) || contextMenu.isMouseOver(mX, mY)) ? null : getTextStyleAt.call(screen, mX, mY);*/
 	/*?}*/
 	}
 

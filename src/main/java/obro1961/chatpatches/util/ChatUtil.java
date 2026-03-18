@@ -10,6 +10,9 @@ import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ChatScreen;
+//? if >1.21.11 {
+//import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//?}
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.Util;
@@ -38,7 +41,7 @@ import static obro1961.chatpatches.util.TextUtil.withoutContent;
 
 public class ChatUtil {
 	public static final GameProfile NIL_SENDER = new GameProfile(Util.NIL_UUID, "");
-	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, EMPTY, null, null);
+	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, EMPTY, null, /*? if >1.21.11 {*//*GuiMessageSource.SYSTEM_CLIENT,*//*?}*/ null);
 	public static final MessageData NIL_MESSAGE_DATA = new MessageData(NIL_SENDER, Date.from(Instant.EPOCH), false);
 
 	/** Contains the timestamp (can be empty) */

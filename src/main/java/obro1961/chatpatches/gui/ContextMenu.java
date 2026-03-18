@@ -1,3 +1,5 @@
+//~ render_extraction
+
 package obro1961.chatpatches.gui;
 
 import com.google.common.collect.Iterables;
@@ -219,7 +221,9 @@ public class ContextMenu implements GuiEventListener {
 			return l;
 		});
 
+		//~ !render_extraction
 		this.messageSender = ChatUtil.extractMessageSender(selectedLine.content());
+		//~ render_extraction
 	}
 
 
@@ -271,16 +275,17 @@ public class ContextMenu implements GuiEventListener {
 				@Override
 				protected void /*? if >=1.21.11 {*/renderContents/*?} else {*//*renderWidget*//*?}*/(GuiGraphics graphics, int mX, int mY, float delta) {
 					/*? if >=1.21.11 {*/
-					renderDefaultSprite(graphics); // both lines pulled from Button.Plain
+					// both lines pulled from Button.Plain
+					renderDefaultSprite(graphics);
 					renderDefaultLabel(graphics.textRendererForWidget(this, GuiGraphics.HoveredTextEffects.NONE));
 					/*?} else {*/
 					/*super.renderWidget(graphics, mX, mY, delta);*/
 					/*?}*/
 
 					if(icon instanceof Item item) {
-						graphics.renderFakeItem(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
+						graphics./*? if >1.21.11 {*//*fakeItem*//*?} else {*/renderFakeItem/*?}*/(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
 					} else if(icon instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*ResourceLocation*//*?}*/ playerSkin) {
-						PlayerFaceRenderer.draw(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
+						/*? if >1.21.11 {*//*PlayerFaceExtractor.extractRenderState*//*?} else {*/PlayerFaceRenderer.draw/*?}*/(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 					}
 				}
 
@@ -579,7 +584,7 @@ public class ContextMenu implements GuiEventListener {
 		// cuts off any of the selection rect that goes past the chat hud
 		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
 		//? if !=1.21.10 {
-		graphics.renderOutline(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));
+		graphics./*? if >1.21.11 {*//*outline*//*?} else {*/renderOutline/*?}*/(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));
 		//?} else {
 		/*new GuiGraphics.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor)).render(graphics);*/
 		//?}
