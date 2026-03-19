@@ -95,7 +95,8 @@ public class ChatHeadsIntegration {
 	 * and <a href="https://github.com/mrbuilder1961/ChatPatches/issues/285">#285</a>.
 	 */
 	public static Optional<MutableComponent> extractHeadComponent(Component message) {
-		if(message.getContents() instanceof ObjectContents(PlayerSprite ignored)) {
+		// stonecutter: no idea what this forced statement below is but change to 26.1
+		if(message.getContents() instanceof ObjectContents(PlayerSprite ignored /*? if >1.21.11 {*//*, Optional<Component> fallback*//*?}*/)) {
 			return Optional.of((MutableComponent) message);
 		}
 

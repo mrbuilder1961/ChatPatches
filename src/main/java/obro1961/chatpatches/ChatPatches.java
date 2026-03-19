@@ -236,7 +236,7 @@ public class ChatPatches implements ClientModInitializer {
 		if(Minecraft.getInstance().level instanceof ClientLevel world) {
 			return world.registryAccess().createSerializationContext(ops);
 		} else {
-			logReportMsg(new NullPointerException("Expected existing or backup ClientLevel but none were present"));
+			logReportMsg(new NullPointerException("Expected existing ClientLevel but none were present"));
 		}
 		//?}
 		return /*? if >=1.20.5 {*/(RegistryOps<T>)/*?}*/ ops;

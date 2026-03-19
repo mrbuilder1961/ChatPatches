@@ -12,7 +12,7 @@
 - Optimized the dynamic shift calculator - it no longer runs every render tick!
 - Fixed the config not writing default values to disk
 - Error and info toasts are now pushed on the render thread ([#302](https://www.github.com/mrbuilder1961/ChatPatches/issues/302))
-- Updated to 26.1! Like always with recent Minecraft drops, a lot has been changed under the hood, so be on the lookout for bugs!
+- Updated to 26.1! Like always with recent Minecraft drops, A LOT has changed under the hood, so be on the lookout for bugs!
 
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
 - Updated to 1.21.11 (blame Mojang for the long wait - they redesigned the chat again 🤬) ([#293](https://www.github.com/mrbuilder1961/ChatPatches/issues/293))

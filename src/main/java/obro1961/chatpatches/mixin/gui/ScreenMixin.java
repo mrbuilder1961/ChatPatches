@@ -37,15 +37,14 @@ public abstract class ScreenMixin {
 
     /*? if >=1.21.11 {*/
     @WrapWithCondition(method = FIX_CLICKTHROUGH_TARGET_METHOD, at = @At(value = "INVOKE", target = FIX_CLICKTHROUGH_TARGET_REFERENCE))
-    private boolean fixFuckassTooltipAndClickthrough(/*? if 1.21.11 {*/GuiGraphics receiver,/*?}*/ GuiGraphics instance, int mX, int mY, float partialTick) {
-        //fixme: run on 1.21.11 to make sure sig change is fine (it should return false when mouse is over settings menu OR context menu)
+    private boolean fixFuckassTooltipAndClickthrough(/*? if 1.21.11 {*/GuiGraphics receiver,/*?}*/ GuiGraphics graphics, int mX, int mY, float partialTick) {
         if(((Screen) (Object) this) instanceof ChatScreen chatScreen) {
             ChatScreenAccess access = (ChatScreenAccess) chatScreen;
             ContextMenu menu = access.getContextMenu();
 
             boolean mouseOverMenu = access.isMouseOverSettingsMenu(mX, mY) || menu.isMouseOver(mX, mY);
-            if(mouseOverMenu && instance.deferredTooltip != null) {
-                instance.hoveredTextStyle = null; // delete the source of the chat tooltip (menu button tooltips are only deferred, as experimentally determined)
+            if(mouseOverMenu && graphics.deferredTooltip != null) {
+                graphics.hoveredTextStyle = null; // delete the source of the chat tooltip (menu button tooltips are only deferred, as experimentally determined)
                 return true; // approve rendering (now just the deferred tooltip)
             } else {
                 // otherwise just prevent hovering through the menus
