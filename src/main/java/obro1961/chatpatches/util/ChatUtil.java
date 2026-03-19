@@ -13,8 +13,10 @@ import net.minecraft.client.gui.screens.ChatScreen;
 //? if >1.21.11 {
 //import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 //?}
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
@@ -198,10 +200,22 @@ public class ChatUtil {
 		return (int)(visibleIndex - visibles.subList(0, visibleIndex).stream().filter(Predicate.not(GuiMessage.Line::endOfEntry)).count());
 	}
 
-	/** @see #deleteMessage(int) */
+	/**
+	 * @see #deleteMessage(int, boolean)
+	 * @see #deleteMessage(GuiMessage)
+	 */
+	@SuppressWarnings("UnusedReturnValue") // follows the List convention
+	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessageSilently(GuiMessage message) {
+		return deleteMessage(mc().gui.getChat().allMessages.indexOf(message), false);
+	}
+
+	/**
+	 * @see #deleteMessage(int, boolean)
+	 * @see #deleteMessageSilently(GuiMessage)
+	 */
 	@SuppressWarnings("UnusedReturnValue") // follows the List convention
 	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(GuiMessage message) {
-		return deleteMessage(mc().gui.getChat().allMessages.indexOf(message));
+		return deleteMessage(mc().gui.getChat().allMessages.indexOf(message), true);
 	}
 
 	/**
@@ -210,18 +224,20 @@ public class ChatUtil {
 	 * are altered but the actual messages remain intact), but note the message is
 	 * still permanently deleted and will not reappear when the query is changed.
 	 *
-	 * @return A {@link Pair} containing the {@linkplain GuiMessage message} removed
-	 * along with the associated {@linkplain GuiMessage.Line visible messages}.
-	 *
 	 * @param messageIndex The {@link ChatComponent#allMessages} index of the message
 	 * to be removed.
+	 * @param playBurnSound Whether to play {@link SoundEvents#LAVA_EXTINGUISH} when a
+	 * message is deleted. Will not play if the message fails to/cannot be deleted.
+	 *
+	 * @return A {@link Pair} containing the {@linkplain GuiMessage message} removed
+	 * along with the associated {@linkplain GuiMessage.Line visible messages}.
 	 *
 	 * @throws ArrayIndexOutOfBoundsException If the message index provided is negative
 	 * or larger than the amount of messages present in {@link ChatComponent#allMessages}.
 	 * Will also throw this error if visible message equivalents cannot be found for this
 	 * message; however, this should never happen.
 	 */
-	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(int messageIndex) {
+	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(int messageIndex, boolean playBurnSound) { // todo see Config#sendBoundaryLine()
 		ChatComponent chat = mc().gui.getChat();
 		List<GuiMessage> messages = chat.allMessages;
 		List<GuiMessage.Line> visibles = chat.trimmedMessages;
@@ -245,6 +261,10 @@ public class ChatUtil {
 
 		do deletedVisibles.add(visibles.remove(v)); // remove the visible message(s) of the message being deleted, starting with its own EoE
 		while(v < visibles.size() && !visibles.get(v).endOfEntry()); // continue removing them until the next message (EoE) is reached
+
+		if(playBurnSound) {
+			mc().getSoundManager().playDelayed(SimpleSoundInstance.forUI(SoundEvents.LAVA_EXTINGUISH, 1.0f), 5);
+		}
 
 		LOGGER.debug("Deleted '{}' at index {} with {} visible(s)", deleted.content().getString(), messageIndex, deletedVisibles.size());
 		return ObjectObjectMutablePair.of(deleted, deletedVisibles);

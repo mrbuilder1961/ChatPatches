@@ -1,18 +1,19 @@
 # Changelog
 
 ## Chat Patches `8.0-alpha.8` for Minecraft 1.20.1–26.1 on Fabric, Quilt
+- Updated to 26.1! Like always with recent Minecraft drops, A LOT has changed under the hood, so be on the lookout for bugs!
 - Requires Fabric Loader 0.18.0+ going forward
 - Added *another* Band-Aid patch for [#252](https://www.github.com/mrbuilder1961/ChatPatches/issues/252), again thanks to [SkyNotTheLimit](https://discord.com/channels/507304429255393322/1452165613756879044/1452516265330475085)!
 - Added the Delete button to the context menu! When clicked it displays a warning forcing you to confirm or cancel the operation, because message deletion 
-  cannot be undone
+  cannot be undone. The burn item sound will play when a message is successfully deleted as an extra indicator something happened. **To be clear this is 
+  purely client side**, _nothing is actually deleted_ from the server chat
 - Fixed non-vanilla messages formatted like vanilla ones having an extra space between the name and message ([#233](https://www.github.com/mrbuilder1961/ChatPatches/issues/233))
 - Mostly fixed Chat Heads' `BEFORE_NAME` setting not working with Chat Patches on 1.21.9+, thanks mostly to
   [Fourmisain](https://github.com/Fourmisain)! ([#285](https://www.github.com/mrbuilder1961/ChatPatches/issues/285) and [#297](https://www.github.com/mrbuilder1961/ChatPatches/issues/297))
 - Fixed a 1.21.10 crash from right-clicking to open the context menu ([#298](https://www.github.com/mrbuilder1961/ChatPatches/issues/298))
-- Optimized the dynamic shift calculator - it no longer runs every render tick!
-- Fixed the config not writing default values to disk
 - Error and info toasts are now pushed on the render thread ([#302](https://www.github.com/mrbuilder1961/ChatPatches/issues/302))
-- Updated to 26.1! Like always with recent Minecraft drops, A LOT has changed under the hood, so be on the lookout for bugs!
+- Fixed the config not writing default values to disk
+- Optimized the dynamic shift calculator - it no longer runs every render tick!
 
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
 - Updated to 1.21.11 (blame Mojang for the long wait - they redesigned the chat again 🤬) ([#293](https://www.github.com/mrbuilder1961/ChatPatches/issues/293))

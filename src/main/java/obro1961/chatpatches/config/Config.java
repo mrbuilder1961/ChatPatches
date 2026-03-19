@@ -282,7 +282,7 @@ public class Config {
 
 		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
 		Component lastMessage = messages.getFirst().content();
-		boolean lastWasBoundary = Boundary.isBoundaryLine(lastMessage);
+		boolean lastWasBoundary = Boundary.isBoundaryLine(lastMessage); // prepub this should probably maybe check chatlog's most recent message. i think that's why boundaries can send back to back
 
 		try {
 			// if the last message received was a different boundary line, we can delete it - no messages were sent
