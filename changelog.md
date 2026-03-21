@@ -9,11 +9,14 @@
   purely client side**, _nothing is actually deleted_ from the server chat
 - Fixed non-vanilla messages formatted like vanilla ones having an extra space between the name and message ([#233](https://www.github.com/mrbuilder1961/ChatPatches/issues/233))
 - Mostly fixed Chat Heads' `BEFORE_NAME` setting not working with Chat Patches on 1.21.9+, thanks mostly to
-  [Fourmisain](https://github.com/Fourmisain)! ([#285](https://www.github.com/mrbuilder1961/ChatPatches/issues/285) and [#297](https://www.github.com/mrbuilder1961/ChatPatches/issues/297))
+  [Fourmisain](https://github.com/Fourmisain)! ([#285](https://www.github.com/mrbuilder1961/ChatPatches/issues/285) + [#297](https://www.github.com/mrbuilder1961/ChatPatches/issues/297), and likely [#233](https://www.github.com/mrbuilder1961/ChatPatches/issues/233) too!)
 - Fixed a 1.21.10 crash from right-clicking to open the context menu ([#298](https://www.github.com/mrbuilder1961/ChatPatches/issues/298))
 - Error and info toasts are now pushed on the render thread ([#302](https://www.github.com/mrbuilder1961/ChatPatches/issues/302))
 - Fixed the config not writing default values to disk
 - Optimized the dynamic shift calculator - it no longer runs every render tick!
+- Once I get started on the compatibility with Neoforge (which should be soon!) I'll bump these releases to beta
+- Also, subtle heads up that some versions that have long been old will lose long-term support soon. I'll post about this in that first release w/o those 
+  versions and on the Discord, so make sure to join for more info and to make your voice heard!
 
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
 - Updated to 1.21.11 (blame Mojang for the long wait - they redesigned the chat again 🤬) ([#293](https://www.github.com/mrbuilder1961/ChatPatches/issues/293))
