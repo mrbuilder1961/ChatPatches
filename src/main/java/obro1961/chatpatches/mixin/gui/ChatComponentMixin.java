@@ -182,9 +182,11 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      *
      * @see Config#calcDynamicChatShift()
      */
-    @ModifyVariable(//stonecutter: 26.1
+    @ModifyVariable(
+        //stonecutter: 26.1
 		method = "render" /*? if >=1.21.11 {*/ +
-            /*~ if >1.21.11 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/"(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"/*~}*//*?}*/,
+            /*~ if >1.21.11 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/"(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"/*~}*/
+        /*?}*/,
 		at = @At("STORE"), // targets ALL store insns for this variable
 		ordinal = /*? if >=1.21.11 {*/ 4 /*?} else {*//* 7 *//*?}*/,
         name = "m"

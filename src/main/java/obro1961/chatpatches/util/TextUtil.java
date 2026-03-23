@@ -6,6 +6,9 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.ChatFormatting;
 import net.minecraft.util.Util;
 import net.minecraft.network.chat.*;
@@ -15,9 +18,11 @@ import net.minecraft.network.chat.contents.PlainTextContents;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -178,6 +183,38 @@ public class TextUtil {
 		return Component.literal(s);
 	}
 
+
+	/**
+	 * @return {@code true} if `a` and `b` are virtually equal; that is, a
+	 * styled color visitor produces the same sequence for both components.
+	 * This is intended to compare the string and style data together, although
+	 * this is a convoluted task that will always have edge cases and frustrating
+	 * edge cases.
+	 *
+	 * todo note unsolveables here.
+	 */
+	public static <T> boolean virtuallyEqual(Component a, Component b) {
+		// this is presumed true due to where this is called in tryCondenseDupes
+		/*if(!a.getString().equals(b.getString())) {
+			return false; // obviously the strings themselves need to be the same (caseinsensitive tho..?)
+		}*/
+
+		Function<List<it.unimi.dsi.fastutil.Pair<String, Style>>, FormattedText.StyledContentConsumer<T>> visitMaker = list -> ((style, contents) -> {
+			list.add(new ObjectObjectImmutablePair<>(
+				contents.toLowerCase(Locale.ROOT),
+				// forcibly clears any invisible style data - otherwise this will always fail due to the differing insertions from the timestamp
+				style.withClickEvent(null).withHoverEvent(null).withInsertion(null)
+			));
+			return Optional.empty();
+		});
+
+		ObjectList<it.unimi.dsi.fastutil.Pair<String, Style>> aColors = new ObjectArrayList<>(), bColors = new ObjectArrayList<>();
+		a.visit(visitMaker.apply(aColors), Style.EMPTY);
+		b.visit(visitMaker.apply(bColors), Style.EMPTY);
+
+		return aColors.equals(bColors);
+	}
+
 	/**
 	 * Converts a {@link Component} into a {@link String} with {@code &<?>} codes.
 	 * Strips any complex style data, including hover events, fonts, insertions,
@@ -215,7 +252,6 @@ public class TextUtil {
 		return DUPLICATE_COLOR_AMPERSAND_REGEX.reset(builder.toString()).replaceAll("$1&$2");
 	}
 
-	// so new warning: string -> Component [works] , Component -> string [not supported].. back to the drawing (white) board..
 	/**
 	 * Returns the formatting codes of the {@link Style} provided, excluding any already
 	 * applied ones according to {@code last}. Returns an empty string if the style is

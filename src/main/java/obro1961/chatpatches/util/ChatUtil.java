@@ -115,8 +115,7 @@ public class ChatUtil {
 	 * @see <a href="https://regex101.com/r/LGbGU9/latest">Vanilla Message Format</a>
 	 */
 	public static final Matcher VANILLA_FORMAT = Pattern.compile("^((-> )?\\[[^<]+] )?<[^>]*(\\w{1,16})[^>]*>\\s.+$").matcher("");
-	// ^ FIXME: edit and test this regex thoroughly (do both -fixes need the no >
-	//          charclass? particularly the last?)
+	// ^ test this regex thoroughly (do both -fixes need the no > charclass? particularly the last?)
 	/**
 	 * The vanilla message format used by {@link #modifyMessage(Component)}
 	 * and related methods. Depends on {@linkplain ChatHeadsIntegration#isActive()
@@ -248,7 +247,7 @@ public class ChatUtil {
 			throw new IndexOutOfBoundsException(messageIndex);
 		}
 
-		var deleted = messages.remove(messageIndex);
+		var deleted = messages.remove(messageIndex); // TODO: delete from chat log too - otherwise it'll come back on relog
 		var deletedVisibles = new ObjectArrayList<GuiMessage.Line>();
 
 		// this call works fine here or before the message is removed bc it only accesses visible messages, not the actual ones
@@ -647,7 +646,7 @@ public class ChatUtil {
 			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) ) {
 				// if the incoming message is different from the iterated message, don't try to condense it
 				continue;
-			} else if( config.counterCheckStyle && !withoutContent(incoming).equals(withoutContent(msg)) ) {
+			} else if( config.counterCheckStyle && !TextUtil.virtuallyEqual(getPart(incoming, MESSAGE_INDEX), getPart(msg, MESSAGE_INDEX)) ) {
 				// if the incoming message has different metadata from the iterated message, skip it
 				continue; //FIXME: THIS DOES NOT WORK AT ALL - calling a style compiler method again aka getFormattingcodes! RUGGHGHSDKFJH
 			}

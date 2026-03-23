@@ -71,8 +71,7 @@ public class ChatLog {
 			.codec()
 	);
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
-	// prepub can't use an AW. i can use this lib Fabric-ASM but the docs are INSANE (derogatory), so last resort is reflection i think? idfk
-    public static final GuiMessageTag RESTORED_INDICATOR = new GuiMessageTag(0x382FB5, null, Component.translatable("text.chatpatches.restored"), "Restored");
+    public static final GuiMessageTag RESTORED_INDICATOR = new GuiMessageTag(0x382FB5, /*not realistically doable rn*/ null, Component.translatable("text.chatpatches.restored"), "Restored");
 
     private static final int DEFAULT_SIZE = 100;
 	private static final int IO_THRESHOLD_SUGGESTION = 1000;
@@ -290,8 +289,7 @@ public class ChatLog {
 				JsonElement json = result.result().orElse(null);
 				String data = GsonHelper.toStableString(json);
 				Path path = PATH;
-//prepub: if possible, find erroring message and flatten it to a string literal with section signs but give it a message indicator of modified w the message "caused an error during serialization" - requires
-// custom text impl for that though, to store the message indicator
+
 				if(json == null) {
 					// noinspection Convert2MethodRef: makes stonecutter life easier
 					var err = result.error().map(e -> e.message()).orElse(ChatFormatting.RED + "Unknown cause");
