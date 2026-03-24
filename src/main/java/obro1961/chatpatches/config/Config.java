@@ -36,8 +36,8 @@ import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 //? if >=1.21.9 {
 import obro1961.chatpatches.integration.ChatHeadsIntegration;
-import obro1961.chatpatches.util.ChatUtil;
 //?}
+import obro1961.chatpatches.util.ChatUtil;
 //? if <=1.20.1 {
 //import obro1961.chatpatches.util.VersionUtil;
 //?}
