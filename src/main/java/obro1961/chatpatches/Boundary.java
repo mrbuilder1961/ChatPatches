@@ -7,8 +7,6 @@ import net.minecraft.network.chat.MutableComponent;
 import obro1961.chatpatches.util.ChatUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * Represents the boundary line between chat messages from different levels,
  * whether client or server worlds. Note that this record does not store the

@@ -182,7 +182,6 @@ tasks {
 
     processResources {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        outputs.upToDateWhen { false } // from Bawnorton/Trimica: works around modstitch mixin cache issue
 
         val changelogFile: File = rootDir.toPath().resolve("changelog.md").toFile()
         if(changelogFile.exists()) {

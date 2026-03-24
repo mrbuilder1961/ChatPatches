@@ -34,7 +34,7 @@ type = "required"
 [[dependencies."${mod_id}"]]
 modId = "modmenu"
 type = "optional"
-#versionRange = "[10.0.0,)" # TODO First version to bundle Placeholder API
+#versionRange = "[10.0.0,)"
 
 [[dependencies."${mod_id}"]]
 modId = "catalogue"

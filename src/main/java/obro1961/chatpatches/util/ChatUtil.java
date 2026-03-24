@@ -283,6 +283,7 @@ public class ChatUtil {
 	 * @see #MESSAGE_INDEX
 	 * @see #DUPE_INDEX
 	 */
+	@NotNull
 	public static Component getPart(Component message, int index) {
 		return message.getSiblings().size() > index ? message.getSiblings().get(index) : EMPTY;
 	}

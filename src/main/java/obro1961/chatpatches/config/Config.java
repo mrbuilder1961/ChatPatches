@@ -278,7 +278,7 @@ public class Config {
         List<GuiMessage> messages = chat.allMessages;
 		Boundary currentLevel = Boundary.createFromCurrentLevel();
 
-		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return; // prepub: if we still want to impl that per-world history using boundary lines, we'll need to remove this isEmpty -> return condition
+		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return; // idea: if we still want to impl that per-world history using boundary lines, we'll need to remove this isEmpty -> return condition
 
 		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
 		Component lastMessage = messages.getFirst().content();
@@ -299,7 +299,7 @@ public class Config {
 			}
 
 			lastBoundary = currentLevel;
-			chat./*? if <=1.21.11 {*/addMessage/*?} else {*//*addClientSystemMessage*//*?}*/(boundaryLine);
+			chat./*? if >1.21.11 {*//*addClientSystemMessage*//*?} else {*/addMessage/*?}*/(boundaryLine);
 
 		} catch(RuntimeException e) {
 			LOGGER.warn("An error occurred while sending the boundary line:", e);
