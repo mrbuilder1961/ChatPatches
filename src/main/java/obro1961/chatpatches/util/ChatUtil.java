@@ -5,7 +5,7 @@ import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectMutablePair;
+import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
@@ -39,12 +39,12 @@ import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static obro1961.chatpatches.ChatPatches.*;
-import static obro1961.chatpatches.util.TextUtil.withoutContent;
 
 public class ChatUtil {
 	public static final GameProfile NIL_SENDER = new GameProfile(Util.NIL_UUID, "");
 	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, EMPTY, null, /*? if >1.21.11 {*//*GuiMessageSource.SYSTEM_CLIENT,*//*?}*/ null);
 	public static final MessageData NIL_MESSAGE_DATA = new MessageData(NIL_SENDER, Date.from(Instant.EPOCH), false);
+	public static final Pair<GuiMessage, List<GuiMessage.Line>> NIL_MESSAGE_PAIR = new ObjectObjectImmutablePair<>(NIL_HUD_LINE, List.of());
 
 	/** Contains the timestamp (can be empty) */
 	public static final int TIMESTAMP_INDEX = 0;
@@ -218,10 +218,11 @@ public class ChatUtil {
 	}
 
 	/**
-	 * Deletes the message at the given index, which includes the actual message and
-	 * all associated visible messages. Can be used while searching (visible messages
-	 * are altered but the actual messages remain intact), but note the message is
-	 * still permanently deleted and will not reappear when the query is changed.
+	 * Deletes the message at the given index, which includes the actual message, its
+	 * associated visible messages, and its copy in the chat log. Can be used while
+	 * searching (visible messages are altered but the actual messages remain intact),
+	 * but note the message is still permanently deleted and will not reappear when
+	 * the query is changed.
 	 *
 	 * @param messageIndex The {@link ChatComponent#allMessages} index of the message
 	 * to be removed.
@@ -231,10 +232,11 @@ public class ChatUtil {
 	 * @return A {@link Pair} containing the {@linkplain GuiMessage message} removed
 	 * along with the associated {@linkplain GuiMessage.Line visible messages}.
 	 *
-	 * @throws ArrayIndexOutOfBoundsException If the message index provided is negative
-	 * or larger than the amount of messages present in {@link ChatComponent#allMessages}.
-	 * Will also throw this error if visible message equivalents cannot be found for this
-	 * message; however, this should never happen.
+	 * @throws ArrayIndexOutOfBoundsException If the message index provided is
+	 * negative or larger than the amount of messages present in {@link
+	 * ChatComponent#allMessages}. Will also throw this error if visible message
+	 * equivalents cannot be found for this message; however, this should never
+	 * happen.
 	 */
 	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(int messageIndex, boolean playBurnSound) { // todo see Config#sendBoundaryLine()
 		ChatComponent chat = mc().gui.getChat();
@@ -243,30 +245,33 @@ public class ChatUtil {
 		// messages shown when searching don't have any issues (at least in terms of GuiMessage) because the index passed is based in #allMessages - perfect!
 
 		if(messageIndex < 0 || messageIndex >= messages.size()) {
-			// prepub: just logReportMsg an error? idk if throwing errors is the best idea
-			throw new IndexOutOfBoundsException(messageIndex);
+			logReportMsg(new IndexOutOfBoundsException(messageIndex));
+			return NIL_MESSAGE_PAIR;
 		}
 
-		var deleted = messages.remove(messageIndex); // TODO: delete from chat log too - otherwise it'll come back on relog
+		var deleted = messages.remove(messageIndex);
 		var deletedVisibles = new ObjectArrayList<GuiMessage.Line>();
+		ChatLog.removeMessage(deleted.content());
 
 		// this call works fine here or before the message is removed bc it only accesses visible messages, not the actual ones
 		int v = message2Visible(messageIndex); // returns the EoE visible message corresponding to messageIndex
 
 		if(v < 0 || v >= visibles.size()) {
-			// prepub: just logReportMsg an error? idk if throwing errors is the best idea
-			throw new IndexOutOfBoundsException(messageIndex); // should never happen because all messages should have a visible - this method is only called thru the helper of the same name
+			// should never happen because all messages should have a visible - this method is only called thru the helper of the same name
+			logReportMsg(new IndexOutOfBoundsException(messageIndex));
+			return NIL_MESSAGE_PAIR;
 		}
 
 		do deletedVisibles.add(visibles.remove(v)); // remove the visible message(s) of the message being deleted, starting with its own EoE
 		while(v < visibles.size() && !visibles.get(v).endOfEntry()); // continue removing them until the next message (EoE) is reached
 
+		LOGGER.debug("Deleted '{}' at index {} with {} visible(s)", deleted.content().getString(), messageIndex, deletedVisibles.size());
+
 		if(playBurnSound) {
 			mc().getSoundManager().playDelayed(SimpleSoundInstance.forUI(SoundEvents.LAVA_EXTINGUISH, 1.0f), 5);
 		}
 
-		LOGGER.debug("Deleted '{}' at index {} with {} visible(s)", deleted.content().getString(), messageIndex, deletedVisibles.size());
-		return ObjectObjectMutablePair.of(deleted, deletedVisibles);
+		return ObjectObjectImmutablePair.of(deleted, deletedVisibles); // i think these are usually immutable but idrk if it's bad to make mutable later
 	}
 
 	/**
@@ -649,7 +654,7 @@ public class ChatUtil {
 				continue;
 			} else if( config.counterCheckStyle && !TextUtil.virtuallyEqual(getPart(incoming, MESSAGE_INDEX), getPart(msg, MESSAGE_INDEX)) ) {
 				// if the incoming message has different metadata from the iterated message, skip it
-				continue; //FIXME: THIS DOES NOT WORK AT ALL - calling a style compiler method again aka getFormattingcodes! RUGGHGHSDKFJH
+				continue;
 			}
 
 			// remove all number formatting codes and non-digits, then replace empty strings with 1 to prevent NumberFormatExceptions

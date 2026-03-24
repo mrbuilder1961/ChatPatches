@@ -36,6 +36,7 @@ import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 //? if >=1.21.9 {
 import obro1961.chatpatches.integration.ChatHeadsIntegration;
+import obro1961.chatpatches.util.ChatUtil;
 //?}
 //? if <=1.20.1 {
 //import obro1961.chatpatches.util.VersionUtil;
@@ -281,21 +282,13 @@ public class Config {
 		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return; // idea: if we still want to impl that per-world history using boundary lines, we'll need to remove this isEmpty -> return condition
 
 		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
-		Component lastMessage = messages.getFirst().content();
-		boolean lastWasBoundary = Boundary.isBoundaryLine(lastMessage); // prepub this should probably maybe check chatlog's most recent message. i think that's why boundaries can send back to back
 
+		// prepub if they're still sending back to back - maybe check chatlog's most recent message
 		try {
-			// if the last message received was a different boundary line, we can delete it - no messages were sent
-			if(lastWasBoundary && !lastMessage.getString().equals(boundaryLine.getString())) {
-				// todo: delete message method - call here! should delete both real and visible message(s), and update search results however possible (if extra needs to be done)
-				messages.removeFirst(); // deletes the useless boundary line
-
-				var visibles = chat.trimmedMessages;
-				// removes all associated visible messages (99% of the time this should run once)
-				do visibles.removeFirst();
-				while(!visibles.isEmpty() && !visibles.getFirst().endOfEntry());
-			} else if(lastWasBoundary) {
-				return; // if the last message received was the same boundary line we want to send, it's already there
+			// if the last (most recent) message received was a boundary line...
+			if(Boundary.isBoundaryLine(messages.getFirst().content())) {
+				// we always want to delete the last message, even if it's the same, so we can ensure the timestamp is up-to-date
+				ChatUtil.deleteMessage(0, false);
 			}
 
 			lastBoundary = currentLevel;

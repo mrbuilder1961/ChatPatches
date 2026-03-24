@@ -17,6 +17,7 @@
 - Once I get started on the compatibility with Neoforge (which should be soon!) I'll bump these releases to beta
 - Also, subtle heads up that some versions that have long been old will lose long-term support soon. I'll post about this in that first release w/o those 
   versions and on the Discord, so make sure to join for more info and to make your voice heard!
+- Fixed the boundary line not condensing when there are multiple back-to-back
 
 ## Chat Patches `8.0-alpha.7` for Minecraft 1.20.1–1.21.11 on Fabric, Quilt
 - Updated to 1.21.11 (blame Mojang for the long wait - they redesigned the chat again 🤬) ([#293](https://www.github.com/mrbuilder1961/ChatPatches/issues/293))

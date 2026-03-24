@@ -126,6 +126,31 @@ public class ChatLog {
         history.add(sentMessage);
     }
 
+	public static void removeMessage(Component message) {
+		boolean changed = true;
+		try {
+			changed = messages.remove(message);
+		} catch(IndexOutOfBoundsException e) {
+			logReportMsg(e);
+		}
+
+		if(!changed) {
+			LOGGER.warn("Couldn't find message '{}' to remove", message.getString());
+		}
+	}
+	/*public static void removeHistory(String sentHistory) {
+		boolean changed = true;
+		try {
+			changed = history.remove(sentHistory);
+		} catch(IndexOutOfBoundsException e) {
+			logReportMsg(e);
+		}
+
+		if(!changed) {
+			LOGGER.warn("Couldn't find sent message '{}' to remove", sentHistory);
+		}
+	}*/ // commented out bc currently unused but here for continuity
+
     public static void clearMessages() { messages.clear(); }
     public static void clearHistory() { history.clear(); }
 

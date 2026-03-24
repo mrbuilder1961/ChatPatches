@@ -5,6 +5,7 @@ import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import obro1961.chatpatches.util.ChatUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,34 +42,38 @@ public record Boundary(String levelName, @NotNull Side side) {
 	 * @apiNote Will not work with old boundary lines.
 	 */
 	public static boolean isBoundaryLine(Component message) {
-		String insertion = Objects.requireNonNullElse(
-			ChatUtil.getPart(message, ChatUtil.MESSAGE_INDEX), // first checks the message component of the whole message
-			message // alternatively checks the root style, although this will probably never work
-		).getStyle().getInsertion();
-
-		return insertion != null && insertion.startsWith(ID_STRING);
+		return !fromMessage(message).equals(UNKNOWN);
 	}
 
-	// need to copy the world name from boundary lines? this isn't finished but could do just that!
-	/*public static Boundary fromInsertion(String insertion) {
+	public static Boundary fromMessage(Component message) {
+		String insertion = ChatUtil.getPart(message, ChatUtil.MESSAGE_INDEX).getStyle().getInsertion();
+		if(insertion != null) {
+			return fromInsertion(insertion);
+		}
+
+		return UNKNOWN;
+	}
+
+	// might be a little volatile! keep an eye on this guy
+	public static Boundary fromInsertion(String insertion) {
 		if(!insertion.startsWith(ID_STRING)) {
 			return UNKNOWN; // not a boundary line
 		}
 
 		// Example insertion: chatpatches:boundary_line[level=MyWorld,side=CLIENT]
-		int levelI = insertion.indexOf("[level="); //0
-		int sideI = insertion.indexOf(",side="); //14
-		int end = insertion.indexOf(']'); //26
+		String opener = "[level=";
+		String separator = ",side=";
+		String closer = "]";
 
-		if(levelI == -1 || end == -1 || end <= levelI) {
+		if(!insertion.contains(opener) || !insertion.contains(separator) || !insertion.endsWith(closer)) {
 			return UNKNOWN; // invalid format
 		}
 
-		String levelName = insertion.substring(levelI, sideI);//StringUtils.substringBetween(insertion, "level=", ",side=");
-		Side side = Side.valueOf(insertion.substring(sideI, end)*//*StringUtils.substringBetween(insertion, "side=", "]")*//*);
+		var levelName = StringUtils.substringBetween(insertion, opener, separator);
+		var side = Side.valueOf(StringUtils.substringBetween(insertion, separator, closer));
 
 		return new Boundary(levelName, side);
-	}*/
+	}
 
 	@Override
 	public @NotNull String toString() {
