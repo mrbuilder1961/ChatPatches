@@ -30,7 +30,7 @@ accessible method net/minecraft/client/gui/components/ChatComponent getHeight ()
 accessible method net/minecraft/client/gui/components/ChatComponent getScale ()D
 #?}
 
-#? if >1.21.11 {
+#? if >=26.1 {
 accessible method net/minecraft/client/gui/components/ChatComponent addMessage (Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V
 #?}
 
@@ -42,13 +42,13 @@ accessible field net/minecraft/client/gui/screens/ChatScreen input Lnet/minecraf
 
 ## GuiGraphics / GuiGraphicsExtractor - ScreenMixin
 
-#? if >1.21.11 {
+#? if >=26.1 {
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor deferredTooltip Ljava/lang/Runnable;
 #?} elif >=1.21.6 {
 accessible field net/minecraft/client/gui/GuiGraphics deferredTooltip Ljava/lang/Runnable;
 #?}
 ## stonecutter: once i figure out how to version this, condense the pairs above and below this comment
-#? if >1.21.11 {
+#? if >=26.1 {
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor hoveredTextStyle Lnet/minecraft/network/chat/Style;
 #?} elif 1.21.11 {
 accessible field net/minecraft/client/gui/GuiGraphics hoveredTextStyle Lnet/minecraft/network/chat/Style;

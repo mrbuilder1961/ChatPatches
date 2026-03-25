@@ -12,9 +12,9 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.util.Util;
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -153,13 +153,13 @@ public class ContextMenu implements GuiEventListener {
 	/**
 	 * The index of the visible message in {@link ChatComponent#trimmedMessages}
 	 * that is also {@linkplain GuiMessage.Line#endOfEntry EoE}. Used
-	 * for simplifying and optimizing {@link #renderSelectionOutline(GuiGraphics)}
+	 * for simplifying and optimizing {@link #extractSelectionOutline(GuiGraphicsExtractor)}
 	 * and for calculating {@link #visibleLines}.
 	 */
 	private final int visibleMessageIndex;
 	/**
 	 * The number of visible lines in the selected message. Used for
-	 * simplifying and optimizing {@link #renderSelectionOutline(GuiGraphics)}.
+	 * simplifying and optimizing {@link #extractSelectionOutline(GuiGraphicsExtractor)}.
 	 */
 	private final int visibleLines;
 
@@ -273,19 +273,19 @@ public class ContextMenu implements GuiEventListener {
 				@Override public void onPress(/*? if >=1.21.9 {*/InputWithModifiers i/*?}*/) { src.onPress(/*? if >=1.21.9 {*/i/*?}*/); }
 
 				@Override
-				protected void /*? if >=1.21.11 {*/renderContents/*?} else {*//*renderWidget*//*?}*/(GuiGraphics graphics, int mX, int mY, float delta) {
+				protected void /*? if >=1.21.11 {*/extractContents/*?} else {*//*extractWidget*//*?}*/(GuiGraphicsExtractor graphics, int mX, int mY, float delta) {
 					/*? if >=1.21.11 {*/
 					// both lines pulled from Button.Plain
-					renderDefaultSprite(graphics);
-					renderDefaultLabel(graphics.textRendererForWidget(this, GuiGraphics.HoveredTextEffects.NONE));
+					extractDefaultSprite(graphics);
+					extractDefaultLabel(graphics.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.NONE));
 					/*?} else {*/
 					/*super.renderWidget(graphics, mX, mY, delta);*/
 					/*?}*/
 
 					if(icon instanceof Item item) {
-						graphics./*? if >1.21.11 {*//*fakeItem*//*?} else {*/renderFakeItem/*?}*/(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
+						graphics./*? if >=26.1 {*/fakeItem/*?} else {*//*renderFakeItem*//*?}*/(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
 					} else if(icon instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*ResourceLocation*//*?}*/ playerSkin) {
-						/*? if >1.21.11 {*//*PlayerFaceExtractor.extractRenderState*//*?} else {*/PlayerFaceRenderer.draw/*?}*/(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
+						/*? if >=26.1 {*/PlayerFaceExtractor.extractRenderState/*?} else {*//*PlayerFaceRenderer.draw*//*?}*/(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 					}
 				}
 
@@ -539,25 +539,25 @@ public class ContextMenu implements GuiEventListener {
 	 * {@link #clickPos} and highlights its selected message
 	 * in chat.
 	 *
-	 * @see #renderSelectionOutline(GuiGraphics)
-	 * @see #renderMenuButtons(GuiGraphics, int, int, float)
+	 * @see #extractSelectionOutline(GuiGraphicsExtractor)
+	 * @see #extractMenuButtons(GuiGraphicsExtractor, int, int, float)
 	 *
-	 * @see ChatScreenMixin#renderCustomWidgets(GuiGraphics, int, int, float, CallbackInfo)
+	 * @see ChatScreenMixin#renderCustomWidgets(GuiGraphicsExtractor, int, int, float, CallbackInfo)
 	 */
-	public void render(GuiGraphics graphics, int mX, int mY, float delta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mX, int mY, float delta) {
 		if(noOp) {
 			return;
 		}
 
-		renderSelectionOutline(graphics/*, mX, mY, delta*/);
-		renderMenuButtons(graphics, mX, mY, delta);
+		extractSelectionOutline(graphics/*, mX, mY, delta*/);
+		extractMenuButtons(graphics, mX, mY, delta);
 	}
 
 	/**
 	 * Renders a selection outline around the hovered message lines
 	 * in the chat, to indicate which message will be copied.
 	 */
-	private void renderSelectionOutline(GuiGraphics graphics/*, int mX, int mY, float delta*/) {
+	private void extractSelectionOutline(GuiGraphicsExtractor graphics/*, int mX, int mY, float delta*/) {
 		if(visibleLines == 0 || visibleMessageIndex == -1) {
 			return;
 		}
@@ -584,7 +584,7 @@ public class ContextMenu implements GuiEventListener {
 		// cuts off any of the selection rect that goes past the chat hud
 		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
 		//? if !=1.21.10 {
-		graphics./*? if >1.21.11 {*//*outline*//*?} else {*/renderOutline/*?}*/(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));
+		graphics./*? if >=26.1 {*/outline/*?} else {*//*renderOutline*//*?}*/(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));
 		//?} else {
 		/*new GuiGraphics.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor)).render(graphics);*/
 		//?}
@@ -594,8 +594,8 @@ public class ContextMenu implements GuiEventListener {
 		graphics.pose().popMatrix();
 	}
 
-	private void renderMenuButtons(GuiGraphics graphics, int mX, int mY, float delta) {
-		grid.buttons().forEach(w -> w.render(graphics, mX, mY, delta));
+	private void extractMenuButtons(GuiGraphicsExtractor graphics, int mX, int mY, float delta) {
+		grid.buttons().forEach(w -> w.extractRenderState(graphics, mX, mY, delta));
 	}
 
 
@@ -928,8 +928,7 @@ public class ContextMenu implements GuiEventListener {
 		@SuppressWarnings("unchecked")
 		public List<AbstractButton> buttons() {
 			try {
-				// stonecutter: >=26.1
-				return (List<AbstractButton>) (Object) layout.children/*? if >1.21.11 {*//*.stream().map(wrapper -> wrapper.child).toList()*//*?}*/;
+				return (List<AbstractButton>) (Object) layout.children/*? if >=26.1 {*/.stream().map(wrapper -> wrapper.child).toList()/*?}*/;
 			} catch(ClassCastException e) {
 				logReportMsg(e);
 				return ObjectList.of();

@@ -2,7 +2,7 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.client.gui.ComponentPath;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 //? if >=1.21.9 {
@@ -18,10 +18,10 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
     @Unique // "render" -> "extract" is automatic
-	private static final String FIX_CLICKTHROUGH_TARGET_METHOD = "render" + "WithTooltipAndSubtitles";
-    @Unique // GuiGraphics -> Extractor is automatic, render -> extract is triggered below, argument change is explicitly specified
+	private static final String FIX_CLICKTHROUGH_TARGET_METHOD = "extractRenderState" + "WithTooltipAndSubtitles";
+    @Unique // GuiGraphics -> GuiGraphicsExtractor is automatic, render -> extract is triggered below, argument change is explicitly specified
     //~ render_extraction
-	private static final String FIX_CLICKTHROUGH_TARGET_REFERENCE = "Lnet/minecraft/client/gui/GuiGraphics;renderDeferredElements("/*? if >1.21.11 {*//*+ "IIF"*//*?}*/ + ")V"; // stonecutter: 26.1
+	private static final String FIX_CLICKTHROUGH_TARGET_REFERENCE = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;extractDeferredElements("/*? if >=26.1 {*/+ "IIF"/*?}*/ + ")V";
 
 
     /**
@@ -36,7 +36,7 @@ public abstract class ScreenMixin {
 
     /*? if >=1.21.11 {*/
     @WrapWithCondition(method = FIX_CLICKTHROUGH_TARGET_METHOD, at = @At(value = "INVOKE", target = FIX_CLICKTHROUGH_TARGET_REFERENCE))
-    private boolean fixFuckassTooltipAndClickthrough(/*? if 1.21.11 {*/GuiGraphics receiver,/*?}*/ GuiGraphics graphics, int mX, int mY, float partialTick) {
+    private boolean fixFuckassTooltipAndClickthrough(/*? if 1.21.11 {*//*GuiGraphicsExtractor receiver,*//*?}*/ GuiGraphicsExtractor graphics, int mX, int mY, float partialTick) {
         if(((Screen) (Object) this) instanceof ChatScreen chatScreen) {
             ChatScreenAccess access = (ChatScreenAccess) chatScreen;
             ContextMenu menu = access.getContextMenu();

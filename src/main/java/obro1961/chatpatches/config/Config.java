@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.util.Util;
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
@@ -292,7 +292,7 @@ public class Config {
 			}
 
 			lastBoundary = currentLevel;
-			chat./*? if >1.21.11 {*//*addClientSystemMessage*//*?} else {*/addMessage/*?}*/(boundaryLine);
+			chat./*? if >=26.1 {*/addClientSystemMessage/*?} else {*//*addMessage*//*?}*/(boundaryLine);
 
 		} catch(RuntimeException e) {
 			LOGGER.warn("An error occurred while sending the boundary line:", e);

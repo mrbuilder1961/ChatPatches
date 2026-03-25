@@ -95,8 +95,8 @@ public class ChatHeadsIntegration {
 	 * and <a href="https://github.com/mrbuilder1961/ChatPatches/issues/285">#285</a>.
 	 */
 	public static Optional<MutableComponent> extractHeadComponent(Component message) {
-		// stonecutter: no idea what this forced statement below is but change to 26.1
-		if(message.getContents() instanceof ObjectContents(PlayerSprite ignored /*? if >1.21.11 {*//*, Optional<Component> fallback*//*?}*/)) {
+		// in 26.1+ that comma and underscore is needed for whatever reason - some new J25 feature ig
+		if(message.getContents() instanceof ObjectContents(PlayerSprite ignored /*? if >=26.1 {*/, _/*?}*/)) {
 			return Optional.of((MutableComponent) message);
 		}
 

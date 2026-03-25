@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(ExtraCodecs.class)
 public abstract class ExtraCodecsMixin {
 	//? if >=1.21.5 {
-	@Unique private static final String LAMBDA_METHOD_NAME = /*? if >1.21.11 {*//*"lambda$static$63"*//*?} else {*/"method_66032"/*?}*/; // stonecutter:todo >=26.1
+	@Unique private static final String LAMBDA_METHOD_NAME = /*? if >=26.1 {*/"lambda$static$63"/*?} else {*//*"method_66032"*//*?}*/;
 	@Unique private static final String LAMBDA_METHOD_SIGNATURE = "(Ljava/lang/String;)Lcom/mojang/serialization/DataResult;";
 	@Unique private static final String TARGET_METHOD_SIGNATURE = "Lnet/minecraft/util/StringUtil;isAllowedChatCharacter(" + /*? if >=1.21.9 {*/"I"/*?} else {*//*"C"*//*?}*/ + ")Z";
 

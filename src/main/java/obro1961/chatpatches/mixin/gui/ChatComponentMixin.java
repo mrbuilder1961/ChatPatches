@@ -10,7 +10,7 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 //?}
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
@@ -46,7 +46,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
     @Unique
     private static final String ADD_MESSAGE_TARGET_REFERENCE =
         "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;"
-            + /*? if <=1.20.4 {*//*"I" +*//*?} elif >1.21.11 {*//*"Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;" +*//*?}*/ "Lnet/minecraft/client/" + /*? if >1.21.11 {*//*"multiplayer/chat/" +*//*?}*/ "GuiMessageTag;"
+            + /*? if <=1.20.4 {*//*"I" +*//*?} elif >=26.1 {*/"Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;" +/*?}*/ "Lnet/minecraft/client/" + /*? if >=26.1 {*/"multiplayer/chat/" +/*?}*/ "GuiMessageTag;"
             + /*? if <=1.20.4 {*//*"Z" +*//*?}*/ ")V";
 
     @Shadow @Final public List<GuiMessage> allMessages;
@@ -183,9 +183,8 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * @see Config#calcDynamicChatShift()
      */
     @ModifyVariable(
-        //stonecutter: 26.1
-		method = "render" /*? if >=1.21.11 {*/ +
-            /*~ if >1.21.11 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/"(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"/*~}*/
+		method = "extractRenderState" /*? if >=1.21.11 {*/ +
+            /*~ if >=26.1 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/"(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V"/*~}*/
         /*?}*/,
 		at = @At("STORE"), // targets ALL store insns for this variable
 		ordinal = /*? if >=1.21.11 {*/ 4 /*?} else {*//* 7 *//*?}*/,

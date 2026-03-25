@@ -63,10 +63,11 @@ public class TextUtil {
 	 * @see obro1961.chatpatches.ChatLog#CODEC
 	 */
 	public static final Codec<Component> UNSAFE_CODEC = new Codec<>() {
+		/*~ if <=1.20.2 'ComponentSerialization.CODEC' -> 'net.minecraft.util.ExtraCodecs.COMPONENT' {*/
 		@Override
 		public <T> DataResult<T> encode(Component input, DynamicOps<T> ops, T prefix) {
 			safeCodec.set(false);
-			var result = /*$ text_codec {*/ComponentSerialization.CODEC/*$}*/.encode(input, ops, prefix);
+			var result = ComponentSerialization.CODEC.encode(input, ops, prefix);
 			safeCodec.set(true);
 			return result;
 		}
@@ -74,15 +75,16 @@ public class TextUtil {
 		@Override
 		public <T> DataResult<Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
 			safeCodec.set(false);
-			var result = /*$ text_codec {*/ComponentSerialization.CODEC/*$}*/.decode(ops, input);
+			var result = ComponentSerialization.CODEC.decode(ops, input);
 			safeCodec.set(true);
 			return result;
 		}
 
 		@Override
 		public String toString() {
-			return "UnsafeTextCodec[safe=" + safeCodec.get() + ", codec=" + /*$ text_codec {*/ComponentSerialization.CODEC/*$}*/ + "]";
+			return "UnsafeTextCodec[safe=" + safeCodec.get() + ", codec=" + ComponentSerialization.CODEC + "]";
 		}
+		/*~}*/
 	};
 
 	/**

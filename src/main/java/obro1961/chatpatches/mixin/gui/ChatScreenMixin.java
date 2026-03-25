@@ -16,14 +16,14 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 //? if >=1.21.11 {
 import net.minecraft.client.gui.ActiveTextCollector;
 //?} else {
 //import net.minecraft.client.gui.Font;
 //?}
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
@@ -242,8 +242,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 *     </ol>
 	 * </ol>
 	 */
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
-	private void renderCustomWidgets(GuiGraphics graphics, int mX, int mY, float delta, CallbackInfo ci) {
+	@Inject(method = "extractRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V"))
+	private void renderCustomWidgets(GuiGraphicsExtractor graphics, int mX, int mY, float delta, CallbackInfo ci) {
 		//$ push_stack
 		graphics.pose().pushMatrix();
 
@@ -254,12 +254,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		if(showSearchBar && config.search) {
 			graphics.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_HEIGHT - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
-			searchField.render(graphics, mX, mY, delta);
+			searchField.extractRenderState(graphics, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
-				graphics./*? if >1.21.11 {*//*text*//*?} else {*/drawString/*?}*/(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(ChatFormatting.DARK_RED));
+				graphics./*? if >=26.1 {*/text/*?} else {*//*drawString*//*?}*/(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(ChatFormatting.DARK_RED));
 			}
 		}
 
@@ -274,14 +274,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			//Identifier DEMO = Identifier.withDefaultNamespace("textures/gui/demo_background.png");
 			//graphics.blit(RenderPipelines.GUI_TEXTURED, DEMO, MENU_X, MENU_Y_OFFSET + height, 0, 0, 248, 166, 256, 256); // too big
 
-			caseSensitiveButton.render(graphics, mX, mY, delta);
-			regexButton.render(graphics, mX, mY, delta);
+			caseSensitiveButton.extractRenderState(graphics, mX, mY, delta);
+			regexButton.extractRenderState(graphics, mX, mY, delta);
 		}
 
 		//$ pop_stack
 		graphics.pose().popMatrix(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
-		contextMenu.render(graphics, mX, mY, delta);
+		contextMenu.extractRenderState(graphics, mX, mY, delta);
 	}
 
 	/**
@@ -420,8 +420,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			value = "INVOKE",
 			target =
 				/*? if >=1.21.11 {*/
-				/*~ if >1.21.11 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/
-				"Lnet/minecraft/client/gui/components/ChatComponent;captureClickableText(Lnet/minecraft/client/gui/ActiveTextCollector;IIZ)V"
+				/*~ if >=26.1 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/
+				"Lnet/minecraft/client/gui/components/ChatComponent;captureClickableText(Lnet/minecraft/client/gui/ActiveTextCollector;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V"
 				//~}
 				/*?} else {*/
 				/*"Lnet/minecraft/client/gui/screens/ChatScreen;getComponentStyleAt(DD)Lnet/minecraft/network/chat/Style;"*/
@@ -431,7 +431,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/*? if >=1.21.11 {*/
 	private void fixStyleClickthrough(
 		ChatComponent chat,
-		ActiveTextCollector styleFinder, int h, int ticks, /*? if >1.21.11 {*//*ChatComponent.DisplayMode*//*?} else {*/boolean/*?}*/ focused,
+		ActiveTextCollector styleFinder, int h, int ticks, /*? if >=26.1 {*/ChatComponent.DisplayMode/*?} else {*//*boolean*//*?}*/ focused,
 		Operation<Void> captureClickableText, MouseButtonEvent mouse, boolean doubleClick
 	) {
 		if(!isMouseOverSettingsMenu(mouse.x(), mouse.y()) && !contextMenu.isMouseOver(mouse.x(), mouse.y())) {

@@ -1,6 +1,6 @@
 package obro1961.chatpatches.accessor;
 
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import obro1961.chatpatches.gui.ContextMenu;
 
 import java.util.List;

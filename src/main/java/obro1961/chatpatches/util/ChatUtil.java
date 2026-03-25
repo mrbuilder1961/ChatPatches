@@ -6,12 +6,12 @@ import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ChatScreen;
-//? if >1.21.11 {
-//import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//? if >=26.1 {
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 //?}
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.*;
@@ -42,7 +42,7 @@ import static obro1961.chatpatches.ChatPatches.*;
 
 public class ChatUtil {
 	public static final GameProfile NIL_SENDER = new GameProfile(Util.NIL_UUID, "");
-	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, EMPTY, null, /*? if >1.21.11 {*//*GuiMessageSource.SYSTEM_CLIENT,*//*?}*/ null);
+	public static final GuiMessage NIL_HUD_LINE = new GuiMessage(0, EMPTY, null, /*? if >=26.1 {*/GuiMessageSource.SYSTEM_CLIENT,/*?}*/ null);
 	public static final MessageData NIL_MESSAGE_DATA = new MessageData(NIL_SENDER, Date.from(Instant.EPOCH), false);
 	public static final Pair<GuiMessage, List<GuiMessage.Line>> NIL_MESSAGE_PAIR = new ObjectObjectImmutablePair<>(NIL_HUD_LINE, List.of());
 

@@ -15,14 +15,14 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.util.Util;
-import net.minecraft.client.GuiMessage;
-import net.minecraft.client.GuiMessageTag;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
-//? if >1.21.11 {
-//import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//? if >=26.1 {
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 //?}
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.GsonHelper;
@@ -386,7 +386,7 @@ public class ChatLog {
 
 			restoring = true;
 			history.forEach(chat::addRecentChat);
-			messages.forEach(msg -> chat.addMessage(msg, null, /*? if >1.21.11 {*//*GuiMessageSource.SYSTEM_CLIENT,*//*?}*/ RESTORED_INDICATOR));
+			messages.forEach(msg -> chat.addMessage(msg, null, /*? if >=26.1 {*/GuiMessageSource.SYSTEM_CLIENT,/*?}*/ RESTORED_INDICATOR));
 			restoring = false;
 
 			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
@@ -414,11 +414,11 @@ public class ChatLog {
 				var l = visibles.get(i);
 				if(ticks - l.addedTime() < 200) {
 					int newTime = -(200 + l.addedTime());
-					/*? if >1.21.11 {*//*var lp = l.parent();*//*?}*/
+					/*? if >=26.1 {*/var lp = l.parent();/*?}*/
 					visibles.set(i, new GuiMessage.Line(
-						/*? if >1.21.11 {*//*new GuiMessage(newTime, lp.content(), lp.signature(), lp.source(), lp.tag())*//*?} else {*/newTime/*?}*/,
+						/*? if >=26.1 {*/new GuiMessage(newTime, lp.content(), lp.signature(), lp.source(), lp.tag())/*?} else {*//*newTime*//*?}*/,
 						l.content(),
-						/*? if <=1.21.11 {*/l.tag(),/*?}*/
+						/*? if <=1.21.11 {*//*l.tag(),*//*?}*/
 						l.endOfEntry()
 					));
 				} else {
