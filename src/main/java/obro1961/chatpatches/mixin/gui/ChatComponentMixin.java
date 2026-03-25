@@ -52,7 +52,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
     @Shadow @Final public List<GuiMessage> allMessages;
     @Shadow @Final public List<GuiMessage.Line> trimmedMessages;
 
-    @Shadow @Final /*? if <1.21.11 {*//*private*//*?}*/ Minecraft minecraft;
+    @Shadow @Final /*? if != 1.21.11 {*/private/*?}*/ Minecraft minecraft;
     @Shadow @Final private List<?> messageDeletionQueue;
 
 	//? if <1.21.11 {

@@ -89,7 +89,7 @@ public class ChatUtil {
 	/**
 	 * Am extension of {@link #VANILLA_FORMAT} that includes support for messages
 	 * containing a
-	 * {@linkplain net.minecraft.network.chat.contents.objects.PlayerSprite#description()
+	 * {@linkplain net.minecraft.network.chat.contents.objects.PlayerSprite#defaultFallback()
 	 * player head} in the chat message. This was split off from the original
 	 * because it has the unavoidable side effect of not being able to parse team
 	 * messages with prefixes or suffixes containing {@code ]} or {@code >}. For

@@ -164,9 +164,9 @@ public class TextUtil {
 	 * Useful for comparing {@link Component} objects'
 	 * metadata (style and siblings) only.
 	 * */
-	public static MutableComponent withoutContent(Component text) {
-		return new MutableComponent(/*? if >1.20.2 {*/PlainTextContents/*?} else {*//*ComponentContents*//*?}*/.EMPTY, text.getSiblings(), text.getStyle());
-	}
+	/*public static MutableComponent withoutContent(Component text) {
+		return new MutableComponent(*//*? if >1.20.2 {*//*PlainTextContents*//*?} else {*//**//*ComponentContents*//**//*?}*//*.EMPTY, text.getSiblings(), text.getStyle());
+	}*/ // currently unused
 
 
 	/**
