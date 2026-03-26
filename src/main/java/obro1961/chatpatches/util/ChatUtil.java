@@ -238,7 +238,7 @@ public class ChatUtil {
 	 * equivalents cannot be found for this message; however, this should never
 	 * happen.
 	 */
-	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(int messageIndex, boolean playBurnSound) { // todo see Config#sendBoundaryLine()
+	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(int messageIndex, boolean playBurnSound) {
 		ChatComponent chat = mc().gui.getChat();
 		List<GuiMessage> messages = chat.allMessages;
 		List<GuiMessage.Line> visibles = chat.trimmedMessages;
@@ -527,7 +527,7 @@ public class ChatUtil {
 					// adds the part after the closing bracket but before any remaining siblings, if it exists
 					if(!afterEndBracket.isEmpty()) {
 						// stripLeading() prevents the space between the '>' and the message from appearing in the message content
-						// also prevents the extra space from appearing with Chat Heads (test: StyledChat too?)
+						// also prevents the extra space from appearing with Chat Heads (warning: should fix the StyledChat bug but i can't test it myself)
 						realContent.append( Component.literal(afterEndBracket.stripLeading()).setStyle(firstPart.getStyle()) );
 					}
 
@@ -627,7 +627,7 @@ public class ChatUtil {
 	 * </ol>
 	 */
 	private static Component tryCondenseDupes(Component incoming) {
-		// prepub: make this method save to the chat log too (so no redundant messages)!
+		// todo: make this method save to the chat log too (so no redundant messages)!
 		ChatComponent chat = mc().gui.getChat();
 		List<GuiMessage> messages = chat.allMessages;
 

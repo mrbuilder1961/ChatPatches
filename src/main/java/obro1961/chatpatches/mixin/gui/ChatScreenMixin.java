@@ -100,7 +100,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private static final int SEARCH_X = 22,
 									 SEARCH_Y_OFFSET = -31,
 									 SEARCH_HEIGHT = 12;
-	// prepub: make this instead a minimum value to hold the suggestion plus a bit of padding and then make it bigger when you type with a max right before the hotbar!
 	@Unique private static final double SEARCH_W_MULT = 0.25;
 	@Unique private static final int MENU_WIDTH = 146,
 									 MENU_HEIGHT = 76,

@@ -108,7 +108,7 @@ public class YaclConfig extends Config {
                     .controller(me -> getController(me, key))
                     .binding(getBinding(opt))
                     .flag(
-                        // prepub: tryCondenseDupes doesn't do anything here bc modifyMessage doesn't run on refresh=true. to get around this we'd
+                        // todo: tryCondenseDupes doesn't do anything here bc modifyMessage doesn't run on refresh=true. to get around this we'd
                         //  need to like make a whole new method or something that only updates the message components on refresh, which is plausible
                         //  but is not an effortless change. (ex. take timestamp and regen time text, take player regen name, etc) not on chatlog#restore
                         cat.equals("counter") || cat.equals("compact")
@@ -420,28 +420,6 @@ public class YaclConfig extends Config {
             .options( options )
             .build();
     }
-
-    // idea: currently being difficult, needs to be modularly added to the controller but sometimes it isn't a VFC, even still there are issues. not critical priority. if its not possible -> scrap
-    /*@SuppressWarnings("unchecked")
-    private static ValueFormatter<?> getValueFormatter(String key) {
-        Class<?> type = config.getOption(key).getType();
-        if(type == Integer.class) {
-            return switch(key) {
-                //for all the values like -1 or 0 for number guys
-                case "chatlogSaveInterval" -> (val -> Text.of("" + Formatting.GREEN + val + "§f ticks"));
-                case "chatWidth", "chatHeight", "chatShift" -> (val -> Text.of("" + Formatting.GREEN + val + "§f pixels"));
-                case "chatMaxMessages", "compactDistance" -> (val -> Text.of("" + Formatting.GREEN + val + "§f messages"));
-                default -> (ValueFormatter<Integer>) IntegerSliderController.DEFAULT_FORMATTER;
-            };
-        } else if(type == Boolean.class) {
-            return switch(key) {
-                case "chatHidePacket", "search" -> (ValueFormatter<Boolean>) BooleanController.YES_NO_FORMATTER;
-                //case "tf" -> (ValueFormatter<Boolean>) BooleanController.TRUE_FALSE_FORMATTER;
-                default -> (ValueFormatter<Boolean>) BooleanController.ON_OFF_FORMATTER;
-            };
-        }
-        return value -> Text.of(value.toString());
-    }*/
 
     private static OptionDescription desc(Setting<?> opt) {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Component.translatable(DESCRIPTION_PREFIX + opt.key) );

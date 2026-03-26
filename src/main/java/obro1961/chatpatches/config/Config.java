@@ -60,7 +60,7 @@ import static obro1961.chatpatches.util.TextUtil.text;
 public class Config {
     public static final Config DEFAULTS = new Config();
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
-	public static final String PLACEHOLDER = "$"; // prepub use in all options..? like of(pre, suf) -> pre + PLACEHOLDER + suf
+	public static final String PLACEHOLDER = "$"; // todo use in all options..? like of(pre, suf) -> pre + PLACEHOLDER + suf
 
 	protected static final int IO_THRESHOLD_SUGGESTION = 500;
 
@@ -102,9 +102,9 @@ public class Config {
 
     public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColor();
     public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean dynamicChatShift = true, vanillaClearing = false, chatHidePacket = true,
-		// idea: messageDrafting -> chatDrafting?
+		// idea: messageDrafting -> chatDrafting? (once migration codec established)
 		messageDrafting = false, onlyInvasiveDrafting = false;
-    public boolean contextMenu = true, contextDeletionWarning = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";//todo: make lang keys
+    public boolean contextMenu = true, contextDeletionWarning = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
         caseSensitive = true, regex = false;
 	public boolean logMessageStructures = false;
@@ -210,7 +210,7 @@ public class Config {
      * player entity and have both a valid name and UUID. Additionally,
      * the {@linkplain Minecraft#level client world} must exist.
      */
-    public MutableComponent formatPlayername(Optional<MutableComponent> headComponent, GameProfile profile) { // todo: accept message style formatting (re: EssentialsX formatting) and update jdoc
+    public MutableComponent formatPlayername(Optional<MutableComponent> headComponent, GameProfile profile) { // fixme: accept message style formatting (re: EssentialsX formatting) and update jdoc
         Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
 		String name = profile != null ? profile./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/() : "<null>";
 		var level = mc().level;
@@ -283,7 +283,6 @@ public class Config {
 
 		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
 
-		// prepub if they're still sending back to back - maybe check chatlog's most recent message
 		try {
 			// if the last (most recent) message received was a boundary line...
 			if(Boundary.isBoundaryLine(messages.getFirst().content())) {
