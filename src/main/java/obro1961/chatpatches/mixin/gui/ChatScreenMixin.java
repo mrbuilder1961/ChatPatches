@@ -54,10 +54,7 @@ import obro1961.chatpatches.util.RenderUtil;
 import org.apache.commons.lang3./*? if >=1.21.11 {*/Strings/*?} else {*//*StringUtils*//*?}*/;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
-import org.spongepowered.asm.mixin.Intrinsic;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -86,6 +83,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@NotNull protected Minecraft minecraft = Minecraft.getInstance(); // removes NPE warnings
 	@Shadow protected String initial;
 	@Shadow private int historyPos;
+	/*? if >=26.1 {*/
+	@Shadow	@Final private boolean closeOnSubmit;
+	/*?}*/
 
 
 	// search text
@@ -169,9 +169,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		}
 
 		//? if >=1.21.9 {
-		else if(!config.messageDrafting && !minecraft.options.saveChatDrafts().get()) {
+		else if(!config.messageDrafting && !minecraft.options.saveChatDrafts().get() /*? if >=26.1 {*/&& !this.closeOnSubmit/*?}*/) {
 			// finally, if message drafting is disabled and save unsent messages is too, delete the draft
-			initial = "";
+			initial = ""; // except on 26.1+ where the chat doesn't close on send (closeOnSubmit = false) so don't delete their drafts
 		}
 		/*?}*/
 	}
