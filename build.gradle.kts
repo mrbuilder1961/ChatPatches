@@ -67,8 +67,7 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 dependencies {
     // fabric only
     modstitch.loom {
-        val fapi = p("fabric.api") + "+" +
-                minecraft.substringBefore('-') // todo: a better fix for snapshots?
+        val fapi = p("fabric.api") + "+" + minecraft.substringBefore('-')
         modstitchModImplementation(fabricApi.module("fabric-lifecycle-events-v1", fapi))
         modstitchModImplementation(fabricApi.module("fabric-networking-api-v1", fapi))
         modstitchModImplementation(fabricApi.module("fabric-screen-api-v1", fapi))
@@ -203,6 +202,10 @@ tasks {
                 if(publish) {
                     publish = false
                 }
+            } else if(changes.length > 2000) {
+                val cutoff = "... (trimmed)"
+                changes = changes.substring(0, 2000 - cutoff.length) + cutoff
+                println("Warning: Changelog is longer than 2000 characters, trimming for publish action")
             }
         }
     }
@@ -278,7 +281,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         str(v12111, "net.minecraft.Util", "net.minecraft.util.Util")
         str(v12111, "ResourceLocation", "Identifier", "yarnification", false) // selectively enabled
 
-        val v261 = current.parsed > "1.21.11" // todo >= "26.1"
+        val v261 = current.parsed >= "26.1"
         str(v261, "net.minecraft.client.GuiMessage", "net.minecraft.client.multiplayer.chat.GuiMessage") // also conveniently covers GuiMessageTag!
         str(v261, "GuiGraphics", "GuiGraphicsExtractor")
         str(v261, "render(", "extractRenderState(", "extract_render_state", true) // targets plain render(..) calls
