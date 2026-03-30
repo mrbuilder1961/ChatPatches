@@ -41,7 +41,7 @@ public class RenderUtil {
 
 
 	public static class MousePos {
-		public double x, y;
+		public final double x, y;
 
 		private MousePos(double x, double y) {
 			this.x = x;

@@ -327,6 +327,7 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		// copies the proxy button's text by executing its press action instead
+		//noinspection DataFlowIssue: parameter is never used anyway
 		registerButton(id, 0, icon, null, me -> grid.get(proxyId).button.onPress(/*? if >=1.21.9 {*/null/*?}*/));
 	}
 

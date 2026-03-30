@@ -182,7 +182,8 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      *
      * @see Config#calcDynamicChatShift()
      */
-    @ModifyVariable(
+    @SuppressWarnings("ModifyVariableMayUseName") // name is not consistent b/w versions
+	@ModifyVariable(
 		method = "extractRenderState" /*? if >=1.21.11 {*/ +
             /*~ if >=26.1 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/"(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V"/*~}*/
         /*?}*/,

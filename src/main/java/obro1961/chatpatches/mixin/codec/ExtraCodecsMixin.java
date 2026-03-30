@@ -31,6 +31,7 @@ public abstract class ExtraCodecsMixin {
 	 * @implNote Targets the synthetic method corresponding to the lambda in {@link
 	 * ExtraCodecs#CHAT_STRING}'s initializer.
 	 */
+	@SuppressWarnings("LocalMayUseName") // only one char instance; specifying name might break other version targets
 	@ModifyExpressionValue(
 		method = LAMBDA_METHOD_NAME + LAMBDA_METHOD_SIGNATURE,
 		at = @At(value = "INVOKE", target = TARGET_METHOD_SIGNATURE)

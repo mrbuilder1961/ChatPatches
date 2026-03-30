@@ -66,8 +66,6 @@ public class Config {
 
     protected static Minecraft mc() { return Minecraft.getInstance(); }
 
-    /** @see #sendBoundaryLine() */
-    protected static Boundary lastBoundary = Boundary.UNKNOWN;
 	/**
 	 * The hash of the player's armor, absorption, health, and other values for
 	 * use with {@link #lastDynamicShift}. Avoids recalculating the same value
@@ -269,7 +267,6 @@ public class Config {
 	 * boundary line from another level, it will be deleted and replaced with the
 	 * current level.
 	 *
-	 * @see #lastBoundary
 	 * @see Boundary
      */
     public void sendBoundaryLine() {
@@ -290,7 +287,6 @@ public class Config {
 				ChatUtil.deleteMessage(0, false);
 			}
 
-			lastBoundary = currentLevel;
 			chat./*? if >=26.1 {*/addClientSystemMessage/*?} else {*//*addMessage*//*?}*/(boundaryLine);
 
 		} catch(RuntimeException e) {
