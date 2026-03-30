@@ -100,7 +100,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Unique private static final int SEARCH_X = 22,
 									 SEARCH_Y_OFFSET = -31,
 									 SEARCH_HEIGHT = 12;
-	@Unique private static final double SEARCH_W_MULT = 0.25;
+	@Unique private static final double SEARCH_W_MULTIPLIER = 0.25;
 	@Unique private static final int MENU_WIDTH = 146,
 									 MENU_HEIGHT = 76,
 									 MENU_X = 2,
@@ -191,7 +191,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchButton = new SearchButton(2, height - 35, me -> showSearchBar = !showSearchBar, me -> showSettingsMenu = !showSettingsMenu);
 		searchButton.setTooltip(Tooltip.create(SEARCH_TOOLTIP));
 
-		searchField = new EditBox(minecraft.font, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULT), SEARCH_HEIGHT, Component.translatable("chat.editBox"));
+		searchField = new EditBox(minecraft.font, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULTIPLIER), SEARCH_HEIGHT, Component.translatable("chat.editBox"));
 		searchField.setMaxLength(ChatUtil.MAX_MESSAGE_LENGTH);
 		searchField.setBordered(false);
 		searchField.setSuggestion(SEARCH_SUGGESTION);
@@ -252,12 +252,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		//?}
 
 		if(showSearchBar && config.search) {
-			graphics.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULT + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_HEIGHT - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
+			graphics.fill(SEARCH_X - 2, height + SEARCH_Y_OFFSET - 2, (int) (width * (SEARCH_W_MULTIPLIER + 0.06)), height + SEARCH_Y_OFFSET + SEARCH_HEIGHT - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
 			searchField.extractRenderState(graphics, mX, mY, delta);
 
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
-				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULT);
+				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULTIPLIER);
 				graphics./*? if >=26.1 {*/text/*?} else {*//*drawString*//*?}*/(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(ChatFormatting.DARK_RED));
 			}
 		}

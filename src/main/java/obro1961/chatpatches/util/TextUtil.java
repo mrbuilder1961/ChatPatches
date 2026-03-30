@@ -193,12 +193,12 @@ public class TextUtil {
 	 * this is a convoluted task that will always have edge cases and frustrating
 	 * edge cases.
 	 *
-	 * todo note unsolveables here.
+	 * todo note unsolvable issues here.
 	 */
 	public static <T> boolean virtuallyEqual(Component a, Component b) {
 		// this is presumed true due to where this is called in tryCondenseDupes
 		/*if(!a.getString().equals(b.getString())) {
-			return false; // obviously the strings themselves need to be the same (caseinsensitive tho..?)
+			return false; // obviously the strings themselves need to be the same (case-insensitive tho..?)
 		}*/
 
 		Function<List<it.unimi.dsi.fastutil.Pair<String, Style>>, FormattedText.StyledContentConsumer<T>> visitMaker = list -> ((style, contents) -> {

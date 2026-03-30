@@ -271,7 +271,8 @@ public class ChatUtil {
 			mc().getSoundManager().playDelayed(SimpleSoundInstance.forUI(SoundEvents.LAVA_EXTINGUISH, 1.0f), 5);
 		}
 
-		return ObjectObjectImmutablePair.of(deleted, deletedVisibles); // i think these are usually immutable but idrk if it's bad to make mutable later
+		return ObjectObjectImmutablePair.of(deleted, deletedVisibles); // i think these are usually immutable but i don't really know if it's bad to make
+		// mutable later
 	}
 
 	/**
@@ -553,7 +554,7 @@ public class ChatUtil {
 			LOGGER.error("\tBody:");
 
 			if(content.getSiblings().size() == 3 && !content.equals(m)) { // modified vanilla message
-				// i know these are technically the wrong fields to use but they make sense so leave me alone
+				// i know these are technically the wrong fields to use, but they make sense so leave me alone
 				LOGGER.error("\t\tTeam: {}", optimizeEmpties(getPart(content, MSG_TEAM_INDEX)));
 				LOGGER.error("\t\tSender: {}", optimizeEmpties(getPart(content, MSG_SENDER_INDEX)));
 				LOGGER.error("\t\tContent: {}", optimizeEmpties(getPart(content, MSG_CONTENT_INDEX)));

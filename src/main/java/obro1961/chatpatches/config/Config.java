@@ -122,7 +122,7 @@ public class Config {
 
 		// ensures yacl config is used if available
 		config = accessibleInGame ? new YaclConfig() : DEFAULTS;
-		//setDefaults() but req for the yaclconfig check to work
+		//setDefaults() but req for the YaclConfig check to work
 
         deserialize();
 
@@ -210,7 +210,7 @@ public class Config {
      * player entity and have both a valid name and UUID. Additionally,
      * the {@linkplain Minecraft#level client world} must exist.
      */
-    public MutableComponent formatPlayername(Optional<MutableComponent> headComponent, GameProfile profile) { // fixme: accept message style formatting (re: EssentialsX formatting) and update jdoc
+    public MutableComponent formatPlayername(Optional<MutableComponent> headComponent, GameProfile profile) { // fixme: accept message style formatting (re: EssentialsX formatting) and update javadoc
         Style style = Style.EMPTY.withColor(nameColor); // defaults to the config-specified color
 		String name = profile != null ? profile./*? if >=1.21.9 {*/name/*?} else {*//*getName*//*?}*/() : "<null>";
 		var level = mc().level;
@@ -532,7 +532,7 @@ public class Config {
     }
 
     /**
-     * Parses the {@link S}(ource) parameter {@code encoded} into
+     * Parses the {@link S} (source) parameter {@code encoded} into
      * {@code this}, or more specifically {@link ChatPatches#config}.
      *
      * @return A {@link DataResult} containing the Config

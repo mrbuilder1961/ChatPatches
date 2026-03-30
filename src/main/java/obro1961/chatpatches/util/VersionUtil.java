@@ -57,7 +57,7 @@ public class VersionUtil {
 	public static double screenToChatY(double y) {
 		double d = (double)mc().getWindow().getGuiScaledHeight() - y - 40.0;
 		// -- ChatPatches' code - previously injected via ChatComponentMixin#moveChatLineY --
-		d -= ChatPatches.config.calcDynamicChatShift(); // negative instead of positive now..?!
+		d -= ChatPatches.config.calcDynamicChatShift(); // negative instead of positive now...?!
 		// -- ChatPatches' code --
 		return d / (chat().getScale() * (double)chat().getLineHeight());
 	}

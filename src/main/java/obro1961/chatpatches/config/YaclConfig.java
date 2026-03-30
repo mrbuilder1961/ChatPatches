@@ -110,7 +110,7 @@ public class YaclConfig extends Config {
                     .flag(
                         // todo: tryCondenseDupes doesn't do anything here bc modifyMessage doesn't run on refresh=true. to get around this we'd
                         //  need to like make a whole new method or something that only updates the message components on refresh, which is plausible
-                        //  but is not an effortless change. (ex. take timestamp and regen time text, take player regen name, etc) not on chatlog#restore
+                        //  but is not an effortless change. (ex. take timestamp and regenerate time text, take player regen name, etc) not on chatlog#restore
                         cat.equals("counter") || cat.equals("compact")
                             ? new OptionFlag[] { client -> client.gui.getChat().rescaleChat() }
                             : new OptionFlag[0]
