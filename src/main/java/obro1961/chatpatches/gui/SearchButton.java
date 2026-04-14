@@ -57,7 +57,7 @@ public class SearchButton extends ImageButton {
 
     //? if <=1.20.1 {
     /*@Override
-    public void renderWidget(net.minecraft.client.gui.GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void renderWidget(net.minecraft.client.gui.GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         ResourceLocation sprite = isHoveredOrFocused() ? FOCUSED_TEXTURE : UNFOCUSED_TEXTURE;
         guiGraphics.blit(sprite, getX(), getY(), 0, 0, 0, getWidth(), getHeight(), getWidth(), getHeight()); // might need to be the really long method call to specify the texture size
     }
