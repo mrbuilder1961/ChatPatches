@@ -17,9 +17,9 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
-    @Unique // "extractRenderState" -> "extract" is automatic
+    @Unique // "render" -> "extract" is automatic
 	private static final String FIX_CLICKTHROUGH_TARGET_METHOD = "extractRenderState" + "WithTooltipAndSubtitles";
-    @Unique // GuiGraphicsExtractor -> GuiGraphicsExtractor is automatic, render -> extract is triggered below, argument change is explicitly specified
+    @Unique // GuiGraphics -> GuiGraphicsExtractor is automatic, render -> extract is triggered below, argument change is explicitly specified
     //~ render_extraction
 	private static final String FIX_CLICKTHROUGH_TARGET_REFERENCE = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;extractDeferredElements("/*? if >=26.1 {*/+ "IIF"/*?}*/ + ")V";
 
@@ -44,7 +44,7 @@ public abstract class ScreenMixin {
             boolean mouseOverMenu = access.isMouseOverSettingsMenu(mX, mY) || menu.isMouseOver(mX, mY);
             if(mouseOverMenu && graphics.deferredTooltip != null) {
                 graphics.hoveredTextStyle = null; // delete the source of the chat tooltip (menu button tooltips are only deferred, as experimentally determined)
-                return true; // approve extracting (now just the deferred tooltip)
+                return true; // approve rendering (now just the deferred tooltip)
             } else {
                 // otherwise just prevent hovering through the menus
                 return !mouseOverMenu;

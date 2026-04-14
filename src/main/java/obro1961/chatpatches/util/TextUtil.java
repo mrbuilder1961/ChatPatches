@@ -13,7 +13,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.util.Util;
 import net.minecraft.network.chat.*;
 //? if >1.20.2 {
-import net.minecraft.network.chat.contents.PlainTextContents;
+//import net.minecraft.network.chat.contents.PlainTextContents;
 //?}
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 

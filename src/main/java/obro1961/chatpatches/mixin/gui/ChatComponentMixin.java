@@ -260,7 +260,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      */
     @Inject(method = "logChatMessage", at = @At("HEAD"), cancellable = true)
     //? if <=1.20.4 {
-    /*private void ignoreRestoredMessages(Component message, net.minecraft.client.multiplayer.chat.GuiMessageTag tag, CallbackInfo ci) {
+    /*private void ignoreRestoredMessages(Component message, net.minecraft.client.GuiMessageTag tag, CallbackInfo ci) {
     *///?} else {
     private void ignoreRestoredMessages(GuiMessage message, CallbackInfo ci) {
     //?}

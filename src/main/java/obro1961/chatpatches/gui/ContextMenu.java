@@ -74,7 +74,7 @@ import static obro1961.chatpatches.util.ChatUtil.*;
 
 /**
  * Represents the context menu that appears when a chat message is right-clicked.
- * Controls the behavior and raw extracting of the menu buttons, as well as the
+ * Controls the behavior and raw rendering of the menu buttons, as well as the
  * logic for utilizing, processing, and copying data from the selected message.
  */
 public class ContextMenu implements GuiEventListener {
@@ -134,7 +134,7 @@ public class ContextMenu implements GuiEventListener {
 	 */
 	private final Grid grid;
 
-	// reference variables kept primarily for extracting and elegance
+	// reference variables kept primarily for rendering and elegance
 	/**
 	 * The ChatScreen this menu is contained within.
 	 * If {@link #noOp} is {@code false}, this field
@@ -239,8 +239,8 @@ public class ContextMenu implements GuiEventListener {
 	 * placed. Main buttons are always in column 0, and hover
 	 * buttons are in columns ≥1.
 	 * @param icon An {@link Item} or {@link PlayerSkin} object to
-	 * extract over the leftmost button area, or {@code null}
-	 * to not extract anything extra.
+	 * render over the leftmost button area, or {@code null}
+	 * to not render anything extra.
 	 */
 	private void registerButton(Component id, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier, Button.OnPress pressAction) {
 		int w = mc().font.width(id) + 2 * BUTTON_PADDING;
@@ -279,11 +279,11 @@ public class ContextMenu implements GuiEventListener {
 					extractDefaultSprite(graphics);
 					extractDefaultLabel(graphics.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.NONE));
 					/*?} else {*/
-					/*super.extractWidget(graphics, mX, mY, delta);*/
+					/*super.renderWidget(graphics, mX, mY, delta);*/
 					/*?}*/
 
 					if(icon instanceof Item item) {
-						graphics./*? if >=26.1 {*/fakeItem/*?} else {*//*extractFakeItem*//*?}*/(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
+						graphics./*? if >=26.1 {*/fakeItem/*?} else {*//*renderFakeItem*//*?}*/(item.getDefaultInstance(), this.getX() + 1, this.getY() + 1);
 					} else if(icon instanceof /*? if >=1.20.2 {*/PlayerSkin/*?} else {*//*ResourceLocation*//*?}*/ playerSkin) {
 						/*? if >=26.1 {*/PlayerFaceExtractor.extractRenderState/*?} else {*//*PlayerFaceRenderer.draw*//*?}*/(graphics, playerSkin, this.getX() + 1, this.getY() + 1, 16);
 					}
@@ -543,7 +543,7 @@ public class ContextMenu implements GuiEventListener {
 	 * @see #extractSelectionOutline(GuiGraphicsExtractor)
 	 * @see #extractMenuButtons(GuiGraphicsExtractor, int, int, float)
 	 *
-	 * @see ChatScreenMixin#extractCustomWidgets(GuiGraphicsExtractor, int, int, float, CallbackInfo)
+	 * @see ChatScreenMixin#renderCustomWidgets(GuiGraphicsExtractor, int, int, float, CallbackInfo)
 	 */
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mX, int mY, float delta) {
 		if(noOp) {
@@ -585,9 +585,9 @@ public class ContextMenu implements GuiEventListener {
 		// cuts off any of the selection rect that goes past the chat hud
 		graphics.enableScissor(0, scissorY1, borderW, scissorY2);
 		//? if !=1.21.10 {
-		graphics./*? if >=26.1 {*/outline/*?} else {*//*extractOutline*//*?}*/(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));
+		graphics./*? if >=26.1 {*/outline/*?} else {*//*renderOutline*//*?}*/(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor));
 		//?} else {
-		/*new GuiGraphicsExtractor.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor)).extractRenderState(graphics);*/
+		/*new GuiGraphics.OutlineBox(0, selectionY1, borderW, selectionH, RenderUtil.opaque(config.contextOutlineColor)).render(graphics);*/
 		//?}
 		graphics.disableScissor();
 
@@ -614,7 +614,7 @@ public class ContextMenu implements GuiEventListener {
 	 * @see ChatScreenMixin#allowContextMenuKeyPressing(KeyEvent, CallbackInfoReturnable)
 	 */
 	@Override
-	public boolean keyPressed(/*$ key_event {*/ KeyEvent key/*$}*/) {
+	public boolean keyPressed(/*$ key_event {*/ KeyEvent key /*$}*/) {
 		if(noOp) {
 			return false;
 		}
