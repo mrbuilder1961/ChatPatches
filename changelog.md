@@ -1,10 +1,18 @@
 # Changelog
 
+## Chat Patches `8.0-alpha.9` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.1.2 on Fabric, Quilt
+- Based on the relative lack of downloads compared to newer versions, the amount of version targets has been reduced. This should somewhat accelerate
+  development for future releases! Later, I may reduce the amount of targets further if needed.
+- Bumped compatibility to 26.1.1 and 2.
+
 ## Chat Patches `8.0-beta.1` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.1 on Fabric, Quilt
-- Based on the relative lack of downloads compared to newer versions, the amount of version targets has been reduced. This should somewhat accelerate 
-  development for future releases
-- This release is also the first to feature NeoForge compatibility! This will initially take time to acclimate to, but then dev time will decrease again
-- For both of those reasons I think it's fitting to bump this channel to beta!
+(moved temporarily for hotfix compat w 26.1.2)
+- [!NOT DONE] This release is the first to feature NeoForge compatibility! This will initially take time to acclimate to, but then dev time will decrease again
+- [!NOT DONE] Implemented a budding test suite! If you're a player you won't firsthand see any of this, but you will feel its effects in that trivial bugs 
+  should be caught earlier, before being shipped as releases!
+- [!NOT DONE] Implemented a minimal DataFixerUpper system that automatically renames old config options and transforms anything necessary (right now, just 
+  flips a boolean lol)
+- For these reasons, I think it's fitting to bump this channel to beta!
 
 ## Chat Patches `8.0-alpha.8` for Minecraft 1.20.1–26.1 on Fabric, Quilt
 - Updated to 26.1! Like always with recent Minecraft drops, A LOT has changed under the hood, so be on the lookout for bugs!
