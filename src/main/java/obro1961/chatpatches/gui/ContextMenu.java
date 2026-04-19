@@ -1,5 +1,3 @@
-//~ render_extraction
-
 package obro1961.chatpatches.gui;
 
 import com.google.common.collect.Iterables;
@@ -150,6 +148,7 @@ public class ContextMenu implements GuiEventListener {
 	public final RenderUtil.MousePos clickPos;
 	private final GuiMessage selectedLine;
 	private final GameProfile messageSender;
+	//~ render_extraction
 	/**
 	 * The index of the visible message in {@link ChatComponent#trimmedMessages}
 	 * that is also {@linkplain GuiMessage.Line#endOfEntry EoE}. Used
@@ -223,7 +222,6 @@ public class ContextMenu implements GuiEventListener {
 
 		//~ !render_extraction
 		this.messageSender = ChatUtil.extractMessageSender(selectedLine.content());
-		//~ render_extraction
 	}
 
 
@@ -272,7 +270,11 @@ public class ContextMenu implements GuiEventListener {
 
 				@Override public void onPress(/*? if >=1.21.9 {*/InputWithModifiers i/*?}*/) { src.onPress(/*? if >=1.21.9 {*/i/*?}*/); }
 
-				@Override
+				/*
+				 * Render replacements shouldn't be kept when applied to the versioned
+				 * out comments; unfortunately, this is atrocious to do automatically.
+				 */
+				@Override //~ render_extraction
 				protected void /*? if >=1.21.11 {*/extractContents/*?} else {*//*extractWidget*//*?}*/(GuiGraphicsExtractor graphics, int mX, int mY, float delta) {
 					/*? if >=1.21.11 {*/
 					// both lines pulled from Button.Plain
@@ -598,6 +600,7 @@ public class ContextMenu implements GuiEventListener {
 	private void extractMenuButtons(GuiGraphicsExtractor graphics, int mX, int mY, float delta) {
 		grid.buttons().forEach(w -> w.extractRenderState(graphics, mX, mY, delta));
 	}
+	/*~ !render_extraction*/
 
 
 	/**

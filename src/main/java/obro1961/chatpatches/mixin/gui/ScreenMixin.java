@@ -22,6 +22,7 @@ public abstract class ScreenMixin {
     @Unique
     //~ render_extraction
 	private static final String FIX_CLICKTHROUGH_TARGET_REFERENCE = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;extractDeferredElements("/*? if >=26.1 {*/+ "IIF"/*?}*/ + ")V";
+    /*~ !render_extraction*/
 
 
     /**
