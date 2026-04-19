@@ -61,7 +61,7 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 
 
 /*kotlin {
-    jvmToolchain(25) // can't use java() bc it's not available here - warning: commenting this out may cause issues?
+    jvmToolchain(25) // can't use java() bc it's not available here, may cause issues?
 }*/
 
 dependencies {

@@ -96,7 +96,7 @@ public class Config {
 
     public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA.getColor();
 
-    public boolean chatlog = true; public int chatlogSaveInterval = 0;
+    public boolean chatlog = true; public int chatlogSaveInterval = 0; // todo fix the save interval guy like never working
 
     public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColor();
     public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean dynamicChatShift = true, vanillaClearing = false, chatHidePacket = true,
@@ -520,7 +520,6 @@ public class Config {
             T val = (T) opt.val;
             MapCodec<T> optCodec = (MapCodec<T>) opt.getTypeCodec();
 
-            // note: currently uses optionalFieldOf as specified in #getTypeCodec; could in theory silently ignore missing fields
             builder = optCodec.encode(val, ops, builder);
         }
 
@@ -547,7 +546,7 @@ public class Config {
             DataResult<T> result = optCodec.decoder().parse(ops, encoded);
 
             if(result.error().isPresent() || result.result().isEmpty()) {
-				//noinspection Convert2MethodRef: if >=1.20.5 DataResult.PartialResult no longer exists
+				//noinspection Convert2MethodRef: on 1.20.5+ DataResult.PartialResult doesn't exist
 				String message = "Failed to parse field '" + opt.key + "': " + result.error().map(e -> e.message()).orElse("<unknown>");
                 logReportMsg(new IllegalStateException(message));
                 return DataResult.error(() -> message);

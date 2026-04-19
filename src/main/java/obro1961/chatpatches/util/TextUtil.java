@@ -12,9 +12,6 @@ import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.ChatFormatting;
 import net.minecraft.util.Util;
 import net.minecraft.network.chat.*;
-//? if >1.20.2 {
-//import net.minecraft.network.chat.contents.PlainTextContents;
-//?}
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 
 import java.util.List;
@@ -165,8 +162,11 @@ public class TextUtil {
 	 * metadata (style and siblings) only.
 	 * */
 	/*public static MutableComponent withoutContent(Component text) {
+		//-? if >1.20.2 {
+		//import net.minecraft.network.chat.contents.PlainTextContents;
+		//-?}
 		return new MutableComponent(*//*-? if >1.20.2 {*//*PlainTextContents*//*-?} else {*//**//*ComponentContents*//**//*-?}*//*.EMPTY, text.getSiblings(), text.getStyle());
-	}*/ // currently unused
+	}*/
 
 
 	/**
@@ -245,7 +245,7 @@ public class TextUtil {
 			builder.delete(0, 2);
 		}
 
-		while(builder.toString().endsWith("&r")) { // removes duplicate trailing reset codes (leaves one if it exists just in case it's intended)
+		while(builder.toString().endsWith("&r")) { // removes duplicate trailing reset codes
 			builder.setLength(builder.length() - 2);
 		}
 

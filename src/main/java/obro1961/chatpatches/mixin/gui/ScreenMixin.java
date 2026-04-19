@@ -17,9 +17,9 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
-    @Unique // "render" -> "extract" is automatic
+    @Unique
 	private static final String FIX_CLICKTHROUGH_TARGET_METHOD = "extractRenderState" + "WithTooltipAndSubtitles";
-    @Unique // GuiGraphics -> GuiGraphicsExtractor is automatic, render -> extract is triggered below, argument change is explicitly specified
+    @Unique
     //~ render_extraction
 	private static final String FIX_CLICKTHROUGH_TARGET_REFERENCE = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;extractDeferredElements("/*? if >=26.1 {*/+ "IIF"/*?}*/ + ")V";
 
