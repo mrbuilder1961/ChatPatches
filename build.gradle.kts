@@ -14,7 +14,12 @@ plugins { // versions in gradle.properties + settings.gradle.kts
 val id = m("id")
 val v: String = m("version")
 val minecraft = stonecutter.current.version
-val loader: String = name.substringAfter("-").replace("neoforge", "neo") // prepub: does this cause any issues...
+val loader: String = when {
+    modstitch.isLoom -> "fabric"
+    modstitch.isModDevGradle -> "neoforge"
+    modstitch.isModDevGradleLegacy -> "forge"
+    else -> error("Invalid Modstitch loader ${modstitch.platform}")
+}
 val currentIsActive = minecraft == stonecutter.active?.version
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
@@ -142,8 +147,7 @@ modstitch {
 
 
         // Configure loom like normal here
-        /*configureLoom {
-        }*/
+        /*configureLoom {}*/
     }
 
     // NeoForge, Forge
@@ -172,6 +176,7 @@ modstitch {
             //configs.register("$id-{}")
     }
 }
+
 tasks {
     modstitch.finalJarTask {
         archiveBaseName.set(id)
@@ -289,7 +294,6 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         str(v261, "render", "extract", "render_extraction", false) // targets render<component>(..) calls
     }
 }
-
 
 publishMods {
     val secrets = rootDir.toPath().resolve("secrets.json").toFile()
