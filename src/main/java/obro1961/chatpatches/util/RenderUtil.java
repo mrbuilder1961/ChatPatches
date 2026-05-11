@@ -1,8 +1,9 @@
 package obro1961.chatpatches.util;
 
-import net.minecraft.ChatFormatting;
-
 public class RenderUtil {
+	public static final int OPAQUE = 0xFF000000;
+	public static final int NO_ALPHA_CHANNEL = 0x00FFFFFF;
+
 	/**
 	 * @return {@code rgb} with the alpha channel set to 255 ({@code argb})
 	 *
@@ -11,14 +12,14 @@ public class RenderUtil {
 	 * first two hex digits, but RGB is the most common.
 	 */
 	public static int opaque(int rgb) {
-		return rgb | 0xFF000000;
+		return rgb | OPAQUE;
 	}
 
 	/**
 	 * On versions >=1.21.6, returns {@code xrgb} as an opaque color, while on versions before
 	 * that it returns {@code xrgb} with any alpha channel explicitly removed. In other words,
 	 * on versions >=1.21.6, this method is equivalent to {@link #opaque(int)}, while on
-	 * older versions it is equivalent to {@code xrgb & 0x00FFFFFF}.
+	 * older versions it is equivalent to <code>xrgb & {@value #NO_ALPHA_CHANNEL}</code>.
 	 *
 	 * @implNote Uses Stonecutter
 	 *
@@ -29,14 +30,9 @@ public class RenderUtil {
 			/*? if >=1.21.6 {*/
 				opaque(xrgb)
 			/*?} else {*/
-				/*xrgb & 0x00FFFFFF*/
+				/*xrgb & NO_ALPHA_CHANNEL*/
 			/*?}*/
 		;
-	}
-
-	/** @see #smartOpaque(int) */
-	public static int smartOpaque(ChatFormatting formatting) {
-		return smartOpaque(formatting.getColor());
 	}
 
 

@@ -40,6 +40,16 @@ accessible method net/minecraft/client/gui/components/ChatComponent addMessage (
 accessible field net/minecraft/client/gui/screens/ChatScreen input Lnet/minecraft/client/gui/components/EditBox;
 
 
+## TextColor - FormattingUtil
+
+accessible field net/minecraft/network/chat/TextColor NAMED_COLORS Ljava/util/Map;
+
+
+## ChatFormatting - FormattingUtil
+
+accessible field net/minecraft/ChatFormatting code C
+
+
 ## GuiGraphics / GuiGraphicsExtractor - ScreenMixin
 
 #? if >=26.1 {
@@ -70,8 +80,3 @@ accessible field net/minecraft/client/gui/layouts/GridLayout children Ljava/util
 #? if >=26.1 {
 accessible class net/minecraft/client/gui/layouts/GridLayout$ChildContainer
 #?}
-
-
-## TextColor - TextUtil
-
-accessible method net/minecraft/network/chat/TextColor formatValue ()Ljava/lang/String;

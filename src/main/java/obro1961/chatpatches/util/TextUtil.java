@@ -4,13 +4,10 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.ChatFormatting;
-import net.minecraft.util.Util;
 import net.minecraft.network.chat.*;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 
@@ -38,15 +35,7 @@ public class TextUtil {
 	public static final Matcher NO_BACKSLASH_AMPERSAND_REGEX = Pattern.compile("(?im)(?<!\\\\)&([0-9a-fk-or])").matcher("");
 	/** <a href="https://regex101.com/r/D9x2yv/latest">Examples</a>*/
 	public static final Matcher DUPLICATE_COLOR_AMPERSAND_REGEX = Pattern.compile("(?im)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])").matcher("");
-	public static final Int2ObjectMap<ChatFormatting> COLOR_TO_FORMATTING = Util.make(() -> {
-		Int2ObjectMap<ChatFormatting> map = new Int2ObjectArrayMap<>(16); // array map bc it's only 16 elements, forever
-		for(ChatFormatting f : ChatFormatting.values()) {
-			if(f.isColor()) {
-				map.put(f.getColor().intValue(), f);
-			}
-		}
-		return map;
-	});
+
 
 	/**
 	 * A wrapped {@link Codec} for {@link Component} objects that will not
@@ -264,22 +253,23 @@ public class TextUtil {
 	 *
 	 * @see TextColor#formatValue()
 	 */
-	public static String getFormattingCodes(Style style, Style last) {
+	public static String getFormattingCodes(Style style, Style last) { //prepub: test this a bit post 26.2 TextColor rework
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
-		TextColor color = style.getColor();
-		ChatFormatting formatting = color != null ? ChatFormatting.getByName(color.serialize()) : ChatFormatting.RESET;
 
-		// only add the color code if one was explicitly specified (reset is not a color ^) and if it's different from the last color
-		if(formatting != ChatFormatting.RESET && (last.getColor() == null || color.getValue() != last.getColor().getValue())) {
-			if(formatting != null) {
-				joiner.add("" + formatting.getChar()); // default colors and reset codes
-			} else if( COLOR_TO_FORMATTING.containsKey(color.getValue()) ) {
-				joiner.add("" + COLOR_TO_FORMATTING.get(color.getValue()).getChar()); // hex colors that exist as formatting codes
-			} else {
-				joiner.add(color.formatValue()); // custom hex colors
-			}
-		} else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY)) { // can't use isEmpty() bc it's a reference check -_-
-			return "&r"; // if the current style is empty and the last style wasn't, we've reset!
+		// if the color is named, it will have a name
+		TextColor thisColor = Colors.simplify(style.getColor());
+		TextColor lastColor = Colors.simplify(last.getColor());
+
+		// only add the color code if one was explicitly specified and if it's different from the last color
+		if(thisColor != null && (lastColor == null || thisColor.getValue() != lastColor.getValue()))
+		{
+			Optional<String> code = Colors.getCode(thisColor);
+			// if thisColor is named, add its formatting code, else add its hex color
+			joiner.add( code.orElse(thisColor.formatValue()) ); // thisColor.serialize() also works bc at that point we know it's not named so it will call formatValue() for us
+		}
+		else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY))
+		{
+			return "&r"; // if the current style is empty but the last style wasn't, we've reset!
 		}
 
 		if(style.isBold() && !last.isBold()) {

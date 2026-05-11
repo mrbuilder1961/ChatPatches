@@ -70,6 +70,12 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 }*/
 
 dependencies {
+    if ("26.2" in v || "26.2" in minecraft) {
+    // FIXME TEMP!!
+        constraints {
+            modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabric.api") + "+" + minecraft.substringBefore('-')}")
+        }
+    }
     // fabric only
     modstitch.loom {
         val fapi = p("fabric.api") + "+" + minecraft.substringBefore('-')
@@ -292,6 +298,10 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         str(v261, "render(", "extractRenderState(", "extract_render_state", true) // targets plain render(..) calls
         str(v261, "\"render\"", "\"extractRenderState\"", "extract_render_state_target", true) // targets plain render(..) injectors
         str(v261, "render", "extract", "render_extraction", false) // targets render<component>(..) calls
+
+        val v262 = current.parsed > "26.1" //stonecutter: >=26.2
+        str(v262, "gui.getChat()", "gui.hud.getChat()") // how clear and verbose Mojang!
+        str(v262, ".setScreen(", ".gui.setScreen(")
     }
 }
 

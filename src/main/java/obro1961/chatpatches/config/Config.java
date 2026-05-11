@@ -52,8 +52,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 
-import static net.minecraft.ChatFormatting.*;
 import static obro1961.chatpatches.ChatPatches.*;
+import static obro1961.chatpatches.util.Colors.*;
 import static obro1961.chatpatches.util.TextUtil.fillVars;
 import static obro1961.chatpatches.util.TextUtil.text;
 
@@ -89,20 +89,20 @@ public class Config {
     //  >> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
     // tab categories: message, boundary, chatlog, chat
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
-    public boolean time = true, timeSystemMessages = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE.getColor();
-    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = PLACEHOLDER; public int hoverColor = WHITE.getColor();
-    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = YELLOW.getColor(); public boolean counterCheckStyle = false;
+    public boolean time = true, timeSystemMessages = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE;
+    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = PLACEHOLDER; public int hoverColor = WHITE;
+    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = YELLOW; public boolean counterCheckStyle = false;
     public boolean compactChat = false; public int compactDistance = 0;
 
-    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA.getColor();
+    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA;
 
     public boolean chatlog = true; public int chatlogSaveInterval = 0; // todo fix the save interval guy like never working
 
-    public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE.getColor();
+    public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE;
     public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean dynamicChatShift = true, vanillaClearing = false, chatHidePacket = true,
 		// idea: messageDrafting -> chatDrafting? (once migration codec established)
 		messageDrafting = false, onlyInvasiveDrafting = false;
-    public boolean contextMenu = true, contextDeletionWarning = true; public int contextOutlineColor = AQUA.getColor(); public String contextReplyFormat = "/msg $ ";
+    public boolean contextMenu = true, contextDeletionWarning = true; public int contextOutlineColor = AQUA; public String contextReplyFormat = "/msg $ ";
     public boolean search = true, searchDrafting = true, searchPrefix = false,
         caseSensitive = true, regex = false;
 	public boolean logMessageStructures = false;
@@ -140,7 +140,7 @@ public class Config {
 				}
             },
             Component.translatable(YaclConfig.HELP_PREFIX + "missing").withStyle(ChatFormatting.RED),
-            Component.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", modTitle).withStyle(GRAY),
+            Component.translatable(YaclConfig.DESCRIPTION_PREFIX + "help.missing", modTitle).withStyle(ChatFormatting.GRAY),
             CommonComponents.GUI_CONTINUE,
             CommonComponents.GUI_BACK
         );

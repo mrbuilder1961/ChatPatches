@@ -7,21 +7,18 @@ import dev.isxander.yacl3.gui.YACLScreen;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
+import obro1961.chatpatches.util.Colors;
 import obro1961.chatpatches.util.RenderUtil;
-import obro1961.chatpatches.util.TextUtil;
 
 import java.awt.*;
 import java.io.File;
@@ -205,8 +202,8 @@ public class YaclConfig extends Config {
 
                                         ( d instanceof Integer i && k.contains("Color") )
                                             ? "`0x%06X`".formatted(i)
-                                                + ((Object) TextUtil.COLOR_TO_FORMATTING.get(i.intValue()) instanceof ChatFormatting f
-                                                    ? " ("+f.getName().toLowerCase(Locale.ROOT)+")"
+                                                + ((Object) Colors.VALUE_TO_TEXTCOLOR.get(i.intValue()) instanceof TextColor c
+                                                    ? " ("+c.serialize().toLowerCase(Locale.ROOT)+")"
                                                     : ""
                                                 )
                                             : (opt.getType().equals(String.class))

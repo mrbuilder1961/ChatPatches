@@ -405,7 +405,7 @@ public class ChatLog {
 	 */
 	public static void hideRecentMessages() {
 		if(messageCount() > 0 && historyCount() > 0) {
-			int ticks = mc().gui.getGuiTicks();
+			int ticks = mc().gui./*? if >26.1 {*//*hud.*//*?}*/getGuiTicks();
 			var visibles = mc().gui.getChat().trimmedMessages;
 
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering! (#42)

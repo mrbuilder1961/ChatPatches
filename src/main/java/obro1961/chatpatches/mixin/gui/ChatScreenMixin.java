@@ -50,6 +50,7 @@ import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
 import obro1961.chatpatches.gui.SearchButton;
 import obro1961.chatpatches.util.ChatUtil;
+import obro1961.chatpatches.util.Colors;
 import obro1961.chatpatches.util.RenderUtil;
 import org.apache.commons.lang3./*? if >=1.21.11 {*/Strings/*?} else {*//*StringUtils*//*?}*/;
 import org.jetbrains.annotations.NotNull;
@@ -258,7 +259,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			// renders a suggestion-esq error message if the regex search is invalid
 			if(searchError != null) {
 				int x = searchField.getX() + 8 + (int) (width * SEARCH_W_MULTIPLIER);
-				graphics./*? if >=26.1 {*/text/*?} else {*//*drawString*//*?}*/(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(ChatFormatting.DARK_RED));
+				graphics./*? if >=26.1 {*/text/*?} else {*//*drawString*//*?}*/(font, searchError.getMessage().split(System.lineSeparator())[0], x, searchField.getY(), RenderUtil.smartOpaque(Colors.DARK_RED));
 			}
 		}
 
@@ -667,7 +668,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				searchField.setSuggestion(null);
 			}
 
-			ChatFormatting status = ChatFormatting.WHITE;
+			int status = Colors.WHITE;
 
 			// if regex is enabled and the text is invalid, set the error and color
 			if(config.regex) {
@@ -677,7 +678,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				} catch(PatternSyntaxException e) {
 					searchError = e;
 					// red = invalid regex
-					status = ChatFormatting.RED;
+					status = Colors.RED;
 					chat.rescaleChat();
 				}
 			} else {
@@ -709,13 +710,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					messages.clear();
 					messages.addAll(copy);
 
-					status = ChatFormatting.GREEN; // match(es) exist
+					status = Colors.GREEN; // match(es) exist
 				} else {
 					// already empty
 					messages.addAll(copy);
 					chat.rescaleChat(); // we need the visible messages back
 
-					status = ChatFormatting.YELLOW; // no matches but valid search
+					status = Colors.YELLOW; // no matches but valid search
 				}
 			}
 
