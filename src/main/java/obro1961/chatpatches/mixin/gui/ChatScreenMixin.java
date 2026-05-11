@@ -374,7 +374,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		method = "keyPressed",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/client/Minecraft;setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"
+			target = "Lnet/minecraft/client/" + /*? if >26.1 {*//*"gui/Gui"*//*?} else {*/"Minecraft"/*?}*/ + ";setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"
 			/*? if <=1.21.8 {*/
 			/*, ordinal = 1, // post 1.21.9 partial drafting feature, only one call exists
 			shift = At.Shift.AFTER // not important post 1.21.9 either

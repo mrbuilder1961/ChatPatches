@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.Util;
+import obro1961.chatpatches.ChatPatches;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -21,6 +22,8 @@ public class Colors {
 	/* {@link TextColor#NAMED_COLORS} maps name strings to {@link TextColor} objects. */
 	/**
 	 * Maps name strings to their respective {@link ChatFormatting} objects.
+	 *
+	 * @apiNote This map contains non-color (modifier) objects.
 	 */
 	public static final Object2ObjectMap<String, ChatFormatting> NAME_TO_LEGACY = Util.make(new Object2ObjectArrayMap<>(22), me -> {
 		for(ChatFormatting legacy : ChatFormatting.values()) {
@@ -40,7 +43,10 @@ public class Colors {
 	 */
 	public static final Int2ObjectMap<ChatFormatting> VALUE_TO_LEGACY = Util.make(new Int2ObjectArrayMap<>(16), me -> {
 		for(ChatFormatting legacy : ChatFormatting.values()) {
-			me.put(TextColor.fromLegacyFormat(legacy).getValue(), legacy);
+			TextColor textColor = TextColor.fromLegacyFormat(legacy);
+			if(textColor != null) {
+				me.put(textColor.getValue(), legacy);
+			}
 		}
 	});
 
