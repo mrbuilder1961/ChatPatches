@@ -1,9 +1,17 @@
 # Changelog
 
-## Chat Patches `8.0-alpha.9` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.1.2 on Fabric, Quilt
+## Chat Patches `8.0-alpha.9` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
+- Updated to 26.2
+- Going forward, Minecraft versions will be published with the `{year}.{drop}.x` pattern, meaning Chat Patches releases can automatically support hotfixes for
+  specific drops (unless explicitly removed due to incompatibilities)! This will save both me (the developer) and you (the player) time in between drops, so 
+  you can keep using the mod and I can avoid no-change releases
 - Based on the relative lack of downloads compared to newer versions, the amount of version targets has been reduced. This should somewhat accelerate
-  development for future releases! Later, I may reduce the amount of targets further if needed.
-- Bumped compatibility to 26.1.1 and 2.
+  development for future releases! Later, I may reduce the amount of targets further. This will not affect the latest version!
+- **Dev notes:**
+  - In response to Mojang gutting `ChatFormatting` and changing `TextColor`, I made a new `Colors` util class to ease interoperability
+  - In order to support the new consistent semver versioning and my existing publishing setup, versions can now specify `mod.versions` explicitly for CF and MR
+    - `mod.nonReleaseComponent` can also be specified for snapshot development, so versions can be `{year}.{drop}` instead of the volatile 
+    `{year}.{drop}-snapshot-n`. This is likely buggy
 
 ## Chat Patches `8.0-beta.1` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.1 on Fabric, Quilt
 (moved temporarily for hotfix compat w 26.1.2)

@@ -21,14 +21,23 @@ val loader: String = when {
     else -> error("Invalid Modstitch loader ${modstitch.platform}")
 }
 val currentIsActive = minecraft == stonecutter.active?.version
+val nonReleaseComponent = findProperty("mod.nonReleaseComponent")?.toString()
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
 // if we just had a `testPublishMods` task
 var changes = "No changelog specified."
 
+fun fullMc(): String {
+    var ver: String = minecraft
+    if(nonReleaseComponent?.isNotEmpty() ?: false) {
+        ver += "-$nonReleaseComponent"
+    }
+    return ver
+}
 fun java(): Int = modstitch.javaVersion.orNull ?: error("No Java version available (per Modstitch)")
 fun javaStr(): String = java().toString()
+
 /**
  * Returns the property with the given name. If it doesn't exist then returns the
  * fallback, but if that's null then throws an error.
@@ -55,14 +64,14 @@ fun d(name: String, fallback: String? = null): String = p("dep.$name", fallback)
 fun dep(name: String, consumer: (prop: String) -> Unit) = prop("dep.$name", consumer)
 
 fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
-//fun mod(name: String, consumer: (prop: String) -> Unit) = prop("mod.$name", consumer)
+fun mod(name: String, consumer: (prop: String) -> Unit) = prop("mod.$name", consumer)
 
 /**
  * Returns the property belonging to the current loader. For example, `l("api")`
- * will return the value of `fabric.api`, `neo.api`, or `forge.api` depending on
+ * will return the value of `fabric.api`, `neoforge.api`, or `forge.api` depending on
  * the current loader.
  */
-/*fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallback)*/
+fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallback)
 
 
 /*kotlin {
@@ -70,15 +79,16 @@ fun m(name: String, fallback: String? = null): String = p("mod.$name", fallback)
 }*/
 
 dependencies {
-    if ("26.2" in v || "26.2" in minecraft) {
-    // FIXME TEMP!!
+    mod("overrides") {
+        //TODO: this setup is temporary but it will be better fleshed out later
         constraints {
             modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabric.api") + "+" + minecraft.substringBefore('-')}")
         }
     }
+
     // fabric only
     modstitch.loom {
-        val fapi = p("fabric.api") + "+" + minecraft.substringBefore('-')
+        val fapi = l("api") + "+" + minecraft // snapshots are now handled via nonReleaseComponent
         modstitchModImplementation(fabricApi.module("fabric-lifecycle-events-v1", fapi))
         modstitchModImplementation(fabricApi.module("fabric-networking-api-v1", fapi))
         modstitchModImplementation(fabricApi.module("fabric-screen-api-v1", fapi))
@@ -100,13 +110,13 @@ repositories {
     mavenCentral()
     maven("https://maven.isxander.dev/releases")
     maven("https://maven.terraformersmc.com/releases/")
-    if(minecraft == "1.20.4") {
-        maven("https://maven.nucleoid.xyz/") // Placeholder API for Mod Menu -_-
-    }
 }
 
 modstitch {
-    minecraftVersion = minecraft
+    minecraftVersion = fullMc()
+    if(nonReleaseComponent != null) {
+        println("Non-release version component: $nonReleaseComponent")
+    }
 
     parchment {
         dep("parchment") { mappingsVersion = it }
@@ -131,7 +141,7 @@ modstitch {
             "mod_source" to m("source"),
             "mod_modrinth" to m("modrinth"),
 
-            "minecraft_range" to m("range", minecraft).run {
+            "minecraft_range" to m("range", fullMc()).run {
                 if(contains(',')) {
                     // parse versions into a list and then add quotes to ensure valid JSON syntax
                     split(",").map { "\"$it\"" }.toString()
@@ -140,7 +150,8 @@ modstitch {
                 }
                 //if(!isLoom) [list.getFirst(),list.getLast()] // version ranges should all be consecutive
             },
-            "fabric_loader_core" to p("fabric.loader").substringAfter('.').substringBefore('.'), // ex. 0.18.4 -> 18
+            // prepub how do we deal w this when neo is impl'd? can we leave it or will it break stuff..?
+            "fabric_loader_core" to l("loader").substringAfter('.').substringBefore('.'), // ex. 0.18.4 -> 18
             "optional_list" to dep2StringList("optionals"),
             "incompatible_list" to dep2StringList("incompatibles"),
             //"embed_list" to dep2StringList("embedded"), // currently empty
@@ -149,7 +160,7 @@ modstitch {
 
     // Fabric
     loom {
-        fabricLoaderVersion = p("fabric.loader")
+        fabricLoaderVersion = l("loader")
 
 
         // Configure loom like normal here
@@ -173,7 +184,7 @@ modstitch {
     }
 
     mixin {
-        addMixinsToModManifest = true // auto-gen mixins in FMJ and mods.toml
+        addMixinsToModManifest = true
 
         configs.register(id)
 
@@ -186,7 +197,7 @@ modstitch {
 tasks {
     modstitch.finalJarTask {
         archiveBaseName.set(id)
-        archiveVersion.set("$v+$minecraft")
+        archiveVersion.set("$v+${fullMc()}")
         archiveClassifier.set(loader)
     }
 
@@ -324,12 +335,14 @@ publishMods {
         }
     }
 
-    val targets = m("range", minecraft).split(",")
+
+    // tries to read explicitly-specified `versions` first, then accesses the more common `range` as a fallback
+    // this lets modern versions automatically support patch versions (ex. 26.1.x via ~26.1) while still specifying versions to CF and MR
+    val targets = m("versions", m("range", minecraft)).split(",")
     val required = propList("required")
     val optionals = propList("optionals")
     val incompatibles = propList("incompatibles")
     val embedded = propList("embedded")
-    //prepub prob need to store these in options... sigh
 
     version = "$v+$name" // mod_version+minecraft-loader
     displayName = "$v for $minecraft ${loader.replaceFirstChar { it.uppercase() }}"
