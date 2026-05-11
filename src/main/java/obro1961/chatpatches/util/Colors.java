@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.Util;
-import obro1961.chatpatches.ChatPatches;
 
 import java.util.Locale;
 import java.util.Optional;
