@@ -2,6 +2,8 @@
 
 ## Chat Patches `8.0-alpha.9` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
 - Updated to 26.2
+  - **WARNING:** the dependencies used at the time of writing (YACL `3.9.3` + Mod Menu `19.0.0-alpha.1`) are not fully ported to 26.2 and *will crash your game* 
+    if you press the <kbd>Mods</kbd> button
 - Going forward, Minecraft versions will be published with the `{year}.{drop}.x` pattern, meaning Chat Patches releases can automatically support hotfixes for
   specific drops (unless explicitly removed due to incompatibilities)! This will save both me (the developer) and you (the player) time in between drops, so 
   you can keep using the mod and I can avoid no-change releases
