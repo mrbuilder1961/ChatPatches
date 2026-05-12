@@ -38,7 +38,7 @@ public class DeletionWarningScreen extends WarningScreen {
 
 
 	private void close() {
-		minecraft.setScreen(parent);
+		minecraft.gui.setScreen(parent);
 	}
 
 	/**

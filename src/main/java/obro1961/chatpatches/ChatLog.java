@@ -380,7 +380,7 @@ public class ChatLog {
     public static void restore() {
         if(messageCount() > 0 || historyCount() > 0) {
 			/*? if >=1.21.9 {*/RenderSystem.assertOnRenderThread();/*?}*/
-			ChatComponent chat = mc().gui.getChat();
+			ChatComponent chat = mc().gui.hud.getChat();
 
 			// todo i think we just need to mixin to the delayed message queue thing, and here we cache the current setting, set it to ~5s delay, and mark some flag field true to be used in the mixin(s)!
 
@@ -405,8 +405,8 @@ public class ChatLog {
 	 */
 	public static void hideRecentMessages() {
 		if(messageCount() > 0 && historyCount() > 0) {
-			int ticks = mc().gui./*? if >26.1 {*//*hud.*//*?}*/getGuiTicks();
-			var visibles = mc().gui.getChat().trimmedMessages;
+			int ticks = mc().gui./*? if >26.1.2 {*/hud./*?}*/getGuiTicks();
+			var visibles = mc().gui.hud.getChat().trimmedMessages;
 
 			// sets all messages (restored and boundary line) to an addedTime of -200 to prevent instant rendering! (#42)
 			// now adds the message's addedTime to account for any extra offsets from the deserialization desync from the main game thread

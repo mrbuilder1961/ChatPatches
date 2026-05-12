@@ -152,7 +152,7 @@ public class ChatUtil {
 	 * @see #visible2Message(int)
 	 */
 	public static int message2Visible(int messageIndex) {
-		var visibles = mc().gui.getChat().trimmedMessages;
+		var visibles = mc().gui.hud.getChat().trimmedMessages;
 
 		if(messageIndex == -1) {
 			return -1; // avoids iterating through the entire list
@@ -190,7 +190,7 @@ public class ChatUtil {
 	 * @see #message2Visible(int)
 	 */
 	public static int visible2Message(int visibleIndex) {
-		var visibles = mc().gui.getChat().trimmedMessages;
+		var visibles = mc().gui.hud.getChat().trimmedMessages;
 
 		if(visibleIndex == -1 || visibleIndex >= visibles.size()) {
 			return -1;
@@ -205,7 +205,7 @@ public class ChatUtil {
 	 */
 	@SuppressWarnings("UnusedReturnValue") // follows the List convention
 	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessageSilently(GuiMessage message) {
-		return deleteMessage(mc().gui.getChat().allMessages.indexOf(message), false);
+		return deleteMessage(mc().gui.hud.getChat().allMessages.indexOf(message), false);
 	}
 
 	/**
@@ -214,7 +214,7 @@ public class ChatUtil {
 	 */
 	@SuppressWarnings("UnusedReturnValue") // follows the List convention
 	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(GuiMessage message) {
-		return deleteMessage(mc().gui.getChat().allMessages.indexOf(message), true);
+		return deleteMessage(mc().gui.hud.getChat().allMessages.indexOf(message), true);
 	}
 
 	/**
@@ -239,7 +239,7 @@ public class ChatUtil {
 	 * happen.
 	 */
 	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(int messageIndex, boolean playBurnSound) {
-		ChatComponent chat = mc().gui.getChat();
+		ChatComponent chat = mc().gui.hud.getChat();
 		List<GuiMessage> messages = chat.allMessages;
 		List<GuiMessage.Line> visibles = chat.trimmedMessages;
 		// messages shown when searching don't have any issues (at least in terms of GuiMessage) because the index passed is based in #allMessages - perfect!
@@ -629,7 +629,7 @@ public class ChatUtil {
 	 */
 	private static Component tryCondenseDupes(Component incoming) {
 		// todo: make this method save to the chat log too (so no redundant messages)!
-		ChatComponent chat = mc().gui.getChat();
+		ChatComponent chat = mc().gui.hud.getChat();
 		List<GuiMessage> messages = chat.allMessages;
 
 		if(!config.counter || messages.isEmpty()) {

@@ -109,7 +109,7 @@ public class YaclConfig extends Config {
                         //  need to like make a whole new method or something that only updates the message components on refresh, which is plausible
                         //  but is not an effortless change. (ex. take timestamp and regenerate time text, take player regen name, etc) not on chatlog#restore
                         cat.equals("counter") || cat.equals("compact")
-                            ? new OptionFlag[] { client -> client.gui.getChat().rescaleChat() }
+                            ? new OptionFlag[] { client -> client.gui.hud.getChat().rescaleChat() }
                             : new OptionFlag[0]
                     )
                     /*? if >=1.21.9 {*/
@@ -358,7 +358,7 @@ public class YaclConfig extends Config {
                 case "chatHeight" -> mc().getWindow().getGuiScaledHeight();
                 case "chatlogSaveInterval" -> 180; // 3 hours
                 case "compactDistance" -> //noinspection ConstantValue: Stonecutter :D
-					(Object)mc().gui.getChat() instanceof ChatComponent chat ? chat.getLinesPerPage() : 25; // chatMaxMessages ?
+					(Object)mc().gui.hud.getChat() instanceof ChatComponent chat ? chat.getLinesPerPage() : 25; // chatMaxMessages ?
                 case "chatShift" -> 100;
                 default -> {
                     ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));

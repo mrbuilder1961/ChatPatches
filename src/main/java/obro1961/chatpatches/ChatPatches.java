@@ -197,7 +197,7 @@ public class ChatPatches implements ClientModInitializer {
 		Minecraft mc = Minecraft.getInstance();
 		mc.execute(() ->
 			SystemToast.add(
-				mc./*? if >26.1 {*//*gui.toastManager*//*?} elif >=1.21.2 {*/getToastManager/*?} else {*//*getToasts*//*?}*/(),
+				mc./*? if >26.1.2 {*/gui.toastManager/*?} elif >=1.21.2 {*//*getToastManager*//*?} else {*//*getToasts*//*?}*/(),
 				error
 					/*~ if <=1.20.2 'Id' -> 'Ids' {*/
 					? SystemToast.SystemToastId.PACK_LOAD_FAILURE

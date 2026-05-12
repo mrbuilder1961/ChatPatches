@@ -25,7 +25,7 @@ import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
  */
 public class VersionUtil {
 	static Minecraft mc() { return Minecraft.getInstance(); }
-	static ChatComponent chat() { return mc().gui.getChat(); }
+	static ChatComponent chat() { return mc().gui.hud.getChat(); }
 
 	//? if >=1.21.11 {
 	public static double screenToChatX(double x) {

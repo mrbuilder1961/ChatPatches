@@ -136,7 +136,7 @@ public class Config {
                 if(clicked) {
 					ConfirmLinkScreen.confirmLinkNow(/*? if >1.20.2 {*/ parent, link /*?} else {*//*link, parent, true*//*?}*/);
 				} else {
-					mc().setScreen(parent);
+					mc().gui.setScreen(parent);
 				}
             },
             Component.translatable(YaclConfig.HELP_PREFIX + "missing").withStyle(ChatFormatting.RED),
@@ -272,7 +272,7 @@ public class Config {
     public void sendBoundaryLine() {
         if(!boundary || vanillaClearing) return;
 
-		ChatComponent chat = mc().gui.getChat();
+		ChatComponent chat = mc().gui.hud.getChat();
         List<GuiMessage> messages = chat.allMessages;
 		Boundary currentLevel = Boundary.createFromCurrentLevel();
 
@@ -329,7 +329,7 @@ public class Config {
 		int armor = player.getArmorValue();
 		float absorption = player.getAbsorptionAmount();
 		float health = player.getMaxHealth();
-		double scale = mc().gui.getChat().getScale();
+		double scale = mc().gui.hud.getChat().getScale();
 
 		int playerState = Objects.hash(armor, absorption, health, scale);
 		// if the last player state is the same as the current one and a shift value is available, use it

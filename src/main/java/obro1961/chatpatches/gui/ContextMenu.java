@@ -192,7 +192,7 @@ public class ContextMenu implements GuiEventListener {
 		this.grid = new Grid();
 
 		// reference and optimization fields
-		this.chat = mc().gui.getChat();
+		this.chat = mc().gui.hud.getChat();
 		var access = (ChatComponentAccess) chat;
 		this.screen = noOp ? null : screen;
 
@@ -527,7 +527,7 @@ public class ContextMenu implements GuiEventListener {
 
 		registerActionButton(MENU_DELETE, Items.BARRIER, me -> {
 			if(config.contextDeletionWarning) {
-				mc().setScreen(new DeletionWarningScreen(screen, selectedLine));
+				mc().gui.setScreen(new DeletionWarningScreen(screen, selectedLine));
 			} else {
 				ChatUtil.deleteMessage(selectedLine);
 			}

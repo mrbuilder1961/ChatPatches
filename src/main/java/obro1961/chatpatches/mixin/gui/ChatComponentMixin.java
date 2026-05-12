@@ -127,7 +127,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
         if(!config.vanillaClearing) {
             // Clear message using F3+D
             if(!clearHistory) {
-                minecraft./*? if >26.1 {*//*gui.chatListener*//*?} else {*/getChatListener/*?}*/()./*? if >=1.21.9 {*/flushQueue/*?} else {*//*clearQueue*//*?}*/();
+                minecraft./*? if >26.1.2 {*/gui.chatListener/*?} else {*//*getChatListener*//*?}*/()./*? if >=1.21.9 {*/flushQueue/*?} else {*//*clearQueue*//*?}*/();
                 messageDeletionQueue.clear();
                 allMessages.clear();
                 trimmedMessages.clear();

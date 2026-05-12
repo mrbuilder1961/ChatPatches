@@ -305,7 +305,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(input.getValue().equals("/")) {
 			messageDraft = ""; // don't retain blank commands
 			//? if >=1.21.9 {
-			minecraft.gui.getChat().discardDraft(); // un-fucks the vanilla system
+			minecraft.gui.hud.getChat().discardDraft(); // un-fucks the vanilla system
 			//?}
 		} else {
 			messageDraft = input.getValue();
@@ -313,7 +313,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		searchDraft = searchField.getValue();
 
 		if(!searchField.getValue().isEmpty()) {
-			minecraft.gui.getChat().rescaleChat(); // reset the hud if it had anything in the field (#102)
+			minecraft.gui.hud.getChat().rescaleChat(); // reset the hud if it had anything in the field (#102)
 		}
 
 		contextMenu.close(this::removeWidget);
@@ -374,7 +374,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		method = "keyPressed",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/client/" + /*? if >26.1 {*//*"gui/Gui"*//*?} else {*/"Minecraft"/*?}*/ + ";setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"
+			target = "Lnet/minecraft/client/" + /*? if >26.1.2 {*/"gui/Gui"/*?} else {*//*"Minecraft"*//*?}*/ + ";setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"
 			/*? if <=1.21.8 {*/
 			/*, ordinal = 1, // post 1.21.9 partial drafting feature, only one call exists
 			shift = At.Shift.AFTER // not important post 1.21.9 either
@@ -589,7 +589,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		int cursor = input.getCursorPosition();
 		String prefix = input.getValue().substring(0, cursor);
-		List<String> history = minecraft.gui.getChat().getRecentChat();
+		List<String> history = minecraft.gui.hud.getChat().getRecentChat();
 
 		int newHistoryIndex = historyPos + offset;
 		int newOffset = 0;
@@ -662,7 +662,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			return; // prevent useless updates
 		}
 
-		ChatComponent chat = minecraft.gui.getChat();
+		ChatComponent chat = minecraft.gui.hud.getChat();
 		if(!text.isEmpty() || refresh) {
 			if(!text.isEmpty()) { // ensures the suggestion is kept when there is no query
 				searchField.setSuggestion(null);
