@@ -90,6 +90,11 @@ public class Colors {
 		return named != null && color.serialize().startsWith("#") ? named : color;
 	}
 
+	/** @see #simplify(TextColor) */
+	public static TextColor simplify(int rgb) {
+		return simplify(TextColor.fromRgb(rgb));
+	}
+
 	/**
 	 * If {@code color} is a named color, returns its formatting code.
 	 * Otherwise, returns an empty optional.

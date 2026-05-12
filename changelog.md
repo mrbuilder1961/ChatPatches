@@ -9,6 +9,7 @@
   you can keep using the mod and I can avoid no-change releases
 - Based on the relative lack of downloads compared to newer versions, the amount of version targets has been reduced. This should somewhat accelerate
   development for future releases! Later, I may reduce the amount of targets further. This will not affect the latest version!
+- Ampersand formatting codes (ex `&a`) are now case-sensitive (`&A` will no longer work) — you shouldn't have done this in the first place though
 - **Dev notes:**
   - In response to Mojang gutting `ChatFormatting` and changing `TextColor`, I made a new `Colors` util class to ease interoperability
   - In order to support the new consistent semver versioning and my existing publishing setup, versions can now specify `mod.versions` explicitly for CF and MR

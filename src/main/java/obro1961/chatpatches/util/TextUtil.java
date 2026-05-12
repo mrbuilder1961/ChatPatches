@@ -11,10 +11,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.*;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -27,14 +24,54 @@ public class TextUtil {
 	/**
 	 * @see ChatFormatting#PREFIX_CODE
 	 */
-	public static final Matcher AMPERSAND_REGEX = Pattern.compile("(?im)&([0-9a-fk-or])").matcher("");
+	public static final Matcher AMPERSAND_REGEX = Pattern.compile("(?m)&([\\da-fk-or])").matcher("");
 	/**
 	 * {@link #AMPERSAND_REGEX} that explicitly does not match any
 	 * formatting codes following backslashes
 	 */
-	public static final Matcher NO_BACKSLASH_AMPERSAND_REGEX = Pattern.compile("(?im)(?<!\\\\)&([0-9a-fk-or])").matcher("");
-	/** <a href="https://regex101.com/r/D9x2yv/latest">Examples</a>*/
-	public static final Matcher DUPLICATE_COLOR_AMPERSAND_REGEX = Pattern.compile("(?im)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])").matcher("");
+	public static final Matcher NO_BACKSLASH_AMPERSAND_REGEX = Pattern.compile("(?m)(?<!\\\\)&([\\da-fk-or])").matcher("");
+	/**
+	 * Matches two ampersand color codes that directly follow one another. Will
+	 * also match if there's any whitespace in between them. This is used to
+	 * simplify output strings, as in these cases the first color code is entirely
+	 * useless.
+	 *
+	 * @see <a href="https://regex101.com/r/D9x2yv/latest">Examples</a>
+	 */
+	public static final Matcher REDUNDANT_COLOR_REGEX = Pattern.compile("(?m)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])").matcher("");
+	/**
+	 * Matches an ampersand color code at the end of a message, optionally
+	 * succeeded by whitespace. This is used to simplify output strings, as
+	 * color codes at the end of a string do nothing.
+	 *
+	 * @apiNote Should be used in conjunction with (after) {@link
+	 * #REDUNDANT_COLOR_REGEX}.
+	 *
+	 * @see <a href="https://regex101.com/r/aUuwX1/latest">Examples</a>
+	 */
+	public static final Matcher EOL_COLOR_REGEX = Pattern.compile("(?m)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)$").matcher("");
+	/**
+	 * Replace with {@code "$2&$1"} to shift all color codes to the right where possible.
+	 * For example, {@code hey&b oops} will be replaced with {@code hey &boops}, or.
+	 * This prevents "floating" formatting codes from impairing readability in
+	 * the output string.
+	 *
+	 * @see <a href="https://regex101.com/r/3N1ZaR/latest">Examples</a>
+	 */
+	public static final Matcher COLOR_SHIFT_WHITESPACE_REGEX = Pattern.compile("&(#[\\da-f]{6}|[\\da-f])(\\s+)").matcher("");
+
+	/**
+	 * Matches any ampersand formatting codes, whether regular (legacy) or hex,
+	 * for use with the pretty-print esque replacer in {@link #toCodedString(Component)}.
+	 *
+	 * @see <a href="https://regex101.com/r/m0AM81/latest">Examples</a>
+	 */
+	public static final Matcher PRETTY_PRINT_TARGETS_REGEX = Pattern.compile("(?im)(?:&(?:#[\\da-f]{6}|[\\da-fk-or]))+").matcher("");
+	//FIXME not working right... it makes ultra-redundant outputs like
+	// 'banned §b&r§r§b&c§r§b&l§r5,565§b&r§r players'
+	// when
+	// 'banned §b&r&c&l§r5,565§b&r§r players'
+	// is what it should produce
 
 
 	/**
@@ -216,31 +253,67 @@ public class TextUtil {
 		AtomicReference<Style> lastStyle = new AtomicReference<>(Style.EMPTY); // ensures that the first equality check returns false
 
 		text.visit((style, str) -> {
+			if(str.isBlank()) {
+				// add the whitespace but don't format anything
+				builder.append(str);
+				return Optional.empty();
+			}
+
 			// if style is different from last, add any formatting codes
 			if(!style.equals(lastStyle.get())) {
-				builder.append(ChatFormatting.AQUA); // adds a pop of color to the codes to make them more visible
 				builder.append(getFormattingCodes(style, lastStyle.get()));
-				builder.append(ChatFormatting.RESET); // adding colors breaks some (whitespace separated) functionality of DUPE_COLOR_AMPERSAND_REGEX
 
 				lastStyle.set(style);
 			}
 
-			builder.append( str.replace(ChatFormatting.PREFIX_CODE, '&') ); // sometimes section signs leak and I WANT THEM OUT
+			// sometimes section signs leak and I WANT THEM OUT
+			// this has to be done here or else the stylish color codes added above will be erased
+			// todo: this should probably be flagged bc otherwise these are not colored like the ones above are
+			builder.append( str.replace(ChatFormatting.PREFIX_CODE, '&') );
 
 			return Optional.empty();
 		}, Style.EMPTY);
 
-		while(builder.toString().startsWith("&r")) { // removes any leading reset codes
-			builder.delete(0, 2);
+
+		String result = builder.toString();
+		Matcher m;
+
+		// removes the redundant code in a pair of color codes, optionally separated by whitespace, including hex codes
+		// ex. '&a&9' -> '&9', '&c&#D231BC' -> '&#D231BC', '&#A0FF22\t&f' -> '\t&f'
+		while((m = REDUNDANT_COLOR_REGEX.reset(result)).find()) {
+			result = m.replaceFirst("$1&$2");
 		}
 
-		while(builder.toString().endsWith("&r")) { // removes duplicate trailing reset codes
-			builder.setLength(builder.length() - 2);
+		// removes redundant codes at the end of a message, optionally succeeded by whitespace, including hex codes
+		// ex. '   &b  ' -> '     ',
+		/*while((m = EOL_COLOR_REGEX.reset(result)).find()) {
+			result = m.replaceFirst("$1");
+		}*/
+
+		while((m = COLOR_SHIFT_WHITESPACE_REGEX.reset(result)).find()) {
+			result = m.replaceFirst("$2&$1");
 		}
 
-		// removes the redundant code in a pair of color codes, optionally separated by whitespace, even including hex codes
-		// ex. '&a&9' -> '&9', '&b   &4' -> '   &4', '&c&#123ABC' -> '&#123ABC', '&#00FF22\t&f' -> '\t&f'
-		return DUPLICATE_COLOR_AMPERSAND_REGEX.reset(builder.toString()).replaceAll("$1&$2");
+		// removes any leading reset codes - all styles begin naturally reset
+		while(result.startsWith("&r")) {
+			result = result.substring(2);
+		}
+
+		while(result.contains("&r&f")) {
+			// this works because simplified, legacy strings cannot have custom,
+			// root styles, unlike the complex sibling-tree structure used today
+			result = result.replace("&r&f", "&r");
+			//todo: see if this is caused in getFormattingCodes()
+		}
+
+		// finally, adds a pop of color to the formatting codes
+		/*if((m = PRETTY_PRINT_TARGETS_REGEX.reset(result)).find()) {
+			//fixme genuinely zero clue why find() and every other equivalent is failing. fuck my chungus life ig
+			result = m.replaceAll(ChatFormatting.AQUA + "$1" + ChatFormatting.RESET);
+			// maybe replace &<?> codes that were in the original message with \\\\$1 and then ignore those in this regex
+		}*/
+
+		return result;
 	}
 
 	/**
@@ -257,8 +330,18 @@ public class TextUtil {
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
 
 		// if the color is named, it will have a name
-		TextColor thisColor = Colors.simplify(style.getColor());
-		TextColor lastColor = Colors.simplify(last.getColor());
+		// makes the fallback white so changes to colorless but not empty styles don't ignore colors
+		// see [newBuff] TODO
+		TextColor thisColor = Colors.simplify(style.getColor() != null ? style.getColor().getValue() : Colors.WHITE);
+		TextColor lastColor = Colors.simplify(last.getColor() != null ? last.getColor().getValue() : Colors.WHITE);
+
+		// ensures reset codes are not treated as white codes by forcing necessary reset codes
+		boolean anyModifierReset = (last.isBold() && !style.isBold()) || (last.isItalic() && !style.isItalic()) || (last.isUnderlined() && !style.isUnderlined()) ||
+			(last.isStrikethrough() && !style.isStrikethrough()) || (last.isObfuscated() && !style.isObfuscated());
+		if(anyModifierReset) {
+			// this is necessary because, unlike with colors, you cannot overwrite one modifier with another
+			joiner.add("r");
+		}
 
 		// only add the color code if one was explicitly specified and if it's different from the last color
 		if(thisColor != null && (lastColor == null || thisColor.getValue() != lastColor.getValue()))
