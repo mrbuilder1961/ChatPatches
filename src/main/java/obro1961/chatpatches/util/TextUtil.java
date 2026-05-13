@@ -34,7 +34,8 @@ public class TextUtil {
 	 * Matches two ampersand color codes that directly follow one another. Will
 	 * also match if there's any whitespace in between them. This is used to
 	 * simplify output strings, as in these cases the first color code is entirely
-	 * useless.
+	 * useless. When replacing, {@code $1} becomes the captured whitespace, if any,
+	 * and {@code $2} becomes the effective color code (not including the ampersand).
 	 *
 	 * @see <a href="https://regex101.com/r/D9x2yv/latest">Examples</a>
 	 */
@@ -42,7 +43,8 @@ public class TextUtil {
 	/**
 	 * Matches an ampersand color code at the end of a message, optionally
 	 * succeeded by whitespace. This is used to simplify output strings, as
-	 * color codes at the end of a string do nothing.
+	 * color codes at the end of a string do nothing. Captures the whitespace,
+	 * if any is available.
 	 *
 	 * @apiNote Should be used in conjunction with (after) {@link
 	 * #REDUNDANT_COLOR_REGEX}.
@@ -50,28 +52,16 @@ public class TextUtil {
 	 * @see <a href="https://regex101.com/r/aUuwX1/latest">Examples</a>
 	 */
 	public static final Matcher EOL_COLOR_REGEX = Pattern.compile("(?m)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)$").matcher("");
-	/**
-	 * Replace with {@code "$2&$1"} to shift all color codes to the right where possible.
-	 * For example, {@code hey&b oops} will be replaced with {@code hey &boops}, or.
-	 * This prevents "floating" formatting codes from impairing readability in
-	 * the output string.
-	 *
-	 * @see <a href="https://regex101.com/r/3N1ZaR/latest">Examples</a>
-	 */
-	public static final Matcher COLOR_SHIFT_WHITESPACE_REGEX = Pattern.compile("&(#[\\da-f]{6}|[\\da-f])(\\s+)").matcher("");
 
 	/**
 	 * Matches any ampersand formatting codes, whether regular (legacy) or hex,
-	 * for use with the pretty-print esque replacer in {@link #toCodedString(Component)}.
+	 * for use with the pretty-printer in {@link #toCodedString(Component)}.
+	 * Captures all formatting code(s) present in a string. Note that if any are
+	 * back-to-back, they will be captured together as one string.
 	 *
 	 * @see <a href="https://regex101.com/r/m0AM81/latest">Examples</a>
 	 */
-	public static final Matcher PRETTY_PRINT_TARGETS_REGEX = Pattern.compile("(?im)(?:&(?:#[\\da-f]{6}|[\\da-fk-or]))+").matcher("");
-	//FIXME not working right... it makes ultra-redundant outputs like
-	// 'banned §b&r§r§b&c§r§b&l§r5,565§b&r§r players'
-	// when
-	// 'banned §b&r&c&l§r5,565§b&r§r players'
-	// is what it should produce
+	public static final Matcher PRETTY_PRINT_TARGETS_REGEX = Pattern.compile("(?im)(?<!\\\\)(&(?:#[\\da-f]{6}|[\\da-fk-or]))+").matcher("");
 
 
 	/**
@@ -249,7 +239,7 @@ public class TextUtil {
 	 * etc. Hex colors are represented in the format {@code &#RRGGBB}.
 	 */
 	public static String toCodedString(Component text) {
-		StringBuilder builder = new StringBuilder(); // required for the lambda expression
+		StringBuilder builder = new StringBuilder();
 		AtomicReference<Style> lastStyle = new AtomicReference<>(Style.EMPTY); // ensures that the first equality check returns false
 
 		text.visit((style, str) -> {
@@ -259,8 +249,17 @@ public class TextUtil {
 				return Optional.empty();
 			}
 
+			String leadingWhitespace = str.substring(0, str.indexOf(str.stripLeading()));
+
 			// if style is different from last, add any formatting codes
 			if(!style.equals(lastStyle.get())) {
+				if(!leadingWhitespace.isEmpty()) {
+					// adds the whitespace BEFORE the formatting codes and regular text to
+					// provide better readability (hugs the right-most characters instead
+					// of left-most)
+					builder.append(leadingWhitespace);
+				}
+
 				builder.append(getFormattingCodes(style, lastStyle.get()));
 
 				lastStyle.set(style);
@@ -268,50 +267,42 @@ public class TextUtil {
 
 			// sometimes section signs leak and I WANT THEM OUT
 			// this has to be done here or else the stylish color codes added above will be erased
-			// todo: this should probably be flagged bc otherwise these are not colored like the ones above are
-			builder.append( str.replace(ChatFormatting.PREFIX_CODE, '&') );
+			builder.append( str.stripLeading().replace(ChatFormatting.PREFIX_CODE, '&') );
 
 			return Optional.empty();
 		}, Style.EMPTY);
 
 
+		// removes any leading reset codes - all styles begin naturally reset
+		while(builder.indexOf("&r") == 0) {
+			builder.delete(0, 2);
+		}
+
+		// removes redundant white color codes directly succeeding reset codes
+		for(int i = builder.indexOf("&r&f"); i != -1; i = builder.indexOf("&r&f")) {
+			String s = builder.toString();
+			// this works because simplified, legacy strings cannot have custom,
+			// root styles, unlike the complex sibling-tree structure used today
+			builder.delete(i + 2, i + 4);
+			//todo: i think this was only caused in getFormattingCodes()
+			ChatPatches.LOGGER.error("Found and removed an instance of '&r&f'. Guilty string:\n'{}'", s);//DEBUG:WORD!
+		}
+
 		String result = builder.toString();
 		Matcher m;
-
-		// removes the redundant code in a pair of color codes, optionally separated by whitespace, including hex codes
-		// ex. '&a&9' -> '&9', '&c&#D231BC' -> '&#D231BC', '&#A0FF22\t&f' -> '\t&f'
 		while((m = REDUNDANT_COLOR_REGEX.reset(result)).find()) {
 			result = m.replaceFirst("$1&$2");
 		}
 
-		// removes redundant codes at the end of a message, optionally succeeded by whitespace, including hex codes
-		// ex. '   &b  ' -> '     ',
 		/*while((m = EOL_COLOR_REGEX.reset(result)).find()) {
 			result = m.replaceFirst("$1");
 		}*/
 
-		while((m = COLOR_SHIFT_WHITESPACE_REGEX.reset(result)).find()) {
-			result = m.replaceFirst("$2&$1");
-		}
-
-		// removes any leading reset codes - all styles begin naturally reset
-		while(result.startsWith("&r")) {
-			result = result.substring(2);
-		}
-
-		while(result.contains("&r&f")) {
-			// this works because simplified, legacy strings cannot have custom,
-			// root styles, unlike the complex sibling-tree structure used today
-			result = result.replace("&r&f", "&r");
-			//todo: see if this is caused in getFormattingCodes()
-		}
-
 		// finally, adds a pop of color to the formatting codes
-		/*if((m = PRETTY_PRINT_TARGETS_REGEX.reset(result)).find()) {
-			//fixme genuinely zero clue why find() and every other equivalent is failing. fuck my chungus life ig
-			result = m.replaceAll(ChatFormatting.AQUA + "$1" + ChatFormatting.RESET);
+		if((m = PRETTY_PRINT_TARGETS_REGEX.reset(result)).find()) {
+			result = m.replaceAll(ChatFormatting.AQUA + "$0" + ChatFormatting.RESET);
 			// maybe replace &<?> codes that were in the original message with \\\\$1 and then ignore those in this regex
-		}*/
+		}
 
 		return result;
 	}
@@ -326,13 +317,14 @@ public class TextUtil {
 	 *
 	 * @see TextColor#formatValue()
 	 */
-	public static String getFormattingCodes(Style style, Style last) { //prepub: test this a bit post 26.2 TextColor rework
+	public static String getFormattingCodes(Style style, Style last) {
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
 
 		// if the color is named, it will have a name
 		// makes the fallback white so changes to colorless but not empty styles don't ignore colors
-		// see [newBuff] TODO
+		// see 'newBuff' in test cases under #311
 		TextColor thisColor = Colors.simplify(style.getColor() != null ? style.getColor().getValue() : Colors.WHITE);
+		int thisValue = thisColor.getValue();
 		TextColor lastColor = Colors.simplify(last.getColor() != null ? last.getColor().getValue() : Colors.WHITE);
 
 		// ensures reset codes are not treated as white codes by forcing necessary reset codes
@@ -343,8 +335,8 @@ public class TextUtil {
 			joiner.add("r");
 		}
 
-		// only add the color code if one was explicitly specified and if it's different from the last color
-		if(thisColor != null && (lastColor == null || thisColor.getValue() != lastColor.getValue()))
+		// only add the color code if it's different from the last color and if it won't result in '&r&f'
+		if(thisValue != lastColor.getValue() && !(anyModifierReset && thisValue == Colors.WHITE))
 		{
 			Optional<String> code = Colors.getCode(thisColor);
 			// if thisColor is named, add its formatting code, else add its hex color
