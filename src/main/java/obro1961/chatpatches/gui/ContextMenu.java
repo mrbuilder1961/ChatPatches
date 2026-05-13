@@ -420,7 +420,7 @@ public class ContextMenu implements GuiEventListener {
 		// string buttons - unconditional
 		registerProxyButton(MENU_STRING, RAW_TEXT, Items.OAK_SIGN);
 			registerCopyButton(RAW_TEXT, text); // 0
-			registerCopyButton(FORMATTED_STR, literal(TextUtil.toCodedString(text))); // 1
+			registerCopyButton(FORMATTED_STR, literal(TextUtil.toLegacyString(text, true))); // 1
 			if(timestamped) {
 				registerCopyButton(NO_TIMESTAMP_TEXT, TextUtil.newSiblings(text, text.getSiblings().subList(MESSAGE_INDEX, text.getSiblings().size()))); // 2
 			}

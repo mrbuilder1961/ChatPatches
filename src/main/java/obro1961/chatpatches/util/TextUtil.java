@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.*;
+import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 
 import java.util.*;
@@ -40,22 +41,10 @@ public class TextUtil {
 	 * @see <a href="https://regex101.com/r/D9x2yv/latest">Examples</a>
 	 */
 	public static final Matcher REDUNDANT_COLOR_REGEX = Pattern.compile("(?m)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)&(#[\\da-f]{6}|[\\da-f])").matcher("");
-	/**
-	 * Matches an ampersand color code at the end of a message, optionally
-	 * succeeded by whitespace. This is used to simplify output strings, as
-	 * color codes at the end of a string do nothing. Captures the whitespace,
-	 * if any is available.
-	 *
-	 * @apiNote Should be used in conjunction with (after) {@link
-	 * #REDUNDANT_COLOR_REGEX}.
-	 *
-	 * @see <a href="https://regex101.com/r/aUuwX1/latest">Examples</a>
-	 */
-	public static final Matcher EOL_COLOR_REGEX = Pattern.compile("(?m)&(?:#[\\da-f]{6}|[\\da-f])(\\s*)$").matcher("");
 
 	/**
 	 * Matches any ampersand formatting codes, whether regular (legacy) or hex,
-	 * for use with the pretty-printer in {@link #toCodedString(Component)}.
+	 * for use with the pretty-printer in {@link #toLegacyString(Component, boolean)}.
 	 * Captures all formatting code(s) present in a string. Note that if any are
 	 * back-to-back, they will be captured together as one string.
 	 *
@@ -238,54 +227,57 @@ public class TextUtil {
 	 * Strips any complex style data, including hover events, fonts, insertions,
 	 * etc. Hex colors are represented in the format {@code &#RRGGBB}.
 	 */
-	public static String toCodedString(Component text) {
+	public static String toLegacyString(Component text, boolean prettyPrint) { //todo: bruh make a freaking unit test for this are we serious.
 		StringBuilder builder = new StringBuilder();
 		AtomicReference<Style> lastStyle = new AtomicReference<>(Style.EMPTY); // ensures that the first equality check returns false
 
-		text.visit((style, str) -> {
-			if(str.isBlank()) {
-				// add the whitespace but don't format anything
-				builder.append(str);
-				return Optional.empty();
-			}
+		// TEST:this with complex components (ex. root w/ hex color so &r applies that..?)
+		for(Component part : text.toFlatList()) {
+			part.visit((style, str) -> {
+				if(str.isBlank()) {
+					// add the whitespace but don't format anything
+					builder.append(str);
+					return Optional.empty();
+				}
+				//elif str.contains("&*") {str.replaceAll("&*", "\\\\&*")} //todo
 
-			String leadingWhitespace = str.substring(0, str.indexOf(str.stripLeading()));
+				String leadingWhitespace = str.substring(0, str.indexOf(str.stripLeading()));
 
-			// if style is different from last, add any formatting codes
-			if(!style.equals(lastStyle.get())) {
-				if(!leadingWhitespace.isEmpty()) {
-					// adds the whitespace BEFORE the formatting codes and regular text to
-					// provide better readability (hugs the right-most characters instead
-					// of left-most)
-					builder.append(leadingWhitespace);
+				// if style is different from last, add any formatting codes
+				if(!style.equals(lastStyle.get())) {
+					if(!leadingWhitespace.isEmpty()) {
+						// adds the whitespace BEFORE the formatting codes and regular text to
+						// provide better readability (hugs the right-most characters instead
+						// of left-most)
+						builder.append(leadingWhitespace);
+					}
+
+					builder.append(getFormattingCodes(style, lastStyle.get()));
+
+					lastStyle.set(style);
 				}
 
-				builder.append(getFormattingCodes(style, lastStyle.get()));
+				// sometimes section signs leak and I WANT THEM OUT
+				// this has to be done here or else the stylish color codes added above will be erased
+				builder.append(str.stripLeading().replace(ChatFormatting.PREFIX_CODE, '&'));
 
-				lastStyle.set(style);
-			}
+				return Optional.empty();
+			}, Style.EMPTY);
+		}
 
-			// sometimes section signs leak and I WANT THEM OUT
-			// this has to be done here or else the stylish color codes added above will be erased
-			builder.append( str.stripLeading().replace(ChatFormatting.PREFIX_CODE, '&') );
-
-			return Optional.empty();
-		}, Style.EMPTY);
-
+		// === Output fixes and optimizations ===
 
 		// removes any leading reset codes - all styles begin naturally reset
 		while(builder.indexOf("&r") == 0) {
 			builder.delete(0, 2);
 		}
 
-		// removes redundant white color codes directly succeeding reset codes
+		// removes redundant white color codes directly succeeding reset codes (white is the default color already)
 		for(int i = builder.indexOf("&r&f"); i != -1; i = builder.indexOf("&r&f")) {
 			String s = builder.toString();
-			// this works because simplified, legacy strings cannot have custom,
-			// root styles, unlike the complex sibling-tree structure used today
 			builder.delete(i + 2, i + 4);
-			//todo: i think this was only caused in getFormattingCodes()
-			ChatPatches.LOGGER.error("Found and removed an instance of '&r&f'. Guilty string:\n'{}'", s);//DEBUG:WORD!
+
+			ChatPatches.LOGGER.error("Found and removed an instance of '&r&f'. Guilty string:\n'{}'", s); //todo: i think this was only caused in getFormattingCodes()
 		}
 
 		String result = builder.toString();
@@ -294,14 +286,10 @@ public class TextUtil {
 			result = m.replaceFirst("$1&$2");
 		}
 
-		/*while((m = EOL_COLOR_REGEX.reset(result)).find()) {
-			result = m.replaceFirst("$1");
-		}*/
-
-		// finally, adds a pop of color to the formatting codes
-		if((m = PRETTY_PRINT_TARGETS_REGEX.reset(result)).find()) {
+		// finally, makes all formatting codes aqua so they're easily distinguishable
+		if(prettyPrint && (m = PRETTY_PRINT_TARGETS_REGEX.reset(result)).find()) {
 			result = m.replaceAll(ChatFormatting.AQUA + "$0" + ChatFormatting.RESET);
-			// maybe replace &<?> codes that were in the original message with \\\\$1 and then ignore those in this regex
+			// prepub: replace &<?> codes that were in the original message with \\\\$1 ? this regex alr ignores the
 		}
 
 		return result;
@@ -320,23 +308,26 @@ public class TextUtil {
 	public static String getFormattingCodes(Style style, Style last) {
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
 
+		//todo: optimizations for when either parameter is empty
+
 		// if the color is named, it will have a name
 		// makes the fallback white so changes to colorless but not empty styles don't ignore colors
 		// see 'newBuff' in test cases under #311
 		TextColor thisColor = Colors.simplify(style.getColor() != null ? style.getColor().getValue() : Colors.WHITE);
 		int thisValue = thisColor.getValue();
-		TextColor lastColor = Colors.simplify(last.getColor() != null ? last.getColor().getValue() : Colors.WHITE);
+		int lastValue = last.getColor() != null ? last.getColor().getValue() : Colors.WHITE;
 
 		// ensures reset codes are not treated as white codes by forcing necessary reset codes
-		boolean anyModifierReset = (last.isBold() && !style.isBold()) || (last.isItalic() && !style.isItalic()) || (last.isUnderlined() && !style.isUnderlined()) ||
+		boolean modifierChanged = (last.isBold() && !style.isBold()) || (last.isItalic() && !style.isItalic()) || (last.isUnderlined() && !style.isUnderlined()) ||
 			(last.isStrikethrough() && !style.isStrikethrough()) || (last.isObfuscated() && !style.isObfuscated());
-		if(anyModifierReset) {
+
+		if(modifierChanged) {
 			// this is necessary because, unlike with colors, you cannot overwrite one modifier with another
 			joiner.add("r");
 		}
 
 		// only add the color code if it's different from the last color and if it won't result in '&r&f'
-		if(thisValue != lastColor.getValue() && !(anyModifierReset && thisValue == Colors.WHITE))
+		if(thisValue != lastValue && !(modifierChanged && thisValue == Colors.WHITE))
 		{
 			Optional<String> code = Colors.getCode(thisColor);
 			// if thisColor is named, add its formatting code, else add its hex color
@@ -347,21 +338,11 @@ public class TextUtil {
 			return "&r"; // if the current style is empty but the last style wasn't, we've reset!
 		}
 
-		if(style.isBold() && !last.isBold()) {
-			joiner.add("l");
-		}
-		if(style.isItalic() && !last.isItalic()) {
-			joiner.add("o");
-		}
-		if(style.isUnderlined() && !last.isUnderlined()) {
-			joiner.add("n");
-		}
-		if(style.isStrikethrough() && !last.isStrikethrough()) {
-			joiner.add("m");
-		}
-		if(style.isObfuscated() && !last.isObfuscated()) {
-			joiner.add("k");
-		}
+		if(style.isBold() && !last.isBold()) joiner.add("l");
+		if(style.isItalic() && !last.isItalic()) joiner.add("o");
+		if(style.isUnderlined() && !last.isUnderlined()) joiner.add("n");
+		if(style.isStrikethrough() && !last.isStrikethrough()) joiner.add("m");
+		if(style.isObfuscated() && !last.isObfuscated()) joiner.add("k");
 
 		return joiner.toString();
 	}
