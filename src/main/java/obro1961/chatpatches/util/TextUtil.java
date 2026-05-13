@@ -274,10 +274,7 @@ public class TextUtil {
 
 		// removes redundant white color codes directly succeeding reset codes (white is the default color already)
 		for(int i = builder.indexOf("&r&f"); i != -1; i = builder.indexOf("&r&f")) {
-			String s = builder.toString();
 			builder.delete(i + 2, i + 4);
-
-			ChatPatches.LOGGER.error("Found and removed an instance of '&r&f'. Guilty string:\n'{}'", s); //todo: i think this was only caused in getFormattingCodes()
 		}
 
 		String result = builder.toString();
@@ -289,7 +286,7 @@ public class TextUtil {
 		// finally, makes all formatting codes aqua so they're easily distinguishable
 		if(prettyPrint && (m = PRETTY_PRINT_TARGETS_REGEX.reset(result)).find()) {
 			result = m.replaceAll(ChatFormatting.AQUA + "$0" + ChatFormatting.RESET);
-			// prepub: replace &<?> codes that were in the original message with \\\\$1 ? this regex alr ignores the
+			// prepub: replace &<?> codes that were in the original message with \\\\$1 ? this regex alr ignores them
 		}
 
 		return result;
@@ -308,7 +305,7 @@ public class TextUtil {
 	public static String getFormattingCodes(Style style, Style last) {
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
 
-		//todo: optimizations for when either parameter is empty
+		//todo: optimizations for when either parameter is Style.EMPTY
 
 		// if the color is named, it will have a name
 		// makes the fallback white so changes to colorless but not empty styles don't ignore colors

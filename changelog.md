@@ -10,6 +10,10 @@
 - Based on the relative lack of downloads compared to newer versions, the amount of version targets has been reduced. This should somewhat accelerate
   development for future releases! Later, I may reduce the amount of targets further. This will not affect the latest version!
 - Ampersand formatting codes (ex `&a`) are now case-sensitive (`&A` will no longer work) — you shouldn't have done this in the first place though
+- Revamped the process that generates the copiable text for the 'Formatted' menu option, and fixed some bugs within it ([#311](https://www.github.com/mrbuilder1961/ChatPatches/issues/311)). The results coming from it 
+  should now be much more accurate and should contain less (if not zero) redundant formatting codes!
+  - As a part of this, I introduced a slightly different approach that should work more effectively on modern Minecraft; however, it hasn't been tested much
+  - Another feature pertaining to this is also coming soon!
 - **Dev notes:**
   - In response to Mojang gutting `ChatFormatting` and changing `TextColor`, I made a new `Colors` util class to ease interoperability
   - In order to support the new consistent semver versioning and my existing publishing setup, versions can now specify `mod.versions` explicitly for CF and MR
