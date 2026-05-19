@@ -1,5 +1,8 @@
 # Changelog
 
+## Chat Patches `8.0-alpha.10` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
+- Added an updated `ko_kr` translation thanks to [ettip](https://github.com/ettip) in [#317](https://www.github.com/mrbuilder1961/ChatPatches/issues/317)! (I have no idea why the original translation was removed; so sorry about that)
+
 ## Chat Patches `8.0-alpha.9` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
 - Updated to 26.2 (snapshot-6)
   - **WARNING:** the dependencies used at the time of writing (YACL `3.9.3` + Mod Menu `19.0.0-alpha.1`) are not fully ported to 26.2 and *will crash your game* 
