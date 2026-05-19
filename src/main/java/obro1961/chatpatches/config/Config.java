@@ -38,6 +38,8 @@ import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.integration.ChatHeadsIntegration;
 //?}
 import obro1961.chatpatches.util.ChatUtil;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.jetbrains.annotations.Nullable;
 //? if <=1.20.1 {
 //import obro1961.chatpatches.util.VersionUtil;
 //?}
@@ -60,7 +62,7 @@ import static obro1961.chatpatches.util.TextUtil.text;
 public class Config {
     public static final Config DEFAULTS = new Config();
     public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
-	public static final String PLACEHOLDER = "$"; // todo use in all options..? like of(pre, suf) -> pre + PLACEHOLDER + suf
+	public static final String PLACEHOLDER = "$";
 
 	protected static final int IO_THRESHOLD_SUGGESTION = 500;
 
@@ -89,22 +91,71 @@ public class Config {
     //  >> OR a separate MIGRATION_CODEC where we explicitly define field names' aliases, and then use that to parse the config file if on reg failure
     // tab categories: message, boundary, chatlog, chat
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
-    public boolean time = true, timeSystemMessages = true; public String timeDate = "HH:mm:ss", timeFormat = "[$]"; public int timeColor = LIGHT_PURPLE;
-    public boolean hover = true; public String hoverDate = "MM/dd/yyyy", hoverFormat = PLACEHOLDER; public int hoverColor = WHITE;
-    public boolean counter = true; public String counterFormat = "&8(&7x&r$&8)"; public int counterColor = YELLOW; public boolean counterCheckStyle = false;
-    public boolean compactChat = false; public int compactDistance = 0;
+    public boolean time = true;
+	public boolean timeSystemMessages = true;
+	@StringConstraints(mustContain = {}, formatTransformer = SimpleDateFormat.class)
+	public String timeDate = "HH:mm:ss";
+	@StringConstraints
+	public String timeFormat = "[$]";
+	public int timeColor = LIGHT_PURPLE;
 
-    public boolean boundary = true; public String boundaryFormat = "&8[&r$&8]"; public int boundaryColor = AQUA;
+	public boolean hover = true;
+	@StringConstraints(mustContain = {}, formatTransformer = SimpleDateFormat.class)
+	public String hoverDate = "MM/dd/yyyy";
+	@StringConstraints
+	public String hoverFormat = PLACEHOLDER;
+	public int hoverColor = WHITE;
 
-    public boolean chatlog = true; public int chatlogSaveInterval = 0; // todo fix the save interval guy like never working
+	public boolean counter = true;
+	@StringConstraints
+	public String counterFormat = "&8(&7x&r$&8)";
+	public int counterColor = YELLOW;
+	public boolean counterCheckStyle = false;
 
-    public boolean name = true; public String nameFormat = "<$>"; public int nameColor = WHITE;
-    public int chatMaxMessages = 16384, chatWidth = 0, chatHeight = 0, chatShift = 0; public boolean dynamicChatShift = true, vanillaClearing = false, chatHidePacket = true,
-		// idea: messageDrafting -> chatDrafting? (once migration codec established)
-		messageDrafting = false, onlyInvasiveDrafting = false;
-    public boolean contextMenu = true, contextDeletionWarning = true; public int contextOutlineColor = AQUA; public String contextReplyFormat = "/msg $ ";
-    public boolean search = true, searchDrafting = true, searchPrefix = false,
-        caseSensitive = true, regex = false;
+	public boolean compactChat = false;
+	@IntConstraints(max = 50)
+	public int compactDistance = 0;
+
+    public boolean boundary = true;
+	@StringConstraints
+	public String boundaryFormat = "&8[&r$&8]";
+	public int boundaryColor = AQUA;
+
+    public boolean chatlog = true;
+	@IntConstraints(max = 180, interval = 5) // 0 -> on save, 1..180 -> 1min..3hr interval
+	public int chatlogSaveInterval = 0; // todo fix this never working
+
+    public boolean name = true;
+	@StringConstraints
+	public String nameFormat = "<$>";
+	public int nameColor = WHITE;
+
+	@IntConstraints(min = 1, max = Short.MAX_VALUE, interval = 16)
+    public int chatMaxMessages = 16384;
+	@IntConstraints(max = 600) /*mc().getWindow().getGuiScaledWidth()*/
+	public int chatWidth = 0;
+	@IntConstraints(max = 600) /*mc().getWindow().getGuiScaledHeight()*/
+	public int chatHeight = 0;
+	@IntConstraints(max = 100)
+	public int chatShift = 0;
+	public boolean dynamicChatShift = true;
+	public boolean vanillaClearing = false;
+	public boolean chatHidePacket = true;
+	public boolean messageDrafting = false; // idea: chatDrafting? (once migration codec established)
+	public boolean onlyInvasiveDrafting = false;
+
+	public boolean contextMenu = true;
+	public boolean contextDeletionWarning = true;
+	public int contextOutlineColor = AQUA;
+	@StringConstraints
+	public String contextReplyFormat = "/msg $ ";
+
+	public boolean search = true;
+	public boolean searchDrafting = true;
+	public boolean searchPrefix = false;
+	public boolean caseSensitive = true;
+	public boolean regex = false;
+
 	public boolean logMessageStructures = false;
 
     /**
@@ -500,6 +551,14 @@ public class Config {
 		config = (config instanceof YaclConfig) ? new YaclConfig() : DEFAULTS;
 	}
 
+	protected @Nullable IntConstraints getRange(String optionKey) {
+		return FieldUtils.getDeclaredField(Config.class, optionKey).getAnnotation(IntConstraints.class);
+	}
+
+	protected @Nullable StringConstraints getConstraints(String optionKey) {
+		return FieldUtils.getDeclaredField(Config.class, optionKey).getAnnotation(StringConstraints.class);
+	}
+
 
     /**
 	 * Encodes this Config instance into a {@link DataResult}
@@ -548,7 +607,7 @@ public class Config {
             if(result.error().isPresent() || result.result().isEmpty()) {
 				//noinspection Convert2MethodRef: on 1.20.5+ DataResult.PartialResult doesn't exist
 				String message = "Failed to parse field '" + opt.key + "': " + result.error().map(e -> e.message()).orElse("<unknown>");
-                logReportMsg(new IllegalStateException(message));
+                ChatPatches.LOGGER.error(message); // warning: demoted from logReportMsg; some errors are the user's fault and not actual bugs
                 return DataResult.error(() -> message);
             }
 
@@ -642,30 +701,49 @@ public class Config {
 			} else {
 				codec = switch(getType().getName()) { // rip 21 pattern matching ;(
 					case "java.lang.Boolean", "boolean" -> Codec.BOOL;
-					case "java.lang.Integer", "int" -> Codec.INT;
+					case "java.lang.Integer", "int" -> (Object)config.getRange(key) instanceof IntConstraints range ? Codec.intRange(range.min(), range.max()) : Codec.INT;
 					case "java.lang.String" -> {
-						if(key.contains("Format")) {
-							yield Codec.STRING.comapFlatMap(
-								raw -> raw.contains(PLACEHOLDER)
+						StringConstraints constraints = config.getConstraints(key);
+
+						Codec<String> c = Codec.STRING;
+
+						if(constraints == null)
+							yield c;
+
+						/*if(constraints.length != @Range(from = 0, to = Integer.MAX_VALUE)) {
+							c = Codec.string(from, to);
+						}*/
+
+						// typically the 'Format' options
+						for(String req : constraints.mustContain()) {
+							c = c.comapFlatMap(
+								raw -> raw.contains(req)
 									? DataResult.success(raw)
-									: DataResult.error(() -> "Format string '" + raw + "' for option '" + key + "' is missing a '" + PLACEHOLDER + "' placeholder"),
+									: DataResult.error(() -> String.format("Format string '%s' for option '%s' is missing constraint '%s'", raw, key, req)),
 								Function.identity()
 							);
-						} else if(key.contains("Date")) {
-							yield Codec.STRING.comapFlatMap(
-								raw -> {
-									try {
-										new SimpleDateFormat(raw);
-										return DataResult.success(raw);
-									} catch(IllegalArgumentException e) {
-										return DataResult.error(() -> "Date string '" + raw + "' for option '" + key + "' is not a valid SimpleDateFormat");
-									}
-								},
-								Function.identity()
-							);
-						} else {
-							yield Codec.STRING;
 						}
+
+						// all 'Date' options
+						if(constraints.formatTransformer() != null) {
+							if(constraints.formatTransformer() == SimpleDateFormat.class) {
+								c = c.comapFlatMap(
+									raw -> {
+										try {
+											// warning: i dont want to make this reflective and dynamic rn if unnecessary
+											//constraints.formatTransformer().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
+											new SimpleDateFormat(raw);
+											return DataResult.success(raw);
+										} catch(IllegalArgumentException e) {
+											return DataResult.error(() -> String.format("Invalid SimpleDateFormat '%s' for option '%s': %s", raw, key, e.getMessage()));
+										}
+									},
+									Function.identity()
+								);
+							} /*else {}*/
+						}
+
+						yield c;
 					}
 					default -> {
 						logReportMsg(new IllegalStateException(String.format("Option '%s' (of type %s) is not a valid type for serialization", key, getType().getName())));

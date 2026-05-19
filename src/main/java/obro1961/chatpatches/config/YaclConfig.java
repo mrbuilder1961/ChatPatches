@@ -1,6 +1,7 @@
 //~ yarnification
 package obro1961.chatpatches.config;
 
+import com.mojang.serialization.DataResult;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
@@ -10,7 +11,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
-import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.UUIDUtil;
@@ -31,6 +31,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -277,9 +280,7 @@ public class YaclConfig extends Config {
         } else if( key.contains("Color") ) {
             builder = ColorControllerBuilder.create((Option<Color>) opt);
         } else if( config.getOption(key).get() instanceof Integer ) { // key is int but not color
-            builder = IntegerSliderControllerBuilder.create((Option<Integer>) opt)
-                .range(getMinOrMax(key, true), getMinOrMax(key, false))
-                .step(getInterval(key));
+            builder = IntegerSliderControllerBuilder.create((Option<Integer>) opt).range(getMin(key), getMax(key)).step(getInterval(key));
         } else {
             builder = BooleanControllerBuilder.create((Option<Boolean>) opt).coloured(true);
         }
@@ -309,72 +310,101 @@ public class YaclConfig extends Config {
         };
     }
 
+	//todo note fancy we dont have to throw err here bc alr done in Config.Setting.getTypeCodec
     @SuppressWarnings("unchecked")
     private static <T> Binding<T> getBinding(Setting<?> option) {
         Setting<T> o = (Setting<T>) option;
+		StringConstraints constraints = config.getConstraints(o.key);
 
-        if(o.key.contains("Date")) {
-            // must be able to successfully create a SimpleDateFormat
-            return Binding.generic(o.def, o::get, inc -> {
-                try {
-                    new SimpleDateFormat(inc.toString());
-                    o.set(inc);
-                } catch(IllegalArgumentException e) {
-                    LOGGER.error("Invalid date format '{}' provided for '{}'", inc, o.key);
-                }
-            });
-        } else if(o.key.contains("Format")) {
-            // must contain placeholder
-            return Binding.generic(o.def, o::get, inc -> {
-                if(inc.toString().contains(PLACEHOLDER)) {
-                    o.set(inc);
-                }
-            });
-        } else {
-            // every other setting either has no requirements or is already constrained with its controller
-            // this applies to all options containing 'Str' and all boolean, int, and color options.
-            // color options have type transformers to int overridden in the screen builder
-            return Binding.generic(o.def, o::get, o::set);
-        }
+		if(constraints != null) {
+			Consumer<String> setter = inc -> {};
+
+			/*if(constraints.length != @Range(from = 0, to = Integer.MAX_VALUE)) {
+							c = Codec.string(from, to);
+						}*/
+
+			// all 'Date' options
+			final boolean[] success = { false };
+			if(constraints.formatTransformer() != null) {
+				if(constraints.formatTransformer() == SimpleDateFormat.class) {
+					setter = setter.andThen(
+						raw -> {
+							try {
+								// warning: i dont want to make this reflective and dynamic rn if unnecessary
+								//constraints.formatTransformer().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
+								new SimpleDateFormat(raw);
+								success[0] = true;
+							} catch(IllegalArgumentException e) {
+								// no-op
+							}
+						}
+					);
+				} /*else {}*/
+			}
+
+			// typically the 'Format' options
+			Predicate<String> containsAll = str -> true;
+			for(String req : constraints.mustContain()) {
+				containsAll = containsAll.and(raw -> raw.contains(req));
+			}
+			final var p = containsAll;
+			setter = setter.andThen(inc -> { if(p.test(inc) && success[0]) { o.set(inc); } });
+
+			if(o.key.contains("Date")) {
+				// must be able to successfully create a SimpleDateFormat
+				return Binding.generic(o.def, o::get, inc -> {
+					try {
+						// warning: i dont wanna make this reflective and dynamic rn but be aware of this for the future
+						new SimpleDateFormat(inc.toString());
+						o.set(inc);
+					} catch(IllegalArgumentException e) {
+						LOGGER.error("Invalid date format '{}' provided for '{}'", inc, o.key);
+					}
+				});
+			}
+
+			// must contain placeholder
+			return Binding.generic(o.def, o::get, (Consumer<T>)setter);
+		}
+
+		// every other setting either has no constraints or is already conformed by its controller.
+		// this applies to all options containing 'Str' and all boolean, int, and color options -
+		// color options have type transformers to int overridden in the screen builder
+		return Binding.generic(o.def, o::get, o::set);
     }
 
-    /**
-     * Returns the appropriate minimum or maximum value for the given key.
-     */
-    private static int getMinOrMax(String key, boolean min) {
-        if(min) {
-            return switch(key) {
-                case "compactDistance", "chatHeight", "chatWidth", "chatShift", "chatlogSaveInterval" -> 0;
-				case "chatMaxMessages" -> 1;
-                default -> {
-                    ChatPatches.logReportMsg(new IllegalArgumentException("No minimum value specified for option '" + key + "'"));
-                    yield 0;
-                }
-            };
-        } else {
-            return switch(key) {
-                case "chatMaxMessages" -> Short.MAX_VALUE;
-                case "chatWidth" -> mc().getWindow().getGuiScaledWidth();
-                case "chatHeight" -> mc().getWindow().getGuiScaledHeight();
-                case "chatlogSaveInterval" -> 180; // 3 hours
-                case "compactDistance" -> //noinspection ConstantValue: Stonecutter :D
-					(Object)mc().gui.hud.getChat() instanceof ChatComponent chat ? chat.getLinesPerPage() : 25; // chatMaxMessages ?
-                case "chatShift" -> 100;
-                default -> {
-                    ChatPatches.logReportMsg(new IllegalArgumentException("No maximum value specified for option '" + key + "'"));
-                    yield 100;
-                }
-            };
-        }
-    }
+	private static int getMin(String key) {
+		try {
+			return (Object)config.getRange(key) instanceof IntConstraints constraints
+				? constraints.min()
+				: (int) IntConstraints.class.getDeclaredMethod("min").getDefaultValue();
+		} catch(NoSuchMethodException e) {
+			ChatPatches.logReportMsg(e);
+			return 0;
+		}
+	}
+
+	private static int getMax(String key) {
+		try {
+			return (Object)config.getRange(key) instanceof IntConstraints constraints
+				? constraints.max()
+				: (int) IntConstraints.class.getDeclaredMethod("max").getDefaultValue();
+		} catch(NoSuchMethodException e) {
+			ChatPatches.logReportMsg(e);
+			return Integer.MAX_VALUE;
+		}
+	}
 
     private static int getInterval(String key) {
-        return switch(key) {
-            case "chatMaxMessages" -> 16;
-            case "chatlogSaveInterval" -> 5;
-            default -> 1;
-        };
-    }
+		try {
+			return (Object)config.getRange(key) instanceof IntConstraints constraints
+				? constraints.interval()
+				: (int) IntConstraints.class.getDeclaredMethod("interval").getDefaultValue();
+		} catch(NoSuchMethodException e) {
+			ChatPatches.logReportMsg(e);
+			return 1;
+		}
+	}
 
 
     /**
