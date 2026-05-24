@@ -82,7 +82,7 @@ fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallb
 
 dependencies {
     mod("overrides") {
-        //TODO: this setup is temporary but it will be better fleshed out later
+        //urgent: this setup is temporary but it will be better fleshed out later
         constraints {
             modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabric.api") + "+" + minecraft.substringBefore('-')}")
         }

@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.*;
-import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 
 import java.util.*;

@@ -90,7 +90,21 @@ Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so
 (Or join for extra info and status updates!)
 
 ## License
-This mod is available under the GNU LGPLv3 license. Check out [this](https://choosealicense.com/licenses/lgpl-3.0/) page for information.
+This mod is available under [GNU LGPLv3](https://choosealicense.com/licenses/lgpl-3.0/) as a legal [compromise](https://thisvsthat.io/gpl-vs-lgpl)
+between GPL (my ideal choice) and Minecraft as a product.
+
+Despite this not being noted in the license, the following restrictions apply to all versions of this project ("The Software") and its derivatives:
+
+1. The Software must list or credit the developer(s) and contributor(s) in a clear and accessible manner.
+
+2. The Software and any modifications made to it may not be used for the purpose of training or improving machine learning algorithms,
+including but not limited to artificial intelligence, natural language processing, or data mining. This condition applies to any derivatives,
+modifications, or updates based on the Software code. Any usage of the Software in an AI-training dataset is considered a breach of this License.
+
+3. The Software may not be included in any dataset used for training or improving machine learning algorithms,
+including but not limited to artificial intelligence, natural language processing, or data mining.
+
+I am working to find a license that includes these terms in them intrinsically, but for now this is the best option to avoid creating a custom, niche license.
 
 ## Help
 

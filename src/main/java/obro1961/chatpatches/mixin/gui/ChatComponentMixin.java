@@ -123,10 +123,10 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * switching worlds}, so this method also prevents unwanted chat clearing then too.
      */
     @Inject(method = "clearMessages", at = @At("HEAD"), cancellable = true)
-    private void clear(boolean clearHistory, CallbackInfo ci) {
+    private void clear(boolean history, CallbackInfo ci) {
         if(!config.vanillaClearing) {
             // Clear message using F3+D
-            if(!clearHistory) {
+            if(!history) {
                 minecraft./*? if >26.1.2 {*/gui.chatListener/*?} else {*//*getChatListener*//*?}*/()./*? if >=1.21.9 {*/flushQueue/*?} else {*//*clearQueue*//*?}*/();
                 messageDeletionQueue.clear();
                 allMessages.clear();
