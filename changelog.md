@@ -2,7 +2,7 @@
 
 ## Chat Patches `8.0-alpha.10` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
 - Added an updated `ko_kr` translation thanks to [ettip](https://github.com/ettip) in [#317](https://www.github.com/mrbuilder1961/ChatPatches/issues/317)! (I have no idea why the original translation was removed; so sorry about that)
-- Prevents vanilla's command history from being loaded if the chat log is enabled ([#300](https://www.github.com/mrbuilder1961/ChatPatches/issues/300)) (
+- Prevents vanilla's command history from being loaded if the chat log is enabled ([#300](https://www.github.com/mrbuilder1961/ChatPatches/issues/300))
   - Note: I wrote this a while ago but couldn't publish it due to dependency requirements, so lmk if you find any issues!!
 - **Dev notes:**
   - Added Fletching Table as a dependency, which primarily allows for versionable mixins
