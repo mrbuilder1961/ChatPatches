@@ -1,15 +1,19 @@
 pluginManagement {
     // allows storing plugin versions in gradle.properties
     val kotlin: String by settings
+    val ksp: String by settings
     val stonecutter: String by settings
+    val fletching: String by settings
     val modstitch: String by settings
     val loom: String by settings
     val mpp: String by settings
 
     plugins {
         kotlin("jvm") version kotlin
+        id("com.google.devtools.ksp") version ksp
         id("dev.isxander.modstitch.base") version modstitch
         id("dev.kikugie.stonecutter") version stonecutter
+        id("dev.kikugie.fletching-table.fabric") version fletching
         id("net.fabricmc.fabric-loom") version loom apply false
         id("me.modmuss50.mod-publish-plugin") version mpp
     }

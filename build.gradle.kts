@@ -5,7 +5,9 @@ import me.modmuss50.mpp.ReleaseType
 
 plugins { // versions in gradle.properties + settings.gradle.kts
     kotlin("jvm")
+    id("com.google.devtools.ksp") // kotlin and this r for fletching-table
     id("dev.isxander.modstitch.base")
+    id("dev.kikugie.fletching-table.fabric")
     id("net.fabricmc.fabric-loom") apply false
     id("me.modmuss50.mod-publish-plugin")
 }
@@ -79,8 +81,8 @@ fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallb
 }*/
 
 dependencies {
-    mod("overrides") { // mod("nonReleaseComponent") { ... ?
-        //TODO: this setup is temporary but it will be better fleshed out later
+    mod("overrides") {
+        //urgent: this setup is temporary but it will be better fleshed out later
         constraints {
             modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabric.api") + "+" + minecraft.substringBefore('-')}")
         }
@@ -191,6 +193,20 @@ modstitch {
         // loader specific mixin configs:
         //if(is(Loom|ModDevGradleRegular|ModDevGradleLegacy))
             //configs.register("$id-{}")
+    }
+}
+
+fletchingTable {
+    fabric {
+        // i lowkey don't know why i'm even bothering with these entrypoints
+        // this feature feels completely useless to me but i'm just gonna leave em bc why not
+        entrypointMappings.put("modmenu", "com.terraformersmc.modmenu.api.ModMenuApi")
+    }
+
+        //fixme: Name should match an existing source set
+    mixins.create("main") {
+        // matches the default value in the annotation
+        mixin("default", "$id.mixins.json")
     }
 }
 
