@@ -10,6 +10,7 @@ plugins { // versions in gradle.properties + settings.gradle.kts
     id("dev.kikugie.fletching-table.fabric")
     id("net.fabricmc.fabric-loom") apply false
     id("me.modmuss50.mod-publish-plugin")
+    signing
 }
 
 fun String.capitalize(): String = replaceFirstChar(Char::uppercaseChar)
@@ -25,6 +26,7 @@ val loader: String = when {
 }
 val currentIsActive = minecraft == stonecutter.active?.version
 val nonReleaseComponent = findProperty("mod.nonReleaseComponent")?.toString()
+val signedFinalJarName: String = "sign" + modstitch.finalJarTask.name.capitalize() // TODO inline once everything is done if only used once
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
@@ -222,6 +224,12 @@ fletchingTable {
     }
 }
 
+signing {
+    isRequired = publish || true
+    // credentials specified in GRADLE_HOME
+    sign(modstitch.finalJarTask.get()) // creates `signJar` on 26.1+ else `signRemapJar`
+}
+
 tasks {
     modstitch.finalJarTask {
         archiveBaseName.set(id)
@@ -356,6 +364,7 @@ publishMods {
     version = "$v+$name" // mod_version+minecraft-loader
     displayName = "$v for $minecraft ${loader.capitalize()}"
     file = modstitch.finalJarTask.flatMap { it.archiveFile } // https://modmuss50.github.io/mod-publish-plugin/getting_started/#input-file
+    additionalFiles.from(tasks[signedFinalJarName])
     changelog = changes
     type = when {
         "alpha" in v -> ReleaseType.ALPHA
