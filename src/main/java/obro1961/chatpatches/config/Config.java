@@ -95,7 +95,7 @@ public class Config {
 	public boolean timeSystemMessages = true;
 	@StringConstraints(mustContain = {}, formatTransformer = SimpleDateFormat.class)
 	public String timeDate = "HH:mm:ss";
-	@StringConstraints
+	@StringConstraints(mustContain = {}) // see #277
 	public String timeFormat = "[$]";
 	public int timeColor = LIGHT_PURPLE;
 

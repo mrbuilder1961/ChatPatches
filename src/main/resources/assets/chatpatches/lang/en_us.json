@@ -35,7 +35,7 @@
     "text.chatpatches.desc.time": "Should a timestamp in front of all messages show?",
     "text.chatpatches.desc.timeSystemMessages": "Should a timestamp be added to system messages? Disable this to only add timestamps to player messages. Requires timestamps as a whole to be enabled.",
     "text.chatpatches.desc.timeDate": "The text that is formatted into a timestamp. See the Help > Date & Time Formatting section for more information.",
-    "text.chatpatches.desc.timeFormat": "The string of '&' + formatting codes and/or decoration text that create the timestamp. Requires '$' as a placeholder for the formatted time, as specified in the option above.",
+    "text.chatpatches.desc.timeFormat": "The string of '&' + formatting codes and/or decoration text that create the timestamp. '$' is a placeholder for the formatted time, as specified in the option above.",
     "text.chatpatches.desc.timeColor": "The color that fills in the unformatted areas of the resulting timestamp. To use this with other formatting codes, use '&r' in the decoration text.",
 
     "text.chatpatches.hover": "Timestamp hover text",
