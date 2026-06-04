@@ -12,6 +12,7 @@ plugins { // versions in gradle.properties + settings.gradle.kts
     id("me.modmuss50.mod-publish-plugin")
 }
 
+fun String.capitalize(): String = replaceFirstChar(Char::uppercaseChar)
 
 val id = m("id")
 val v: String = m("version")
@@ -74,6 +75,17 @@ fun mod(name: String, consumer: (prop: String) -> Unit) = prop("mod.$name", cons
  * the current loader.
  */
 fun l(name: String, fallback: String? = null): String = p("$loader.$name", fallback)
+
+fun token(name: String): String {
+    val secrets: File? = rootDir.toPath().resolve("secrets.json").toFile()
+    if(secrets?.exists() == true) {
+        // kotlin's json is weird
+        return Json.parseToJsonElement(secrets.readText(Charsets.UTF_8)).jsonObject[name]?.toString()?.replace("\"", "") ?: "?"
+    } else {
+        publishMods.dryRun = true
+        return "(no secrets.json specified)"
+    }
+}
 
 
 /*kotlin {
@@ -235,7 +247,7 @@ tasks {
             changes = (if(newIndex > prevEntryIndex) "" else fileText.substring(if(newIndex >= 0) newIndex else 0, prevEntryIndex))
 
             // considered "malformed" if it doesn't end with any word characters, whitespace, or newlines - or changes were emptied bc the indices were bad
-            if( !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)$")) || newIndex == -1 ) {
+            if(newIndex == -1 || !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)$"))) {
                 println("Warning: Changelog appears malformed, this is typically caused by an outdated version ($v)")
                 if(publish) {
                     publish = false
@@ -333,25 +345,6 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 }
 
 publishMods {
-    val secrets = rootDir.toPath().resolve("secrets.json").toFile()
-    fun token(name: String): String {
-        return when {
-            !secrets.exists() -> {
-                dryRun = true
-                "-"
-            }
-            else -> (
-                Json.parseToJsonElement( secrets.readText(Charsets.UTF_8) )
-                    .jsonObject[name]
-                    ?.toString()
-                    ?.replace("\"", "") // kotlin's json is weird
-                ?:
-                    "?"
-            )
-        }
-    }
-
-
     // tries to read explicitly-specified `versions` first, then accesses the more common `range` as a fallback
     // this lets modern versions automatically support patch versions (ex. 26.1.x via ~26.1) while still specifying versions to CF and MR
     val targets = m("versions", m("range", minecraft)).split(",")
@@ -361,7 +354,7 @@ publishMods {
     val embedded = propList("embedded")
 
     version = "$v+$name" // mod_version+minecraft-loader
-    displayName = "$v for $minecraft ${loader.replaceFirstChar { it.uppercase() }}"
+    displayName = "$v for $minecraft ${loader.capitalize()}"
     file = modstitch.finalJarTask.flatMap { it.archiveFile } // https://modmuss50.github.io/mod-publish-plugin/getting_started/#input-file
     changelog = changes
     type = when {

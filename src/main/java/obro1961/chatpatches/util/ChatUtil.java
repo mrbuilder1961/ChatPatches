@@ -649,11 +649,13 @@ public class ChatUtil {
 		int dupeCount = 1;
 		for(int i = 0; i < attemptDistance && i < messages.size(); i++) {
 			Component msg = messages.get(i).content();
+			Component msgContent = getPart(msg, MESSAGE_INDEX);
+			Component incomingContent = getPart(incoming, MESSAGE_INDEX);
 
-			if( !getPart(incoming, MESSAGE_INDEX).getString().equalsIgnoreCase(getPart(msg, MESSAGE_INDEX).getString()) ) {
+			if( !incomingContent.getString().equalsIgnoreCase(msgContent.getString()) ) {
 				// if the incoming message is different from the iterated message, don't try to condense it
 				continue;
-			} else if( config.counterCheckStyle && !TextUtil.virtuallyEqual(getPart(incoming, MESSAGE_INDEX), getPart(msg, MESSAGE_INDEX)) ) {
+			} else if( config.counterCheckStyle && !TextUtil.virtuallyEqual(incomingContent, msgContent) ) {
 				// if the incoming message has different metadata from the iterated message, skip it
 				continue;
 			}

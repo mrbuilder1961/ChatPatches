@@ -141,7 +141,7 @@ public class Config {
 	public boolean dynamicChatShift = true;
 	public boolean vanillaClearing = false;
 	public boolean chatHidePacket = true;
-	public boolean messageDrafting = false; // idea: chatDrafting? (once migration codec established)
+	public boolean messageDrafting = false; // idea: `chatDrafting` once migration codec established
 	public boolean onlyInvasiveDrafting = false;
 
 	public boolean contextMenu = true;

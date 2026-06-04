@@ -6,7 +6,7 @@
   - Note: I wrote this a while ago but couldn't publish it due to dependency requirements, so lmk if you find any issues!!
 - **Dev notes:**
   - Added Fletching Table as a dependency, which primarily allows for versionable mixins
-  - This allows for certain niche behavior, such as the implementations for [#109](https://www.github.com/mrbuilder1961/ChatPatches/issues/109)(on 1.21.11+) 
+  - This allows for certain niche behavior, such as the implementations for [#109](https://www.github.com/mrbuilder1961/ChatPatches/issues/109) (on 1.21.11+) 
     and #300.
 
 ## Chat Patches `8.0-alpha.9` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
