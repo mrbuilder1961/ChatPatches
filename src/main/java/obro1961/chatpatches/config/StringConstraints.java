@@ -28,5 +28,5 @@ public @interface StringConstraints {
 	 * looks like {@link java.text.SimpleDateFormat} for -{@code Date} options.
 	 * {@link String} is the default and signifies none exists.
 	 */
-	Class<?> formatTransformer() default String.class;
+	Class<?> validator() default String.class;
 }

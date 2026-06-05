@@ -54,6 +54,8 @@ public class YaclConfig extends Config {
     public static final String HELP_PREFIX = LANG_PREFIX + "help.";
     public static final String SEARCH_PREFIX = LANG_PREFIX + "search.";
 
+	protected static Language I18n; // lazily initialized to ensure proper registration
+
     /**
      * Matches if the compared string ends with {@code Str}, {@code Date}, or {@code Format}.
      */
@@ -62,6 +64,8 @@ public class YaclConfig extends Config {
 
     @Override
     public Screen getConfigScreen(Screen parent) {
+		if(I18n == null) I18n = Language.getInstance();
+
         ObjectList<Option<?>> timeOpts = new ObjectArrayList<>(),
                         hoverOpts = new ObjectArrayList<>(),
                         counterOpts = new ObjectArrayList<>(),
@@ -79,11 +83,11 @@ public class YaclConfig extends Config {
             String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
 
-            if(I18n.exists(SEARCH_PREFIX + key)) {
+            if(I18n.has(SEARCH_PREFIX + key)) {
 				cat = "_"; // chat search filters are configurable in the chat screen, not here, where they won't render nicely
 			} else if(key.equals("logMessageStructures")) {
 				cat = "help";
-			} else if(!I18n.exists(CATEGORY_PREFIX + cat)) {
+			} else if(!I18n.has(CATEGORY_PREFIX + cat)) {
 				cat = "chat"; // default to chat if the category is invalid
 			}
 
@@ -198,10 +202,10 @@ public class YaclConfig extends Config {
                                 config.getOptions().forEach(opt -> {
                                     String k = opt.key;
                                     Object d = opt.def;
-                                    boolean search = I18n.exists(SEARCH_PREFIX + k);
+                                    boolean search = I18n.has(SEARCH_PREFIX + k);
                                     String prefix = search ? SEARCH_PREFIX : LANG_PREFIX;
                                     str.append("\n| %s | %s | %s | `%s` |".formatted(
-                                        I18n.get(prefix + k),
+                                        I18n.getOrDefault(prefix + k),
 
                                         ( d instanceof Integer i && k.contains("Color") )
                                             ? "`0x%06X`".formatted(i)
@@ -213,7 +217,7 @@ public class YaclConfig extends Config {
                                                 ? "`\"" + d + "\"`"
                                                 : "`" + d + "`",
 
-                                        I18n.get(prefix + DESCRIPTION_KEY + k).replace("\n", ""),
+                                        I18n.getOrDefault(prefix + DESCRIPTION_KEY + k).replace("\n", ""),
                                         prefix.replace(LANG_PREFIX, "") + k
 									));
                                 });
@@ -325,13 +329,13 @@ public class YaclConfig extends Config {
 
 			// all 'Date' options
 			final boolean[] success = { false };
-			if(constraints.formatTransformer() != null) {
-				if(constraints.formatTransformer() == SimpleDateFormat.class) {
+			if(constraints.validator() != null) {
+				if(constraints.validator() == SimpleDateFormat.class) {
 					setter = setter.andThen(
 						raw -> {
 							try {
 								// warning: i dont want to make this reflective and dynamic rn if unnecessary
-								//constraints.formatTransformer().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
+								//constraints.validator().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
 								new SimpleDateFormat(raw);
 								success[0] = true;
 							} catch(IllegalArgumentException e) {

@@ -85,6 +85,16 @@ public class Config {
 	 */
 	protected static int lastDynamicShift = -1;
 
+	/**
+	 * Used to determine when to <b>not</b> log a report message in the log.
+	 * This flag is raised when a constraint is ignored or triggered as invalid.
+	 * If {@code true}, the error thrown may be safely logged and ignored.
+	 *
+	 * @see #parse(DynamicOps, Object)
+	 * @see Setting#getTypeCodec()
+	 */
+	protected static boolean constraintsIgnored = false;
+
 
     // todo #297,000,000: figure out some way to do config migration aka field aliases. they should be hardcoded, so maybe with annotations? but they'll look weird with the
     //  current system, so maybe just like a Map<Str, List<Str>> with field names as keys and the list of aliases as strings contained in the list value?
@@ -93,14 +103,14 @@ public class Config {
 	// subgroups: [time, hover, counter, counter.compact], [boundary], [chatlog], [chat.name, chat, chat.context, chat.search]
     public boolean time = true;
 	public boolean timeSystemMessages = true;
-	@StringConstraints(mustContain = {}, formatTransformer = SimpleDateFormat.class)
+	@StringConstraints(mustContain = {}, validator = SimpleDateFormat.class)
 	public String timeDate = "HH:mm:ss";
 	@StringConstraints(mustContain = {}) // see #277
 	public String timeFormat = "[$]";
 	public int timeColor = LIGHT_PURPLE;
 
 	public boolean hover = true;
-	@StringConstraints(mustContain = {}, formatTransformer = SimpleDateFormat.class)
+	@StringConstraints(mustContain = {}, validator = SimpleDateFormat.class)
 	public String hoverDate = "MM/dd/yyyy";
 	@StringConstraints
 	public String hoverFormat = PLACEHOLDER;
@@ -600,6 +610,7 @@ public class Config {
      */
     @SuppressWarnings("unchecked")
     public <S, T> DataResult<Config> parse(DynamicOps<S> ops, S encoded) {
+		boolean dirty = false;
         for(Setting<?> opt : getOptions()) {
             MapCodec<T> optCodec = (MapCodec<T>) opt.getTypeCodec();
             DataResult<T> result = optCodec.decoder().parse(ops, encoded);
@@ -607,12 +618,21 @@ public class Config {
             if(result.error().isPresent() || result.result().isEmpty()) {
 				//noinspection Convert2MethodRef: on 1.20.5+ DataResult.PartialResult doesn't exist
 				String message = "Failed to parse field '" + opt.key + "': " + result.error().map(e -> e.message()).orElse("<unknown>");
-                ChatPatches.LOGGER.error(message); // warning: demoted from logReportMsg; some errors are the user's fault and not actual bugs
-                return DataResult.error(() -> message);
-            }
 
-            opt.set( result.result().get() );
+				if(constraintsIgnored) {
+					dirty = true;
+					constraintsIgnored = false;
+					// logged separately here because the other logpoint is a logReportMsg() call
+					ChatPatches.LOGGER.warn(message);
+				} else {
+					return DataResult.error(() -> message);
+	            }
+            } else {
+				opt.set( result.result().get() );
+			}
         }
+
+		if(dirty) Config.serialize();
 
         return DataResult.success(this);
     }
@@ -701,7 +721,9 @@ public class Config {
 			} else {
 				codec = switch(getType().getName()) { // rip 21 pattern matching ;(
 					case "java.lang.Boolean", "boolean" -> Codec.BOOL;
-					case "java.lang.Integer", "int" -> (Object)config.getRange(key) instanceof IntConstraints range ? Codec.intRange(range.min(), range.max()) : Codec.INT;
+					case "java.lang.Integer", "int" -> (Object)config.getRange(key) instanceof IntConstraints range
+						? Codec.intRange(range.min(), range.max()).promotePartial((err) -> constraintsIgnored = true)
+						: Codec.INT;
 					case "java.lang.String" -> {
 						StringConstraints constraints = config.getConstraints(key);
 
@@ -719,23 +741,27 @@ public class Config {
 							c = c.comapFlatMap(
 								raw -> raw.contains(req)
 									? DataResult.success(raw)
-									: DataResult.error(() -> String.format("Format string '%s' for option '%s' is missing constraint '%s'", raw, key, req)),
+									: DataResult.error(() -> {
+										constraintsIgnored = true;
+										return String.format("Format string '%s' is missing constraint '%s'", raw, req);
+									}),
 								Function.identity()
 							);
 						}
 
 						// all 'Date' options
-						if(constraints.formatTransformer() != null) {
-							if(constraints.formatTransformer() == SimpleDateFormat.class) {
+						if(constraints.validator() != null) {
+							if(constraints.validator() == SimpleDateFormat.class) {
 								c = c.comapFlatMap(
 									raw -> {
 										try {
 											// warning: i dont want to make this reflective and dynamic rn if unnecessary
-											//constraints.formatTransformer().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
+											//constraints.validator().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
 											new SimpleDateFormat(raw);
 											return DataResult.success(raw);
 										} catch(IllegalArgumentException e) {
-											return DataResult.error(() -> String.format("Invalid SimpleDateFormat '%s' for option '%s': %s", raw, key, e.getMessage()));
+											constraintsIgnored = true;
+											return DataResult.error(() -> String.format("Invalid SimpleDateFormat '%s': %s", raw, e.getMessage()));
 										}
 									},
 									Function.identity()
@@ -746,7 +772,7 @@ public class Config {
 						yield c;
 					}
 					default -> {
-						logReportMsg(new IllegalStateException(String.format("Option '%s' (of type %s) is not a valid type for serialization", key, getType().getName())));
+						logReportMsg(new IllegalStateException(String.format("Option type %s is not valid for serialization", getType().getName())));
 						yield Codec.STRING;
 					}
 				};

@@ -89,7 +89,7 @@ public class ContextMenu implements GuiEventListener {
 	/**
 	 * Slightly modified from <a href="https://stackoverflow.com/a/163398">StackOverflow</a>
 	 * to not include file links. Memoized to avoid recompiling the regex every time, and so
-	 * it's only compiled once when needed.
+	 * it's only compiled when needed.
 	 */
 	private static final Supplier<Pattern> URL_PATTERN = Memoizer.memoize(() -> Pattern.compile("(?:https?://|www)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"));
 

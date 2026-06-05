@@ -110,12 +110,7 @@ dependencies {
         modstitchModImplementation(fabricApi.module("fabric-screen-api-v1", fapi))
     }
 
-    modstitchModImplementation(
-        if(minecraft == "1.20.2")
-            "dev.isxander.yacl:yet-another-config-lib-fabric:${d("yacl")}"
-        else
-            "dev.isxander:yet-another-config-lib:${d("yacl")}-fabric"
-    )
+    modstitchModImplementation("dev.isxander:yet-another-config-lib:${d("yacl")}-fabric")
 
     modstitchModImplementation("com.terraformersmc:modmenu:${d("modmenu")}")
 
@@ -124,8 +119,11 @@ dependencies {
 
 repositories {
     mavenCentral()
-    maven("https://maven.isxander.dev/releases")
     maven("https://maven.terraformersmc.com/releases/")
+    if(minecraft <= "1.20.1") {
+        // newer versions are on maven central
+        maven("https://maven.isxander.dev/releases")
+    }
 }
 
 modstitch {
