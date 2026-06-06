@@ -223,8 +223,9 @@ fletchingTable {
 }
 
 signing {
-    isRequired = publish || true
-    // credentials specified in GRADLE_HOME
+    isRequired = publish
+
+    useGpgCmd() // credentials specified in GRADLE_HOME
     sign(modstitch.finalJarTask.get()) // creates `signJar` on 26.1+ else `signRemapJar`
 }
 
@@ -291,6 +292,8 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     swaps {
+        //prepub some of these versions arent targeted anymore. it doesnt invalidate the conditions but it means they can be merged with other ones.
+        // this isn't high priority rn but just to keep in mind when wrapping up the release
         put("text_codec", when {
             current.parsed > "1.20.2" -> "net.minecraft.network.chat.ComponentSerialization.CODEC"
             else -> "net.minecraft.util.ExtraCodecs.COMPONENT"
@@ -362,7 +365,6 @@ publishMods {
     version = "$v+$name" // mod_version+minecraft-loader
     displayName = "$v for $minecraft ${loader.capitalize()}"
     file = modstitch.finalJarTask.flatMap { it.archiveFile } // https://modmuss50.github.io/mod-publish-plugin/getting_started/#input-file
-    additionalFiles.from(tasks[signedFinalJarName])
     changelog = changes
     type = when {
         "alpha" in v -> ReleaseType.ALPHA
@@ -388,6 +390,7 @@ publishMods {
         accessToken = token("modrinth")
         projectId = m("modrinth")
         minecraftVersions.addAll(targets)
+        additionalFiles.from(tasks[signedFinalJarName])
 
         // specify id OR slug NOT both, +OPTIONAL specific version
         required.forEach(::requires)
