@@ -95,19 +95,32 @@ fun token(name: String): String {
 }*/
 
 dependencies {
-    mod("overrides") { // mod("nonReleaseComponent") { ... ?
-        //urgent: this setup is temporary but it will be better fleshed out later
-        constraints {
-            modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${p("fabric.api") + "+" + minecraft.substringBefore('-')}")
-        }
+    // snapshots are now handled via nonReleaseComponent
+    val fapi = if(modstitch.isModDevGradle) "" else l("api") + "+" + minecraft
+
+    // warning: this is ugly and not great, maybe remove?
+    mod("nonReleaseComponent") {
+        if(modstitch.isLoom && !it.startsWith("!")) {
+            constraints {
+                // enforces the specified fapi version when a non-release component is specified, avoiding
+                // the common issue of old fapi dependencies preventing the buildscript from compiling!
+                modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:$fapi")
+            }
+        } /*else if(modstitch.isModDevGradle) {}*/
     }
 
     // fabric only
     modstitch.loom {
-        val fapi = l("api") + "+" + minecraft // snapshots are now handled via nonReleaseComponent
-        modstitchModImplementation(fabricApi.module("fabric-lifecycle-events-v1", fapi))
-        modstitchModImplementation(fabricApi.module("fabric-networking-api-v1", fapi))
-        modstitchModImplementation(fabricApi.module("fabric-screen-api-v1", fapi))
+        if(minecraft > "1.20.1") {
+            // loads the correct versions: https://github.com/FabricMC/fabric-api/pull/3487#issue-2058907234
+            modstitchModImplementation(platform("net.fabricmc.fabric-api:fabric-api-bom:$fapi"))
+
+            modstitchModImplementation("net.fabricmc.fabric-api:fabric-lifecycle-events-v1")
+            modstitchModImplementation("net.fabricmc.fabric-api:fabric-networking-api-v1")
+            modstitchModImplementation("net.fabricmc.fabric-api:fabric-screen-api-v1")
+        } else {
+            modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:$fapi")
+        }
     }
 
     modstitchModImplementation("dev.isxander:yet-another-config-lib:${d("yacl")}-fabric")
@@ -356,7 +369,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 publishMods {
     // tries to read explicitly-specified `versions` first, then accesses the more common `range` as a fallback
     // this lets modern versions automatically support patch versions (ex. 26.1.x via ~26.1) while still specifying versions to CF and MR
-    val targets = m("versions", m("range", minecraft)).split(",")
+    val targets = m("targets", m("range", minecraft)).split(",")
     val required = propList("required")
     val optionals = propList("optionals")
     val incompatibles = propList("incompatibles")
