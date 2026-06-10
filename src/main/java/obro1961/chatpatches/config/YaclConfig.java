@@ -1,18 +1,22 @@
 //~ yarnification
 package obro1961.chatpatches.config;
 
-import com.mojang.serialization.DataResult;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.Component;
+//? if >1.20.1 {
+import net.minecraft.util.NullOps;
+//?} else {
+//import com.mojang.serialization.JsonOps;
+//?}
 import net.minecraft.util.Util;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.Identifier;
 import obro1961.chatpatches.ChatLog;
@@ -25,15 +29,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -314,67 +312,33 @@ public class YaclConfig extends Config {
         };
     }
 
-	//todo note fancy we dont have to throw err here bc alr done in Config.Setting.getTypeCodec
     @SuppressWarnings("unchecked")
     private static <T> Binding<T> getBinding(Setting<?> option) {
         Setting<T> o = (Setting<T>) option;
-		StringConstraints constraints = config.getConstraints(o.key);
 
-		if(constraints != null) {
-			Consumer<String> setter = inc -> {};
+		// because all parsing is handled in Config.Setting#getTypeCodec(), we just
+		// need to ensure that encoding the incoming value against it is successful!
+		return Binding.generic(
+			o.def,
+			o::get,
+			val -> {
+				// NullOps is perfect: it fails when there are errors, and it always returns Unit on success!
+				var result = o.getTypeCodec()
+					.codec()
+					.encodeStart(/*? if >1.20.1 {*/NullOps/*?} else {*//*JsonOps*//*?}*/.INSTANCE, val);
 
-			/*if(constraints.length != @Range(from = 0, to = Integer.MAX_VALUE)) {
-							c = Codec.string(from, to);
-						}*/
-
-			// all 'Date' options
-			final boolean[] success = { false };
-			if(constraints.validator() != null) {
-				if(constraints.validator() == SimpleDateFormat.class) {
-					setter = setter.andThen(
-						raw -> {
-							try {
-								// warning: i dont want to make this reflective and dynamic rn if unnecessary
-								//constraints.validator().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
-								new SimpleDateFormat(raw);
-								success[0] = true;
-							} catch(IllegalArgumentException e) {
-								// no-op
-							}
-						}
-					);
-				} /*else {}*/
+				// take a wild fuckin' guess to which version doesn't have ifSuccess().
+				if(result./*? if >1.20.1 {*/isSuccess/*?} else {*//*result().isPresent*//*?}*/()) {
+					o.set(val);
+					// toast if we should
+				} else {
+					//o.set(o.def); // FIXME DOESNT prevents 'value mismatch after applying!' log spam // i think this is because its expecting opt.value == val - but obv thats not true
+					//noinspection OptionalGetWithoutIsPresent: what else could there gonna be?
+					LOGGER.warn("'{}' constraints ignored, discarding value - {}", o.key, result.error().get().message());
+					// toast if we should
+				}
 			}
-
-			// typically the 'Format' options
-			Predicate<String> containsAll = str -> true;
-			for(String req : constraints.mustContain()) {
-				containsAll = containsAll.and(raw -> raw.contains(req));
-			}
-			final var p = containsAll;
-			setter = setter.andThen(inc -> { if(p.test(inc) && success[0]) { o.set(inc); } });
-
-			if(o.key.contains("Date")) {
-				// must be able to successfully create a SimpleDateFormat
-				return Binding.generic(o.def, o::get, inc -> {
-					try {
-						// warning: i dont wanna make this reflective and dynamic rn but be aware of this for the future
-						new SimpleDateFormat(inc.toString());
-						o.set(inc);
-					} catch(IllegalArgumentException e) {
-						LOGGER.error("Invalid date format '{}' provided for '{}'", inc, o.key);
-					}
-				});
-			}
-
-			// must contain placeholder
-			return Binding.generic(o.def, o::get, (Consumer<T>)setter);
-		}
-
-		// every other setting either has no constraints or is already conformed by its controller.
-		// this applies to all options containing 'Str' and all boolean, int, and color options -
-		// color options have type transformers to int overridden in the screen builder
-		return Binding.generic(o.def, o::get, o::set);
+		);
     }
 
 	private static int getMin(String key) {

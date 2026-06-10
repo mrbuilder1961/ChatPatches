@@ -24,7 +24,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/;
-//? if >1.20.1 && <=1.20.4 {
+//? if <=1.20.4 {
 //import net.minecraft.util.ExtraCodecs;
 //?}
 import net.minecraft.util.GsonHelper;
@@ -52,7 +52,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.Colors.*;
@@ -241,7 +240,13 @@ public class Config {
      */
     public MutableComponent makeTimestamp(Date when, boolean system, boolean boundary) {
 		MutableComponent timestamp = time && !boundary && (timeSystemMessages || !system)
-			? makeText(timeFormat, new SimpleDateFormat(timeDate).format(when), "", " ", timeColor)
+			? makeText(
+				timeFormat, // don't bother computing the output if we're not gonna use it
+				timeFormat.contains(PLACEHOLDER) ? new SimpleDateFormat(timeDate).format(when) : "",
+				"",
+				" ",
+				timeColor
+			)
 			: Component.empty();
 		MutableComponent hoverText = makeText(hoverFormat, new SimpleDateFormat(hoverDate).format(when), hoverColor);
 
@@ -719,6 +724,7 @@ public class Config {
 					.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
 					.xmap(TextColor::getValue, TextColor::fromRgb);
 			} else {
+				/*~ if <=1.20.1 'c.validate(' -> 'ExtraCodecs.validate(c, ' {*/
 				codec = switch(getType().getName()) { // rip 21 pattern matching ;(
 					case "java.lang.Boolean", "boolean" -> Codec.BOOL;
 					case "java.lang.Integer", "int" -> (Object)config.getRange(key) instanceof IntConstraints range
@@ -738,36 +744,34 @@ public class Config {
 
 						// typically the 'Format' options
 						for(String req : constraints.mustContain()) {
-							c = c.comapFlatMap(
+							c = c.validate(
 								raw -> raw.contains(req)
 									? DataResult.success(raw)
 									: DataResult.error(() -> {
 										constraintsIgnored = true;
 										return String.format("Format string '%s' is missing constraint '%s'", raw, req);
-									}),
-								Function.identity()
+									})
 							);
 						}
 
 						// all 'Date' options
-						if(constraints.validator() != null) {
-							if(constraints.validator() == SimpleDateFormat.class) {
-								c = c.comapFlatMap(
-									raw -> {
-										try {
-											// warning: i dont want to make this reflective and dynamic rn if unnecessary
-											//constraints.validator().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
-											new SimpleDateFormat(raw);
-											return DataResult.success(raw);
-										} catch(IllegalArgumentException e) {
-											constraintsIgnored = true;
-											return DataResult.error(() -> String.format("Invalid SimpleDateFormat '%s': %s", raw, e.getMessage()));
-										}
-									},
-									Function.identity()
-								);
-							} /*else {}*/
-						}
+						if(constraints.validator() == SimpleDateFormat.class) {
+							c = c.validate(
+								raw -> {
+									try {
+										// warning: i dont want to make this reflective and dynamic rn if unnecessary
+										//constraints.validator().getDeclaredConstructor(String.class).newInstance(raw); // vanilla reflection strat
+										new SimpleDateFormat(raw);
+										return DataResult.success(raw);
+									} catch(IllegalArgumentException e) {
+										constraintsIgnored = true;
+										return DataResult.error(() -> String.format("Invalid SimpleDateFormat '%s': %s", raw, e.getMessage()));
+									}
+								}
+							);
+						} /*else {
+							//
+						}*/
 
 						yield c;
 					}
@@ -776,6 +780,7 @@ public class Config {
 						yield Codec.STRING;
 					}
 				};
+				/*~}*/
 			}
 
 			// replaces Optional.empty() w/ Optional.of(defaultValue) to serialize default values
