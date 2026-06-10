@@ -1,6 +1,7 @@
 package obro1961.chatpatches.gui;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.layouts.Layout;
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 //?}
 
+import java.util.Objects;
+
 import static obro1961.chatpatches.gui.ContextMenu.LANG_PREFIX;
 
 public class DeletionWarningScreen extends WarningScreen {
@@ -28,17 +31,25 @@ public class DeletionWarningScreen extends WarningScreen {
 	 */
 	public final Screen parent;
 
+	/**
+	 * Fixes the side effect of the chat resetting the scroll position, due to
+	 * this new screen being created (and subsequently destroying the old one).
+	 */
+	private final int scroll;
 	private final GuiMessage chatMessage;
 
 	public DeletionWarningScreen(@NotNull Screen parent, @NotNull GuiMessage chatMessage) {
 		super(TITLE, chatMessage.content(), DISMISS, CommonComponents.joinForNarration(TITLE, chatMessage.content()));
 		this.parent = parent;
 		this.chatMessage = chatMessage;
+		//noinspection DataFlowIssue: that's what i said too. man fuck 1.20.1
+		this.scroll = Objects.requireNonNullElse(minecraft, Minecraft.getInstance()).gui.hud.getChat().chatScrollbarPos;
 	}
 
 
 	private void close() {
 		minecraft.gui.setScreen(parent);
+		minecraft.gui.hud.getChat().scrollChat(scroll);
 	}
 
 	/**

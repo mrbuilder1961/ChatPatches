@@ -10,6 +10,7 @@
   - Note: I wrote this a while ago but couldn't publish it due to dependency requirements, so lmk if you find any issues!!
 - Added an updated `ko_kr` translation thanks to [ettip](https://github.com/ettip) in [#317](https://www.github.com/mrbuilder1961/ChatPatches/issues/317)! (I have no idea why the original translation was removed; so sorry about that)
 - Increase max compact chat distance to 50 ([#319](https://www.github.com/mrbuilder1961/ChatPatches/issues/319))
+- Fixed the chat un-scrolling after deleting a message when `contextDeletionWarning` was enabled
 - **Dev notes:**
   - Added Fletching Table as a dependency, which primarily allows for versionable mixins
   - This allows for certain niche behavior, such as the implementations for [#109](https://www.github.com/mrbuilder1961/ChatPatches/issues/109) (on 1.21.11+)
