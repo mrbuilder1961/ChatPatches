@@ -1,9 +1,11 @@
 # Changelog
 
 ## Chat Patches `8.0-alpha.10` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
-- Published builds are now signed! This means you can verify the integrity of Chat Patches builds (ensuring they haven't been tampered with)! However,
-  checksums are not yet available but will be soon. Note that signatures are currently only available on Modrinth.
-  - Signatures can be verified by installing GPG and running `gpg --verify path_to_signature.asc path_to_file.jar`
+- Published builds now come with signatures and checksums! This means you can verify the integrity of Chat Patches builds (and ensure they haven't been tampered 
+  with)! This is currently only available on Modrinth.
+  - Signatures can be verified by installing GPG or Gpg4win and running `gpg --verify {chatpatches-version}.jar.asc {chatpatches-version}.jar`
+  - With checksums, [this page](https://eakondratiev.github.io/sha256.htm) explains everything! For power users, `gc {chatpatches-version}.jar.sha256` in 
+    PowerShell will print the file's checksum
 
 - The placeholder (`$`) in `timeFormat` is now optional ([#277](https://www.github.com/mrbuilder1961/ChatPatches/issues/277))
 - Prevents vanilla's command history from being loaded if the chat log is enabled ([#300](https://www.github.com/mrbuilder1961/ChatPatches/issues/300))

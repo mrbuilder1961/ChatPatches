@@ -2,6 +2,7 @@ import dev.kikugie.stonecutter.build.config.ReplacementContainer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import me.modmuss50.mpp.ReleaseType
+import org.gradle.crypto.checksum.Checksum
 
 plugins { // versions in gradle.properties + settings.gradle.kts
     kotlin("jvm")
@@ -11,6 +12,7 @@ plugins { // versions in gradle.properties + settings.gradle.kts
     id("net.fabricmc.fabric-loom") apply false
     id("me.modmuss50.mod-publish-plugin")
     signing
+    id("org.gradle.crypto.checksum") version "1.4.0" // hasn't updated in 4+ years
 }
 
 fun String.capitalize(): String = replaceFirstChar(Char::uppercaseChar)
@@ -242,6 +244,17 @@ signing {
     sign(modstitch.finalJarTask.get()) // creates `signJar` on 26.1+ else `signRemapJar`
 }
 
+tasks.register<Checksum>("generateChecksum") {
+    description = "Generates a SHA256 hash for the registered final jar task."
+    group = "signing"
+
+    dependsOn(signedFinalJarName) // requires the signed jars to exist (which in turn requires `build`)
+
+    inputFiles.from(modstitch.finalJarTask)
+    outputDirectory = layout.buildDirectory.dir("libs")
+    appendFileNameToChecksum = true
+}
+
 tasks {
     modstitch.finalJarTask {
         archiveBaseName.set(id)
@@ -249,6 +262,7 @@ tasks {
         archiveClassifier.set(loader)
     }
 
+    // https://docs.gradle.org/current/userguide/build_lifecycle.html#the_phases_in_build_scripts
     processResources {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
@@ -281,8 +295,11 @@ tasks {
     }
 
     clean {
-        delete(rootProject.layout.buildDirectory)
-        delete(project.file("build"))
+        delete(layout.buildDirectory.asFile.map(File::toPath).get().resolveSibling("out"))
+    }
+
+    signedFinalJarName {
+        dependsOn("build")
     }
 
     publishMods {
@@ -403,7 +420,8 @@ publishMods {
         accessToken = token("modrinth")
         projectId = m("modrinth")
         minecraftVersions.addAll(targets)
-        additionalFiles.from(tasks[signedFinalJarName])
+        // uploads verification info to Modrinth only so it's clear which files have what information
+        additionalFiles.from(tasks[signedFinalJarName], tasks["generateChecksum"])
 
         // specify id OR slug NOT both, +OPTIONAL specific version
         required.forEach(::requires)
