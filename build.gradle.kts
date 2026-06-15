@@ -28,7 +28,7 @@ val loader: String = when {
 }
 val currentIsActive = minecraft == stonecutter.active?.version
 val nonReleaseComponent = findProperty("mod.nonReleaseComponent")?.toString()
-val signedFinalJarName: String = "sign" + modstitch.finalJarTask.name.capitalize() // TODO inline once everything is done if only used once
+val signedFinalJarTask: String = "sign" + modstitch.finalJarTask.name.capitalize() // TODO inline once everything is done if only used once
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
@@ -98,7 +98,7 @@ fun token(name: String): String {
 
 dependencies {
     // snapshots are now handled via nonReleaseComponent
-    val fapi = if(modstitch.isModDevGradle) "" else l("api") + "+" + minecraft
+    val fapi = (if(modstitch.isModDevGradle) "" else l("api")) + "+" + minecraft
 
     // warning: this is ugly and not great, maybe remove?
     mod("nonReleaseComponent") {
@@ -248,7 +248,7 @@ tasks.register<Checksum>("generateChecksum") {
     description = "Generates a SHA256 hash for the registered final jar task."
     group = "signing"
 
-    dependsOn(signedFinalJarName) // requires the signed jars to exist (which in turn requires `build`)
+    dependsOn(signedFinalJarTask) // requires the signed jars to exist (which in turn requires `build`)
 
     inputFiles.from(modstitch.finalJarTask)
     outputDirectory = layout.buildDirectory.dir("libs")
@@ -269,9 +269,10 @@ tasks {
         val changelogFile: File = rootDir.toPath().resolve("changelog.md").toFile()
         if(changelogFile.exists()) {
             var fileText = changelogFile.readText()
+
             // replace issue numbers with links
             fileText = fileText.replace(Regex("##(\\d+)"), "[#$1](https://www.github.com/mrbuilder1961/ChatPatches/issues/$1)")
-            changelogFile.writeText(fileText) // update the file
+            changelogFile.writeText(fileText)
 
             // hack-ily gets the first changelog entry
             val newEntryTitle = "## Chat Patches `$v`"
@@ -298,7 +299,7 @@ tasks {
         delete(layout.buildDirectory.asFile.map(File::toPath).get().resolveSibling("out"))
     }
 
-    signedFinalJarName {
+    signedFinalJarTask {
         dependsOn("build")
     }
 
@@ -409,6 +410,7 @@ publishMods {
         projectId = m("curseforge")
         projectSlug = m("id")
         minecraftVersions.addAll(targets)
+//        println("$name (cf) = ${additionalFiles.files}")
 
         required.forEach(::requires)
         optionals.forEach(::optional)
@@ -421,7 +423,8 @@ publishMods {
         projectId = m("modrinth")
         minecraftVersions.addAll(targets)
         // uploads verification info to Modrinth only so it's clear which files have what information
-        additionalFiles.from(tasks[signedFinalJarName], tasks["generateChecksum"])
+        additionalFiles.from(tasks[signedFinalJarTask], tasks["generateChecksum"])
+//        println("$name (mr) = ${additionalFiles.files}")
 
         // specify id OR slug NOT both, +OPTIONAL specific version
         required.forEach(::requires)

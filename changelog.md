@@ -1,6 +1,6 @@
 # Changelog
 
-## Chat Patches `8.0-alpha.10` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
+## Chat Patches `8.0-alpha.10` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-rc-2 on Fabric, Quilt
 - Published builds now come with signatures and checksums! This means you can verify the integrity of Chat Patches builds (and ensure they haven't been tampered 
   with)! This is currently only available on Modrinth.
   - Signatures can be verified by installing GPG or Gpg4win and running `gpg --verify {chatpatches-version}.jar.asc {chatpatches-version}.jar`
