@@ -665,8 +665,10 @@ public class ChatUtil {
 			dupeCount += Integers.parseInt( getPart(msg, DUPE_INDEX).getString().replaceAll("(§\\d)|\\D", "") , 1);
 
 			int v = config.compactChat ? message2Visible(i) : i; // ensure that `i` correctly maps to its EoE visible
-			do visibles.remove(v); // remove the visible message(s) of the message being condensed, starting with its own EoE
-			while(v < visibles.size() && !visibles.get(v).endOfEntry()); // continue removing them until the next message (EoE) is reached
+			if ( !visibles.isEmpty() ) {
+				do visibles.remove(v); // remove the visible message(s) of the message being condensed, starting with its own EoE
+				while (v < visibles.size() && !visibles.get(v).endOfEntry()); // continue removing them until the next message (EoE) is reached
+			}
 
 			// remove the message being condensed; done last to ensure #message2Visible(.) works correctly
 			messages.remove(i);
