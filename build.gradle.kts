@@ -28,7 +28,7 @@ val loader: String = when {
 }
 val currentIsActive = minecraft == stonecutter.active?.version
 val nonReleaseComponent = findProperty("mod.nonReleaseComponent")?.toString()
-val signedFinalJarTask: String = "sign" + modstitch.finalJarTask.name.capitalize() // TODO inline once everything is done if only used once
+val signedFinalJarTask: String = "sign" + modstitch.finalJarTask.name.capitalize()
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
