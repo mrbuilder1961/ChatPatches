@@ -7,18 +7,18 @@ import dev.isxander.yacl3.gui.YACLScreen;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 //? if >1.20.1 {
 import net.minecraft.util.NullOps;
 //?} else {
 //import com.mojang.serialization.JsonOps;
 //?}
 import net.minecraft.util.Util;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.UUIDUtil;
-import net.minecraft.resources.Identifier;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.Colors;
@@ -29,8 +29,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -89,6 +91,7 @@ public class YaclConfig extends Config {
 				cat = "chat"; // default to chat if the category is invalid
 			}
 
+			// yacl only supports java.awt.Color so we have to make a manual adapter here via Setting -_-
             if(key.endsWith("Color")) {
                 opt = new Setting<>(new Color( (int)opt.val ), new Color( (int)opt.def ), key) {
                     @Override
@@ -316,6 +319,14 @@ public class YaclConfig extends Config {
     private static <T> Binding<T> getBinding(Setting<?> option) {
         Setting<T> o = (Setting<T>) option;
 
+		// because yacl only uses java.awt.Color and doesn't let you transform it, it's much easier to simply
+		// carve out an exception than bulk up the codec and risk future headaches / undesired side effects
+		if(o.key.contains("Color")) {
+			// note that the setter is the only difference - it doesn't have to validate anything,
+			// only convert - which is handled in the anonymous Setting class in getConfigScreen()
+			return Binding.generic(o.def, o::get, o::set);
+		}
+
 		// because all parsing is handled in Config.Setting#getTypeCodec(), we just
 		// need to ensure that encoding the incoming value against it is successful!
 		return Binding.generic(
@@ -332,8 +343,8 @@ public class YaclConfig extends Config {
 					o.set(val);
 					// toast if we should
 				} else {
-					//o.set(o.def); // FIXME DOESNT prevents 'value mismatch after applying!' log spam // i think this is because its expecting opt.value == val - but obv thats not true
-					//noinspection OptionalGetWithoutIsPresent: what else could there gonna be?
+					// FIXME DOESNT prevent 'value mismatch after applying!' log spam // i think this is because its expecting opt.value == val - but obv thats not true
+					//noinspection OptionalGetWithoutIsPresent: what else could there be?
 					LOGGER.warn("'{}' constraints ignored, discarding value - {}", o.key, result.error().get().message());
 					// toast if we should
 				}

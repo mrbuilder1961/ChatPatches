@@ -11,8 +11,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
-import net.minecraft.util.Util;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
@@ -21,6 +19,7 @@ import net.minecraft.client.gui.screens.Screen;
 //? if <1.21.5 {
 //import net.minecraft.client.multiplayer.PlayerInfo;
 //?}
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/;
@@ -29,6 +28,7 @@ import net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*
 //?}
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.PlayerTeam;
 import obro1961.chatpatches.Boundary;
@@ -720,9 +720,12 @@ public class Config {
 				// parses int -> TextColor (migration) and String <-> TextColor (default); the final result is always of type int
 				// thx to TheWhyEvenHow: https://discord.com/channels/507304429255393322/721100785936760876/1385863368300040244
 				codec =
-					/*? if <=1.20.1 {*//*VersionUtil*//*?} elif <=1.20.4 {*//*ExtraCodecs*//*?} else {*/Codec/*?}*/
-					.withAlternative(TextColor.CODEC, Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue))
-					.xmap(TextColor::getValue, TextColor::fromRgb);
+					/*~ if <=1.20.1 'Codec.with' -> 'VersionUtil.with' {*/
+					Codec.withAlternative(
+						TextColor.CODEC,
+						Codec.INT.xmap(TextColor::fromRgb, TextColor::getValue)
+					).xmap(TextColor::getValue, TextColor::fromRgb);
+					/*~}*/
 			} else {
 				/*~ if <=1.20.1 'c.validate(' -> 'ExtraCodecs.validate(c, ' {*/
 				codec = switch(getType().getName()) { // rip 21 pattern matching ;(
