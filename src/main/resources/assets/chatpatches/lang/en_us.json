@@ -139,12 +139,14 @@
     "text.chatpatches.search.desc.regex": "Should the search query be used as a regular expression?\n\nTo learn how to use regexes, see the help section in the config.\nNote that Java regexes §nrequire a full match§f, so remember to put \"^.*\" in front and \".*$\" at the end.",
 
 
-    "text.chatpatches.contextReplyFormat": "Reply text format",
-    "text.chatpatches.contextOutlineColor": "Message outline color",
     "text.chatpatches.contextDeletionWarning": "Show message deletion warning",
-    "text.chatpatches.desc.contextReplyFormat": "The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the context menu. Requires '$' as a placeholder for the message sender's name.",
-    "text.chatpatches.desc.contextOutlineColor": "The color of the selection box that surrounds a chat message after right-clicking.",
+    "text.chatpatches.contextDeletionSizzle": "Play message deletion sizzle",
+    "text.chatpatches.contextOutlineColor": "Message outline color",
+    "text.chatpatches.contextReplyFormat": "Reply text format",
     "text.chatpatches.desc.contextDeletionWarning": "Should a warning screen appear when you try to delete a message? Be aware that a deleted message cannot be restored.",
+    "text.chatpatches.desc.contextDeletionSizzle": "Should a lava sizzle sound cue be played after deleting a message?",
+    "text.chatpatches.desc.contextOutlineColor": "The color of the selection box that surrounds a chat message after right-clicking.",
+    "text.chatpatches.desc.contextReplyFormat": "The text that is filled into the chat box after right-clicking on a chat message and clicking on the 'Reply' button in the context menu. Requires '$' as a placeholder for the message sender's name.",
 
     "text.chatpatches.context.copied": "Successfully copied to clipboard!",
     "text.chatpatches.context.copyText": "Copy Text",

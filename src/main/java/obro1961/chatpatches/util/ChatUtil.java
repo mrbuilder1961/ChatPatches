@@ -201,11 +201,11 @@ public class ChatUtil {
 
 	/**
 	 * @see #deleteMessage(int, boolean)
-	 * @see #deleteMessage(GuiMessage)
+	 * @see #deleteMessage(GuiMessage, boolean)
 	 */
 	@SuppressWarnings("UnusedReturnValue") // follows the List convention
 	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessageSilently(GuiMessage message) {
-		return deleteMessage(mc().gui.hud.getChat().allMessages.indexOf(message), false);
+		return deleteMessage(message, false);
 	}
 
 	/**
@@ -213,8 +213,8 @@ public class ChatUtil {
 	 * @see #deleteMessageSilently(GuiMessage)
 	 */
 	@SuppressWarnings("UnusedReturnValue") // follows the List convention
-	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(GuiMessage message) {
-		return deleteMessage(mc().gui.hud.getChat().allMessages.indexOf(message), true);
+	public static Pair<GuiMessage, List<GuiMessage.Line>> deleteMessage(GuiMessage message, boolean playBurnSound) {
+		return deleteMessage(mc().gui.hud.getChat().allMessages.indexOf(message), playBurnSound);
 	}
 
 	/**

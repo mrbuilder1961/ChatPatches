@@ -155,6 +155,7 @@ public class Config {
 
 	public boolean contextMenu = true;
 	public boolean contextDeletionWarning = true;
+	public boolean contextDeletionSizzle = true;
 	public int contextOutlineColor = AQUA;
 	@StringConstraints
 	public String contextReplyFormat = "/msg $ ";

@@ -62,7 +62,7 @@ public class DeletionWarningScreen extends WarningScreen {
 			if(stopShowing.selected()) {
 				ChatPatches.config.contextDeletionWarning = false;
 			}
-			ChatUtil.deleteMessage(chatMessage);
+			ChatUtil.deleteMessage(chatMessage, ChatPatches.config.contextDeletionSizzle);
 			close();
 		});
 		var cancelButton = Button.builder(CommonComponents.GUI_CANCEL, me -> close());
