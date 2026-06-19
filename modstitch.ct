@@ -80,3 +80,14 @@ accessible field net/minecraft/client/gui/layouts/GridLayout children Ljava/util
 #? if >=26.1 {
 accessible class net/minecraft/client/gui/layouts/GridLayout$ChildContainer
 #?}
+
+
+## Button/ButtonWidget - ContextMenu
+
+#? if >=1.21.11 {
+accessible field net/minecraft/client/gui/components/Button onPress Lnet/minecraft/client/gui/components/Button$OnPress;
+accessible field net/minecraft/client/gui/components/Button DEFAULT_NARRATION Lnet/minecraft/client/gui/components/Button$CreateNarration;
+accessible method net/minecraft/client/gui/components/Button$Plain <init> (IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;Lnet/minecraft/client/gui/components/Button$CreateNarration;)V
+#?} else {
+accessible method net/minecraft/client/gui/components/Button <init> (IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;Lnet/minecraft/client/gui/components/Button$CreateNarration;)V
+#?}

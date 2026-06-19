@@ -330,6 +330,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
             else -> "net.minecraft.util.ExtraCodecs.COMPONENT"
         })
 
+        //todo i think these r the only oned tht actyally need to ve swaps
         val v1215 = current.parsed >= "1.21.5"
         // all of these require 'new' before them, regardless of version
         put("open_url", if(v1215) "ClickEvent.OpenUrl(URI.create($1))" else "ClickEvent(ClickEvent.Action.OPEN_URL, $1)") // java.net.URI is always available
@@ -347,6 +348,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         put("mouse_args", if(v1219) "mouse, bl" else "mX, mY, button")
     }
 
+    // https://stonecutter.kikugie.dev/wiki/config/params#replacement-overlapping:~:text=Excluded%20matches !!!
     replacements {
         fun str(dir: Boolean, from: String, to: String, nameId: String? = null, defaultEnabled: Boolean = true) {
             val action: ReplacementContainer.StringReplacementSpec.() -> Unit = { replace(from, to) }

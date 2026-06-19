@@ -17,11 +17,9 @@ import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.GridLayout;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 //? if >=1.21.9 {
-import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 //?}
@@ -41,11 +39,9 @@ import net.minecraft.world.entity.player.PlayerSkin;
 *//*?}*/
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
-import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.RenderUtil;
 import obro1961.chatpatches.util.TextUtil;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -207,7 +203,7 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		this.selectedLine = noOp ? NIL_HUD_LINE : Iterables.get(messages, messageIndex, NIL_HUD_LINE);
-		this.visibleMessageIndex = noOp ? -1 : ChatUtil.message2Visible(messageIndex);
+		this.visibleMessageIndex = noOp ? -1 : message2Visible(messageIndex);
 		this.visibleLines = noOp ? 0 : Util.make(() -> {
 			var visibles = chat.trimmedMessages;
 
@@ -221,17 +217,17 @@ public class ContextMenu implements GuiEventListener {
 		});
 
 		//~ !render_extraction
-		this.messageSender = ChatUtil.extractMessageSender(selectedLine.content());
+		this.messageSender = extractMessageSender(selectedLine.content());
 	}
 
 
 	/**
 	 * Registers a button in the {@linkplain Grid#layout button grid} and
-	 * {@linkplain #grid associated data manager}. This is done
-	 * by creating a new {@link Button} (or similarly-implemented
-	 * {@link AbstractButton} if {@code icon} is specified)
-	 * according to the passed id, copy text supplier, press action, and
-	 * coordinates (the local row and absolute column).
+	 * {@linkplain #grid associated data manager}. This is done by
+	 * creating a new {@link Button} (or similarly-implemented one if
+	 * {@code icon} is specified) according to the passed id, copy text
+	 * supplier, press action, and coordinates (the local row and
+	 * absolute column).
 	 *
 	 * @param col The column in the grid menu where the button should be
 	 * placed. Main buttons are always in column 0, and hover
@@ -244,7 +240,7 @@ public class ContextMenu implements GuiEventListener {
 		int w = mc().font.width(id) + 2 * BUTTON_PADDING;
 		int h = BUTTON_HEIGHT + BUTTON_PADDING;
 
-		AbstractButton button = Button.builder(id, b -> {
+		Button b = Button.builder(id, me -> {
 			if(noOp) {
 				return;
 			}
@@ -253,23 +249,18 @@ public class ContextMenu implements GuiEventListener {
 			String copyStr = StringUtil.stripColor(copyText.getString());
 			if(!copyStr.isEmpty()) {
 				mc().keyboardHandler.setClipboard(copyStr);
-				ChatPatches.pushInfoToast(translate("copied").withStyle(ChatFormatting.GREEN), copyText);
+				pushInfoToast(translate("copied").withStyle(ChatFormatting.GREEN), copyText);
 			}
 
 			if(pressAction != null) {
-				pressAction.onPress(b);
+				pressAction.onPress(me);
 			}
 		}).bounds(clickPos.xInt(), clickPos.yInt(), w, h).build();
 
-		if(icon != null) { // prepub make an AW for ButtonWidget to avoid this ugly custom implementation? OR ACCESSOR MIXIN CLASS
-			final AbstractButton src = button;
+		if(icon != null) {
 			// idea: make the button *not* adjust the text if it doesnt need to
 			// accounts for the 16x16 icon on the left with the +16 and prefixed 4 spaces (each of width 4) in the id label
-			button = new AbstractButton(button.getX(), button.getY(), button.getWidth() + 16, button.getHeight(), literal("    ").append(id)) {
-				final Button.CreateNarration narrationSupplier = Supplier::get;
-
-				@Override public void onPress(/*? if >=1.21.9 {*/InputWithModifiers i/*?}*/) { src.onPress(/*? if >=1.21.9 {*/i/*?}*/); }
-
+			b = new Button/*? if >=1.21.11 >> '('*/.Plain(b.getX(), b.getY(), b.getWidth() + 16, b.getHeight(), literal("    ").append(id), b.onPress, Button.DEFAULT_NARRATION) {
 				/*
 				 * Render replacements shouldn't be kept when applied to the versioned
 				 * out comments; unfortunately, this is atrocious to do automatically.
@@ -294,21 +285,17 @@ public class ContextMenu implements GuiEventListener {
 				@Override
 				public String toString() {
 					// hopefully helps with debugging
-					return "ContextMenu.ButtonWidget[id=" + id.getString() + ", icon=" + icon + "]";
+					return "ContextMenu.IconButton[id=" + id.getString() + ", icon=" + icon + "]";
 				}
-
-				// pulled from ButtonWidget
-				@Override protected @NotNull MutableComponent createNarrationMessage() {return narrationSupplier.createNarrationMessage(super::createNarrationMessage);}
-				@Override public void updateWidgetNarration(NarrationElementOutput builder) {defaultButtonNarrationText(builder);}
 			};
 		}
 
 		// set here so buttons with an icon don't have theirs deleted
 		if(tooltipCopyTextSupplier != null) {
-			button.setTooltip(Tooltip.create( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace(Formatting.FORMATTING_CODE_PREFIX, '&') )
+			b.setTooltip(Tooltip.create( tooltipCopyTextSupplier.get() )); //Text.of( tooltipCopyTextSupplier.get().getString().replace(Formatting.FORMATTING_CODE_PREFIX, '&') )
 		}
 
-		grid.add(button, col, tooltipCopyTextSupplier, pressAction);
+		grid.add(b, col, tooltipCopyTextSupplier, pressAction);
 	}
 
 	/**
@@ -428,7 +415,7 @@ public class ContextMenu implements GuiEventListener {
 				registerCopyButton(NO_DUPE_TEXT, TextUtil.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
 			}
 			registerCopyButton(JSON_STR,
-				TextUtil.UNSAFE_CODEC.encodeStart(ChatPatches.regBack(NbtOps.INSTANCE), text)
+				TextUtil.UNSAFE_CODEC.encodeStart(regBack(NbtOps.INSTANCE), text)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.map(NbtUtils::toPrettyComponent)
 					.orElse(UNKNOWN.apply(JSON_STR))
@@ -515,8 +502,8 @@ public class ContextMenu implements GuiEventListener {
 			var id = messageSender./*? if >=1.21.9 {*/id/*?} else {*//*getId*//*?}*/();
 
 			registerProxyButton(MENU_SENDER, NAME, Items.NAME_TAG);
-				registerCopyButton(NAME, Component.literal(name));
-				registerCopyButton(UUID, Component.literal(id.toString()));
+				registerCopyButton(NAME, literal(name));
+				registerCopyButton(UUID, literal(id.toString()));
 
 			registerActionButton(
 				MENU_REPLY,
@@ -529,7 +516,7 @@ public class ContextMenu implements GuiEventListener {
 			if(config.contextDeletionWarning) {
 				mc().gui.setScreen(new DeletionWarningScreen(screen, selectedLine));
 			} else {
-				ChatUtil.deleteMessage(selectedLine, config.contextDeletionSizzle);
+				deleteMessage(selectedLine, config.contextDeletionSizzle);
 			}
 		});
 
