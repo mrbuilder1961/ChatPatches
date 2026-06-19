@@ -343,7 +343,8 @@ public class Config {
         List<GuiMessage> messages = chat.allMessages;
 		Boundary currentLevel = Boundary.createFromCurrentLevel();
 
-		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return; // idea: if we still want to impl that per-world history using boundary lines, we'll need to remove this isEmpty -> return condition
+		/*(messages.isEmpty() && !config.perWorldHistory) || ...*/
+		if(messages.isEmpty() || currentLevel == Boundary.UNKNOWN) return;
 
 		Component boundaryLine = currentLevel.format(makeText(boundaryFormat, currentLevel.levelName(), boundaryColor)); // boundary message itself
 
@@ -792,5 +793,4 @@ public class Config {
 			//Objects.equals(o, def) ? Optional.of(def) : Optional.of(o) <-> Optional.of(o)
         }
     }
-
 }

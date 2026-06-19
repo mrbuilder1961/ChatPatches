@@ -378,7 +378,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         str(v261, "\"render\"", "\"extractRenderState\"", "extract_render_state_target", true) // targets plain render(..) injectors
         str(v261, "render", "extract", "render_extraction", false) // targets render<component>(..) calls
 
-        val v262 = current.parsed > "26.1.2" //stonecutter: >=26.2
+        val v262 = current.parsed >= "26.2"
         str(v262, "gui.getChat()", "gui.hud.getChat()") // how clear and verbose Mojang!
         str(v262, ".setScreen(", ".gui.setScreen(")
     }
