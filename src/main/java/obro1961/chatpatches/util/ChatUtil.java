@@ -631,13 +631,19 @@ public class ChatUtil {
 		// todo: make this method save to the chat log too (so no redundant messages)!
 		ChatComponent chat = mc().gui.hud.getChat();
 		List<GuiMessage> messages = chat.allMessages;
+		List<GuiMessage.Line> visibles = chat.trimmedMessages;
 
-		if(!config.counter || messages.isEmpty()) {
+		if(!config.counter || messages.isEmpty() || visibles.isEmpty()) {
+			// see #323
+			if(visibles.isEmpty()) {
+				String err = "`tryCondenseDupes(.)` called when `trimmedMessages` is empty";
+				ChatPatches.logReportMsg(new IllegalStateException(err));
+				//ChatPatches.pushErrorToast("Duplicate condenser warning", err);
+			}
 			return incoming;
 		}
 
 		ObjectList<Component> siblings = new ObjectArrayList<>( incoming.getSiblings() ); // prevents UOEs on 1.20.3+ (#199)
-		List<GuiMessage.Line> visibles = chat.trimmedMessages;
 		int attemptDistance =
 			switch(config.compactChat ? Math.abs(config.compactDistance) : 1) {
 				case 0 -> chat.getLinesPerPage();
@@ -646,7 +652,7 @@ public class ChatUtil {
 			};
 
 		// iterate through the last `attemptDistance` messages to find and condense (remove) any duplicates
-		int dupeCount = 1;
+		int count = 1;
 		for(int i = 0; i < attemptDistance && i < messages.size(); i++) {
 			Component msg = messages.get(i).content();
 			Component msgContent = getPart(msg, MESSAGE_INDEX);
@@ -662,7 +668,7 @@ public class ChatUtil {
 
 			// remove all number formatting codes and non-digits, then replace empty strings with 1 to prevent NumberFormatExceptions
 			// finally add it to the total dupe count
-			dupeCount += Integers.parseInt( getPart(msg, DUPE_INDEX).getString().replaceAll("(§\\d)|\\D", "") , 1);
+			count += Integers.parseInt( getPart(msg, DUPE_INDEX).getString().replaceAll("(§\\d)|\\D", "") , 1);
 
 			int v = config.compactChat ? message2Visible(i) : i; // ensure that `i` correctly maps to its EoE visible
 			do visibles.remove(v); // remove the visible message(s) of the message being condensed, starting with its own EoE
@@ -676,13 +682,13 @@ public class ChatUtil {
 		}
 
 		// update the incoming message with the new dupe counter
-		if(dupeCount > 1) {
+		if(count > 1) {
 			if(siblings.size() > DUPE_INDEX) {
-				siblings.set(DUPE_INDEX, config.makeDupeCounter(dupeCount)); // this will throw errors if DUPE_INDEX doesn't exist!
+				siblings.set(DUPE_INDEX, config.makeDupeCounter(count)); // this will throw errors if DUPE_INDEX doesn't exist!
 			} else {
 				// don't bother reporting this, restoring dumped logs and other edge cases will cause the same issue
 				// no use in creating more headaches when a perfectly valid solution exists right here
-				siblings.add(config.makeDupeCounter(dupeCount));
+				siblings.add(config.makeDupeCounter(count));
 			}
 		}
 

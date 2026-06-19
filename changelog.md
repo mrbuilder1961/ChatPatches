@@ -1,29 +1,29 @@
 # Changelog
 
-## Chat Patches `8.0-alpha.10` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-rc-2 on Fabric, Quilt
-- Published builds now come with signatures and checksums! This means you can verify the integrity of Chat Patches builds (and ensure they haven't been tampered 
-  with)! This is currently only available on Modrinth.
+## Chat Patches `8.0-alpha.10` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt
+- Published builds now come with signatures and checksums! This means you can verify the integrity of Chat Patches builds (and ensure they haven't been tampered
+  with)! Currently only available on Modrinth.
   - Signatures can be verified by installing GPG or Gpg4win and running `gpg --verify {chatpatches-version}.jar.asc {chatpatches-version}.jar`
-  - With checksums, [this page](https://eakondratiev.github.io/sha256.htm) explains everything! For power users, `gc {chatpatches-version}.jar.sha256` in 
-    PowerShell will print the file's checksum
+  - With checksums, [this page](https://eakondratiev.github.io/sha256.htm) explains everything! For power users, `gc {chatpatches-version}.jar.sha256` in
+    PowerShell comes in handy
 
 - The placeholder (`$`) in `timeFormat` is now optional ([#277](https://www.github.com/mrbuilder1961/ChatPatches/issues/277))
 - Prevents vanilla's command history from being loaded if the chat log is enabled ([#300](https://www.github.com/mrbuilder1961/ChatPatches/issues/300))
   - Note: I wrote this a while ago but couldn't publish it due to dependency requirements, so lmk if you find any issues!!
-- Added an updated `ko_kr` translation thanks to [ettip](https://github.com/ettip) in [#317](https://www.github.com/mrbuilder1961/ChatPatches/issues/317)! (I have no idea why the original translation was removed; so sorry about that)
+- Added an updated `ko_kr` translation thanks to [ettip](https://github.com/ettip) in [#317](https://www.github.com/mrbuilder1961/ChatPatches/issues/317)! (I have no idea why the original translation was removed)
 - Increase max compact chat distance to 50 ([#319](https://www.github.com/mrbuilder1961/ChatPatches/issues/319))
+- Partially implemented ([#323](https://www.github.com/mrbuilder1961/ChatPatches/pull/323))
 - Fixed the chat un-scrolling after deleting a message when `contextDeletionWarning` was enabled
+- Added a toggle for the message deletion sizzle sound
 
-- **Known issues:**
-  - Entering an invalid value to a config option will log a "value mismatch after applying! Reset to binding's getter" error -- valid values still serialize,
-    don't be alarmed
-  - For devs: using the `generateChecksum` task via `publishMods` will largely work but fail on curseforge despite it not running there. I'm working on it 
+- ***Known issues:***
+  - Entering an invalid value to a config option will **falsely** log a "Value mismatch! Reset to binding's getter" error
+  - For devs: using the `generateChecksum` task via `publishMods` will largely work but fail on curseforge despite it not running there. I'm working on it
     (although nobody else should be publishing lmao)
 
 - **Dev notes:**
-  - Added Fletching Table as a dependency, which primarily allows for versionable mixins
-  - This allows for certain niche behavior, such as the implementations for [#109](https://www.github.com/mrbuilder1961/ChatPatches/issues/109) (on 1.21.11+)
-    and #300.
+  - Added Fletching Table as a dependency, which primarily allows for versionable mixins (needed for #300 and the future implementation of
+  - [#109](https://www.github.com/mrbuilder1961/ChatPatches/issues/109) on 1.21.11+)
 
 ## Chat Patches `8.0-alpha.9` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2-snapshot-6 on Fabric, Quilt
 - Updated to 26.2 (snapshot-6)
