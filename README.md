@@ -35,18 +35,19 @@ Many of these features were adopted or inspired from the following existing mods
 
 ## FAQ
 - What Minecraft version can I use this with?
-  - The *latest Fabric* versions of Minecraft, plus 1.18.x. Quilt seemingly works out of the box, but I don't specifically develop versions for it.
+  - Currently, all recent Fabric versions have releases; however, only widely-used versions are going to be maintained going forward.
 - Will you make it for (older Minecraft version)?
-  - Unless it's after 1.18.x, then probably not. Any older version would only be considered if it was requested across the board, because I don't have the time for that!
+  - No. If Minecraft's codebase allows for it, I'll consider making a release that would support a wide range of versions, but if it's too difficult then I 
+    won't bother as almost nobody plays those versions anymore.
 - Will you make this for Forge or NeoForge?
-  - Yes, but it won't be ready for at least a few more months.
+  - Yes to NeoForge, but I need to cross some more important things off the agenda first. Maybe to Forge, but it's unlikely given 1.20.1 is already 3 years old.
 - I found a bug/issue, what do I do?
   - First, make sure you're on the latest version of Chat Patches for your Minecraft version. If it doesn't go away, you can click on the Issues tab on this 
-    page, and if it hasn't been reported yet, you can create a new report! Make sure to fill out the entire thing as much as possible.
+    page, and if it hasn't been reported yet, you can create a new report! **FILL OUT THE ENTIRE REPORT.**
 - It says I need to install Fabric, but I already have it installed?
   - [Install the Fabric API.](https://modrinth.com/mod/fabric-api)
 - Do servers need this mod?
-  - Nope! It's entirely client-side, meaning it won't do anything if installed on the server.
+  - Nope! It's entirely client-side (it won't do anything if installed on the server).
 - I can't access the config menu in-game!
   - <u>For 1.19.2+:</u>
     - Installing either [Mod Menu](https://modrinth.com/mod/modmenu/versions) or [Catalogue](https://www.curseforge.com/minecraft/mc-mods/catalogue-fabric) with [Menulogue](https://www.curseforge.com/minecraft/mc-mods/menulogue) will allow you to edit the config in-game!
@@ -84,6 +85,7 @@ Many of these features were adopted or inspired from the following existing mods
 ## Localization and Translation
 If you would like to help translate Chat Patches into other languages, you can:
 - [Create a pull request](https://github.com/mrbuilder1961/ChatPatches/compare) that adds, corrects, or updates a language file *(preferred)*
+  - If you do this, please feel free to add yourself to the credits list in `gradle.properties`! Just make sure to follow the pattern.
 - DM me on Discord (@obro1961)
 
 Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so you can receive your complementary Contributor and Translator roles!
@@ -93,16 +95,17 @@ Once you contribute, [join the Discord server](https://discord.gg/3MqBvNEyMz) so
 This mod is available under [GNU LGPLv3](https://choosealicense.com/licenses/lgpl-3.0/) as a legal [compromise](https://thisvsthat.io/gpl-vs-lgpl)
 between GPL (my ideal choice) and Minecraft as a product.
 
-Despite this not being noted in the license, the following restrictions apply to all versions of this project ("The Software") and its derivatives:
+Despite this not being noted in the license, the following details and restrictions apply to all versions and forks of this project ("The 
+Software") and its derivatives:
 
-1. The Software must list or credit the developer(s) and contributor(s) in a clear and accessible manner.
-
-2. The Software and any modifications made to it may not be used for the purpose of training or improving machine learning algorithms,
+1. The Software must list or credit the developer(s) and contributor(s) in a **clear and accessible manner**.
+2. The Software and any modifications made to it **may not** be used for the purpose of training or improving machine learning algorithms,
 including but not limited to artificial intelligence, natural language processing, or data mining. This condition applies to any derivatives,
-modifications, or updates based on the Software code. Any usage of the Software in an AI-training dataset is considered a breach of this License.
+modifications, or updates based on the Software code. Any usage of the Software in a training dataset is considered a breach of this License.
+3. The Software may not be included in any dataset used for training or improving machine learning algorithms, including but not limited to 
+artificial intelligence, natural language processing, or data mining.
 
-3. The Software may not be included in any dataset used for training or improving machine learning algorithms,
-including but not limited to artificial intelligence, natural language processing, or data mining.
+-
 
 I am working to find a license that includes these terms in them intrinsically, but for now this is the best option to avoid creating a custom, niche license.
 
@@ -150,11 +153,12 @@ https://github.com/mrbuilder1961/ChatPatches/actions/runs/1234567890/artifacts/0
 #### Now, follow these steps:
 1. Click on the link. If it doesn't instantly download, scroll down, and under the "Artifacts" section, click on "jars" and the download should start. If the text isn't clickable, make sure you're logged in to GitHub. Otherwise, click on `build` -> `ubuntu-latest` (if multiple runs are present) -> `capture build artifacts`; the last line should have a download link
 2. Once the download is complete, open or extract the .zip file.
-3. You should see two folders, `libs` and `devlibs`. Open the `libs` folder.
-4. Inside the `libs` folder, you should see multiple `.jar` files for different Minecraft versions.
-5. Move the file applicable to your version to your mods folder. If your specific version is not present but nearby ones are, pick the newest between them (ex. you need 1.21.2, but only 1.21.1 and 1.21.4 are present, so use the file for 1.21.4)
+3. You should see one folder: `libs`. Open it.
+4. Inside, you should see multiple `.jar` files for different Minecraft versions.
+5. Move the file applicable to your version to your `mods` folder. If your specific version is not present but a newer one is, use that one
+   (ex. you need 1.21.2, but only 1.21.1 and 1.21.4 are present, so use 1.21.4)
 6. If you have another version of Chat Patches already installed, you can move it, rename the file extension to anything but `.jar`, or delete it.
-7. Now you should be good to go! Launching the game should now load the beta version. If you experience any issues, make sure to report them as soon as
+7. You're good to go! Launching the game should now load the beta version. If you experience any issues, make sure to report them as soon as
    possible wherever you were given the link (here on GitHub or [the Discord](https://discord.gg/3MqBvNEyMz)).
 
 ### How to find mod(s) causing compatibility issues [binary-search]
