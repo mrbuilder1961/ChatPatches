@@ -21,7 +21,6 @@ import net.minecraft.util.NullOps;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-import obro1961.chatpatches.util.Colors;
 import obro1961.chatpatches.util.RenderUtil;
 
 import java.awt.*;
@@ -189,45 +188,12 @@ public class YaclConfig extends Config {
             )
             .save(Config::serialize);
 
-        // debug options
+        // region [Debug options]
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
             builder.category(
                 tabCat(
                     "debug",
                     ObjectList.of(
-                        ButtonOption.createBuilder()
-                            .name( Component.nullToEmpty("Print and Copy option table") )
-                            .action((screen, option) -> {
-                                StringBuilder str = new StringBuilder();
-
-                                config.getOptions().forEach(opt -> {
-                                    String k = opt.key;
-                                    Object d = opt.def;
-                                    boolean search = I18n.has(SEARCH_PREFIX + k);
-                                    String prefix = search ? SEARCH_PREFIX : LANG_PREFIX;
-                                    str.append("\n| %s | %s | %s | `%s` |".formatted(
-                                        I18n.getOrDefault(prefix + k),
-
-                                        ( d instanceof Integer i && k.contains("Color") )
-                                            ? "`0x%06X`".formatted(i)
-                                                + ((Object) Colors.VALUE_TO_TEXTCOLOR.get(i.intValue()) instanceof TextColor c
-                                                    ? " ("+c.serialize().toLowerCase(Locale.ROOT)+")"
-                                                    : ""
-                                                )
-                                            : (opt.getType().equals(String.class))
-                                                ? "`\"" + d + "\"`"
-                                                : "`" + d + "`",
-
-                                        I18n.getOrDefault(prefix + DESCRIPTION_KEY + k).replace("\n", ""),
-                                        prefix.replace(LANG_PREFIX, "") + k
-									));
-                                });
-
-                                mc().keyboardHandler.setClipboard(str.toString());
-                                LOGGER.warn("{}", str);
-                            })
-                            .build(),
-
                         ButtonOption.createBuilder()
                             .name(Component.nullToEmpty("Convert id arrays to strings"))
                             .action((screen, option) -> Arrays.stream(
@@ -271,6 +237,7 @@ public class YaclConfig extends Config {
                 )
             );
         }
+		// endregion
 
         return builder.build().generateScreen(parent);
     }
