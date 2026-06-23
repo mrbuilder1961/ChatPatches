@@ -412,6 +412,7 @@ publishMods {
         projectId = m("curseforge")
         projectSlug = m("id")
         minecraftVersions.addAll(targets)
+        client = true
 //        println("$name (cf) = ${additionalFiles.files}")
 
         required.forEach(::requires)
