@@ -539,7 +539,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
 	private void allowContextMenuKeyPressing(KeyEvent key, CallbackInfoReturnable<Boolean> cir) {
 		// keyPressed must be called first, otherwise tabbing will not work
-		if(contextMenu.keyPressed(/*$ key_args {*/ key /*?}*/) && /*? if >=1.21.9 {*/ key.isSelection() /*?} else {*//*CommonInputs.selected(keyCode)*//*?}*/) {
+		if(contextMenu.keyPressed(/*$ key_args {*/ key /*$}*/) && /*? if >=1.21.9 {*/ key.isSelection() /*?} else {*//*CommonInputs.selected(keyCode)*//*?}*/) {
 			contextMenu.close(this::removeWidget);
 			blockSpaceConsumption = true; // see #charTyped
 			cir.setReturnValue(true);
