@@ -12,15 +12,15 @@ plugins { // versions in gradle.properties + settings.gradle.kts
     id("net.fabricmc.fabric-loom") apply false
     id("me.modmuss50.mod-publish-plugin")
     signing
-    id("org.gradle.crypto.checksum") version "1.4.0" // hasn't updated in 4+ years
+    id("org.gradle.crypto.checksum")
 }
 
 fun String.capitalize(): String = replaceFirstChar(Char::uppercaseChar)
 
 val id = m("id")
-val v: String = m("version")
+val v = m("version")
 val minecraft = stonecutter.current.version
-val loader: String = when {
+val loader = when {
     modstitch.isLoom -> "fabric"
     modstitch.isModDevGradle -> "neoforge"
     modstitch.isModDevGradleLegacy -> "forge"
@@ -28,7 +28,7 @@ val loader: String = when {
 }
 val currentIsActive = minecraft == stonecutter.active?.version
 val nonReleaseComponent = findProperty("mod.nonReleaseComponent")?.toString()
-val signedFinalJarTask: String = "sign" + modstitch.finalJarTask.name.capitalize()
+val signedFinalJarTask = "sign" + modstitch.finalJarTask.name.capitalize()
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
@@ -151,7 +151,7 @@ modstitch {
         dep("parchment") { mappingsVersion = it }
     }
 
-    // applies to any files inside the templates folder
+    // applies to *all* files inside the templates folder
     metadata {
         modId = id
         modVersion = v
@@ -216,10 +216,6 @@ modstitch {
         addMixinsToModManifest = true
 
         configs.register(id)
-
-        // loader specific mixin configs:
-        //if(is(Loom|ModDevGradleRegular|ModDevGradleLegacy))
-            //configs.register("$id-{}")
     }
 }
 

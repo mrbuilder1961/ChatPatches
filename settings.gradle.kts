@@ -16,6 +16,7 @@ pluginManagement {
         id("dev.kikugie.fletching-table.fabric") version fletching
         id("net.fabricmc.fabric-loom") version loom apply false
         id("me.modmuss50.mod-publish-plugin") version mpp
+        id("org.gradle.crypto.checksum") version "1.4.0" // hasn't updated in 4+ years
     }
 
     repositories {
