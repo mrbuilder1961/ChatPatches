@@ -319,28 +319,14 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 
     swaps {
-        //prepub some of these versions arent targeted anymore. it doesnt invalidate the conditions but it means they can be merged with other ones.
-        // this isn't high priority rn but just to keep in mind when wrapping up the release
-        put("text_codec", when {
-            current.parsed > "1.20.2" -> "net.minecraft.network.chat.ComponentSerialization.CODEC"
-            else -> "net.minecraft.util.ExtraCodecs.COMPONENT"
-        })
-
-        //todo i think these r the only oned tht actyally need to ve swaps
         val v1215 = current.parsed >= "1.21.5"
         // all of these require 'new' before them, regardless of version
         put("open_url", if(v1215) "ClickEvent.OpenUrl(URI.create($1))" else "ClickEvent(ClickEvent.Action.OPEN_URL, $1)") // java.net.URI is always available
         put("suggest_command", if(v1215) "ClickEvent.SuggestCommand($1)" else "ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, $1)")
         put("show_text", if(v1215) "HoverEvent.ShowText($1)" else "HoverEvent(HoverEvent.Action.SHOW_TEXT, $1)")
 
-        val v1216 = current.parsed >= "1.21.6"
-        put("push_stack", if(v1216) "graphics.pose().pushMatrix();" else "graphics.pose().pushPose();")
-        put("pop_stack", if(v1216) "graphics.pose().popMatrix();" else "graphics.pose().popPose();")
-
         val v1219 = current.parsed >= "1.21.9"
-        put("key_event", if(v1219) "KeyEvent key" else "int keyCode, int scanCode, int modifiers")
         put("key_args", if(v1219) "key" else "keyCode, scanCode, modifiers")
-        put("mouse_event", if(v1219) "MouseButtonEvent mouse, boolean bl" else "double mX, double mY, int button")
         put("mouse_args", if(v1219) "mouse, bl" else "mX, mY, button")
     }
 
@@ -360,10 +346,19 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
             //println("REGISTERED STRING REPLACEMENT $id: '$from' ${if(dir) "->" else "<-"} '$to' (defaultEnabled = $defaultEnabled)")
         }
 
-        //prepub rename these they ugly as freak
         val j21 = java() >= 21
         str(j21, ".get(0)", ".getFirst()", "j21_get_first")
         str(j21, ".remove(0)", ".removeFirst()", "j21_remove_first")
+
+        val v1219 = current.parsed >= "1.21.9"
+        str(v1219, "int keyCode, int scanCode, int modifiers", "KeyEvent key") // key_event
+        //str(v1219, "keyCode, scanCode, modifiers", "key") // key_args
+        str(v1219, "double mX, double mY, int button", "MouseButtonEvent mouse, boolean bl") // mouse_event
+        //str(v1219, "mX, mY, button", "mouse, bl") // mouse_args
+
+        val v1216 = current.parsed >= "1.21.6"
+        str(v1216, "graphics.pose().pushPose();", "graphics.pose().pushMatrix();") // push_stack
+        str(v1216, "graphics.pose().popPose();", "graphics.pose().popMatrix();") // pop_stack
 
         val v12111 = current.parsed >= "1.21.11"
         str(v12111, "net.minecraft.Util", "net.minecraft.util.Util")

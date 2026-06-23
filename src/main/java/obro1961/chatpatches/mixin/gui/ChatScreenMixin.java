@@ -244,7 +244,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "extractRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V"))
 	private void renderCustomWidgets(GuiGraphicsExtractor graphics, int mX, int mY, float delta, CallbackInfo ci) {
-		//$ push_stack
 		graphics.pose().pushMatrix();
 
 		//? if <1.21.6 {
@@ -278,7 +277,6 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 			regexButton.extractRenderState(graphics, mX, mY, delta);
 		}
 
-		//$ pop_stack
 		graphics.pose().popMatrix(); // stop shifting before the context menu renders so the chat field doesn't cut it off
 
 		contextMenu.extractRenderState(graphics, mX, mY, delta);
@@ -351,7 +349,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				+ ")Z"
 		)
 	)
-	private void emptyManualDrafts(/*$ key_event {*/ KeyEvent key /*$}*/, CallbackInfoReturnable<Boolean> cir) {
+	private void emptyManualDrafts(KeyEvent key, CallbackInfoReturnable<Boolean> cir) {
 		if(
 			!config.messageDrafting && // if both are enabled, assume all drafts are wanted
 
@@ -452,7 +450,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * possible.
 	 */
 	@WrapMethod(method = "mouseClicked")
-	private boolean fixContextMenuNotClosing(/*$ mouse_event {*/ MouseButtonEvent mouse, boolean bl /*$}*/, Operation<Boolean> mouseClicked) {
+	private boolean fixContextMenuNotClosing(MouseButtonEvent mouse, boolean bl, Operation<Boolean> mouseClicked) {
 		boolean clicked = mouseClicked.call(/*$ mouse_args {*/ mouse, bl /*$}*/);
 
 		if(/*? if >=1.21.9 {*/ mouse.button() /*?} else {*//*button*//*?}*/ != GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
@@ -488,7 +486,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * </ol>
 	 */
 	@Inject(method = "mouseClicked", at = @At("TAIL"), cancellable = true)
-	public void mouseClickedEvents(/*$ mouse_event {*/ MouseButtonEvent mouse, boolean bl /*$}*/, CallbackInfoReturnable<Boolean> cir) {
+	public void mouseClickedEvents(MouseButtonEvent mouse, boolean bl, CallbackInfoReturnable<Boolean> cir) {
 		if(cir.getReturnValueZ()) {
 			return;
 		}
@@ -539,9 +537,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * @see #charTyped(CharacterEvent)
 	 */
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-	private void allowContextMenuKeyPressing(/*$ key_event {*/ KeyEvent key /*$}*/, CallbackInfoReturnable<Boolean> cir) {
+	private void allowContextMenuKeyPressing(KeyEvent key, CallbackInfoReturnable<Boolean> cir) {
 		// keyPressed must be called first, otherwise tabbing will not work
-		if(contextMenu.keyPressed(/*? if >=1.21.9 {*/ key /*?} else {*//*keyCode, scanCode, modifiers*//*?}*/) && /*? if >=1.21.9 {*/ key.isSelection() /*?} else {*//*CommonInputs.selected(keyCode)*//*?}*/) {
+		if(contextMenu.keyPressed(/*$ key_args {*/ key /*?}*/) && /*? if >=1.21.9 {*/ key.isSelection() /*?} else {*//*CommonInputs.selected(keyCode)*//*?}*/) {
 			contextMenu.close(this::removeWidget);
 			blockSpaceConsumption = true; // see #charTyped
 			cir.setReturnValue(true);
