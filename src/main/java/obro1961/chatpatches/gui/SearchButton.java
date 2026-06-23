@@ -35,7 +35,7 @@ public class SearchButton extends ImageButton {
     }
 
     @Override
-    public boolean mouseClicked(/*$ mouse_event {*/MouseButtonEvent mouse, boolean bl/*$}*/) {
+    public boolean mouseClicked(MouseButtonEvent mouse, boolean bl) {
         //? if >=1.21.9 {
         double mX = mouse.x(), mY = mouse.y();
         int button = mouse.button();
