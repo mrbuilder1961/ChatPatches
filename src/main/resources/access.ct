@@ -42,18 +42,21 @@ accessible field net/minecraft/ChatFormatting code C # Colors#getCode()
 
 
 ## GuiGraphics / GuiGraphicsExtractor - ScreenMixin, ActiveTextCollectorsMixin, ContextMenu#extractSelectionOutline()
+# FIXME: GG<->GGE conversions are not working again... no idea why..
+#~ if <26.1 'GuiGraphicsExtractor' -> 'GuiGraphics' {
 
-#? if >=26.1 {
+#? if >=1.21.6 {
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor deferredTooltip Ljava/lang/Runnable;
-#?} elif >=1.21.6 {
-accessible field net/minecraft/client/gui/GuiGraphics deferredTooltip Ljava/lang/Runnable;
 #?}
-## stonecutter: once i figure out how to version this, condense the pairs above and below this comment
-#? if >=26.1 {
+
+#? if >=1.21.11 {
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor hoveredTextStyle Lnet/minecraft/network/chat/Style;
-#?} elif 1.21.11 {
-accessible field net/minecraft/client/gui/GuiGraphics hoveredTextStyle Lnet/minecraft/network/chat/Style;
 #?}
+
+#? if >=1.21.11 {
+accessible class net/minecraft/client/gui/GuiGraphicsExtractor$RenderingTextCollector
+#?}
+#~}
 
 #? if 1.21.10 {
 accessible class net/minecraft/client/gui/GuiGraphics$OutlineBox
@@ -73,9 +76,10 @@ accessible class net/minecraft/client/gui/layouts/GridLayout$ChildContainer
 #?}
 
 
-## Button/ButtonWidget - ContextMenu
+## Button - ContextMenu#registerButton(....)
 
-#? if >=1.21.11 {
 accessible field net/minecraft/client/gui/components/Button onPress Lnet/minecraft/client/gui/components/Button$OnPress;
 accessible field net/minecraft/client/gui/components/Button DEFAULT_NARRATION Lnet/minecraft/client/gui/components/Button$CreateNarration;
+
+#~ if <1.21.11 'Button$Plain ' -> 'Button ' >> '<init>'
 accessible method net/minecraft/client/gui/components/Button$Plain <init> (IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;Lnet/minecraft/client/gui/components/Button$CreateNarration;)V
