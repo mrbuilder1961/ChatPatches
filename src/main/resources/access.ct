@@ -1,5 +1,5 @@
 accessWidener v1 named
-# warning: all versioning code in here doesn't do anything... not sure that it needs to tho?
+# automatically handles replacements (ex. GG -> GGE) per Stonecutter!!
 
 # MutableComponent - Text
 

@@ -137,6 +137,7 @@ repositories {
     maven("https://maven.terraformersmc.com/releases/")
     if(minecraft <= "1.20.1") {
         // newer versions are on maven central
+        // ... SIKE! https://discord.com/channels/780023008668287017/780485575194312704/1516546095499706368
         maven("https://maven.isxander.dev/releases")
     }
 }
@@ -146,6 +147,10 @@ modstitch {
     if(nonReleaseComponent != null) {
         println("Non-release version component: $nonReleaseComponent")
     }
+
+    // warning: doesn't appear to make any processed.ct file but the respective access.ct ones are generated just fine (..?)
+    classTweaker = sc.process(rootProject.file("src/main/resources/access.ct"), ".gradle/processed.ct")
+    //validateClassTweaker = providers.gradleProperty("forceValidation").map(String::toBoolean).get()
 
     parchment {
         dep("parchment") { mappingsVersion = it }
