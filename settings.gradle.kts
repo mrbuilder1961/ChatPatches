@@ -1,22 +1,17 @@
 pluginManagement {
     // allows storing plugin versions in gradle.properties
-    val kotlin: String by settings
-    val ksp: String by settings
-    val stonecutter: String by settings
-    val fletching: String by settings
-    val modstitch: String by settings
-    val loom: String by settings
-    val mpp: String by settings
+    fun prop(qualifier: String): String = providers.gradleProperty(qualifier).get()
+    fun plugin(property: String): String = prop("plugin.$property")
 
     plugins {
-        kotlin("jvm") version kotlin
-        id("com.google.devtools.ksp") version ksp
-        id("dev.isxander.modstitch.base") version modstitch
-        id("dev.kikugie.stonecutter") version stonecutter
-        id("dev.kikugie.fletching-table.fabric") version fletching
-        id("net.fabricmc.fabric-loom") version loom apply false
-        id("me.modmuss50.mod-publish-plugin") version mpp
+        kotlin("jvm") version plugin("kotlin")
+        id("com.google.devtools.ksp") version plugin("ksp")
+        id("dev.kikugie.fletching-table.fabric") version plugin("fletching-table")
         id("org.gradle.crypto.checksum") version "1.4.0" // hasn't updated in 4+ years
+        id("me.modmuss50.mod-publish-plugin") version plugin("mod-publish-plugin")
+        id("dev.isxander.modstitch.base") version plugin("modstitch")
+        id("dev.kikugie.stonecutter") version plugin("stonecutter")
+        id("net.fabricmc.fabric-loom") version prop("fabric.loom") apply false
     }
 
     repositories {
@@ -45,9 +40,9 @@ stonecutter {
         // ----|----/                         // forge
         // 1.20   1.20.1      1.20.2  1.20.3
 
-        val loaders: String by settings
+        val loaders = providers.gradleProperty("loaders").get()
         val loadList = loaders.replace("neoforge", "neo").split(",")
-        val targets: String by settings
+        val targets = providers.gradleProperty("targets").get()
         targets.split(",").forEach {
             v: String ->
             loadList.forEach {
