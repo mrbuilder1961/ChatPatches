@@ -148,9 +148,9 @@ modstitch {
         println("Non-release version component: $nonReleaseComponent")
     }
 
-    // warning: doesn't appear to make any processed.ct file but the respective access.ct ones are generated just fine (..?)
+    // warning: inconsistent processed.ct file generation
     classTweaker = sc.process(rootProject.file("src/main/resources/access.ct"), ".gradle/processed.ct")
-    //validateClassTweaker = providers.gradleProperty("forceValidation").map(String::toBoolean).get()
+    //validateClassTweaker = providers.gradleProperty("forceValidation").getOrElse("").toBoolean()
 
     parchment {
         dep("parchment") { mappingsVersion = it }

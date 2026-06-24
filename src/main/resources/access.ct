@@ -1,32 +1,23 @@
 accessWidener v1 named
-# automatically handles replacements (ex. GG -> GGE) per Stonecutter!!
+# Automatically handles replacements (ex. GG -> GGE) per Stonecutter!!
+# Widening statements should either declare the class using the widened member (many usages),
+# or they should have a comment at the end of the line where the member is referenced (1-2 usages)
 
-# MutableComponent - Text
+# MutableComponent - Config, TextUtil
 
-accessible field net/minecraft/network/chat/MutableComponent contents Lnet/minecraft/network/chat/ComponentContents;
-accessible field net/minecraft/network/chat/MutableComponent siblings Ljava/util/List;
-accessible field net/minecraft/network/chat/MutableComponent style Lnet/minecraft/network/chat/Style;
 accessible method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
-
-#? if >=1.21.11 {
-extendable method net/minecraft/network/chat/MutableComponent <init> (Lnet/minecraft/network/chat/ComponentContents;Ljava/util/List;Lnet/minecraft/network/chat/Style;)V
-extendable class net/minecraft/network/chat/MutableComponent
-#?}
 
 
 ## ChatComponent - (Mixin), ChatUtil#modifyMessage()
 
-accessible field net/minecraft/client/gui/components/ChatComponent BOTTOM_MARGIN I
-accessible field net/minecraft/client/gui/components/ChatComponent MESSAGE_INDENT I
-accessible field net/minecraft/client/gui/components/ChatComponent DELETED_CHAT_MESSAGE Lnet/minecraft/network/chat/Component; # modifyMessage()
+accessible field net/minecraft/client/gui/components/ChatComponent BOTTOM_MARGIN I # ContextMenu#extractSelectionOutline()
 accessible field net/minecraft/client/gui/components/ChatComponent allMessages Ljava/util/List;
 accessible field net/minecraft/client/gui/components/ChatComponent trimmedMessages Ljava/util/List;
 accessible field net/minecraft/client/gui/components/ChatComponent chatScrollbarPos I
 accessible method net/minecraft/client/gui/components/ChatComponent getLineHeight ()I
 
 #? if >=1.21.11 {
-accessible method net/minecraft/client/gui/components/ChatComponent getWidth ()I
-accessible method net/minecraft/client/gui/components/ChatComponent getHeight ()I
+accessible method net/minecraft/client/gui/components/ChatComponent getWidth ()I # ContextMenu#extractSelectionOutline()
 accessible method net/minecraft/client/gui/components/ChatComponent getScale ()D
 #?}
 
@@ -40,17 +31,17 @@ accessible method net/minecraft/client/gui/components/ChatComponent addMessage (
 accessible field net/minecraft/client/gui/screens/ChatScreen input Lnet/minecraft/client/gui/components/EditBox;
 
 
-## TextColor - FormattingUtil
+## TextColor - Colors
 
-accessible field net/minecraft/network/chat/TextColor NAMED_COLORS Ljava/util/Map;
-
-
-## ChatFormatting - FormattingUtil
-
-accessible field net/minecraft/ChatFormatting code C
+accessible field net/minecraft/network/chat/TextColor NAMED_COLORS Ljava/util/Map; # Colors#VALUE_TO_TEXTCOLOR
 
 
-## GuiGraphics / GuiGraphicsExtractor - ScreenMixin
+## ChatFormatting - Colors
+
+accessible field net/minecraft/ChatFormatting code C # Colors#getCode()
+
+
+## GuiGraphics / GuiGraphicsExtractor - ScreenMixin, ActiveTextCollectorsMixin, ContextMenu#extractSelectionOutline()
 
 #? if >=26.1 {
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor deferredTooltip Ljava/lang/Runnable;
@@ -88,6 +79,3 @@ accessible class net/minecraft/client/gui/layouts/GridLayout$ChildContainer
 accessible field net/minecraft/client/gui/components/Button onPress Lnet/minecraft/client/gui/components/Button$OnPress;
 accessible field net/minecraft/client/gui/components/Button DEFAULT_NARRATION Lnet/minecraft/client/gui/components/Button$CreateNarration;
 accessible method net/minecraft/client/gui/components/Button$Plain <init> (IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;Lnet/minecraft/client/gui/components/Button$CreateNarration;)V
-#?} else {
-accessible method net/minecraft/client/gui/components/Button <init> (IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;Lnet/minecraft/client/gui/components/Button$CreateNarration;)V
-#?}
