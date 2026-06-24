@@ -49,10 +49,10 @@ fun registerLoaderBuildTask(loader: String) {
 }
 
 registerLoaderBuildTask("fabric")
-registerLoaderBuildTask("neo")
-registerLoaderBuildTask("forge")
+//registerLoaderBuildTask("neo")
+//registerLoaderBuildTask("forge")
 
 tasks.register("collectAll") {
     group = "build"
-    dependsOn("collectFabric", "collectNeo", "collectForge")
+    dependsOn("collectFabric"/*, "collectNeo", "collectForge"*/)
 }
