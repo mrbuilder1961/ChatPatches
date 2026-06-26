@@ -40,7 +40,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build jars for all Minecraft versions
-        run: ./gradlew generateChecksum --stacktrace
+        run: ./gradlew collectAll --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: jars
