@@ -8,6 +8,7 @@ on:
   # Prevents redundant builds
   push:
     paths:
+      - '**'
       - '!assets/chatpatches/**'
       - '**.ct' # only asset file that could cause a compile-time issue; intentionally ordered after the above entry
       - '!LICENSE'
@@ -15,6 +16,7 @@ on:
       - '!.gitignore'
   pull_request:
     paths:
+      - '**'
       - '!assets/chatpatches/**'
       - '**.ct'
       - '!LICENSE'
