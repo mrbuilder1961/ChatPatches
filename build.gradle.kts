@@ -28,7 +28,7 @@ val loader = when {
 }
 val currentIsActive = minecraft == stonecutter.active?.version
 val nonReleaseComponent = findProperty("mod.nonReleaseComponent")?.toString()
-val signedFinalJarTask = "sign" + modstitch.finalJarTask.name.capitalize()
+val signFinalJarTask = "sign" + modstitch.finalJarTask.name.capitalize()
 
 var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
@@ -245,11 +245,11 @@ signing {
     sign(modstitch.finalJarTask.get()) // creates `signJar` on 26.1+ else `signRemapJar`
 }
 
-tasks.register<Checksum>("generateChecksum") {
+val checksumTask = tasks.register<Checksum>("generateChecksum") {
     description = "Generates a SHA256 hash for the registered final jar task."
     group = "signing"
 
-    dependsOn(signedFinalJarTask) // requires the signed jars to exist (which in turn requires `build`)
+    dependsOn(signFinalJarTask) // requires the signed jars to exist (which in turn requires `build`)
 
     inputFiles.from(modstitch.finalJarTask)
     outputDirectory = layout.buildDirectory.dir("libs")
@@ -297,22 +297,23 @@ tasks {
     }
 
     clean {
-        delete(layout.buildDirectory.asFile.map(File::toPath).get().resolveSibling("out"))
+        delete(layout.buildDirectory.file("out"))
     }
 
-    signedFinalJarTask {
-        dependsOn("build")
+    signFinalJarTask {
+        dependsOn( if(sc.current.parsed >= "26.1") "jar" else "remapJar" )
     }
 
-    publishMods {
-        dependencies.get().dependsOn("processResources")
-    }
+    //prepub: do we need to declare a dependency for signFinalJarTask?
+    // it doesn't seem like it... but idk if gradle will crash out later
+    /*publishMods {
+        dependencies.get().dependsOn(tasks[signFinalJarTask], checksumTask)
+    }*/
 }
 
 stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     constants {
         match(loader, "fabric", "neo", "forge")
-        //put("forge", loader != "fabric") //prepub forgelike maybe?
     }
 
     dependencies {
@@ -409,7 +410,6 @@ publishMods {
         projectSlug = m("id")
         minecraftVersions.addAll(targets)
         client = true
-//        println("$name (cf) = ${additionalFiles.files}")
 
         required.forEach(::requires)
         optionals.forEach(::optional)
@@ -421,9 +421,9 @@ publishMods {
         accessToken = token("modrinth")
         projectId = m("modrinth")
         minecraftVersions.addAll(targets)
+        // fixme turns out i can't even upload checksums to modrinth..?? 😭
         // uploads verification info to Modrinth only so it's clear which files have what information
-        additionalFiles.from(tasks[signedFinalJarTask], tasks["generateChecksum"])
-//        println("$name (mr) = ${additionalFiles.files}")
+        additionalFiles.from(tasks[signFinalJarTask]/*, checksumTask*/)
 
         // specify id OR slug NOT both, +OPTIONAL specific version
         required.forEach(::requires)

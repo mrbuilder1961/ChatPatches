@@ -7,17 +7,19 @@ name: build
 on:
   # Prevents redundant builds
   push:
-    paths-ignore:
-      - 'LICENSE'
-      - 'assets/chatpatches/**' # no asset file will cause a compile-time issue, so don't bother
-      - '**.md'
-      - '.gitignore'
+    paths:
+      - '!assets/chatpatches/**'
+      - '**.ct' # only asset file that could cause a compile-time issue; intentionally ordered after the above entry
+      - '!LICENSE'
+      - '!**.md'
+      - '!.gitignore'
   pull_request:
-    paths-ignore:
-      - 'LICENSE'
-      - 'assets/chatpatches/**' # no asset file will cause a compile-time issue, so don't bother
-      - '**.md'
-      - '.gitignore'
+    paths:
+      - '!assets/chatpatches/**'
+      - '**.ct'
+      - '!LICENSE'
+      - '!**.md'
+      - '!.gitignore'
 
 jobs:
   build:
@@ -38,11 +40,11 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build jars for all Minecraft versions
-        run: ./gradlew collectAll --stacktrace
-
+        run: ./gradlew generateChecksum --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: jars
           path: |
-            build/libs/
-            build/devlibs/
+            **.jar
+            **.asc
+            **.sha256

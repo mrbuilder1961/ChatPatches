@@ -174,6 +174,30 @@ https://github.com/mrbuilder1961/ChatPatches/actions/runs/1234567890/artifacts/0
 
 Make sure you leave Chat Patches and its dependencies installed when you're looking for the problematic mod, otherwise it won't do anything to help diagnose the issue.
 
+### How to verify the integrity of releases [verification]
+To verify Chat Patches jars, you'll need to download them from Modrinth so you can download the associated signature (`.asc`) and checksum (`.sha256`) files.
+Once you have everything downloaded and in the same folder, open a terminal and follow the instructions below:
+
+#### Checksums (easiest):
+1. Navigate to https://eakondratiev.github.io/sha256.htm
+2. Open the `{chatpatches-version}.jar.sha256` file with Notepad and copy it (not including any file name, if present)
+3. Paste the checksum into the 'expected checksum' field
+4. Drag or select the appropriate jar to the file field
+5. Read the result!
+
+#### Checksums (manual):
+1. Print the expected checksum with `gc {chatpatches-version}.jar.sha256` (Windows) / `cat {chatpatches-version}.jar.sha256` (Mac/Linux)
+2. Generate the downloaded jar's checksum with `Get-FileHash {chatpatches-version}.jar -Algorithm SHA256` / `sha256sum {chatpatches-version}.jar`
+3. Verify that the checksums are identical. If they're not, double-check the commands are typed properly and try again.
+
+#### Signatures (manual):
+1. Install Gpg4win (Windows) / GPG (Mac/Linux)
+2. Run `gpg --verify {chatpatches-version}.jar.asc {chatpatches-version}.jar`
+
+If anything does not match, first ensure you copied every command **_exactly_**, and that you run it one more time.
+If the checksum or signature still does not match, please message me **privately** on Discord and tell me which version failed verification and where you 
+downloaded it from.
+
 ## Sponsor me!
 - Ko-Fi: https://ko-fi.com/obro1961
 
