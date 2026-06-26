@@ -30,7 +30,7 @@ val currentIsActive = minecraft == stonecutter.active?.version
 val nonReleaseComponent = findProperty("mod.nonReleaseComponent")?.toString()
 val signFinalJarTask = "sign" + modstitch.finalJarTask.name.capitalize()
 
-var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
+var publish = providers.gradleProperty("publish").getOrElse("true").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
 // if we just had a `testPublishMods` task
 var changes = "No changelog specified."
@@ -386,7 +386,8 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 publishMods {
     // tries to read explicitly-specified `versions` first, then accesses the more common `range` as a fallback
     // this lets modern versions automatically support patch versions (ex. 26.1.x via ~26.1) while still specifying versions to CF and MR
-    val targets = m("targets", m("range", minecraft)).split(",")
+    val targets = m("targets", m("range", minecraft)).split(",") // FIXME b4 next publish for curseforge; prob use xander's toolkit for maven version deps or
+    // smth idrk
     val required = propList("required")
     val optionals = propList("optionals")
     val incompatibles = propList("incompatibles")
@@ -394,7 +395,7 @@ publishMods {
 
     version = "$v+$name" // mod_version+minecraft-loader
     displayName = "$v for $minecraft ${loader.capitalize()}"
-    file = modstitch.finalJarTask.flatMap { it.archiveFile } // https://modmuss50.github.io/mod-publish-plugin/getting_started/#input-file
+    file = modstitch.finalJarTask.flatMap { it.archiveFile }
     changelog = changes
     type = when {
         "alpha" in v -> ReleaseType.ALPHA
@@ -422,8 +423,9 @@ publishMods {
         projectId = m("modrinth")
         minecraftVersions.addAll(targets)
         // fixme turns out i can't even upload checksums to modrinth..?? 😭
+        //  also turns out that modrinth's api is borked and won't let you upload signatures automatically either. i hate everything
         // uploads verification info to Modrinth only so it's clear which files have what information
-        additionalFiles.from(tasks[signFinalJarTask]/*, checksumTask*/)
+        //additionalFiles.from(tasks[signFinalJarTask]/*, checksumTask*/)
 
         // specify id OR slug NOT both, +OPTIONAL specific version
         required.forEach(::requires)
@@ -438,6 +440,7 @@ publishMods {
             dryRunWebhookUrl = token("discord_debug") // testing
             username = "Publisher Bot"
             avatarUrl = "https://cdn.modrinth.com/data/MOqt4Z5n/56c954dea290ef4dd1b0d6ea92a811acac62ca85.png"
+            // todo only enforce limit for discord!
         }
     }
 }
