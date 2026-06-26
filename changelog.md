@@ -9,7 +9,7 @@
   - Note: I wrote this a while ago but couldn't publish it due to dependency requirements, so lmk if you find any issues!!
 - Added an updated `ko_kr` translation thanks to [ettip](https://github.com/ettip) in [#317](https://www.github.com/mrbuilder1961/ChatPatches/issues/317)! (I have no idea why the original translation was removed)
 - Increase max compact chat distance to 50 ([#319](https://www.github.com/mrbuilder1961/ChatPatches/issues/319))
-- Partially implemented ([#323](https://www.github.com/mrbuilder1961/ChatPatches/pull/323))
+- Partially implemented [#323](https://www.github.com/mrbuilder1961/ChatPatches/pull/323) (fix for a Feather-related crash)
 - Fixed the chat un-scrolling after deleting a message when `contextDeletionWarning` was enabled
 - Added a toggle for the message deletion sizzle sound
 
