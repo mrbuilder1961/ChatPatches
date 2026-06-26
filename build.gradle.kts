@@ -30,7 +30,7 @@ val currentIsActive = minecraft == stonecutter.active?.version
 val nonReleaseComponent = findProperty("mod.nonReleaseComponent")?.toString()
 val signFinalJarTask = "sign" + modstitch.finalJarTask.name.capitalize()
 
-var publish = providers.gradleProperty("publish").getOrElse("true").toBoolean() // prepub: abolish bc this is annoying bc the default is
+var publish = providers.gradleProperty("publish").getOrElse("false").toBoolean() // prepub: abolish bc this is annoying bc the default is
 // that it will publish bc the property is not set but u need that for regular publishMods to work without ugly command line parameters, but it would be best
 // if we just had a `testPublishMods` task
 var changes = "No changelog specified."
