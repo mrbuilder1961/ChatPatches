@@ -238,6 +238,7 @@ public class ChatPatches implements ClientModInitializer {
 			return world.registryAccess().createSerializationContext(ops);
 		} else {
 			logReportMsg(new NullPointerException("Expected existing ClientLevel but none were present"));
+			LOGGER.warn("Sometimes this can be triggered if the game is closed too abruptly.");
 		}
 		//?}
 		return /*? if >=1.20.5 {*/(RegistryOps<T>)/*?}*/ ops;

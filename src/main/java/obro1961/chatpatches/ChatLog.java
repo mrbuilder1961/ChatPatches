@@ -30,6 +30,7 @@ import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 import obro1961.chatpatches.util.TextUtil;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -71,10 +72,12 @@ public class ChatLog {
 			.codec()
 	);
     public static final Path PATH = FabricLoader.getInstance().getGameDir().resolve("logs").resolve("chatlog.json");
+	// idea: if i keep the option to not reject all delete message packets, add a new indicator red ATTEMPTED_DELETION OR custom MODIFIED for when that happens
     public static final GuiMessageTag RESTORED_INDICATOR = new GuiMessageTag(0x382FB5, /*not realistically doable rn*/ null, Component.translatable("text.chatpatches.restored"), "Restored");
 
     private static final int DEFAULT_SIZE = 100;
 	private static final int IO_THRESHOLD_SUGGESTION = 1000;
+	@Language("json")
 	private static final String EMPTY_JSON = "{\"messages\":[],\"history\":[]}";
 	/**
 	 * Convenience object that's also used for determining if the chat log has

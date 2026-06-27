@@ -149,7 +149,7 @@ public class Config {
 	public int chatShift = 0;
 	public boolean dynamicChatShift = true;
 	public boolean vanillaClearing = false;
-	public boolean chatHidePacket = true;
+	public boolean chatHidePacket = true; //idea: delete this. consensus seems to be approve deletion but i think do that and add a toast w/ the deleted message + log in chat
 	public boolean messageDrafting = false; // idea: `chatDrafting` once migration codec established
 	public boolean onlyInvasiveDrafting = false;
 

@@ -636,8 +636,9 @@ public class ChatUtil {
 		if(!config.counter || messages.isEmpty() || visibles.isEmpty()) {
 			// see #323
 			if(visibles.isEmpty()) {
+				// warning: this gets triggered on level loading, but doesn't seem to matter there
 				String err = "`tryCondenseDupes(.)` called when `trimmedMessages` is empty";
-				ChatPatches.logReportMsg(new IllegalStateException(err));
+				LOGGER.warn(err);
 				//ChatPatches.pushErrorToast("Duplicate condenser warning", err);
 			}
 			return incoming;
