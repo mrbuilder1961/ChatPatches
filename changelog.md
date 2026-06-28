@@ -1,11 +1,11 @@
 # Changelog
 
 ## Chat Patches `8.0-alpha.11` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt
-- Re-published version of `8.0-alpha.10` without the rogue code from other incomplete stuff
-- Fixed crash on startup ([#325](https://www.github.com/mrbuilder1961/ChatPatches/issues/325))
-- Fixed config failing to open ([#326](https://www.github.com/mrbuilder1961/ChatPatches/issues/326))
-- Updated version parsing for publishing (prevents immense headaches when I go to publish releases)
-- This is the last new version for 1.21.5-10
+- Re-published version of `8.0-alpha.10` without the rogue code from other incomplete stuff [#325](https://www.github.com/mrbuilder1961/ChatPatches/issues/325), 
+  [#326](https://www.github.com/mrbuilder1961/ChatPatches/issues/326))
+- Rewrote how subproject versions are parsed, for both publishing and file metadata (you don't even know how critical this is)
+
+- This is the last new version for 1.21.5-10!
 - For those interested in the security of these builds, Modrinth provides an API endpoint for viewing file hashes
   - I myself am not exactly sure how to access it, but I will provide more info in the README when I figure it out!
 - If all goes well, the next release will move out of the alpha stage and into the beta stage! This release will have the long-needed benefit of being 

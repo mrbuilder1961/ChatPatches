@@ -7,13 +7,13 @@ import org.gradle.crypto.checksum.Checksum
 plugins { // versions in gradle.properties + settings.gradle.kts
     kotlin("jvm")
     id("com.google.devtools.ksp") // kotlin and this r for fletching-table
-    id("dev.isxander.modstitch.base")
     id("dev.kikugie.fletching-table.fabric")
-    id("net.fabricmc.fabric-loom") apply false
-    id("me.modmuss50.mod-publish-plugin")
+    id("org.gradle.crypto.checksum") //todo temp comment out this stuff..?
     signing
-    id("dev.isxander.mtk.manifests") version "0.1.3" //TODO settings.g.kts ify this
-    id("org.gradle.crypto.checksum") //todo temp comment out this stuff
+    id("dev.isxander.mtk.manifests")
+    id("me.modmuss50.mod-publish-plugin")
+    id("dev.isxander.modstitch.base")
+    id("net.fabricmc.fabric-loom") apply false
 }
 
 fun String.capitalize(): String = replaceFirstChar(Char::uppercaseChar)

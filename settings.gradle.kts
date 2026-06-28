@@ -1,13 +1,15 @@
 pluginManagement {
     // allows storing plugin versions in gradle.properties
-    fun prop(qualifier: String): String = providers.gradleProperty(qualifier).get()
-    fun plugin(property: String): String = prop("plugin.$property")
+    fun prop(prop: String): String = providers.gradleProperty(prop).get()
+    fun plugin(prop: String): String = prop("plugin.$prop")
+    fun mtk(prop: String): String = plugin("mtk.$prop")
 
     plugins {
         kotlin("jvm") version plugin("kotlin")
         id("com.google.devtools.ksp") version plugin("ksp")
         id("dev.kikugie.fletching-table.fabric") version plugin("fletching-table")
         id("org.gradle.crypto.checksum") version "1.4.0" // hasn't updated in 4+ years
+        id("dev.isxander.mtk.manifests") version mtk("manifests")
         id("me.modmuss50.mod-publish-plugin") version plugin("mod-publish-plugin")
         id("dev.isxander.modstitch.base") version plugin("modstitch")
         id("dev.kikugie.stonecutter") version plugin("stonecutter")
