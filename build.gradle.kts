@@ -384,10 +384,13 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 }
 
 publishMods {
-    // tries to read explicitly-specified `versions` first, then accesses the more common `range` as a fallback
-    // this lets modern versions automatically support patch versions (ex. 26.1.x via ~26.1) while still specifying versions to CF and MR
-    val targets = m("targets", m("range", minecraft)).split(",") // FIXME b4 next publish for curseforge; prob use xander's toolkit for maven version deps or
-    // smth idrk
+    val range = (findProperty("mod.range.publishing") as String?)
+        ?.let {
+            it.substring(1, it.length - 1) // cuts off the enclosing brackets/parenthesis
+        }
+        ?.split(",")
+    val targets = findProperty("mod.targets") as String?
+
     val required = propList("required")
     val optionals = propList("optionals")
     val incompatibles = propList("incompatibles")
@@ -409,8 +412,26 @@ publishMods {
         accessToken = token("curseforge")
         projectId = m("curseforge")
         projectSlug = m("id")
-        minecraftVersions.addAll(targets)
         client = true
+
+        when {
+            targets != null -> {
+                minecraftVersionList(targets) // todo fold into range: if no [ / ] / ( / ) are found slash >1 , are found: treat as csv
+            }
+            range != null && range.size > 1 -> {
+                // ex. [26.2,26.3)
+                minecraftVersionRange {
+                    start = range[0]
+                    end = when {
+                        currentIsActive -> "latestRelease"
+                        else -> range[1]
+                    }
+                }
+            }
+            else -> minecraftVersions.add(minecraft)
+            //else -> error("No publishing version range nor explicit version targets specified")
+        }
+        println(minecraftVersions.orNull ?: "null")
 
         required.forEach(::requires)
         optionals.forEach(::optional)
@@ -421,10 +442,26 @@ publishMods {
     modrinth {
         accessToken = token("modrinth")
         projectId = m("modrinth")
-        minecraftVersions.addAll(targets)
+        environment = CLIENT_ONLY
+
+        when {
+            targets != null -> {
+                minecraftVersionList(targets)
+            }
+            range != null && range.size > 1 -> {
+                minecraftVersionRange {
+                    start = range[0]
+                    end = when {
+                        currentIsActive -> "latestRelease"
+                        else -> range[1]
+                    }
+                }
+            }
+            else -> minecraftVersions.add(minecraft)
+        }
+
         // fixme turns out i can't even upload checksums to modrinth..?? 😭
-        //  also turns out that modrinth's api is borked and won't let you upload signatures automatically either. i hate everything
-        // uploads verification info to Modrinth only so it's clear which files have what information
+        // todo modrinth's api only accepts signatures on v3 (unstable) not MPP compatible v2 </3
         //additionalFiles.from(tasks[signFinalJarTask]/*, checksumTask*/)
 
         // specify id OR slug NOT both, +OPTIONAL specific version
