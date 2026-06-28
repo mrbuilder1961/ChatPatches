@@ -18,8 +18,10 @@
   "depends": {
     "java": ">=${java}",
     "minecraft": ${minecraft_range},
-    "fabricloader": ">=0.${fabric_loader_core}.0",
-    "fabric-api": "*",
+    "fabricloader": ">=${fabric_loader_major}",
+    "fabric-lifecycle-events-v1": "*",
+    "fabric-networking-api-v1": "*",
+    "fabric-screen-api-v1": "*",
     "yet_another_config_lib_v3": "*"
   },
   "suggests": {

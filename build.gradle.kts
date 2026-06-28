@@ -12,7 +12,8 @@ plugins { // versions in gradle.properties + settings.gradle.kts
     id("net.fabricmc.fabric-loom") apply false
     id("me.modmuss50.mod-publish-plugin")
     signing
-    id("org.gradle.crypto.checksum")
+    id("dev.isxander.mtk.manifests") version "0.1.3" //TODO settings.g.kts ify this
+    id("org.gradle.crypto.checksum") //todo temp comment out this stuff
 }
 
 fun String.capitalize(): String = replaceFirstChar(Char::uppercaseChar)
@@ -175,17 +176,12 @@ modstitch {
             "mod_source" to m("source"),
             "mod_modrinth" to m("modrinth"),
 
-            "minecraft_range" to m("range", fullMc()).run {
-                if(contains(',')) {
-                    // parse versions into a list and then add quotes to ensure valid JSON syntax
-                    split(",").map { "\"$it\"" }.toString()
-                } else {
-                    "\"$this\""
-                }
-                //if(!isLoom) [list.getFirst(),list.getLast()] // version ranges should all be consecutive
-            },
-            // prepub how do we deal w this when neo is impl'd? can we leave it or will it break stuff..?
-            "fabric_loader_core" to l("loader").substringAfter('.').substringBefore('.'), // ex. 0.18.4 -> 18
+            // translates the maven range into a fabric one, escapes it, and gets the only element from the list
+            // (which may contain multiple ranges)
+            "minecraft_range" to manifests.mavenRange( m("range.publishing", "[${fullMc()}]") )
+                .toFabric()
+                .map { "\"$it\"" }[0],
+            "fabric_loader_major" to (l("loader").substringBeforeLast('.', "!") + ".0"),
             "optional_list" to dep2StringList("optionals"),
             "incompatible_list" to dep2StringList("incompatibles"),
             //"embed_list" to dep2StringList("embedded"), // currently empty
@@ -195,7 +191,6 @@ modstitch {
     // Fabric
     loom {
         fabricLoaderVersion = l("loader")
-
 
         // Configure loom like normal here
         /*configureLoom {}*/
@@ -431,7 +426,6 @@ publishMods {
             else -> minecraftVersions.add(minecraft)
             //else -> error("No publishing version range nor explicit version targets specified")
         }
-        println(minecraftVersions.orNull ?: "null")
 
         required.forEach(::requires)
         optionals.forEach(::optional)
