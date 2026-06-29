@@ -168,7 +168,6 @@ modstitch {
         modAuthor = m("author")
         modCredits = m("credits").split(",").map { "\"$it\"" }.toString() // transforms the invalid json into a valid list
         modLicense = m("license")
-        //todo forge: uses mods.toml instead of neoforge.mods.toml
 
         fun dep2StringList(list: String): String = propList(list).joinToString(separator = ",\n\t", transform = { "\"$it\": \"*\"" })
 
@@ -177,11 +176,16 @@ modstitch {
             "mod_source" to m("source"),
             "mod_modrinth" to m("modrinth"),
 
-            // translates the maven range into a fabric one, escapes it, and gets the only element from the list
-            // (which may contain multiple ranges)
-            "minecraft_range" to manifests.mavenRange( m("range", "[${fullMc()}]") )
-                .toFabric()
-                .map { "\"$it\"" }[0],
+            // uses the override if available, otherwise translates the
+            // maven range into a fabric one, escapes it, and gets the only
+            // element from the list (which may contain multiple ranges)
+            "minecraft_range" to m(
+                "metadata",
+                manifests.mavenRange( m("range", "[${fullMc()}]") )
+                    .toFabric()
+                    .map { "\"$it\"" }[0]
+            ),
+            // extracts the major version of the loader so lower minor versions don't throw a bogus error
             "fabric_loader_major" to (l("loader").substringBeforeLast('.', "!") + ".0"),
             "optional_list" to dep2StringList("optionals"),
             "incompatible_list" to dep2StringList("incompatibles"),
