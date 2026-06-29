@@ -7,9 +7,14 @@ assignees: ''
 
 ---
 
+// TODO: someday make this fancy with the Issue Form template (if supported on Codeberg)
+
 # WAIT!!! Before you continue:
-Check and make sure the mod version that is causing you trouble is the latest one for the version of Minecraft you are playing on.
-If it's not, update it, then check first to see if the bug persists. If it does, delete this message and carry on reporting. Otherwise, yay and goodbye!
+- [ ] Ensure you're experiencing your problem **on the latest version** of Chat Patches.
+  - [ ] I'd also highly recommend ensuring all dependencies are up-to-date.
+- [ ] Ensure **no issue(s) already exist** about your problem. Make sure to filter by tag (`bug` / `suggestion`) and **check closed issues too**.
+  - [ ] If any already exist, comment your Specs and Details there instead and add any extra information you feel is necessary
+- [ ] Once all these steps have been completed, delete this section and fill out the rest of the report! Thank you for helping me help you.
 
 ### Description
 As detailed and descriptive as you can make it. If possible, attach photos and/or videos.
