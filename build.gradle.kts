@@ -2,6 +2,8 @@ import dev.kikugie.stonecutter.build.config.ReplacementContainer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import me.modmuss50.mpp.ReleaseType
+import me.modmuss50.mpp.platforms.curseforge.CurseforgeVersionRangeOptions
+import me.modmuss50.mpp.platforms.modrinth.ModrinthVersionRangeOptions
 import org.gradle.crypto.checksum.Checksum
 
 plugins { // versions in gradle.properties + settings.gradle.kts
@@ -386,13 +388,6 @@ fun trimChanges(max: Int = 2000): String {
 }
 
 publishMods {
-    val range = findProperty("mod.range") as String?
-    val rangeList = range
-        ?.let {
-            it.substring(1, it.length - 1) // cuts off the enclosing brackets/parenthesis
-        }
-        ?.split(",")
-
     val required = propList("required")
     val optionals = propList("optionals")
     val incompatibles = propList("incompatibles")
@@ -408,7 +403,60 @@ publishMods {
         else -> ReleaseType.STABLE
     }
     modLoaders = propList("loaders") // note: vers-specific for forge/neo version cutoffs
-    dryRun = !publish
+    dryRun = !publish /*findProperty("dryRun")?.toString()?.toBoolean() ?: false*/// todo: can i just specify dryRun as false thru the command line?
+
+    /**
+     * Takes the `minecraftVersions` ListProperty, the `minecraftVersionList()` method, and
+     * a boolean representing Modrinth or CurseForge, and configures the minecraft versions
+     * appropriately. Note that if the conditions are satisfied for `minecraftVersionRange`,
+     * it will return a Curseforge/Modrinth -VersionRangeOptions object that can be used via
+     * `let` or a similar method to set the actual publishing configuration.
+     */
+    fun specifyVersions(mcV: ListProperty<String>, mVL: (csv: String) -> Unit, modrinth: Boolean): Any? {
+        val range = findProperty("mod.range") as String?
+        val rangeList = range
+            ?.let {
+                it.substring(1, it.length - 1) // cuts off the enclosing brackets/parenthesis
+            }
+            ?.split(",")
+
+        when {
+            // if nothing is specified, use the only version we have
+            rangeList == null -> mcV.add(minecraft)
+
+            // if there are no brackets, we have a list
+            !range.startsWith("[") && !range.startsWith("(") -> mVL(range)
+
+            // otherwise, we have a range of versions!
+            // todo this might throw an error for strings like `[26.1,)` or `(,1.21.11]`
+            rangeList.size > 1 -> {
+                val start = rangeList[0]
+                /*startInclusive = range.startsWith('[')*/
+                val end = if(currentIsActive) "latestRelease" else rangeList[1]
+                /*endInclusive = range.endsWith(']')*/
+
+                if(modrinth) {
+                    val opts = getObjects().newInstance(ModrinthVersionRangeOptions::class.java)
+                    opts.start = start
+                    /*opts.startInclusive = startInclusive*/
+                    opts.end = end
+                    /*opts.endInclusive = endInclusive*/
+                    opts.includeSnapshots = nonReleaseComponent != null
+                    return opts
+                } else {
+                    val opts = getObjects().newInstance(CurseforgeVersionRangeOptions::class.java)
+                    opts.start = start
+                    /*opts.startInclusive = startInclusive*/
+                    opts.end = end
+                    /*opts.endInclusive = endInclusive*/
+                    return opts
+                }
+            }
+
+            else -> error("Invalid `mod.range` value specified: '$range'")
+        }
+        return null
+    }
 
     curseforge {
         if(nonReleaseComponent != null) {
@@ -421,26 +469,14 @@ publishMods {
         projectSlug = m("id")
         client = true
 
-        when {
-            // if nothing is specified, use the only version we have
-            rangeList == null -> minecraftVersions.add(minecraft)
-
-            // if there are no brackets, we have a list
-            !range.startsWith("[") && !range.startsWith("(") -> minecraftVersionList(range)
-
-            // otherwise, we have a range of versions!
-            rangeList.size > 1 -> {
-                // ex. [26.2,26.3)
-                minecraftVersionRange {
-                    start = rangeList[0]
-                    end = when {
-                        currentIsActive -> "latestRelease"
-                        else -> rangeList[1]
-                    }
-                }
+        specifyVersions(minecraftVersions, ::minecraftVersionList, false)?.let {
+            minecraftVersionRange {
+                val src = it as CurseforgeVersionRangeOptions
+                start = src.start
+                /*startInclusive = src.startInclusive*/
+                end = src.end
+                /*endInclusive = src.endInclusive*/
             }
-
-            else -> error("Invalid `mod.range` value specified: '$range'")
         }
 
         required.forEach(::requires)
@@ -454,26 +490,15 @@ publishMods {
         projectId = m("modrinth")
         environment = CLIENT_ONLY
 
-        when {
-            // if nothing is specified, use the only version we have
-            rangeList == null -> minecraftVersions.add(minecraft)
-
-            // if there are no brackets, we have a list
-            !range.startsWith("[") && !range.startsWith("(") -> minecraftVersionList(range)
-
-            // otherwise, we have a range of versions!
-            rangeList.size > 1 -> {
-                // ex. [26.2,26.3)
-                minecraftVersionRange {
-                    start = rangeList[0]
-                    end = when {
-                        currentIsActive -> "latestRelease"
-                        else -> rangeList[1]
-                    }
-                }
+        specifyVersions(minecraftVersions, ::minecraftVersionList, true)?.let {
+            minecraftVersionRange {
+                val src = it as ModrinthVersionRangeOptions
+                start = src.start
+                /*startInclusive = src.startInclusive*/
+                end = src.end
+                /*endInclusive = src.endInclusive*/
+                includeSnapshots = src.includeSnapshots
             }
-
-            else -> error("Invalid `mod.range` value specified: '$range'")
         }
 
         // turns out i can't even upload checksums to modrinth..?? 😭 bc they're... already provided? but not shown to anyone unless explicitly API requested?
