@@ -182,9 +182,8 @@ modstitch {
             "minecraft_range" to m(
                 "metadata",
                 manifests.mavenRange( m("range", "[${fullMc()}]") )
-                    .toFabric()
-                    .map { "\"$it\"" }[0]
-            ),
+                    .toFabric()[0]
+            ).let { "\"$it\"" },
             // extracts the major version of the loader so lower minor versions don't throw a bogus error
             "fabric_loader_major" to (l("loader").substringBeforeLast('.', "!") + ".0"),
             "optional_list" to dep2StringList("optionals"),
@@ -284,14 +283,8 @@ tasks {
 
             // considered "malformed" if it doesn't end with any word characters, whitespace, or newlines - or changes were emptied bc the indices were bad
             if(newIndex == -1 || !changes.matches(Regex("(?s).*(\\s+|(\r?\n)+|\\w+)$"))) {
-                println("Warning: Changelog appears malformed, this is typically caused by an outdated version ($v)")
-                if(publish) {
-                    publish = false
-                }
-            } else if(changes.length > 2000) {
-                val cutoff = "... (trimmed)"
-                changes = changes.substring(0, 2000 - cutoff.length) + cutoff
-                println("Warning: Changelog is longer than 2000 characters, trimming for publish action")
+                publish = false
+                println("Warning: Changelog appears malformed; this is typically caused by an outdated version ($v)")
             }
         }
     }
@@ -380,6 +373,15 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         val v262 = current.parsed >= "26.2"
         str(v262, "gui.getChat()", "gui.hud.getChat()") // how clear and verbose Mojang!
         str(v262, ".setScreen(", ".gui.setScreen(")
+    }
+}
+
+fun trimChanges(max: Int = 2000): String {
+    val cutoff = "... (trimmed)"
+    return if(changes.length > max) {
+        changes.substring(0, max - cutoff.length) + cutoff
+    } else {
+        changes
     }
 }
 
@@ -492,7 +494,7 @@ publishMods {
             dryRunWebhookUrl = token("discord_debug") // testing
             username = "Publisher Bot"
             avatarUrl = "https://cdn.modrinth.com/data/MOqt4Z5n/56c954dea290ef4dd1b0d6ea92a811acac62ca85.png"
-            // todo only enforce limit for discord!
+            changelog = trimChanges()
         }
     }
 }
