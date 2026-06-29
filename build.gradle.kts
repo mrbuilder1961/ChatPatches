@@ -39,7 +39,7 @@ var changes = "No changelog specified."
 fun fullMc(): String {
     var ver: String = minecraft
     if(nonReleaseComponent?.isNotEmpty() ?: false) {
-        ver += "-$nonReleaseComponent"
+        ver += "-${nonReleaseComponent.removePrefix("!")}"
     }
     return ver
 }
@@ -146,7 +146,8 @@ repositories {
 modstitch {
     minecraftVersion = fullMc()
     if(nonReleaseComponent != null) {
-        println("Non-release version component: $nonReleaseComponent")
+        val note = if(nonReleaseComponent.startsWith("!")) " (dependency override disabled)" else ""
+        println("Non-release version component: ${nonReleaseComponent.removePrefix("!")}$note")
     }
 
     // warning: inconsistent processed.ct file generation
@@ -178,7 +179,7 @@ modstitch {
 
             // translates the maven range into a fabric one, escapes it, and gets the only element from the list
             // (which may contain multiple ranges)
-            "minecraft_range" to manifests.mavenRange( m("range.publishing", "[${fullMc()}]") )
+            "minecraft_range" to manifests.mavenRange( m("range", "[${fullMc()}]") )
                 .toFabric()
                 .map { "\"$it\"" }[0],
             "fabric_loader_major" to (l("loader").substringBeforeLast('.', "!") + ".0"),
@@ -379,12 +380,12 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 }
 
 publishMods {
-    val range = (findProperty("mod.range.publishing") as String?)
+    val range = findProperty("mod.range") as String?
+    val rangeList = range
         ?.let {
             it.substring(1, it.length - 1) // cuts off the enclosing brackets/parenthesis
         }
         ?.split(",")
-    val targets = findProperty("mod.targets") as String?
 
     val required = propList("required")
     val optionals = propList("optionals")
@@ -400,31 +401,40 @@ publishMods {
         "beta" in v -> ReleaseType.BETA
         else -> ReleaseType.STABLE
     }
-    modLoaders = propList("loaders") // todo: vers-specific for forge/neo version cutoffs
+    modLoaders = propList("loaders") // note: vers-specific for forge/neo version cutoffs
     dryRun = !publish
 
     curseforge {
+        if(nonReleaseComponent != null) {
+            println("Warning: Attempting to publish to CurseForge with a snapshot build!")
+            return@curseforge
+        }
+
         accessToken = token("curseforge")
         projectId = m("curseforge")
         projectSlug = m("id")
         client = true
 
         when {
-            targets != null -> {
-                minecraftVersionList(targets) // todo fold into range: if no [ / ] / ( / ) are found slash >1 , are found: treat as csv
-            }
-            range != null && range.size > 1 -> {
+            // if nothing is specified, use the only version we have
+            rangeList == null -> minecraftVersions.add(minecraft)
+
+            // if there are no brackets, we have a list
+            !range.startsWith("[") && !range.startsWith("(") -> minecraftVersionList(range)
+
+            // otherwise, we have a range of versions!
+            rangeList.size > 1 -> {
                 // ex. [26.2,26.3)
                 minecraftVersionRange {
-                    start = range[0]
+                    start = rangeList[0]
                     end = when {
                         currentIsActive -> "latestRelease"
-                        else -> range[1]
+                        else -> rangeList[1]
                     }
                 }
             }
-            else -> minecraftVersions.add(minecraft)
-            //else -> error("No publishing version range nor explicit version targets specified")
+
+            else -> error("Invalid `mod.range` value specified: '$range'")
         }
 
         required.forEach(::requires)
@@ -439,22 +449,29 @@ publishMods {
         environment = CLIENT_ONLY
 
         when {
-            targets != null -> {
-                minecraftVersionList(targets)
-            }
-            range != null && range.size > 1 -> {
+            // if nothing is specified, use the only version we have
+            rangeList == null -> minecraftVersions.add(minecraft)
+
+            // if there are no brackets, we have a list
+            !range.startsWith("[") && !range.startsWith("(") -> minecraftVersionList(range)
+
+            // otherwise, we have a range of versions!
+            rangeList.size > 1 -> {
+                // ex. [26.2,26.3)
                 minecraftVersionRange {
-                    start = range[0]
+                    start = rangeList[0]
                     end = when {
                         currentIsActive -> "latestRelease"
-                        else -> range[1]
+                        else -> rangeList[1]
                     }
                 }
             }
-            else -> minecraftVersions.add(minecraft)
+
+            else -> error("Invalid `mod.range` value specified: '$range'")
         }
 
-        // fixme turns out i can't even upload checksums to modrinth..?? 😭
+        // turns out i can't even upload checksums to modrinth..?? 😭 bc they're... already provided? but not shown to anyone unless explicitly API requested?
+        // sigh.
         // todo modrinth's api only accepts signatures on v3 (unstable) not MPP compatible v2 </3
         //additionalFiles.from(tasks[signFinalJarTask]/*, checksumTask*/)
 
