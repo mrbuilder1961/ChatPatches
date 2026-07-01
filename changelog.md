@@ -9,10 +9,12 @@
 - Rewrote how subproject versions are parsed, for both publishing and file metadata (you don't even know how critical this is)
 
 - This is the last new version for 1.21.5-10!
-- For those interested in the security of these builds, Modrinth provides an API endpoint for viewing file hashes
-  - I myself am not exactly sure how to access it, but I will provide more info in the README when I figure it out!
+- For those interested in the security of these builds, Modrinth provides a (v3?) API endpoint for viewing file hashes
+  - I will provide more info in the README when it's clarified how to access in the docs!
 - If all goes well, the next release will move out of the alpha stage and into the beta stage! This release will have the long-needed benefit of being 
   verified by code and game tests, meaning (way!!) less crashes and bugs that are very easily encountered
+- Thank you all for your patience, I know this has taken a while. Going forward I will be solely prioritizing quality over speed.
+  - As ALWAYS, you can access pre-release builds of Chat Patches through [GitHub Actions](https://github.com/mrbuilder1961/ChatPatches/actions?query=branch%3Aomnivers%20is%3Asuccess)!
 
 ## Chat Patches `8.0-beta.1` for Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1-2 on Fabric, Quilt
 (moved temporarily for hotfix compat w 26.1.2)
