@@ -16,6 +16,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Options;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 //? if >=1.21.11 {
@@ -60,9 +61,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import oshi.util.Memoizer;
 
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -85,6 +88,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Shadow protected String initial;
 	@Shadow private int historyPos;
 	/*? if >=26.1 {*/
+	/**
+	 * <li>True -> ChatScreen (InBed is always false)</li>
+	 * <li>False -> InBedChatScreen, ChatScreen</li>
+	 */
 	@Shadow	@Final private boolean closeOnSubmit;
 	/*?}*/
 
@@ -96,6 +103,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * @see #chatScreenInit(String, boolean, CallbackInfo)
 	 */
 	@Unique private static final Matcher SMWYG_ITEM_PATTERN = Pattern.compile("^\\[[\\w\\s]+]$").matcher("");
+	@Unique private static final Supplier<Boolean> SMWYG_INSTALLED = Memoizer.memoize(() -> FabricLoader.getInstance().isModLoaded("smwyg"));
 
 	// coordinates and positioning // todo: remove magic numbers from the math where these are used
 	@Unique private static final int SEARCH_X = 22,
@@ -151,27 +159,29 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	protected ChatScreenMixin(Component title) { super(title); }
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void chatScreenInit(String initialChat, /*? if >=1.21.9 {*/ boolean isDraft, /*?}*/ CallbackInfo ci) {
+	private void chatScreenInit(String initial, /*? if >=1.21.9 {*/ boolean isDraft, /*?}*/ CallbackInfo ci) {
 		// don't touch this unless you're a pro at drafts or have 4+ free hours
 
-		if(initialChat.equals("/")) {
+		if(initial.equals("/")) {
 			return; // no reason to mess with or draft blank commands - emptied in #onScreenClose
 		}
 
-		if((config.messageDrafting || config.onlyInvasiveDrafting) && !messageDraft.isBlank()) {
-			if(FabricLoader.getInstance().isModLoaded("smwyg") && SMWYG_ITEM_PATTERN.reset(initialChat).matches()) {
+		if((config.messageDrafting || saveChatDrafts()) && !messageDraft.isBlank()) {
+			if(SMWYG_INSTALLED.get() && SMWYG_ITEM_PATTERN.reset(initial).matches()) {
 				// if message drafting is enabled, a draft exists, and SMWYG sent an item message: clear the draft to avoid crashing
-				messageDraft = initialChat;
+				messageDraft = initial;
 			} else {
 				// otherwise if message drafting is enabled and a draft exists: update the draft
-				initial = messageDraft;
+				this.initial = messageDraft;
 			}
 		}
-
 		//? if >=1.21.9 {
-		else if(!config.messageDrafting && !minecraft.options.saveChatDrafts().get() /*? if >=26.1 {*/&& !this.closeOnSubmit/*?}*/) {
+		else if(!config.messageDrafting && !saveChatDrafts() /*? if >=26.1 {*/&& isDraft && this.closeOnSubmit/*?}*/) {
+			// ATTENTION: don't mess with this shit. at all. it makes no sense. if you're going to, please
+			// just rewrite the whole system and document how it all works. thanks!
+
 			// finally, if message drafting is disabled and save unsent messages is too, delete the draft
-			initial = ""; // except on 26.1+ where the chat doesn't close on send (closeOnSubmit = false) so don't delete their drafts
+			this.initial = ""; // except on 26.1+ where the chat doesn't close on send (closeOnSubmit = false) so don't delete their drafts
 		}
 		/*?}*/
 	}
@@ -332,9 +342,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	//?}
 
 	/**
-	 * Empties the message draft if the screen was closed manually and <s>only invasive
-	 * drafting</s> {@linkplain net.minecraft.client.Options#saveChatDrafts save chat
-	 * drafts} is enabled.
+	 * Empties the message draft if the screen was closed manually and only invasive
+	 * drafting/{@linkplain Options#saveChatDrafts save chat drafts} is enabled.
 	 *
 	 * @implNote Injects at the super method call because it closes the screen if
 	 * the key is {@link GLFW#GLFW_KEY_ESCAPE}, which is beaten out by the chat
@@ -350,15 +359,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		)
 	)
 	private void emptyManualDrafts(KeyEvent key, CallbackInfoReturnable<Boolean> cir) {
-		if(
-			!config.messageDrafting && // if both are enabled, assume all drafts are wanted
+		// here, we're keeping all drafts and discarding none
+		if(config.messageDrafting) return;
 
-			//? if >=1.21.9 {
-			minecraft.options.saveChatDrafts().get() && key.isEscape()
-			//?} else {
-			/*config.onlyInvasiveDrafting && keyCode == GLFW.GLFW_KEY_ESCAPE*/
-			/*?}*/
-		) {
+		boolean manualEscape = /*? if >=1.21.9 {*/key.isEscape()/*?} else {*//*keyCode == GLFW.GLFW_KEY_ESCAPE*//*?}*/;
+
+		if(saveChatDrafts() && manualEscape) {
 			input.setValue(""); // required to empty both the chat field and the messageDraft (later on in #onScreenClose)
 		}
 	}
@@ -622,6 +628,20 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Intrinsic // prevents merging or discarding if a conflict unexpectedly occurs, unlike @Unique
 	public boolean isMouseOverSettingsMenu(double mX, double mY) {
 		return showSettingsMenu && (mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT);
+	}
+
+	/**
+	 * @return Whether chat drafts should only be saved when the chat is closed
+	 * unintentionally. On >=1.21.9, this returns the vanilla `saveChatDrafts` option,
+	 * and on all earlier versions it returns {@link Config#onlyInvasiveDrafting}.
+	 * They represent the same feature.
+	 *
+	 * @implNote If {@link Config#messageDrafting} is enabled, that takes precedent
+	 * and all drafts will be saved.
+	 */
+	@Unique
+	private boolean saveChatDrafts() {
+		return /*? if >=1.21.9 {*/minecraft.options.saveChatDrafts().get()/*?} else {*//*config.onlyInvasiveDrafting*//*?}*/;
 	}
 
 	@Unique

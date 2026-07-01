@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
@@ -58,7 +59,21 @@ public class ChatPatches implements ClientModInitializer {
 		ClientPlayConnectionEvents.JOIN.register((network, packetSender, client) -> {
 			// loads once
 			ChatLog.load(false);
-			// loads every time
+
+			/*? if >=1.21.9 {*/
+			try {
+				// provides a consistent value when accessing the config, and avoids #327
+				// has to be done here because options isn't initialized at any earlier point :/
+				boolean saveChatDrafts = Minecraft.getInstance().options.saveChatDrafts().get();
+				// todo if there is any sort of onChanged callback i can register that'd be perfect
+				if(config.onlyInvasiveDrafting != saveChatDrafts) {
+					config.onlyInvasiveDrafting = saveChatDrafts;
+				}
+			} catch(Exception e) {
+				//LOGGER.warn("Couldn't access options.saveChatDrafts:", e); // it's not that important
+			}
+			/*?}*/
+
 			config.sendBoundaryLine(); // doesn't run the first time because of the slight delay before the chat log initializes messages
 			ChatLog.hideRecentMessages();
 		});

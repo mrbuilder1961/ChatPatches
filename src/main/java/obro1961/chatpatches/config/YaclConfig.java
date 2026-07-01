@@ -120,7 +120,7 @@ public class YaclConfig extends Config {
                             : new OptionFlag[0]
                     )
                     /*? if >=1.21.9 {*/
-                    .available( !key.equals("onlyInvasiveDrafting") ) /*?}*/ // disables onlyInvasiveDrafting in 1.21.9+ due to it's native implementation
+                    .available( !key.equals("onlyInvasiveDrafting") ) /*?}*/
                     .build();
 
 

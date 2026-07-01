@@ -1,8 +1,11 @@
 # Changelog
 
 ## Chat Patches `8.0-alpha.11` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt
-- Re-published version of `8.0-alpha.10` without the rogue code from other incomplete stuff [#325](https://www.github.com/mrbuilder1961/ChatPatches/issues/325), 
-  [#326](https://www.github.com/mrbuilder1961/ChatPatches/issues/326))
+- Re-published version of `8.0-alpha.10` without the rogue code from other incomplete stuff (#325-331)
+  - Side note: some of y'all really need to learn to read. Seriously. Three people submitted bug reports that were IDENTICAL to the top, most recent reports. 
+    Please don't inflate my issue numbers with duplicates, it's really frustrating
+- `onlyInvasiveDrafting` now synchronizes its value with its successor, `saveChatDrafts`, to avoid confusion and bugs ([#327](https://www.github.com/mrbuilder1961/ChatPatches/issues/327))
+  - If you're running 1.21.9+, don't touch it at all
 - Rewrote how subproject versions are parsed, for both publishing and file metadata (you don't even know how critical this is)
 
 - This is the last new version for 1.21.5-10!

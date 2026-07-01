@@ -37,6 +37,7 @@ import obro1961.chatpatches.ChatPatches;
 //? if >=1.21.9 {
 import obro1961.chatpatches.integration.ChatHeadsIntegration;
 //?}
+import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.ChatUtil;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.Nullable;
@@ -151,6 +152,9 @@ public class Config {
 	public boolean vanillaClearing = false;
 	public boolean chatHidePacket = true; //idea: delete this. consensus seems to be approve deletion but i think do that and add a toast w/ the deleted message + log in chat
 	public boolean messageDrafting = false; // idea: `chatDrafting` once migration codec established
+	/**
+	 * @see ChatScreenMixin#saveChatDrafts()
+	 */
 	public boolean onlyInvasiveDrafting = false;
 
 	public boolean contextMenu = true;
@@ -630,7 +634,7 @@ public class Config {
 					dirty = true;
 					constraintsIgnored = false;
 					// logged separately here because the other logpoint is a logReportMsg() call
-					ChatPatches.LOGGER.warn(message);
+					LOGGER.warn(message);
 				} else {
 					return DataResult.error(() -> message);
 	            }
