@@ -58,11 +58,6 @@ accessible class net/minecraft/client/gui/GuiGraphicsExtractor$RenderingTextColl
 #?}
 #~}
 
-#? if 1.21.10 {
-accessible class net/minecraft/client/gui/GuiGraphics$OutlineBox
-accessible method net/minecraft/client/gui/GuiGraphics$OutlineBox <init> (IIIII)V
-#?}
-
 
 ## GridLayout - ContextMenu.Grid
 
