@@ -138,11 +138,7 @@ dependencies {
 repositories {
     mavenCentral()
     maven("https://maven.terraformersmc.com/releases/")
-    if(minecraft <= "1.20.1") {
-        // newer versions are on maven central
-        // ... SIKE! https://discord.com/channels/780023008668287017/780485575194312704/1516546095499706368
-        maven("https://maven.isxander.dev/releases")
-    }
+    maven("https://beta.maven.isxander.dev/releases") // warning: keep an eye out for changes in Xander's Pit
 }
 
 modstitch {
