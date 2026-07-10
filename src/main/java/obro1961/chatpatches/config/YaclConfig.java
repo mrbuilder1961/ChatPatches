@@ -84,8 +84,8 @@ public class YaclConfig extends Config {
 
             if(I18n.has(SEARCH_PREFIX + key)) {
 				cat = "_"; // chat search filters are configurable in the chat screen, not here, where they won't render nicely
-			} else if(key.equals("logMessageStructures")) {
-				cat = "help";
+			} else if(key.equals("logMessageStructures") || key.equals("helpToastLevel")) {
+				cat = "help"; // todo: when the migration codec is set up, sort out this help/chat default behavior. for now it's ugly
 			} else if(!I18n.has(CATEGORY_PREFIX + cat)) {
 				cat = "chat"; // default to chat if the category is invalid
 			}
@@ -175,15 +175,16 @@ public class YaclConfig extends Config {
             .category(
                 tabCat(
                 "help",
-                    ObjectList.of(
-                        action("help.reloadConfig", -1),
-                        helpOpts.getFirst(),
-                        label( Component.translatable(HELP_PREFIX + "dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ),
-                        label( Component.translatable(HELP_PREFIX + "formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ),
-                        label( Component.translatable(HELP_PREFIX + "faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ),
-                        label( Component.translatable(HELP_PREFIX + "regex"), "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"),
-                        label( Component.translatable(HELP_PREFIX + "regexTester"), "https://regex101.com/" )
-                    )
+					Util.make(new ObjectArrayList<>(7), opts -> {
+						opts.add(action("help.reloadConfig", -1));
+						opts.addAll(helpOpts);
+						//prepub make iterable list of pairs of key+link
+						opts.add(label( Component.translatable(HELP_PREFIX + "dateFormat"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html" ));
+						opts.add(label( Component.translatable(HELP_PREFIX + "formatCodes"), "https://minecraft.wiki/w/Formatting_codes" ));
+						opts.add(label( Component.translatable(HELP_PREFIX + "faq"), "https://github.com/mrbuilder1961/ChatPatches#faq" ));
+						opts.add(label( Component.translatable(HELP_PREFIX + "regex"), "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"));
+						opts.add(label( Component.translatable(HELP_PREFIX + "regexTester"), "https://regex101.com/" ));
+					})
                 )
             )
             .save(Config::serialize);

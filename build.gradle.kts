@@ -138,7 +138,7 @@ dependencies {
 repositories {
     mavenCentral()
     maven("https://maven.terraformersmc.com/releases/")
-    maven("https://beta.maven.isxander.dev/releases") // warning: keep an eye out for changes in Xander's Pit
+    maven("https://maven.isxander.dev/releases")
 }
 
 modstitch {
@@ -360,6 +360,8 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         val v12111 = current.parsed >= "1.21.11"
         str(v12111, "net.minecraft.Util", "net.minecraft.util.Util")
         str(v12111, "ResourceLocation", "Identifier", "yarnification", false) // selectively enabled
+        // \- todo try out the specific disabling thing outlined in the docs so maybe i can auto enable this and selectively DISable it (perhaps
+        //     automatically too!)
 
         val v261 = current.parsed >= "26.1"
         str(v261, "net.minecraft.client.GuiMessage", "net.minecraft.client.multiplayer.chat.GuiMessage") // also conveniently covers GuiMessageTag!

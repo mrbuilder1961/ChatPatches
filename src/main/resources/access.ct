@@ -1,4 +1,4 @@
-accessWidener v1 named
+accessWidener v1 official
 # Automatically handles replacements (ex. GG -> GGE) per Stonecutter!!
 # Widening statements should either declare the class using the widened member (many usages),
 # or they should have a comment at the end of the line where the member is referenced (1-2 usages)
@@ -42,9 +42,9 @@ accessible field net/minecraft/ChatFormatting code C # Colors#getCode()
 
 
 ## GuiGraphics / GuiGraphicsExtractor - ScreenMixin, ActiveTextCollectorsMixin, ContextMenu#extractSelectionOutline()
+
 # FIXME: GG<->GGE conversions are not working again... no idea why..
 #~ if <26.1 'GuiGraphicsExtractor' -> 'GuiGraphics' {
-
 #? if >=1.21.6 {
 accessible field net/minecraft/client/gui/GuiGraphicsExtractor deferredTooltip Ljava/lang/Runnable;
 #?}
