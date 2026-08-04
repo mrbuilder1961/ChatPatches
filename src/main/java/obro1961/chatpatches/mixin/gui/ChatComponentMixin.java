@@ -11,10 +11,15 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
+//? if >=26.1 {
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//?}
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MessageSignature;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.config.Config;
@@ -225,9 +230,33 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
      * @see ChatUtil#modifyMessage(Component)
      * @see ChatUtil#tryCondenseDupes(Component)
      */
+	@Inject(method = ADD_MESSAGE_TARGET_REFERENCE, at = @At("HEAD"), cancellable = true)
+	private void queueMessageWhileLoading(
+		Component message,
+		MessageSignature signature,
+		/*? if <=1.20.4 {*//*int addedTime,*//*?}*/
+		/*? if >=26.1 {*/GuiMessageSource source,/*?}*/
+		GuiMessageTag tag
+		/*? if <=1.20.4 {*//*, boolean refreshing*//*?}*/,
+		CallbackInfo ci
+	) {
+		if(ChatLog.queueMessage(
+			message,
+			signature,
+			/*? if <=1.20.4 {*//*addedTime,*//*?}*/
+			/*? if >=26.1 {*/source,/*?}*/
+			tag
+			/*? if <=1.20.4 {*//*, refreshing*//*?}*/
+		)) {
+			ci.cancel();
+		}
+	}
+
     @ModifyVariable(method = ADD_MESSAGE_TARGET_REFERENCE, at = @At("HEAD"), argsOnly = true)
     private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @Local(argsOnly = true) boolean refreshing*//*?}*/) {
-        return /*? if <=1.20.4 {*//* refreshing ? m : *//*?}*/ ChatUtil.modifyMessage(m);
+		// The cancellable injector may be ordered after this variable modifier.
+		// Leave both the component and its temporary metadata untouched until queued.
+        return ChatLog.isLoading() ? m : /*? if <=1.20.4 {*//* refreshing ? m : *//*?}*/ ChatUtil.modifyMessage(m);
     }
 
     @Inject(
