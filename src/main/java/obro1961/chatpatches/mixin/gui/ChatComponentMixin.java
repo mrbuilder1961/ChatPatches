@@ -254,9 +254,7 @@ public abstract class ChatComponentMixin implements ChatComponentAccess {
 
     @ModifyVariable(method = ADD_MESSAGE_TARGET_REFERENCE, at = @At("HEAD"), argsOnly = true)
     private Component modifyMessage(Component m /*? if <=1.20.4 {*//*, @Local(argsOnly = true) boolean refreshing*//*?}*/) {
-		// The cancellable injector may be ordered after this variable modifier.
-		// Leave both the component and its temporary metadata untouched until queued.
-        return ChatLog.isLoading() ? m : /*? if <=1.20.4 {*//* refreshing ? m : *//*?}*/ ChatUtil.modifyMessage(m);
+		return ChatLog.isLoading() /*? if <=1.20.4 {*//* || refreshing *//*?}*/ ? m : ChatUtil.modifyMessage(m);
     }
 
     @Inject(

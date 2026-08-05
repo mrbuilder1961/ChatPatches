@@ -7,6 +7,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
@@ -41,9 +42,6 @@ import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -56,15 +54,21 @@ import static obro1961.chatpatches.ChatPatches.*;
  * backing up the messages and history stored within.
  */
 public class ChatLog {
+	/** Tracks asynchronous loading and client-thread restoration of the chat log. */
 	public enum RestoreState {
-		NOT_STARTED,
+		/** The chat log has not been initialized during this session. */
+		INIT,
+		/** The saved chat log is being deserialized on an I/O worker thread. */
 		LOADING,
+		/** Saved messages and sent-message history are being restored on the client thread. */
 		RESTORING,
+		/** Live messages captured during loading are being replayed on the client thread. */
 		DRAINING,
-		READY
+		/** Initial restoration is finished and messages should be processed normally. */
+		DONE
 	}
 
-	private record PendingChatMessage(
+	private record PendingMessage(
 		Component component,
 		MessageSignature signature,
 		ChatUtil.MessageData messageData,
@@ -111,8 +115,8 @@ public class ChatLog {
 
 	private static Minecraft mc() { return Minecraft.getInstance(); }
 
-	private static final Deque<PendingChatMessage> pendingMessages = new ArrayDeque<>();
-	private static volatile RestoreState restoreState = RestoreState.NOT_STARTED;
+	private static final ObjectArrayFIFOQueue<PendingMessage> pendingMessages = new ObjectArrayFIFOQueue<>();
+	private static volatile RestoreState restoreState = RestoreState.INIT;
     private static int lastHistoryCount = -1, lastMessageCount = -1;
     private static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
 
@@ -132,6 +136,7 @@ public class ChatLog {
 
     public static boolean isRestoring() { return restoreState == RestoreState.RESTORING; }
     public static boolean isLoading() { return restoreState == RestoreState.LOADING; }
+	public static boolean isWorking() { return restoreState != RestoreState.INIT && restoreState != RestoreState.DONE; }
 
 	/**
 	 * Captures an incoming message before the asynchronous chat log load can
@@ -151,16 +156,10 @@ public class ChatLog {
 			return false;
 		}
 
-		ChatUtil.MessageData data = ChatUtil.messageData;
-		ChatUtil.MessageData snapshot = new ChatUtil.MessageData(
-			data.sender(),
-			new Date(data.timestamp().getTime()),
-			data.vanilla()
-		);
-		pendingMessages.addLast(new PendingChatMessage(
+		pendingMessages.enqueue(new PendingMessage(
 			component,
 			signature,
-			snapshot,
+			ChatUtil.messageData,
 			/*? if <=1.20.4 {*//*addedTime,*//*?}*/
 			/*? if >=26.1 {*/source,/*?}*/
 			tag
@@ -459,25 +458,25 @@ public class ChatLog {
 		boolean hasSavedEntries = messageCount() > 0 || historyCount() > 0;
 
 		try {
-			if(loadFailure != null) {
-				LOGGER.error("Chat log loading failed; queued messages will still be replayed:", loadFailure);
-			} else {
+			if(loadFailure == null) {
 				restoreState = RestoreState.RESTORING;
 				restore();
 				hasSavedEntries = messageCount() > 0 || historyCount() > 0;
+			} else {
+				LOGGER.error("Chat log loading failed; queued messages will still be replayed:", loadFailure);
 			}
 		} catch(RuntimeException | AssertionError e) {
 			LOGGER.error("Chat log restoration failed; queued messages will still be replayed:", e);
 		} finally {
 			restoreState = RestoreState.DRAINING;
 			try {
-				try {
-					if(hasSavedEntries) {
+				if(hasSavedEntries) {
+					try {
 						config.sendBoundaryLine();
 						hideRecentMessages();
+					} catch(RuntimeException | AssertionError e) {
+						LOGGER.error("Failed to finish restored chat history presentation:", e);
 					}
-				} catch(RuntimeException | AssertionError e) {
-					LOGGER.error("Failed to finish restored chat history presentation:", e);
 				}
 
 				try {
@@ -487,18 +486,22 @@ public class ChatLog {
 				}
 			} finally {
 				ChatUtil.messageData = ChatUtil.NIL_MESSAGE_DATA;
-				restoreState = RestoreState.READY;
+				restoreState = RestoreState.DONE;
 			}
 		}
 	}
 
 	private static void drainPendingMessages() {
+		if(pendingMessages.isEmpty()) {
+			return;
+		}
+
 		ChatComponent chat = mc().gui.hud.getChat();
 		int pendingCount = pendingMessages.size();
-		int replayed = 0;
+		int drained = 0;
 
 		while(!pendingMessages.isEmpty()) {
-			PendingChatMessage pending = pendingMessages.poll();
+			PendingMessage pending = pendingMessages.dequeue();
 			try {
 				ChatUtil.messageData = pending.messageData();
 				chat.addMessage(
@@ -509,7 +512,7 @@ public class ChatLog {
 					pending.tag()
 					/*? if <=1.20.4 {*//*, pending.refreshing()*//*?}*/
 				);
-				replayed++;
+				drained++;
 			} catch(RuntimeException | AssertionError e) {
 				LOGGER.error("Failed to replay a queued chat message:", e);
 			} finally {
@@ -517,7 +520,7 @@ public class ChatLog {
 			}
 		}
 
-		LOGGER.info("Replayed {} of {} pending chat messages", replayed, pendingCount);
+		LOGGER.info("Replayed {} of {} pending chat messages", drained, pendingCount);
 	}
 
 	/**
@@ -569,9 +572,9 @@ public class ChatLog {
 	 * {@link Minecraft}'s implementation of {@link java.util.concurrent.Executor}, which
 	 * assumes the render thread will always be used.
      */
-    public static void load(boolean force) {
+	public static void load(boolean force) {
 		if(config.chatlog && ((messages == EMPTY_LIST && history == EMPTY_LIST) || force)) {
-			if(restoreState == RestoreState.LOADING || restoreState == RestoreState.RESTORING || restoreState == RestoreState.DRAINING) {
+			if(isWorking()) {
 				return;
 			}
 
