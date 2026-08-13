@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "chatpatches-test-mod",
+  "version": "1.0.0",
+  "name": "Chat Mid-patching mod",
+  "icon": "assets/chatpatches/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-client-gametest": ["obro1961.chatpatches.ChatPatchesTest"]
+  }
+}

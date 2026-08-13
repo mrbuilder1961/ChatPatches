@@ -129,8 +129,9 @@ dependencies {
     }
 
     modstitchModImplementation("dev.isxander:yet-another-config-lib:${d("yacl")}-fabric")
-
     modstitchModImplementation("com.terraformersmc:modmenu:${d("modmenu")}")
+
+    testImplementation(platform("org.junit:junit-bom:${p("test.junit")}"))
 
     implementation(kotlin("stdlib-jdk8"))
 }
@@ -219,6 +220,8 @@ modstitch {
 
         configs.register(id)
     }
+
+    unitTesting()
 }
 
 fletchingTable {
