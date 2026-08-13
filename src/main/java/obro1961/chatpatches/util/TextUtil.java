@@ -1,26 +1,31 @@
 package obro1961.chatpatches.util;
 
-import com.mojang.datafixers.util.Pair;
+import com.mojang.brigadier.Message;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.contents.PlainTextContents;
+import net.minecraft.util.StringRepresentable;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static net.minecraft.network.chat.Style.EMPTY;
+import static obro1961.chatpatches.ChatPatches.LOGGER;
 
 /**
  * A class containing various string and {@link Component} related utilities.
  */
 public class TextUtil {
+	/** @see #isBlank(Style) */
+	public static final Style BLANK = EMPTY.withBold(false).withItalic(false).withUnderlined(false).withObfuscated(false).withStrikethrough(false);
 	/**
 	 * @see ChatFormatting#PREFIX_CODE
 	 */
@@ -74,7 +79,7 @@ public class TextUtil {
 		}
 
 		@Override
-		public <T> DataResult<Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
+		public <T> DataResult<com.mojang.datafixers.util.Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
 			safeCodec.set(false);
 			var result = ComponentSerialization.CODEC.decode(ops, input);
 			safeCodec.set(true);
@@ -120,7 +125,27 @@ public class TextUtil {
 		} else if(o instanceof Component) {
 			return (MutableComponent) o;
 		} else {
-			return Component.literal(o instanceof FormattedText ft ? ft.getString() : String.valueOf(o));
+			/*? if java: >= 21 {*/
+			String value = switch(o) {
+				case StringRepresentable sr -> sr.getSerializedName();
+				case FormattedText ft -> ft.getString();
+				case Message m -> m.getString();
+				default -> String.valueOf(o);
+			};
+			/*?} else {*/
+			/*String value;
+			if(o instanceof StringRepresentable sr) {
+				value = sr.getSerializedName();
+			} else if(o instanceof FormattedText ft) {
+				value = ft.getString();
+			} else if(o instanceof Message m) {
+				value = m.getString();
+			} else {
+				value = String.valueOf(o);
+			}*/
+			/*?}*/
+
+			return Component.literal(value);
 		}
 	}
 
@@ -130,7 +155,7 @@ public class TextUtil {
 		}
 
 		var truncated = Component.empty();
-		int[] len = {0};
+		int[] len = {0}; // prepub: try text.toFlatList() then iterate over each entry in an enhanced-for to avoid len[0] /!\
 
 		text.visit((style, str) -> {
 			if(str.length() + len[0] > max) {
@@ -173,36 +198,137 @@ public class TextUtil {
 		return Component.literal(s);
 	}
 
+	/**
+	 * @return true if style is blank - that is, it doesn't have a <b>visible</b> impact
+	 * on text. It may contain complex data (click/hover events, insertions) but if
+	 * it affects anything visually (bold, *colored, font-ed), returns false.
+	 * *color may be white.
+	 */
+	public static boolean isBlank(Style style) {
+		if(style.equals(Style.EMPTY)) return true;
+		if(style.equals(BLANK)) return true;
+
+		if(style.isBold()) return false;
+		if(style.isItalic()) return false;
+		if(style.isUnderlined()) return false;
+		if(style.isStrikethrough()) return false;
+		if(style.isObfuscated()) return false;
+
+		if((Object)style.getColor() instanceof TextColor c && c.getValue() != Colors.WHITE) return false;
+
+		// shadowColor is ignored as it's only in newer versions
+
+		//noinspection RedundantIfStatement: i got a pattern going here. shutup
+		if(style.getFont() != FontDescription.DEFAULT) return false; //stonecutter:sigh /!\
+
+		return true;
+	}
+
 
 	/**
 	 * @return {@code true} if `a` and `b` are virtually equal; that is, a
 	 * styled color visitor produces the same sequence for both components.
 	 * This is intended to compare the string and style data together, although
-	 * this is a convoluted task that will always have edge cases and frustrating
-	 * edge cases.
+	 * this is a convoluted task that will always have frustrating edge cases.
 	 *
-	 * todo note unsolvable issues here.
+	 * todo rewrite this javadoc and note any unfixables (if any)
 	 */
-	public static <T> boolean virtuallyEqual(Component a, Component b) {
-		// this is presumed true due to where this is called in tryCondenseDupes
-		/*if(!a.getString().equals(b.getString())) {
-			return false; // obviously the strings themselves need to be the same (case-insensitive tho..?)
-		}*/
+	public static boolean virtuallyEqual(Component a, Component b) { // FIXME: finish this method /!\
+		boolean param_caseSensitive = true;
 
-		Function<List<it.unimi.dsi.fastutil.Pair<String, Style>>, FormattedText.StyledContentConsumer<T>> visitMaker = list -> ((style, contents) -> {
-			list.add(new ObjectObjectImmutablePair<>(
-				contents.toLowerCase(Locale.ROOT),
-				// forcibly clears any invisible style data - otherwise this will always fail due to the differing insertions from the timestamp
-				style.withClickEvent(null).withHoverEvent(null).withInsertion(null)
-			));
-			return Optional.empty();
-		});
+		if(Objects.equals(a, b)) return true;
 
-		ObjectList<it.unimi.dsi.fastutil.Pair<String, Style>> aColors = new ObjectArrayList<>(), bColors = new ObjectArrayList<>();
-		a.visit(visitMaker.apply(aColors), Style.EMPTY);
-		b.visit(visitMaker.apply(bColors), Style.EMPTY);
+		String aStripped = ChatFormatting.stripFormatting(a.getString()), bStripped = ChatFormatting.stripFormatting(b.getString());
+		if(param_caseSensitive ? !aStripped.equals(bStripped) : !aStripped.equalsIgnoreCase(bStripped)) return false;
 
-		return aColors.equals(bColors);
+		List<Component> aFlatList = uniformFlatList(a);
+		List<Component> bFlatList = uniformFlatList(b);
+
+		for(int i = 0; i < aFlatList.size() && i < bFlatList.size(); i++) {
+			Component aPart = aFlatList.get(i), bPart = bFlatList.get(i);
+			String aStr = aPart.getString(), bStr = bPart.getString();
+			Style aStyle = aPart.getStyle(), bStyle = bPart.getStyle();
+
+			if(param_caseSensitive ? !aStr.equals(bStr) : !aStr.equalsIgnoreCase(bStr))
+				return false;
+
+			if(!Objects.equals(aStyle, bStyle) || isBlank(aStyle) != isBlank(bStyle))
+				return false;
+		}
+
+		if(aFlatList.size() != bFlatList.size()) {
+			LOGGER.warn("PROBABLY NOT EQUAL (diff sizes)");// debug:wub
+			if(aFlatList.size() > bFlatList.size()) {
+				LOGGER.warn("Skipped {} entries of aFlatList: {}", aFlatList.size() - bFlatList.size(), aFlatList.subList(bFlatList.size(), aFlatList.size()));
+			} else {
+				LOGGER.warn("Skipped {} entries of bFlatList: {}", bFlatList.size() - aFlatList.size(), bFlatList.subList(aFlatList.size(), bFlatList.size()));
+			}
+		}
+
+		return true;
+	}
+
+	// transforms legacy strings into component lists. does not support hex codes (as they are not supported w/ section signs) nor complex data
+	/**
+	 * If {@code text} is a literal text component containing a single string
+	 * with legacy formatting codes, manually splits it into a list of individual
+	 * components, each with their own appropriate style. Otherwise, returns the
+	 * result of {@link Component#toFlatList()}.
+	 */
+	private static List<Component> uniformFlatList(Component text) {
+		ComponentContents contents = text.getContents();
+		String str;
+
+		List<Component> flatList = text.toFlatList();
+		if(flatList.size() == 1 && contents instanceof PlainTextContents plain && plain.text().contains("§")) {
+			str = plain.text();
+		} else {
+			return flatList;
+		}
+
+		String consumable = str;
+
+		String[] split = str.split("(?:§(.))+"); // contains the strings making up `text`
+		List<Component> result = new ObjectArrayList<>(split.length);
+		String prevCodes = ""; // formatting codes from the previous string - ensures they're propagated forward
+		int i = 0; // index relative to split
+		for(String s : split) {
+			if(!s.isEmpty()) {
+				int strI = consumable.indexOf(s); // index relative to the mid-consumption entire message
+
+				String whitespace;
+				while(i + 1 < split.length && (whitespace = split[i + 1]).isBlank() && !whitespace.isEmpty()) {
+					s += whitespace;
+					split[i + 1] = "";
+					consumable = consumable.replaceFirst(whitespace, ""); // /!\ (source of current error)
+					//TODO could help if replaced w non-regex version - but might still cause issues...?!?!
+					//^ stopped here, last thing i added. stops NPE but now removes the necessary &r code..?
+					//i++;
+				}
+
+				MutableComponent component = Component.literal(s);
+				if(strI != 0) {
+					String block = consumable.substring(1, strI).replace("§", "");
+					if(!block.contains("r")) {
+						// if there's no reset code, make sure to inherit any previous formattings first.
+						// they will automatically be overridden as they should be
+						block = prevCodes + block;
+					}
+
+					char[] codes = block.toCharArray();
+					for(char c : codes) {
+						component.withStyle(ChatFormatting.getByCode(c));
+					}
+					prevCodes = block;
+				}
+
+				consumable = consumable.substring(strI + s.length());
+
+				result.add(component);
+			}
+			i++;
+		}
+		return result;
 	}
 
 	/**
@@ -210,12 +336,12 @@ public class TextUtil {
 	 * Strips any complex style data, including hover events, fonts, insertions,
 	 * etc. Hex colors are represented in the format {@code &#RRGGBB}.
 	 */
-	public static String toLegacyString(Component text, boolean prettyPrint) { //todo: bruh make a freaking unit test for this are we serious.
+	public static String toLegacyString(Component text, boolean prettyPrint) {
 		StringBuilder builder = new StringBuilder();
-		AtomicReference<Style> lastStyle = new AtomicReference<>(Style.EMPTY); // ensures that the first equality check returns false
+		AtomicReference<Style> lastStyle = new AtomicReference<>(null); // ensures that the first equality check returns false
 
-		// TEST:this with complex components (ex. root w/ hex color so &r applies that..?)
-		for(Component part : text.toFlatList()) {
+		// TEST:this with complex components (ex. root w/ hex color or custom style so &r applies that..?)
+		for(Component part : uniformFlatList(text)) {
 			part.visit((style, str) -> {
 				if(str.isBlank()) {
 					// add the whitespace but don't format anything
@@ -229,18 +355,20 @@ public class TextUtil {
 				// if style is different from last, add any formatting codes
 				if(!style.equals(lastStyle.get())) {
 					if(!leadingWhitespace.isEmpty()) {
-						// adds the whitespace BEFORE the formatting codes and regular text to
-						// provide better readability (hugs the right-most characters instead
-						// of left-most)
+						// adds the whitespace BEFORE the formatting codes and regular text to provide
+						// better readability (hugs the right-most characters instead of left-most)
 						builder.append(leadingWhitespace);
 					}
 
-					builder.append(getFormattingCodes(style, lastStyle.get()));
+					// if lastStyle == null, we pass it as empty here
+					// the only reason it's initially null is that some messages are constructed with legacy codes,
+					// and those messages have one part with a root empty style (skipping this block)
+					builder.append(getFormattingCodes(style, Objects.requireNonNullElse(lastStyle.get(), Style.EMPTY)));
 
 					lastStyle.set(style);
 				}
 
-				// sometimes section signs leak and I WANT THEM OUT
+				// sometimes section signs leak
 				// this has to be done here or else the stylish color codes added above will be erased
 				builder.append(str.stripLeading().replace(ChatFormatting.PREFIX_CODE, '&'));
 
@@ -249,6 +377,8 @@ public class TextUtil {
 		}
 
 		// === Output fixes and optimizations ===
+
+		// TODO: SEE HOW MANY OF THESE ARE ACTUALLY TRIGGERED, AND IF NONE ARE COMMENT OUT - ESP. REGEXES! /!\
 
 		// removes any leading reset codes - all styles begin naturally reset
 		while(builder.indexOf("&r") == 0) {
@@ -269,7 +399,7 @@ public class TextUtil {
 		// finally, makes all formatting codes aqua so they're easily distinguishable
 		if(prettyPrint && (m = PRETTY_PRINT_TARGETS_REGEX.reset(result)).find()) {
 			result = m.replaceAll(ChatFormatting.AQUA + "$0" + ChatFormatting.RESET);
-			// prepub: replace &<?> codes that were in the original message with \\\\$1 ? this regex alr ignores them
+			// prepub: replace &<?> codes that were in the original message with \\\\$1 ? this regex alr ignores them /!\
 		}
 
 		return result;
@@ -285,19 +415,26 @@ public class TextUtil {
 	 *
 	 * @see TextColor#formatValue()
 	 */
-	public static String getFormattingCodes(Style style, Style last) {
+	public static String getFormattingCodes(@NotNull Style style, @NotNull Style last) {
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
 
-		//todo: optimizations for when either parameter is Style.EMPTY
+		if(style.equals(last) || (isBlank(style) && isBlank(last))) {
+			// nothing has changed
+			return "";
+		} else if(style.equals(Style.EMPTY) /*&& !fillOutBooleans(last).equals(BLANK)*/) {
+			// here we know last isn't empty, so we must reset
+			return "&r";
+		}
+		// todo two more conditions: one where style has all false and last has all false and vice versa (null -> false) /!\
 
 		// if the color is named, it will have a name
 		// makes the fallback white so changes to colorless but not empty styles don't ignore colors
-		// see 'newBuff' in test cases under #311
 		TextColor thisColor = Colors.simplify(style.getColor() != null ? style.getColor().getValue() : Colors.WHITE);
 		int thisValue = thisColor.getValue();
 		int lastValue = last.getColor() != null ? last.getColor().getValue() : Colors.WHITE;
 
 		// ensures reset codes are not treated as white codes by forcing necessary reset codes
+		// only marked as changed if a code is in the last style but not the current one
 		boolean modifierChanged = (last.isBold() && !style.isBold()) || (last.isItalic() && !style.isItalic()) || (last.isUnderlined() && !style.isUnderlined()) ||
 			(last.isStrikethrough() && !style.isStrikethrough()) || (last.isObfuscated() && !style.isObfuscated());
 
@@ -306,23 +443,28 @@ public class TextUtil {
 			joiner.add("r");
 		}
 
-		// only add the color code if it's different from the last color and if it won't result in '&r&f'
-		if(thisValue != lastValue && !(modifierChanged && thisValue == Colors.WHITE))
+		// adds the color code if we reset, and it's not white (no "&r&f"); or if we didn't reset and the colors changed
+		if(modifierChanged ? (thisValue != Colors.WHITE) : (thisValue != lastValue))
 		{
 			Optional<String> code = Colors.getCode(thisColor);
 			// if thisColor is named, add its formatting code, else add its hex color
-			joiner.add( code.orElse(thisColor.formatValue()) ); // thisColor.serialize() also works bc at that point we know it's not named so it will call formatValue() for us
+			joiner.add( code.orElse(thisColor.serialize()) ); // at this point we know thisColor isn't named, so it will call formatValue() for us
 		}
-		else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY))
+		else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY)) // todo move this check up earlier, we dont need to do all that logic if current is empty /!\
 		{
 			return "&r"; // if the current style is empty but the last style wasn't, we've reset!
 		}
 
-		if(style.isBold() && !last.isBold()) joiner.add("l");
-		if(style.isItalic() && !last.isItalic()) joiner.add("o");
-		if(style.isUnderlined() && !last.isUnderlined()) joiner.add("n");
-		if(style.isStrikethrough() && !last.isStrikethrough()) joiner.add("m");
-		if(style.isObfuscated() && !last.isObfuscated()) joiner.add("k");
+		if(style.isBold() && (!last.isBold() || modifierChanged))
+			joiner.add("l");
+		if(style.isItalic() && (!last.isItalic() || modifierChanged))
+			joiner.add("o");
+		if(style.isUnderlined() && (!last.isUnderlined() || modifierChanged))
+			joiner.add("n");
+		if(style.isStrikethrough() && (!last.isStrikethrough() || modifierChanged))
+			joiner.add("m");
+		if(style.isObfuscated() && (!last.isObfuscated() || modifierChanged))
+			joiner.add("k");
 
 		return joiner.toString();
 	}

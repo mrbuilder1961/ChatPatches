@@ -115,7 +115,7 @@ public class ChatUtil {
 	 * @see <a href="https://regex101.com/r/LGbGU9/latest">Vanilla Message Format</a>
 	 */
 	public static final Matcher VANILLA_FORMAT = Pattern.compile("^((-> )?\\[[^<]+] )?<[^>]*(\\w{1,16})[^>]*>\\s.+$").matcher("");
-	// ^ test this regex thoroughly (do both -fixes need the no > charclass? particularly the last?)
+	// ^ TEST: this regex thoroughly (do both -fixes need the no > charclass? particularly the last?) /!\
 	/**
 	 * The vanilla message format used by {@link #modifyMessage(Component)}
 	 * and related methods. Depends on {@linkplain ChatHeadsIntegration#isActive()

@@ -1,5 +1,15 @@
 # Changelog
 
+/!\
+## Chat Patches `8.0-beta.1` for Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1-2 on Fabric, Quilt
+- [!NOT DONE] Implemented a budding test suite! If you're a player you won't firsthand see any of this, but you will feel its effects in that trivial bugs
+  should be caught earlier, before being shipped as releases!
+- For these reasons, I think it's fitting to bump this channel to beta!
+
+- [!NOT DONE] This release is the first to feature NeoForge compatibility! This will initially take time to acclimate to, but then dev time will decrease again
+- [!NOT DONE] Implemented a minimal DataFixerUpper system that automatically renames old config options and transforms anything necessary (right now, just
+  flips a boolean lol)
+
 ## Chat Patches `8.0-alpha.11` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt
 - Re-published version of `8.0-alpha.10` without the rogue code from other incomplete stuff (#325-331)
   - Side note: some of y'all really need to learn to read. Seriously. Three people submitted bug reports that were IDENTICAL to the top, most recent reports. 
@@ -15,15 +25,6 @@
   verified by code and game tests, meaning (way!!) less crashes and bugs that are very easily encountered
 - Thank you all for your patience, I know this has taken a while. Going forward I will be solely prioritizing quality over speed.
   - As ALWAYS, you can access pre-release builds of Chat Patches through [GitHub Actions](https://github.com/mrbuilder1961/ChatPatches/actions?query=branch%3Aomnivers%20is%3Asuccess)!
-
-## Chat Patches `8.0-beta.1` for Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1-2 on Fabric, Quilt
-(moved temporarily for hotfix compat w 26.1.2)
-- [!NOT DONE] This release is the first to feature NeoForge compatibility! This will initially take time to acclimate to, but then dev time will decrease again
-- [!NOT DONE] Implemented a budding test suite! If you're a player you won't firsthand see any of this, but you will feel its effects in that trivial bugs
-  should be caught earlier, before being shipped as releases!
-- [!NOT DONE] Implemented a minimal DataFixerUpper system that automatically renames old config options and transforms anything necessary (right now, just
-  flips a boolean lol)
-- For these reasons, I think it's fitting to bump this channel to beta!
 
 ## Chat Patches `8.0-alpha.10` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt
 - Published builds now come with signatures ~~and checksums~~! This means you can verify the integrity of Chat Patches builds (and ensure they haven't been
