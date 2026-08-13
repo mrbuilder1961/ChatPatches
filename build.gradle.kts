@@ -499,10 +499,10 @@ publishMods {
             }
         }
 
-        // turns out i can't even upload checksums to modrinth..?? 😭 bc they're... already provided? but not shown to anyone unless explicitly API requested?
-        // sigh.
-        // todo modrinth's api only accepts signatures on v3 (unstable) not MPP compatible v2 </3
-        //additionalFiles.from(tasks[signFinalJarTask]/*, checksumTask*/)
+        // turns out i can't even upload checksums to modrinth,😭 bc they're... already provided? but not shown to anyone (unless explicitly API requested)? sigh.
+
+        // prepub: signatures *should* now be supported both via Modrinth's v3 API and thru MPP 2.2.0!
+        additionalFiles.from(tasks[signFinalJarTask], /*checksumTask*/)
 
         // specify id OR slug NOT both, +OPTIONAL specific version
         required.forEach(::requires)
