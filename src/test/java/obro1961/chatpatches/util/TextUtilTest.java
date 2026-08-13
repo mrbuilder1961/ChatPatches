@@ -51,7 +51,7 @@ class TextUtilTest {
 	/**
 	 * @see TextUtil#truncate(Component, int)
 	 */
-	@Test //TODO: this task's results having any valid meaning entirely depends on whether testVirtuallyEqual() passed successfully - how do i specify this? /!\
+	@Test //TODO: this task's results having any valid meaning entirely depends on whether testVirtuallyEqual() passed successfully - how do i specify this? (/!\)
 	void testTruncate() {
 		int max = 60;
 
@@ -124,7 +124,7 @@ class TextUtilTest {
 		//  icl i might have to resort to ethical AI :( this just takes SOOOO much time to get off the ground,
 		//  and then 99% of the remaining time is rewriting whole functions for hours to fix edge cases.
 		//  i'm okay with that last bit but both is just unrealistic, and i really need this framework
-		//  for this mod at its current scale. /!\
+		//  for this mod at its current scale. (/!\)
 	}
 
 	// note that when pretty printing is enabled, we strip actual formatting codes

@@ -155,7 +155,7 @@ public class TextUtil {
 		}
 
 		var truncated = Component.empty();
-		int[] len = {0}; // prepub: try text.toFlatList() then iterate over each entry in an enhanced-for to avoid len[0] /!\
+		int[] len = {0}; // prepub: try text.toFlatList() then iterate over each entry in an enhanced-for to avoid len[0] (/!\)
 
 		text.visit((style, str) -> {
 			if(str.length() + len[0] > max) {
@@ -219,7 +219,7 @@ public class TextUtil {
 		// shadowColor is ignored as it's only in newer versions
 
 		//noinspection RedundantIfStatement: i got a pattern going here. shutup
-		if(style.getFont() != FontDescription.DEFAULT) return false; //stonecutter:sigh /!\
+		if(style.getFont() != FontDescription.DEFAULT) return false; //stonecutter:sigh (/!\)
 
 		return true;
 	}
@@ -233,7 +233,7 @@ public class TextUtil {
 	 *
 	 * todo rewrite this javadoc and note any unfixables (if any)
 	 */
-	public static boolean virtuallyEqual(Component a, Component b) { // FIXME: finish this method /!\
+	public static boolean virtuallyEqual(Component a, Component b) { // FIXME: finish this method (/!\)
 		boolean param_caseSensitive = true;
 
 		if(Objects.equals(a, b)) return true;
@@ -378,7 +378,7 @@ public class TextUtil {
 
 		// === Output fixes and optimizations ===
 
-		// TODO: SEE HOW MANY OF THESE ARE ACTUALLY TRIGGERED, AND IF NONE ARE COMMENT OUT - ESP. REGEXES! /!\
+		// TODO: SEE HOW MANY OF THESE ARE ACTUALLY TRIGGERED, AND IF NONE ARE COMMENT OUT - ESP. REGEXES! (/!\)
 
 		// removes any leading reset codes - all styles begin naturally reset
 		while(builder.indexOf("&r") == 0) {
@@ -399,7 +399,7 @@ public class TextUtil {
 		// finally, makes all formatting codes aqua so they're easily distinguishable
 		if(prettyPrint && (m = PRETTY_PRINT_TARGETS_REGEX.reset(result)).find()) {
 			result = m.replaceAll(ChatFormatting.AQUA + "$0" + ChatFormatting.RESET);
-			// prepub: replace &<?> codes that were in the original message with \\\\$1 ? this regex alr ignores them /!\
+			// prepub: replace &<?> codes that were in the original message with \\\\$1 ? this regex alr ignores them (/!\)
 		}
 
 		return result;
@@ -425,7 +425,7 @@ public class TextUtil {
 			// here we know last isn't empty, so we must reset
 			return "&r";
 		}
-		// todo two more conditions: one where style has all false and last has all false and vice versa (null -> false) /!\
+		// todo two more conditions: one where style has all false and last has all false and vice versa (null -> false) (/!\)
 
 		// if the color is named, it will have a name
 		// makes the fallback white so changes to colorless but not empty styles don't ignore colors
@@ -450,7 +450,7 @@ public class TextUtil {
 			// if thisColor is named, add its formatting code, else add its hex color
 			joiner.add( code.orElse(thisColor.serialize()) ); // at this point we know thisColor isn't named, so it will call formatValue() for us
 		}
-		else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY)) // todo move this check up earlier, we dont need to do all that logic if current is empty /!\
+		else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY)) // todo move this check up earlier, we dont need to do all that logic if current is empty (/!\)
 		{
 			return "&r"; // if the current style is empty but the last style wasn't, we've reset!
 		}

@@ -14,7 +14,7 @@ import static net.minecraft.network.chat.Component.literal;
 import static net.minecraft.network.chat.Style.EMPTY;
 import static obro1961.chatpatches.util.TextUtil.text;
 
-// prepub: re-enable this - it's just so i know which texts i haven't used yet /!\
+// prepub: re-enable this - it's just so i know which texts i haven't used yet (/!\)
 //@SuppressWarnings("unused")
 public final class TestData {
 	//region [Strings]
@@ -132,7 +132,7 @@ public final class TestData {
 								  TEXT_NO_REDUNDANT_AMP = text(STR_NO_REDUNDANT_AMP),
 								  TEXT_NO_REDUNDANT_AMP_EXPLICIT = literal("STR18 has ").withStyle(DARK_GREEN)
 									.append(literal("NO ").withStyle(RED, BOLD))
-									.append(literal("redundant ").withStyle(RESET, BOLD))//todo lol double check this guy /!\
+									.append(literal("redundant ").withStyle(RESET, BOLD))//todo lol double check this guy (/!\)
 									.append(literal("codes ").withStyle(DARK_RED))
 									.append(literal("that can be ").withStyle(BLUE, UNDERLINE))
 									.append(literal("filtered out").withStyle(STYLE_LIGHT_PURPLE))

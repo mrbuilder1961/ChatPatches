@@ -53,7 +53,7 @@ public class ChatPatchesTest {
 	void pushInfoToast() {
 	}*/
 
-	// todo requires the GameTest framework for a Minecraft instance to exist /!\
+	// todo requires the GameTest framework for a Minecraft instance to exist (/!\)
 	/*@Test
 	void regBack() {
 		context.runOnClient(mc -> {
