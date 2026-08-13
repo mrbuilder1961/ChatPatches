@@ -1,6 +1,7 @@
 package obro1961.chatpatches.util;
 
 import com.mojang.brigadier.Message;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -9,6 +10,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.util.StringRepresentable;
+import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +68,7 @@ public class TextUtil {
 	 * messages to be serialized.
 	 *
 	 * @see ClickEvent$ActionMixin#allowConditionalSerialization(boolean)
-	 * @see obro1961.chatpatches.ChatLog#CODEC
+	 * @see ChatLog#CODEC
 	 */
 	public static final Codec<Component> UNSAFE_CODEC = new Codec<>() {
 		/*~ if <=1.20.2 'ComponentSerialization.CODEC' -> 'net.minecraft.util.ExtraCodecs.COMPONENT' {*/
@@ -79,7 +81,7 @@ public class TextUtil {
 		}
 
 		@Override
-		public <T> DataResult<com.mojang.datafixers.util.Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
+		public <T> DataResult<Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
 			safeCodec.set(false);
 			var result = ComponentSerialization.CODEC.decode(ops, input);
 			safeCodec.set(true);
@@ -171,7 +173,7 @@ public class TextUtil {
 			len[0] += str.length();
 
 			return Optional.empty();
-		}, Style.EMPTY);
+		}, EMPTY);
 
 		return truncated;
 	}
@@ -205,7 +207,7 @@ public class TextUtil {
 	 * *color may be white.
 	 */
 	public static boolean isBlank(Style style) {
-		if(style.equals(Style.EMPTY)) return true;
+		if(style.equals(EMPTY)) return true;
 		if(style.equals(BLANK)) return true;
 
 		if(style.isBold()) return false;
@@ -219,7 +221,7 @@ public class TextUtil {
 		// shadowColor is ignored as it's only in newer versions
 
 		//noinspection RedundantIfStatement: i got a pattern going here. shutup
-		if(style.getFont() != FontDescription.DEFAULT) return false; //stonecutter:sigh (/!\)
+		if(!style.getFont().equals( /*? if >1.21.1 {*/FontDescription.DEFAULT/*?} else {*//*Style.DEFAULT_FONT*//*?}*/ )) return false;
 
 		return true;
 	}
@@ -363,7 +365,7 @@ public class TextUtil {
 					// if lastStyle == null, we pass it as empty here
 					// the only reason it's initially null is that some messages are constructed with legacy codes,
 					// and those messages have one part with a root empty style (skipping this block)
-					builder.append(getFormattingCodes(style, Objects.requireNonNullElse(lastStyle.get(), Style.EMPTY)));
+					builder.append(getFormattingCodes(style, Objects.requireNonNullElse(lastStyle.get(), EMPTY)));
 
 					lastStyle.set(style);
 				}
@@ -373,7 +375,7 @@ public class TextUtil {
 				builder.append(str.stripLeading().replace(ChatFormatting.PREFIX_CODE, '&'));
 
 				return Optional.empty();
-			}, Style.EMPTY);
+			}, EMPTY);
 		}
 
 		// === Output fixes and optimizations ===
@@ -421,7 +423,7 @@ public class TextUtil {
 		if(style.equals(last) || (isBlank(style) && isBlank(last))) {
 			// nothing has changed
 			return "";
-		} else if(style.equals(Style.EMPTY) /*&& !fillOutBooleans(last).equals(BLANK)*/) {
+		} else if(style.equals(EMPTY) /*&& !fillOutBooleans(last).equals(BLANK)*/) {
 			// here we know last isn't empty, so we must reset
 			return "&r";
 		}
@@ -450,7 +452,7 @@ public class TextUtil {
 			// if thisColor is named, add its formatting code, else add its hex color
 			joiner.add( code.orElse(thisColor.serialize()) ); // at this point we know thisColor isn't named, so it will call formatValue() for us
 		}
-		else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY)) // todo move this check up earlier, we dont need to do all that logic if current is empty (/!\)
+		else if(style.equals(EMPTY) && !last.equals(EMPTY)) // todo move this check up earlier, we dont need to do all that logic if current is empty /!\
 		{
 			return "&r"; // if the current style is empty but the last style wasn't, we've reset!
 		}
