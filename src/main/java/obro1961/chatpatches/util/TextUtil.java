@@ -161,26 +161,10 @@ public class TextUtil {
 	}
 
 	/**
-	 * Returns a copy of {@code text} with an empty content.
-	 * Useful for comparing {@link Component} objects'
-	 * metadata (style and siblings) only.
-	 * */
-	/*public static MutableComponent withoutContent(Component text) {
-		//-? if >1.20.2 {
-		//import net.minecraft.network.chat.contents.PlainTextContents;
-		//-?}
-		return new MutableComponent(*//*-? if >1.20.2 {*//*PlainTextContents*//*-?} else {*//**//*ComponentContents*//**//*-?}*//*.EMPTY, text.getSiblings(), text.getStyle());
-	}*/
-
-
-	/**
 	 * Formats a String with {@code &} formatting codes into a {@link Component}.
 	 * First replaces all {@code &<?>} codes with a section symbol ({@code §}),
 	 * then deletes the backslash from all {@code \&<?>} instances. Doesn't
 	 * support hex colors.
-	 *
-	 * @apiNote Hex colors could be supported with the Placeholder API, but using
-	 * an entire library just for this one feature seems excessive.
 	 */
 	public static MutableComponent text(String unformatted) {
 		String s = NO_BACKSLASH_AMPERSAND_REGEX.reset(unformatted).replaceAll("§$1");

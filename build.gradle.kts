@@ -347,6 +347,10 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         str(j21, ".get(0)", ".getFirst()", "j21_get_first")
         str(j21, ".remove(0)", ".removeFirst()", "j21_remove_first")
 
+
+        val v1203 = current.parsed > "1.20.2"
+        str(v1203, "LiteralContents", "PlainTextContents")
+
         val v1219 = current.parsed >= "1.21.9"
         str(v1219, "int keyCode, int scanCode, int modifiers", "KeyEvent key") // key_event
         //str(v1219, "keyCode, scanCode, modifiers", "key") // key_args

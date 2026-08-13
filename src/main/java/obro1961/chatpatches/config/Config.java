@@ -22,7 +22,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.chat.*;
-import net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/;
+import net.minecraft.network.chat.contents.PlainTextContents;
 //? if <=1.20.4 {
 //import net.minecraft.util.ExtraCodecs;
 //?}
@@ -309,7 +309,7 @@ public class Config {
             }
 
             return new MutableComponent(
-				/*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/.EMPTY,
+				PlainTextContents.EMPTY,
 				components,
 				hoverStyle
 			);
