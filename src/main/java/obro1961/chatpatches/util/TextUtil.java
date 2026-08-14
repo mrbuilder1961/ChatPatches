@@ -299,7 +299,7 @@ public class TextUtil {
 	 * (ex. {@code #55FF55} for {@link ChatFormatting#GREEN}) will return as the formatting
 	 * code (ex. {@code &a}).
 	 *
-	 * @see TextColor#formatValue()
+	 * @see TextColor#serialize()
 	 */
 	public static String getFormattingCodes(Style style, Style last) {
 		StringJoiner joiner = new StringJoiner("&", "&", "").setEmptyValue(""); // adds the & at the start of the string
@@ -327,7 +327,7 @@ public class TextUtil {
 		{
 			Optional<String> code = Colors.getCode(thisColor);
 			// if thisColor is named, add its formatting code, else add its hex color
-			joiner.add( code.orElse(thisColor.formatValue()) ); // thisColor.serialize() also works bc at that point we know it's not named so it will call formatValue() for us
+			joiner.add( code.orElse(thisColor.serialize()) );
 		}
 		else if(style.equals(Style.EMPTY) && !last.equals(Style.EMPTY))
 		{

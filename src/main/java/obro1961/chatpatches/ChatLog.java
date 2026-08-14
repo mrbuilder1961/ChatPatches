@@ -7,6 +7,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
@@ -25,9 +26,11 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 //?}
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MessageSignature;
 import net.minecraft.util.GsonHelper;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
+import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.TextUtil;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.intellij.lang.annotations.Language;
@@ -40,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.*;
@@ -50,6 +54,30 @@ import static obro1961.chatpatches.ChatPatches.*;
  * backing up the messages and history stored within.
  */
 public class ChatLog {
+	/** Tracks asynchronous loading and client-thread restoration of the chat log. */
+	public enum RestoreState {
+		/** The chat log has not been initialized during this session. */
+		INIT,
+		/** The saved chat log is being deserialized on an I/O worker thread. */
+		LOADING,
+		/** Saved messages and sent-message history are being restored on the client thread. */
+		RESTORING,
+		/** Live messages captured during loading are being replayed on the client thread. */
+		DRAINING,
+		/** Initial restoration is finished and messages should be processed normally. */
+		DONE
+	}
+
+	private record PendingMessage(
+		Component component,
+		MessageSignature signature,
+		ChatUtil.MessageData messageData,
+		/*? if <=1.20.4 {*//*int addedTime,*//*?}*/
+		/*? if >=26.1 {*/GuiMessageSource source,/*?}*/
+		GuiMessageTag tag
+		/*? if <=1.20.4 {*//*, boolean refreshing*//*?}*/
+	) {}
+
     /**
      * Serializes as a {@link Pair} to avoid needing a dedicated class.
 	 * {@link #messages} are first and {@link #history} is second, and the native
@@ -87,12 +115,8 @@ public class ChatLog {
 
 	private static Minecraft mc() { return Minecraft.getInstance(); }
 
-    /**
-     * Used to suspend the addition of messages and access to the chat log
-	 * while restoring. Prevents log spam of restored messages and other
-	 * related issues like {?}.
-     */
-    private static boolean restoring = false;
+	private static final ObjectArrayFIFOQueue<PendingMessage> pendingMessages = new ObjectArrayFIFOQueue<>();
+	private static volatile RestoreState restoreState = RestoreState.INIT;
     private static int lastHistoryCount = -1, lastMessageCount = -1;
     private static int ticksUntilSave = config.chatlogSaveInterval * SharedConstants.TICKS_PER_MINUTE;
 
@@ -110,10 +134,46 @@ public class ChatLog {
     }
 
 
-    public static boolean isRestoring() { return restoring; }
+    public static boolean isRestoring() { return restoreState == RestoreState.RESTORING; }
+    public static boolean isLoading() { return restoreState == RestoreState.LOADING; }
+	public static boolean isWorking() { return restoreState != RestoreState.INIT && restoreState != RestoreState.DONE; }
+
+	/**
+	 * Captures an incoming message before the asynchronous chat log load can
+	 * replace the in-memory message list. Called only from the client thread.
+	 *
+	 * @return {@code true} when the original addMessage call should be cancelled.
+	 */
+	public static boolean queueMessage(
+		Component component,
+		MessageSignature signature,
+		/*? if <=1.20.4 {*//*int addedTime,*//*?}*/
+		/*? if >=26.1 {*/GuiMessageSource source,/*?}*/
+		GuiMessageTag tag
+		/*? if <=1.20.4 {*//*, boolean refreshing*//*?}*/
+	) {
+		if(!isLoading() || RESTORED_INDICATOR.equals(tag)) {
+			return false;
+		}
+
+		pendingMessages.enqueue(new PendingMessage(
+			component,
+			signature,
+			ChatUtil.messageData,
+			/*? if <=1.20.4 {*//*addedTime,*//*?}*/
+			/*? if >=26.1 {*/source,/*?}*/
+			tag
+			/*? if <=1.20.4 {*//*, refreshing*//*?}*/
+		));
+		ChatUtil.messageData = ChatUtil.NIL_MESSAGE_DATA;
+		if(pendingMessages.size() == 1) {
+			LOGGER.info("Queuing live chat messages until chat history is restored");
+		}
+		return true;
+	}
 
     public static void addMessage(Component message) {
-        if(restoring) {
+		if(isRestoring()) {
 			return;
 		}
 
@@ -121,7 +181,7 @@ public class ChatLog {
         messages.add(message);
     }
     public static void addHistory(String sentMessage) {
-        if(restoring) {
+		if(isRestoring()) {
 			return;
 		}
 
@@ -387,16 +447,80 @@ public class ChatLog {
 
 			// todo i think we just need to mixin to the delayed message queue thing, and here we cache the current setting, set it to ~5s delay, and mark some flag field true to be used in the mixin(s)!
 
-			restoring = true;
 			history.forEach(chat::addRecentChat);
 			messages.forEach(msg -> chat.addMessage(msg, null, /*? if >=26.1 {*/GuiMessageSource.SYSTEM_CLIENT,/*?}*/ RESTORED_INDICATOR));
-			restoring = false;
-
-			config.sendBoundaryLine(); // ensures the check that the chat isn't empty passes, which often doesn't due to multithreading
-			hideRecentMessages();
 		}
 
 		LOGGER.info("Restored {} messages and {} history messages!", messageCount(), historyCount());
+	}
+
+	private static void finishLoading(Throwable loadFailure) {
+		boolean hasSavedEntries = messageCount() > 0 || historyCount() > 0;
+
+		try {
+			if(loadFailure == null) {
+				restoreState = RestoreState.RESTORING;
+				restore();
+				hasSavedEntries = messageCount() > 0 || historyCount() > 0;
+			} else {
+				LOGGER.error("Chat log loading failed; queued messages will still be replayed:", loadFailure);
+			}
+		} catch(RuntimeException | AssertionError e) {
+			LOGGER.error("Chat log restoration failed; queued messages will still be replayed:", e);
+		} finally {
+			restoreState = RestoreState.DRAINING;
+			try {
+				if(hasSavedEntries) {
+					try {
+						config.sendBoundaryLine();
+						hideRecentMessages();
+					} catch(RuntimeException | AssertionError e) {
+						LOGGER.error("Failed to finish restored chat history presentation:", e);
+					}
+				}
+
+				try {
+					drainPendingMessages();
+				} catch(RuntimeException | AssertionError e) {
+					LOGGER.error("Failed to drain queued chat messages:", e);
+				}
+			} finally {
+				ChatUtil.messageData = ChatUtil.NIL_MESSAGE_DATA;
+				restoreState = RestoreState.DONE;
+			}
+		}
+	}
+
+	private static void drainPendingMessages() {
+		if(pendingMessages.isEmpty()) {
+			return;
+		}
+
+		ChatComponent chat = mc().gui.hud.getChat();
+		int pendingCount = pendingMessages.size();
+		int drained = 0;
+
+		while(!pendingMessages.isEmpty()) {
+			PendingMessage pending = pendingMessages.dequeue();
+			try {
+				ChatUtil.messageData = pending.messageData();
+				chat.addMessage(
+					pending.component(),
+					pending.signature(),
+					/*? if <=1.20.4 {*//*pending.addedTime(),*//*?}*/
+					/*? if >=26.1 {*/pending.source(),/*?}*/
+					pending.tag()
+					/*? if <=1.20.4 {*//*, pending.refreshing()*//*?}*/
+				);
+				drained++;
+			} catch(RuntimeException | AssertionError e) {
+				LOGGER.error("Failed to replay a queued chat message:", e);
+			} finally {
+				ChatUtil.messageData = ChatUtil.NIL_MESSAGE_DATA;
+			}
+		}
+
+		LOGGER.info("Replayed {} of {} pending chat messages", drained, pendingCount);
 	}
 
 	/**
@@ -448,9 +572,19 @@ public class ChatLog {
 	 * {@link Minecraft}'s implementation of {@link java.util.concurrent.Executor}, which
 	 * assumes the render thread will always be used.
      */
-    public static void load(boolean force) {
-        if(config.chatlog && ((messages == EMPTY_LIST && history == EMPTY_LIST) || force)) {
-			executeIoTask(ChatLog::deserialize).thenAcceptAsync(x -> restore(), mc());
+	public static void load(boolean force) {
+		if(config.chatlog && ((messages == EMPTY_LIST && history == EMPTY_LIST) || force)) {
+			if(isWorking()) {
+				return;
+			}
+
+			restoreState = RestoreState.LOADING;
+			try {
+				CompletableFuture.runAsync(ChatLog::deserialize, Util.ioPool())
+					.whenCompleteAsync((unused, error) -> finishLoading(error), mc());
+			} catch(RuntimeException e) {
+				finishLoading(e);
+			}
         }
     }
 
