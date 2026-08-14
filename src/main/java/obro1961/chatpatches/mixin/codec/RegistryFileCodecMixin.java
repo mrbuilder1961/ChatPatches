@@ -1,7 +1,7 @@
 package obro1961.chatpatches.mixin.codec;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import net.minecraft.resources.RegistryFileCodec;
+import net.minecraft.resources.RegistryFileCodec; // net.minecraft.core.registries.codec
 import obro1961.chatpatches.util.TextUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

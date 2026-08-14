@@ -1,6 +1,6 @@
 # Changelog
 
-## Chat Patches `8.0-beta.1` for Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1-2 on Fabric, Quilt
+## Chat Patches `8.0-beta.1` for Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1-3 on Fabric, Quilt
 - [!NOT DONE] Implemented a budding test suite! If you're a player you won't firsthand see any of this, but you will feel its effects in that trivial bugs
   should be caught earlier, before being shipped as releases!
 - [!NOT DONE] This release is the first to feature NeoForge compatibility! This will initially take time to acclimate to, but then dev time will decrease again

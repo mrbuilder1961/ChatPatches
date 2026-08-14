@@ -373,6 +373,9 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         val v262 = current.parsed >= "26.2"
         str(v262, "gui.getChat()", "gui.hud.getChat()") // how clear and verbose Mojang!
         str(v262, ".setScreen(", ".gui.setScreen(")
+
+        val v263 = current.parsed > "26.2" // >= "26.3"
+        str(v263, "net.minecraft.resources.RegistryFi", "net.minecraft.core.registries.codec.RegistryFi")
     }
 }
 
