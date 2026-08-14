@@ -16,6 +16,10 @@ accessible field net/minecraft/client/gui/components/ChatComponent trimmedMessag
 accessible field net/minecraft/client/gui/components/ChatComponent chatScrollbarPos I
 accessible method net/minecraft/client/gui/components/ChatComponent getLineHeight ()I
 
+#? if <=1.20.4 {
+accessible method net/minecraft/client/gui/components/ChatComponent addMessage (Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;ILnet/minecraft/client/GuiMessageTag;Z)V
+#?}
+
 #? if >=1.21.11 {
 accessible method net/minecraft/client/gui/components/ChatComponent getWidth ()I # ContextMenu#extractSelectionOutline()
 accessible method net/minecraft/client/gui/components/ChatComponent getScale ()D
