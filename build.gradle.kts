@@ -361,7 +361,7 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
         str(v12111, "net.minecraft.Util", "net.minecraft.util.Util")
         str(v12111, "ResourceLocation", "Identifier", "yarnification", false) // selectively enabled
         // \- todo try out the specific disabling thing outlined in the docs so maybe i can auto enable this and selectively DISable it (perhaps
-        //     automatically too!)
+        //     automatically too!) (/!\)
 
         val v261 = current.parsed >= "26.1"
         str(v261, "net.minecraft.client.GuiMessage", "net.minecraft.client.multiplayer.chat.GuiMessage") // also conveniently covers GuiMessageTag!
@@ -376,6 +376,8 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
 
         val v263 = current.parsed > "26.2" // >= "26.3"
         str(v263, "net.minecraft.resources.RegistryFi", "net.minecraft.core.registries.codec.RegistryFi")
+        str(v263, "org.lwjgl.glfw.GLFW", "com.mojang.blaze3d.platform.InputConstants")
+        str(v263, "GLFW.GLFW_", "InputConstants.")
     }
 }
 
