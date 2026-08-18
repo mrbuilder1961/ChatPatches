@@ -381,15 +381,6 @@ stonecutter { // https://stonecutter.kikugie.dev/wiki/config/params
     }
 }
 
-fun trimChanges(max: Int = 2000): String {
-    val cutoff = "... (trimmed)"
-    return if(changes.length > max) {
-        changes.substring(0, max - cutoff.length) + cutoff
-    } else {
-        changes
-    }
-}
-
 publishMods {
     val required = propList("required")
     val optionals = propList("optionals")
@@ -522,7 +513,7 @@ publishMods {
             dryRunWebhookUrl = token("discord_debug") // testing
             username = "Publisher Bot"
             avatarUrl = "https://cdn.modrinth.com/data/MOqt4Z5n/56c954dea290ef4dd1b0d6ea92a811acac62ca85.png"
-            changelog = trimChanges()
+            changelog = if(changes.length > 2000) changes.take(2000 - 4) + " ..." else changes
         }
     }
 }
