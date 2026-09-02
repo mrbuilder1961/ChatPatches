@@ -9,6 +9,7 @@
 - Signatures (`.asc` files) are now uploaded with releases to Modrinth for added security!
 - For these reasons, I think it's fitting to bump this channel to beta!
 - Messages received while the chat log is loading no longer get pushed to the top of the list ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263), fixed by [NineOfGaming](https://github.com/NineOfGaming)!)
+- Receiving duplicate messages no longer auto-scrolls the focused chat ([#286](https://www.github.com/mrbuilder1961/ChatPatches/issues/286))
 - Updated Russian `ru_ru` translations ([#333](https://www.github.com/mrbuilder1961/ChatPatches/issues/333)) thanks to [ADevnin](https://github.com/ADevnin)!
 
 ## Chat Patches `8.0-alpha.11` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt

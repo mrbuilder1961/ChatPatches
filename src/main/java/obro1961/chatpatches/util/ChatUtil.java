@@ -6,13 +6,10 @@ import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ChatScreen;
-//? if >=26.1 {
-import net.minecraft.client.multiplayer.chat.GuiMessageSource;
-//?}
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -22,9 +19,6 @@ import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.config.Config;
-//? if >=1.21.9 {
-import obro1961.chatpatches.integration.ChatHeadsIntegration;
-//? }
 import obro1961.chatpatches.mixin.gui.ChatComponentMixin;
 import obro1961.chatpatches.mixin.listener.ChatListenerMixin;
 import org.apache.logging.log4j.core.util.Integers;
@@ -39,6 +33,13 @@ import java.util.regex.Pattern;
 
 import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static obro1961.chatpatches.ChatPatches.*;
+
+//? if >=26.1 {
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//?}
+//? if >=1.21.9 {
+import obro1961.chatpatches.integration.ChatHeadsIntegration;
+//? }
 
 public class ChatUtil {
 	public static final GameProfile NIL_SENDER = new GameProfile(Util.NIL_UUID, "");
@@ -619,8 +620,15 @@ public class ChatUtil {
 	 * 	       <li>Decrements the attempt distance to prevent checking extra
 	 * 	       messages.</li>
 	 *     </ol>
-	 *     <li>Updates the incoming message with the new dupe counter, if the total dupe
-	 *     count is greater than 1.</li>
+	 *     <li>Updates the incoming message with the new dupe counter, if the
+	 *     total dupe count is greater than 1.</li>
+	 *     <li>If the message was a duplicate, the chat is focused, and it's
+	 *     scrolled at all, counteracts the upcoming scroll by decrementing
+	 *     {@link ChatComponent#chatScrollbarPos}. This is necessary because
+	 *     Minecraft still thinks a new message was received, so it tries to
+	 *     scroll up to account for it. But we know nothing new was added, so we
+	 *     cancel it out preemptively
+	 *     (<a href="https://github.com/mrbuilder1961/ChatPatches/issues/286">#286</a>).</li>
 	 *     <li>Returns the incoming message, regardless of if it was actually modified
 	 *     or not, reconstructed to avoid an {@link ArrayIndexOutOfBoundsException}
 	 *     since 1.20.3+
@@ -690,6 +698,11 @@ public class ChatUtil {
 				// don't bother reporting this, restoring dumped logs and other edge cases will cause the same issue
 				// no use in creating more headaches when a perfectly valid solution exists right here
 				siblings.add(config.makeDupeCounter(count));
+			}
+
+			// prevents auto-scrolling (#268) - see Javadoc for more details
+			if(chat.isChatFocused() && chat.chatScrollbarPos > 0) {
+				chat.chatScrollbarPos--;
 			}
 		}
 
