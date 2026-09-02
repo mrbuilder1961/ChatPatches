@@ -44,8 +44,8 @@ stonecutter {
 
         val loaders = providers.gradleProperty("loaders").get()
         val loadList = loaders.replace("neoforge", "neo").split(",")
-        val targets = providers.gradleProperty("targets").get()
-        targets.split(",").forEach {
+        val targets = providers.gradleProperty("targets").get().split(',').map(String::trim)
+        targets.forEach {
             v: String ->
             loadList.forEach {
                 l: String ->
@@ -53,7 +53,25 @@ stonecutter {
             }
         }
 
-        vcsVersion = "${targets.substringAfterLast(',')}-fabric" // most recent version on fabric
+        // sets vcsVersion to the most recent Fabric version **that's not a full release**
+        // starts at the end (most recent versions) to avoid unnecessary file reads
+        for(v in targets.reversed()) {
+            val vFab = "$v-fabric"
+            val props = rootProject.projectDir.resolve("versions/$vFab/gradle.properties") // i know this is ugly but the vcsVersion warnings pmo
+
+            if(props.exists()) {
+                val content = props.readText()
+
+                // the \n ensures it's not present but commented out
+                if(content.contains("\nmod.nonReleaseComponent=")) {
+                    println("Skipped consideration of $vFab as `vcsVersion` because it's not a full release")
+                    continue
+                } else {
+                    vcsVersion = vFab
+                    break
+                }
+            }
+        }
     }
 }
 
