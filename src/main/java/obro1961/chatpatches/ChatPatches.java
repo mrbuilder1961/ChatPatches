@@ -10,15 +10,14 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.OptionsList;
-import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.TextUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +35,8 @@ public class ChatPatches implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches");
 
 	public static Config config = Config.initialize();
+
+	private static ClientLevel backup;
 
 	public static Identifier id(String path) {
 		return Identifier.tryBuild(MOD_ID, path);
@@ -249,13 +250,16 @@ public class ChatPatches implements ClientModInitializer {
 	 */
 	public static <T> /*? if >=1.20.5 {*/RegistryOps/*?} else {*//*DynamicOps*//*?}*/<T> regBack(DynamicOps<T> ops) {
 		//? if >=1.20.5 {
-		if(Minecraft.getInstance().level instanceof ClientLevel world) {
+		var world = Minecraft.getInstance().level instanceof ClientLevel current ? current : backup;
+		if(world != null) {
+			backup = world;
 			return world.registryAccess().createSerializationContext(ops);
 		} else {
-			logReportMsg(new NullPointerException("Expected existing ClientLevel but none were present"));
-			LOGGER.warn("Sometimes this can be triggered if the game is closed too abruptly.");
+			LOGGER.warn("Sometimes this can be triggered if the game was closed too abruptly.");
+			throw new IllegalStateException("Existing ClientLevel not found; fallback not present");
 		}
+		//?} else {
+		/*return ops;*/
 		//?}
-		return /*? if >=1.20.5 {*/(RegistryOps<T>)/*?}*/ ops;
 	}
 }

@@ -1,7 +1,6 @@
 package obro1961.chatpatches;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
@@ -15,19 +14,16 @@ import joptsimple.internal.Strings;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
-import net.minecraft.util.Util;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
-import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
-//? if >=26.1 {
-import net.minecraft.client.multiplayer.chat.GuiMessageSource;
-//?}
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 import obro1961.chatpatches.util.ChatUtil;
@@ -47,6 +43,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.*;
+
+//? if >=26.1 {
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//?}
 
 /**
  * Represents the chat log file in the run directory located at {@link #PATH}.
@@ -312,9 +312,10 @@ public class ChatLog {
                 messages = newSyncedObjectList(null);
                 history = newSyncedObjectList(null);
             } else {
-                JsonObject json = GsonHelper.parse(rawJson);
+				var ops = regJsonOps(); // on a separate line for clearer debugging
+                var json = GsonHelper.parse(rawJson);
                 var deserializedPair =
-                    CODEC.parse(ChatPatches.regJsonOps(), json)
+                    CODEC.parse(ops, json)
                         .resultOrPartial(e -> {
                             logReportMsg(new JsonParseException(e));
                             pushErrorToast("Chat log parse error", e);
@@ -373,7 +374,8 @@ public class ChatLog {
 			LOGGER.info("Saving...");
 
 			try {
-				DataResult<JsonElement> result = CODEC.encodeStart(ChatPatches.regJsonOps(), Pair.of(messages, history));
+				var ops = regJsonOps(); // on a separate line for clearer debugging
+				DataResult<JsonElement> result = CODEC.encodeStart(ops, Pair.of(messages, history));
 				JsonElement json = result.result().orElse(null);
 				String data = GsonHelper.toStableString(json);
 				Path path = PATH;
