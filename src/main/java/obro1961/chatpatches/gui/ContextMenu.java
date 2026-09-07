@@ -100,13 +100,13 @@ public class ContextMenu implements GuiEventListener {
 	static final Component NO_TIMESTAMP_TEXT = translate("noTimestampText");
 	static final Component NO_DUPE_TEXT = translate("noCounterText");
 	static final Component JSON_STR = translate("jsonString");
-	static final Component MENU_TIMESTAMP = translate("timestamp");
+	static final Component MENU_TIME = translate("time");
 	static final Component TIMESTAMP = translate("timestampText");
 	static final Component TIMESTAMP_HOVER = translate("timestampHoverText");
 	static final Component MENU_DUPE_COUNTER = translate("counter");
 	static final Component COUNTER_TEXT = translate("counterText");
 	static final Component COUNTER_VALUE = translate("counterValue");
-	static final Component MENU_UNIX = translate("unix");
+	static final Component UNIX = translate("unix");
 	static final Component MENU_LINKS = translate("links");
 	static final Int2ObjectFunction<Component> LINK_N = (n) -> translate("linkN", n);
 	static final Component MENU_SENDER = translate("sender");
@@ -305,7 +305,7 @@ public class ContextMenu implements GuiEventListener {
 	 * over the leftmost button area.
 	 *
 	 * @see #MENU_STRING
-	 * @see #MENU_TIMESTAMP
+	 * @see #MENU_TIME
 	 * @see #MENU_LINKS
 	 * @see #MENU_SENDER
 	 */
@@ -340,7 +340,7 @@ public class ContextMenu implements GuiEventListener {
 	 *
 	 * @see #registerCopyButton(Component, Component)
 	 * @see #TIMESTAMP_HOVER
-	 * @see #MENU_UNIX
+	 * @see #UNIX
 	 */
 	private void registerCopyButton(Component id, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier) {
 		registerButton(id, col, icon, tooltipCopyTextSupplier, null);
@@ -372,13 +372,13 @@ public class ContextMenu implements GuiEventListener {
 	 *     <li>*{@link #NO_TIMESTAMP_TEXT}</li>
 	 *     <li>^{@link #NO_DUPE_TEXT}</li>
 	 *     <li>{@link #JSON_STR}</li>
-	 *     <li>If a timestamp is present*: {@link #MENU_TIMESTAMP}</li>
+	 *     <li>If not a boundary line: {@link #MENU_TIME}</li>
 	 *     <li>*{@link #TIMESTAMP}</li>
 	 *     <li>*{@link #TIMESTAMP_HOVER}</li>
+	 *     <li>*{@link #UNIX}</li>
 	 *     <li>If a dupe counter is present^: {@link #MENU_DUPE_COUNTER}</li>
 	 *     <li>^{@link #COUNTER_TEXT}</li>
 	 *     <li>^{@link #COUNTER_VALUE}</li>
-	 *     <li>{@link #MENU_UNIX}</li>
 	 *     <li>If any web or file links are present**: {@link #MENU_LINKS}</li>
 	 *     <li>**{@link #LINK_N} (for each link)</li>
 	 *     <li>If the message sender is a player^^: {@link #MENU_SENDER}</li>
@@ -422,9 +422,14 @@ public class ContextMenu implements GuiEventListener {
 			); // (timestamped && duped) ? 4 : (timestamped || duped) ? 3 : 2
 			// todo: OG_JSON_STR - json of the original message w/o CPS mods - some sort of check should determine if we can just use the time/dupe-stripped text or if reconstruction is needed
 
-		// timestamp buttons - conditional (not on boundary lines)
-		if(timestamped) {
-			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP, Items.CLOCK);
+		// time buttons - always show
+		registerProxyButton(MENU_TIME, TIMESTAMP, Items.CLOCK);
+			registerCopyButton(UNIX, 1, null, () -> {
+				String time = timestamp.getStyle().getInsertion();
+				return time != null && !time.isEmpty() ? Component.nullToEmpty(time) : UNKNOWN.apply(UNIX);
+			});
+
+			if(timestamped) {
 				registerCopyButton(TIMESTAMP, timestamp);
 
 				// registers TIMESTAMP_HOVER if the timestamp has hover text in its style
@@ -435,7 +440,7 @@ public class ContextMenu implements GuiEventListener {
 				//?} else {
 				/*event != null ? Optional.of(event.getValue(HoverEvent.Action.SHOW_TEXT)) : Optional.empty();*//*?}*/
 				optional.ifPresent(hoverText -> registerCopyButton(TIMESTAMP_HOVER, hoverText));
-		}
+			}
 
 		// dupe counter buttons - conditional
 		if(duped) {
@@ -443,12 +448,6 @@ public class ContextMenu implements GuiEventListener {
 				registerCopyButton(COUNTER_TEXT, counter);
 				registerCopyButton(COUNTER_VALUE, literal(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
 		}
-
-		// unix timestamp button - unconditional
-		registerCopyButton(MENU_UNIX, 0, Items.REDSTONE, () -> {
-			String time = timestamp.getStyle().getInsertion();
-			return time != null && !time.isEmpty() ? Component.nullToEmpty(time) : UNKNOWN.apply(MENU_UNIX);
-		});
 
 		// link buttons - conditional
 		ObjectList<String> webLinks = Util.make(new ObjectArrayList<>(), l -> {
