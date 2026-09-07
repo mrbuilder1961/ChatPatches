@@ -53,6 +53,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import oshi.util.Memoizer;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -103,10 +105,11 @@ public class ContextMenu implements GuiEventListener {
 	static final Component MENU_TIME = translate("time");
 	static final Component TIMESTAMP = translate("timestampText");
 	static final Component TIMESTAMP_HOVER = translate("timestampHoverText");
+	static final Component UNIX = translate("unix");
+	static final Component FORMATTED_TIME = translate("formattedTime");
 	static final Component MENU_DUPE_COUNTER = translate("counter");
 	static final Component COUNTER_TEXT = translate("counterText");
 	static final Component COUNTER_VALUE = translate("counterValue");
-	static final Component UNIX = translate("unix");
 	static final Component MENU_LINKS = translate("links");
 	static final Int2ObjectFunction<Component> LINK_N = (n) -> translate("linkN", n);
 	static final Component MENU_SENDER = translate("sender");
@@ -372,10 +375,11 @@ public class ContextMenu implements GuiEventListener {
 	 *     <li>*{@link #NO_TIMESTAMP_TEXT}</li>
 	 *     <li>^{@link #NO_DUPE_TEXT}</li>
 	 *     <li>{@link #JSON_STR}</li>
-	 *     <li>If not a boundary line: {@link #MENU_TIME}</li>
+	 *     <li>{@link #MENU_TIME}</li>
+	 *     <li>*{@link #UNIX}</li>
 	 *     <li>*{@link #TIMESTAMP}</li>
 	 *     <li>*{@link #TIMESTAMP_HOVER}</li>
-	 *     <li>*{@link #UNIX}</li>
+	 *     <li>*{link #FORMATTED_TIME}</li>
 	 *     <li>If a dupe counter is present^: {@link #MENU_DUPE_COUNTER}</li>
 	 *     <li>^{@link #COUNTER_TEXT}</li>
 	 *     <li>^{@link #COUNTER_VALUE}</li>
@@ -424,11 +428,24 @@ public class ContextMenu implements GuiEventListener {
 
 		// time buttons - always show
 		registerProxyButton(MENU_TIME, TIMESTAMP, Items.CLOCK);
+			registerCopyButton(FORMATTED_TIME, 1, null, () -> {
+				String time = timestamp.getStyle().getInsertion();
+				if (time != null && !time.isEmpty() && config.contextTimeFormat != null && !config.contextTimeFormat.isBlank()) {
+					try {
+						long millis = Long.parseLong(time);
+						return Component.literal(new SimpleDateFormat(config.contextTimeFormat).format(new Date(millis)));
+					} catch (Exception e) {
+						logReportMsg(e);
+					}
+				}
+				return UNKNOWN.apply(FORMATTED_TIME);
+			});
 			registerCopyButton(UNIX, 1, null, () -> {
 				String time = timestamp.getStyle().getInsertion();
 				return time != null && !time.isEmpty() ? Component.nullToEmpty(time) : UNKNOWN.apply(UNIX);
 			});
 
+			// timestamp buttons - conditional (not on boundary lines)
 			if(timestamped) {
 				registerCopyButton(TIMESTAMP, timestamp);
 
