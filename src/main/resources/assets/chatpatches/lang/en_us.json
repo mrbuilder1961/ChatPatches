@@ -163,7 +163,7 @@
     "text.chatpatches.context.timestampText": "Text",
     "text.chatpatches.context.timestampHoverText": "Hover Text",
     "text.chatpatches.context.unix": "Unix Time",
-    "text.chatpatches.context.contextTimeFormat": "Formatted",
+    "text.chatpatches.context.formattedTime": "Formatted",
     "text.chatpatches.context.counter": "Dupe Counter",
     "text.chatpatches.context.counterText": "Counter Text",
     "text.chatpatches.context.counterValue": "Counter Value",
