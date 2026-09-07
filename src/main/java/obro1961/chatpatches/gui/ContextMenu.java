@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.Util;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
@@ -891,13 +892,21 @@ public class ContextMenu implements GuiEventListener {
 		 * @return The {@link Entry} object associated with the given {@link Component}
 		 * id, otherwise {@code null} if none exists.
 		 *
-		 * @implNote Compares using {@link Component#getString()} because direct equality
+		 * @implNote Tries to compare using the component contents, so different translation keys
+		 * with equal resolved values still resolve as different. If the id component is not
+		 * translatable, compares using {@link Component#getString()} because direct equality
 		 * checks returned false negatives due to the styles occasionally being
 		 * different (typically from the underlined button text).
 		 */
 		public Entry get(Component id) {
+			ComponentContents componentcontents = id.getContents();
+			boolean useTranslationKeyForEqualityCheck = componentcontents instanceof TranslatableContents;
 			for(Entry e : entries) {
-				if(e.button.getMessage().getString().equals(id.getString())) {
+				if(!useTranslationKeyForEqualityCheck) {
+					if(e.button.getMessage().getString().equals(id.getString())) {
+						return e;
+					}
+				} else if(componentcontents.equals(e.button.getMessage().getContents())) {
 					return e;
 				}
 			}
