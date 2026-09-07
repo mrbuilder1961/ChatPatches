@@ -101,6 +101,7 @@
     "text.chatpatches.search": "Show search button",
     "text.chatpatches.vanillaClearing": "Vanilla chat clearing",
     "text.chatpatches.searchPrefix": "Prefix history search",
+    "text.chatpatches.searchEmptyShowsFullChat": "Empty search shows all messages",
     "text.chatpatches.contextMenu": "Context menu",
     "text.chatpatches.desc.chatHidePacket": "Should hide message packets that delete chat messages be ignored?",
     "text.chatpatches.desc.chatWidth": "The width of the chat box. This overrides vanilla's default and allows for a much larger width. Set to 0 to use the vanilla setting and not override it.",
@@ -117,6 +118,7 @@
     "text.chatpatches.desc.search": "Should the search button be shown? Note that if disabled, all search functionality will also be disabled.",
     "text.chatpatches.desc.vanillaClearing": "Should chat messages clear after leaving a world/server like vanilla? Note that this completely erases the chat and effectively disables the chat log.",
     "text.chatpatches.desc.searchPrefix": "Should searching through sent history filter messages with the same prefix behind the cursor? This allows for quicker autocompletion of previous history messages that start with the same string. Vanilla disables this, instead using immediate history only.",
+    "text.chatpatches.desc.searchEmptyShowsFullChat": "Should all messages be shown when the search returns no results? Disabling this option shows an empty chat window instead.",
     "text.chatpatches.desc.contextMenu": "Should a context menu appear when right-clicking on chat messages? This allows for copying chat messages, replying to messages more easily, and more.",
 
     "text.chatpatches.logMessageStructures": "Log message structures",

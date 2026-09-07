@@ -167,6 +167,7 @@ public class Config {
 	public boolean search = true;
 	public boolean searchDrafting = true;
 	public boolean searchPrefix = false;
+    public boolean searchEmptyShowsFullChat = true;
 	public boolean caseSensitive = true;
 	public boolean regex = false;
 

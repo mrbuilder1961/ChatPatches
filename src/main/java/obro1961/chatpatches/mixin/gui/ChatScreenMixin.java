@@ -718,8 +718,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 				searchResults.clear(); // either there are no results -> clear(), or there are new ones -> clear() + addAll()
 
-				// only update the chat if there are results to show
-				if(!messages.isEmpty()) {
+				// only show matched messages if there are results to show, fall back to showing normal chat window
+                // unless the config option to show a blank screen is set instead
+				if(!messages.isEmpty() || !config.searchEmptyShowsFullChat) {
 					// save the full, filtered messages for the context menu
 					searchResults.addAll(messages);
 					// generate the visible messages from the filtered messages
