@@ -377,10 +377,10 @@ public class ContextMenu implements GuiEventListener {
 	 *     <li>^{@link #NO_DUPE_TEXT}</li>
 	 *     <li>{@link #JSON_STR}</li>
 	 *     <li>{@link #MENU_TIME}</li>
-	 *     <li>*{@link #UNIX}</li>
 	 *     <li>*{@link #TIMESTAMP}</li>
 	 *     <li>*{@link #TIMESTAMP_HOVER}</li>
-	 *     <li>*{link #FORMATTED_TIME}</li>
+	 *     <li>{@link #FORMATTED_TIME}</li>
+	 *     <li>{@link #UNIX}</li>
 	 *     <li>If a dupe counter is present^: {@link #MENU_DUPE_COUNTER}</li>
 	 *     <li>^{@link #COUNTER_TEXT}</li>
 	 *     <li>^{@link #COUNTER_VALUE}</li>
@@ -429,6 +429,19 @@ public class ContextMenu implements GuiEventListener {
 
 		// time buttons - always show
 		registerProxyButton(MENU_TIME, TIMESTAMP, Items.CLOCK);
+			// timestamp buttons - conditional (not on boundary lines)
+			if(timestamped) {
+				registerCopyButton(TIMESTAMP, timestamp);
+
+				// registers TIMESTAMP_HOVER if the timestamp has hover text in its style
+				HoverEvent event = timestamp.getStyle().getHoverEvent();
+				Optional<Component> optional =
+					//? if >=1.21.5 {
+					event instanceof HoverEvent.ShowText(Component value) ? Optional.of(value) : Optional.empty();
+				//?} else {
+				/*event != null ? Optional.of(event.getValue(HoverEvent.Action.SHOW_TEXT)) : Optional.empty();*//*?}*/
+				optional.ifPresent(hoverText -> registerCopyButton(TIMESTAMP_HOVER, hoverText));
+			}
 			registerCopyButton(FORMATTED_TIME, 1, null, () -> {
 				String time = timestamp.getStyle().getInsertion();
 				if (time != null && !time.isEmpty() && config.contextTimeFormat != null && !config.contextTimeFormat.isBlank()) {
@@ -445,20 +458,6 @@ public class ContextMenu implements GuiEventListener {
 				String time = timestamp.getStyle().getInsertion();
 				return time != null && !time.isEmpty() ? Component.nullToEmpty(time) : UNKNOWN.apply(UNIX);
 			});
-
-			// timestamp buttons - conditional (not on boundary lines)
-			if(timestamped) {
-				registerCopyButton(TIMESTAMP, timestamp);
-
-				// registers TIMESTAMP_HOVER if the timestamp has hover text in its style
-				HoverEvent event = timestamp.getStyle().getHoverEvent();
-				Optional<Component> optional =
-				//? if >=1.21.5 {
-				event instanceof HoverEvent.ShowText(Component value) ? Optional.of(value) : Optional.empty();
-				//?} else {
-				/*event != null ? Optional.of(event.getValue(HoverEvent.Action.SHOW_TEXT)) : Optional.empty();*//*?}*/
-				optional.ifPresent(hoverText -> registerCopyButton(TIMESTAMP_HOVER, hoverText));
-			}
 
 		// dupe counter buttons - conditional
 		if(duped) {
