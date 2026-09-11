@@ -101,7 +101,7 @@
 	"text.chatpatches.context.jsonString": "JSON",
 	"text.chatpatches.context.links": "リンクをコピー >",
 	"text.chatpatches.context.linkN": "リンク %d",
-	"text.chatpatches.context.timestamp": "タイムスタンプをコピー >",
+	"text.chatpatches.context.time": "タイムスタンプをコピー >",
 	"text.chatpatches.context.timestampText": "タイムスタンプ",
 	"text.chatpatches.context.timestampHoverText": "ホバー",
 	"text.chatpatches.context.unix": "UNIX時間をコピー",

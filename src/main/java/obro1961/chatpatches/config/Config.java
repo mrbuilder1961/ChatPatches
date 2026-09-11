@@ -163,6 +163,8 @@ public class Config {
 	public int contextOutlineColor = AQUA;
 	@StringConstraints
 	public String contextReplyFormat = "/msg $ ";
+	@StringConstraints(mustContain = {}, validator = SimpleDateFormat.class)
+	public String contextTimeFormat = "MM/dd/yyyy HH:mm:ss";
 
 	public boolean search = true;
 	public boolean searchDrafting = true;

@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.Util;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
@@ -53,6 +54,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import oshi.util.Memoizer;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -100,13 +103,14 @@ public class ContextMenu implements GuiEventListener {
 	static final Component NO_TIMESTAMP_TEXT = translate("noTimestampText");
 	static final Component NO_DUPE_TEXT = translate("noCounterText");
 	static final Component JSON_STR = translate("jsonString");
-	static final Component MENU_TIMESTAMP = translate("timestamp");
+	static final Component MENU_TIME = translate("time");
 	static final Component TIMESTAMP = translate("timestampText");
 	static final Component TIMESTAMP_HOVER = translate("timestampHoverText");
+	static final Component UNIX = translate("unix");
+	static final Component FORMATTED_TIME = translate("formattedTime");
 	static final Component MENU_DUPE_COUNTER = translate("counter");
 	static final Component COUNTER_TEXT = translate("counterText");
 	static final Component COUNTER_VALUE = translate("counterValue");
-	static final Component MENU_UNIX = translate("unix");
 	static final Component MENU_LINKS = translate("links");
 	static final Int2ObjectFunction<Component> LINK_N = (n) -> translate("linkN", n);
 	static final Component MENU_SENDER = translate("sender");
@@ -305,7 +309,7 @@ public class ContextMenu implements GuiEventListener {
 	 * over the leftmost button area.
 	 *
 	 * @see #MENU_STRING
-	 * @see #MENU_TIMESTAMP
+	 * @see #MENU_TIME
 	 * @see #MENU_LINKS
 	 * @see #MENU_SENDER
 	 */
@@ -340,7 +344,7 @@ public class ContextMenu implements GuiEventListener {
 	 *
 	 * @see #registerCopyButton(Component, Component)
 	 * @see #TIMESTAMP_HOVER
-	 * @see #MENU_UNIX
+	 * @see #UNIX
 	 */
 	private void registerCopyButton(Component id, int col, Object icon, Supplier<Component> tooltipCopyTextSupplier) {
 		registerButton(id, col, icon, tooltipCopyTextSupplier, null);
@@ -372,13 +376,14 @@ public class ContextMenu implements GuiEventListener {
 	 *     <li>*{@link #NO_TIMESTAMP_TEXT}</li>
 	 *     <li>^{@link #NO_DUPE_TEXT}</li>
 	 *     <li>{@link #JSON_STR}</li>
-	 *     <li>If a timestamp is present*: {@link #MENU_TIMESTAMP}</li>
+	 *     <li>{@link #MENU_TIME}</li>
 	 *     <li>*{@link #TIMESTAMP}</li>
 	 *     <li>*{@link #TIMESTAMP_HOVER}</li>
+	 *     <li>{@link #FORMATTED_TIME}</li>
+	 *     <li>{@link #UNIX}</li>
 	 *     <li>If a dupe counter is present^: {@link #MENU_DUPE_COUNTER}</li>
 	 *     <li>^{@link #COUNTER_TEXT}</li>
 	 *     <li>^{@link #COUNTER_VALUE}</li>
-	 *     <li>{@link #MENU_UNIX}</li>
 	 *     <li>If any web or file links are present**: {@link #MENU_LINKS}</li>
 	 *     <li>**{@link #LINK_N} (for each link)</li>
 	 *     <li>If the message sender is a player^^: {@link #MENU_SENDER}</li>
@@ -422,20 +427,37 @@ public class ContextMenu implements GuiEventListener {
 			); // (timestamped && duped) ? 4 : (timestamped || duped) ? 3 : 2
 			// todo: OG_JSON_STR - json of the original message w/o CPS mods - some sort of check should determine if we can just use the time/dupe-stripped text or if reconstruction is needed
 
-		// timestamp buttons - conditional (not on boundary lines)
-		if(timestamped) {
-			registerProxyButton(MENU_TIMESTAMP, TIMESTAMP, Items.CLOCK);
+		// time buttons - always show
+		registerProxyButton(MENU_TIME, TIMESTAMP, Items.CLOCK);
+			// timestamp buttons - conditional (not on boundary lines)
+			if(timestamped) {
 				registerCopyButton(TIMESTAMP, timestamp);
 
 				// registers TIMESTAMP_HOVER if the timestamp has hover text in its style
 				HoverEvent event = timestamp.getStyle().getHoverEvent();
 				Optional<Component> optional =
-				//? if >=1.21.5 {
-				event instanceof HoverEvent.ShowText(Component value) ? Optional.of(value) : Optional.empty();
+					//? if >=1.21.5 {
+					event instanceof HoverEvent.ShowText(Component value) ? Optional.of(value) : Optional.empty();
 				//?} else {
 				/*event != null ? Optional.of(event.getValue(HoverEvent.Action.SHOW_TEXT)) : Optional.empty();*//*?}*/
 				optional.ifPresent(hoverText -> registerCopyButton(TIMESTAMP_HOVER, hoverText));
-		}
+			}
+			registerCopyButton(FORMATTED_TIME, 1, null, () -> {
+				String time = timestamp.getStyle().getInsertion();
+				if (time != null && !time.isEmpty() && config.contextTimeFormat != null && !config.contextTimeFormat.isBlank()) {
+					try {
+						long millis = Long.parseLong(time);
+						return Component.literal(new SimpleDateFormat(config.contextTimeFormat).format(new Date(millis)));
+					} catch (Exception e) {
+						logReportMsg(e);
+					}
+				}
+				return UNKNOWN.apply(FORMATTED_TIME);
+			});
+			registerCopyButton(UNIX, 1, null, () -> {
+				String time = timestamp.getStyle().getInsertion();
+				return time != null && !time.isEmpty() ? Component.nullToEmpty(time) : UNKNOWN.apply(UNIX);
+			});
 
 		// dupe counter buttons - conditional
 		if(duped) {
@@ -443,12 +465,6 @@ public class ContextMenu implements GuiEventListener {
 				registerCopyButton(COUNTER_TEXT, counter);
 				registerCopyButton(COUNTER_VALUE, literal(counter.getString().replaceAll("(§\\d)|\\D", "").trim()));
 		}
-
-		// unix timestamp button - unconditional
-		registerCopyButton(MENU_UNIX, 0, Items.REDSTONE, () -> {
-			String time = timestamp.getStyle().getInsertion();
-			return time != null && !time.isEmpty() ? Component.nullToEmpty(time) : UNKNOWN.apply(MENU_UNIX);
-		});
 
 		// link buttons - conditional
 		ObjectList<String> webLinks = Util.make(new ObjectArrayList<>(), l -> {
@@ -875,13 +891,21 @@ public class ContextMenu implements GuiEventListener {
 		 * @return The {@link Entry} object associated with the given {@link Component}
 		 * id, otherwise {@code null} if none exists.
 		 *
-		 * @implNote Compares using {@link Component#getString()} because direct equality
+		 * @implNote Tries to compare using the component contents, so different translation keys
+		 * with equal resolved values still resolve as different. If the id component is not
+		 * translatable, compares using {@link Component#getString()} because direct equality
 		 * checks returned false negatives due to the styles occasionally being
 		 * different (typically from the underlined button text).
 		 */
 		public Entry get(Component id) {
+			ComponentContents componentcontents = id.getContents();
+			boolean useTranslationKeyForEqualityCheck = componentcontents instanceof TranslatableContents;
 			for(Entry e : entries) {
-				if(e.button.getMessage().getString().equals(id.getString())) {
+				if(!useTranslationKeyForEqualityCheck) {
+					if(e.button.getMessage().getString().equals(id.getString())) {
+						return e;
+					}
+				} else if(componentcontents.equals(e.button.getMessage().getContents())) {
 					return e;
 				}
 			}

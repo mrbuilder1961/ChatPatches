@@ -97,7 +97,7 @@
     "text.chatpatches.context.jsonString": "JSON",
     "text.chatpatches.context.links": "Copia Link(s) >",
     "text.chatpatches.context.linkN": "Link %d",
-    "text.chatpatches.context.timestamp": "Copia il marcatore temporale >",
+    "text.chatpatches.context.time": "Copia il marcatore temporale >",
     "text.chatpatches.context.timestampText": "Testo",
     "text.chatpatches.context.timestampHoverText": "Testo al passaggio del mouse",
     "text.chatpatches.context.unix": "Copia il tempo Unix",
