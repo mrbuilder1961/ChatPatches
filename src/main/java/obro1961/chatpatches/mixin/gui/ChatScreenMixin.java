@@ -729,7 +729,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					messages.clear();
 					messages.addAll(copy);
 
-					status = Colors.GREEN; // match(es) exist
+					status = messages.isEmpty() ? Colors.YELLOW : Colors.GREEN; // color based on whether matches were found
 				} else {
 					// already empty
 					messages.addAll(copy);
