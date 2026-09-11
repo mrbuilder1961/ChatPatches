@@ -721,15 +721,14 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				// only show matched messages if there are results to show, fall back to showing normal chat window
                 // unless the config option to show a blank screen is set instead
 				if(!messages.isEmpty() || !config.searchEmptyShowsFullChat) {
-					// save the full, filtered messages for the context menu
+                    status = messages.isEmpty() ? Colors.YELLOW : Colors.GREEN; // color based on whether matches were found
+                    // save the full, filtered messages for the context menu
 					searchResults.addAll(messages);
 					// generate the visible messages from the filtered messages
 					chat.rescaleChat();
-					// add the real messages back; doesn't affect the visible messages
-					messages.clear();
-					messages.addAll(copy);
-
-					status = messages.isEmpty() ? Colors.YELLOW : Colors.GREEN; // color based on whether matches were found
+                    // add the real messages back; doesn't affect the visible messages
+                    messages.clear();
+                    messages.addAll(copy);
 				} else {
 					// already empty
 					messages.addAll(copy);
