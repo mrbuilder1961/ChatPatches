@@ -1,9 +1,6 @@
 //~ yarnification
 package obro1961.chatpatches;
 
-import com.google.gson.JsonElement;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -11,11 +8,9 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.TextUtil;
@@ -229,30 +224,5 @@ public class ChatPatches implements ClientModInitializer {
 
 	public static void pushInfoToast(Object header, Object description) {
 		pushToast(false, header, description);
-	}
-
-	/** @see #regBack(DynamicOps) */
-	public static DynamicOps<JsonElement> regJsonOps() {
-		return regBack(JsonOps.INSTANCE);
-	}
-
-	/**
-	 * Returns a registry-backed copy of {@code ops}, provided by the {@linkplain
-	 * Minecraft#level client's world}, to not crash when serializing. Fixes
-	 * <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>.
-	 * Thanks to
-	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1278519812628156528">arkosammy12</a>
-	 * for the help!
-	 */
-	public static <T> /*? if >=1.20.5 {*/RegistryOps/*?} else {*//*DynamicOps*//*?}*/<T> regBack(DynamicOps<T> ops) {
-		//? if >=1.20.5 {
-		if(Minecraft.getInstance().level instanceof ClientLevel world) {
-			return world.registryAccess().createSerializationContext(ops);
-		} else {
-			logReportMsg(new NullPointerException("Expected existing ClientLevel but none were present"));
-			LOGGER.warn("Sometimes this can be triggered if the game is closed too abruptly.");
-		}
-		//?}
-		return /*? if >=1.20.5 {*/(RegistryOps<T>)/*?}*/ ops;
 	}
 }

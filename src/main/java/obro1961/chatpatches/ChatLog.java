@@ -15,23 +15,21 @@ import joptsimple.internal.Strings;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
-import net.minecraft.util.Util;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
-import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
-//? if >=26.1 {
-import net.minecraft.client.multiplayer.chat.GuiMessageSource;
-//?}
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Util;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.TextUtil;
+import obro1961.chatpatches.util.VersionUtil;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +45,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static obro1961.chatpatches.ChatPatches.*;
+
+//? if >=26.1 {
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//?}
 
 /**
  * Represents the chat log file in the run directory located at {@link #PATH}.
@@ -314,7 +316,7 @@ public class ChatLog {
             } else {
                 JsonObject json = GsonHelper.parse(rawJson);
                 var deserializedPair =
-                    CODEC.parse(ChatPatches.regJsonOps(), json)
+                    CODEC.parse(VersionUtil.backedJsonOps(), json)
                         .resultOrPartial(e -> {
                             logReportMsg(new JsonParseException(e));
                             pushErrorToast("Chat log parse error", e);
@@ -373,7 +375,7 @@ public class ChatLog {
 			LOGGER.info("Saving...");
 
 			try {
-				DataResult<JsonElement> result = CODEC.encodeStart(ChatPatches.regJsonOps(), Pair.of(messages, history));
+				DataResult<JsonElement> result = CODEC.encodeStart(VersionUtil.backedJsonOps(), Pair.of(messages, history));
 				JsonElement json = result.result().orElse(null);
 				String data = GsonHelper.toStableString(json);
 				Path path = PATH;
