@@ -1,10 +1,6 @@
 //~ yarnification
 package obro1961.chatpatches;
 
-import com.google.gson.JsonElement;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.JsonOps;
-import dev.kikugie.fletching_table.annotation.fabric.Entrypoint;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -12,11 +8,9 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.TextUtil;
@@ -29,14 +23,11 @@ import java.util.concurrent.TimeUnit;
 
 import static obro1961.chatpatches.util.TextUtil.asText;
 
-@Entrypoint("client")
 public class ChatPatches implements ClientModInitializer {
 	public static final String MOD_ID = "chatpatches";
 	public static final Logger LOGGER = LoggerFactory.getLogger("Chat Patches");
 
 	public static Config config = Config.initialize();
-
-	private static ClientLevel backup;
 
 	public static Identifier id(String path) {
 		return Identifier.tryBuild(MOD_ID, path);
@@ -233,33 +224,5 @@ public class ChatPatches implements ClientModInitializer {
 
 	public static void pushInfoToast(Object header, Object description) {
 		pushToast(false, header, description);
-	}
-
-	/** @see #regBack(DynamicOps) */
-	public static DynamicOps<JsonElement> regJsonOps() {
-		return regBack(JsonOps.INSTANCE);
-	}
-
-	/**
-	 * Returns a registry-backed copy of {@code ops}, provided by the {@linkplain
-	 * Minecraft#level client's world}, to not crash when serializing. Fixes
-	 * <a href="https://github.com/mrbuilder1961/ChatPatches/issues/180">#180</a>.
-	 * Thanks to
-	 * <a href="https://discord.com/channels/507304429255393322/721100785936760876/1278519812628156528">arkosammy12</a>
-	 * for the help!
-	 */
-	public static <T> /*? if >=1.20.5 {*/RegistryOps/*?} else {*//*DynamicOps*//*?}*/<T> regBack(DynamicOps<T> ops) {
-		//? if >=1.20.5 {
-		var world = Minecraft.getInstance().level instanceof ClientLevel current ? current : backup;
-		if(world != null) {
-			backup = world;
-			return world.registryAccess().createSerializationContext(ops);
-		} else {
-			LOGGER.warn("Sometimes this can be triggered if the game was closed too abruptly.");
-			throw new IllegalStateException("Existing ClientLevel not found; fallback not present");
-		}
-		//?} else {
-		/*return ops;*/
-		//?}
 	}
 }

@@ -9,8 +9,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ChatFormatting;
-import net.minecraft.util.Util;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
@@ -19,24 +17,14 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
-//? if >=1.21.9 {
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-//?}
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.*;
-//? if <1.20.2 {
-//import net.minecraft.resources.ResourceLocation;
-//?}
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
-//? if >=1.21.9 {
-import net.minecraft.world.entity.player.PlayerSkin;
-//?} elif >=1.20.2 {
-/*import net.minecraft.client.resources.PlayerSkin;
-*//*?}*/
+import net.minecraft.util.Util;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
@@ -44,6 +32,7 @@ import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtil;
 import obro1961.chatpatches.util.TextUtil;
+import obro1961.chatpatches.util.VersionUtil;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +54,19 @@ import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static net.minecraft.network.chat.Component.literal;
 import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.ChatUtil.*;
+
+//? if >=1.21.9 {
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
+//? if <1.20.2 {
+//import net.minecraft.resources.ResourceLocation;
+//?}
+//? if >=1.21.9 {
+import net.minecraft.world.entity.player.PlayerSkin;
+//?} elif >=1.20.2 {
+/*import net.minecraft.client.resources.PlayerSkin;
+*//*?}*/
 
 /**
  * Represents the context menu that appears when a chat message is right-clicked.
@@ -415,7 +417,7 @@ public class ContextMenu implements GuiEventListener {
 				registerCopyButton(NO_DUPE_TEXT, TextUtil.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
 			}
 			registerCopyButton(JSON_STR,
-				TextUtil.UNSAFE_CODEC.encodeStart(regBack(NbtOps.INSTANCE), text)
+				TextUtil.UNSAFE_CODEC.encodeStart(VersionUtil.addSerializationContext(NbtOps.INSTANCE), text)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.map(NbtUtils::toPrettyComponent)
 					.orElse(UNKNOWN.apply(JSON_STR))

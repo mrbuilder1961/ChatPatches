@@ -4,13 +4,12 @@
 - [!NOT DONE] Implemented a budding test suite! If you're a player you won't firsthand see any of this, but you will feel its effects in that trivial bugs
   should be caught earlier, before being shipped as releases!
 - [!NOT DONE] This release is the first to feature NeoForge compatibility! This will initially take time to acclimate to, but then dev time will decrease again
-- [!NOT DONE] Implemented a minimal DataFixerUpper system that automatically renames old config options and transforms anything necessary (right now, just
-  flips a boolean lol)
 - Signatures (`.asc` files) are now uploaded with releases to Modrinth for added security!
-- For these reasons, I think it's fitting to bump this channel to beta!
+- Bumped the version channel to beta! 🥳🎉
 - Messages received while the chat log is loading no longer get pushed to the top of the list ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263), fixed by [NineOfGaming](https://github.com/NineOfGaming)!)
 - Receiving duplicate messages no longer auto-scrolls the focused chat ([#268](https://www.github.com/mrbuilder1961/ChatPatches/issues/268))
 - Updated Russian `ru_ru` translations ([#333](https://www.github.com/mrbuilder1961/ChatPatches/issues/333)) thanks to [ADevnin](https://github.com/ADevnin)!
+- Updated some under-the-hood chat log saving stuff that *should* prevent some save/load failures
 
 ## Chat Patches `8.0-alpha.11` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt
 - Re-published version of `8.0-alpha.10` without the rogue code from other incomplete stuff (#325-331)

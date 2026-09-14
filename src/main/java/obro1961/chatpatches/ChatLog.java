@@ -28,6 +28,7 @@ import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.mixin.security.ClickEvent$ActionMixin;
 import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.TextUtil;
+import obro1961.chatpatches.util.VersionUtil;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nullable;
@@ -312,7 +313,7 @@ public class ChatLog {
                 messages = newSyncedObjectList(null);
                 history = newSyncedObjectList(null);
             } else {
-				var ops = regJsonOps(); // on a separate line for clearer debugging
+				var ops = VersionUtil.backedJsonOps(); // on a separate line for clearer debugging
                 var json = GsonHelper.parse(rawJson);
                 var deserializedPair =
                     CODEC.parse(ops, json)
@@ -374,7 +375,7 @@ public class ChatLog {
 			LOGGER.info("Saving...");
 
 			try {
-				var ops = regJsonOps(); // on a separate line for clearer debugging
+				var ops = VersionUtil.backedJsonOps(); // on a separate line for clearer debugging
 				DataResult<JsonElement> result = CODEC.encodeStart(ops, Pair.of(messages, history));
 				JsonElement json = result.result().orElse(null);
 				String data = GsonHelper.toStableString(json);
