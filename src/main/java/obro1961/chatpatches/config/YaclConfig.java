@@ -15,12 +15,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.NullOps;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.RenderUtil;
-import org.apache.logging.log4j.spi.StandardLevel;
 
 import java.awt.*;
 import java.io.File;
@@ -29,7 +27,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
@@ -40,6 +37,7 @@ import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 
 //? if >1.20.1 {
+import net.minecraft.util.NullOps;
 //?} else {
 //import com.mojang.serialization.JsonOps;
 //?}
