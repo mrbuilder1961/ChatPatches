@@ -10,18 +10,17 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.locale.Language;
-import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
-//? if >1.20.1 {
 import net.minecraft.util.NullOps;
-//?} else {
-//import com.mojang.serialization.JsonOps;
-//?}
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.util.RenderUtil;
+import org.apache.logging.log4j.spi.StandardLevel;
 
 import java.awt.*;
 import java.io.File;
@@ -39,6 +38,14 @@ import java.util.stream.Stream;
 
 import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
+
+//? if >1.20.1 {
+//?} else {
+//import com.mojang.serialization.JsonOps;
+//?}
+//? if >26.2 {
+//import com.mojang.blaze3d.Blaze3D;
+//?}
 
 /**
  * @apiNote This is the second edition of a config menu using external
@@ -276,7 +283,12 @@ public class YaclConfig extends Config {
                     case "chatlogLoad" -> ChatLog.load(true); // queues the deserialization and restoration tasks together
                     case "chatlogSave" -> ChatLog.serialize();
                     case "chatlogBackup" -> ChatLog.backup();
-                    case "chatlogOpenFolder" -> Util.getPlatform().openFile(ChatLog.PATH.getParent().toFile());
+                    case "chatlogOpenFolder" ->
+						//? if >26.2 {
+						//Blaze3D.openPath(ChatLog.PATH.getParent());
+						//?} else {
+						Util.getPlatform().openFile(ChatLog.PATH.getParent().toFile());
+						//?}
                     case "help.reloadConfig" -> deserialize();
                 }
             }

@@ -16,16 +16,9 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
-//? if <1.21.5 {
-//import net.minecraft.client.multiplayer.PlayerInfo;
-//?}
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.network.chat.*;
-import net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/;
-//? if <=1.20.4 {
-//import net.minecraft.util.ExtraCodecs;
-//?}
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
@@ -34,35 +27,49 @@ import net.minecraft.world.scores.PlayerTeam;
 import obro1961.chatpatches.Boundary;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
-//? if >=1.21.9 {
-import obro1961.chatpatches.integration.ChatHeadsIntegration;
-//?}
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.ChatUtil;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.logging.log4j.spi.StandardLevel;
 import org.jetbrains.annotations.Nullable;
-//? if <=1.20.1 {
-//import obro1961.chatpatches.util.VersionUtil;
-//?}
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
 
 import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.Colors.*;
 import static obro1961.chatpatches.util.TextUtil.fillVars;
 import static obro1961.chatpatches.util.TextUtil.text;
 
+import net.minecraft.network.chat.contents./*? if >1.20.2 {*/PlainTextContents/*?} else {*//*LiteralContents*//*?}*/;
+//? if <1.21.5 {
+//import net.minecraft.client.multiplayer.PlayerInfo;
+//?}
+//? if <=1.20.4 {
+//import net.minecraft.util.ExtraCodecs;
+//?}
+//? if >=1.21.9 {
+import obro1961.chatpatches.integration.ChatHeadsIntegration;
+//?}
+//? if <=1.20.1 {
+//import obro1961.chatpatches.util.VersionUtil;
+//?}
+
+//-? if >26.2 {
+//-?}
+
 public class Config {
     public static final Config DEFAULTS = new Config();
-    public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
 	public static final String PLACEHOLDER = "$";
+    public static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("chatpatches.json");
 
 	protected static final int IO_THRESHOLD_SUGGESTION = 500;
 
@@ -193,7 +200,7 @@ public class Config {
     }
 
     public Screen getConfigScreen(Screen parent) {
-        String link = "https://modrinth.com/mod/" + /*? if config: =yacl {*/"yacl"/*?} else {*//*"cloth-config"*//*?}*/;
+        URI link = URI.create("https://modrinth.com/mod/" + /*? if config: =yacl {*/"yacl"/*?} else {*//*"cloth-config"*//*?}*/);
 		String modTitle = /*? if config: =yacl {*/"YACL"/*?} else {*//*"Cloth Config"*//*?}*/;
 
         return new ConfirmScreen(
@@ -272,7 +279,7 @@ public class Config {
 	 *
 	 * @param headComponent An {@link Optional} containing a message with a
 	 * player head icon in it. See
-	 * {@link ChatHeadsIntegration#getHeadIfEnabled(Component, java.util.regex.Matcher)}
+	 * {@link ChatHeadsIntegration#getHeadIfEnabled(Component, Matcher)}
 	 * for more info.
      *
      * @implNote {@code player} must reference a valid, existing
