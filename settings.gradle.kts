@@ -6,8 +6,6 @@ pluginManagement {
 
     plugins {
         kotlin("jvm") version plugin("kotlin")
-        id("com.google.devtools.ksp") version plugin("ksp")
-        id("dev.kikugie.fletching-table.fabric") version plugin("fletching-table")
         id("org.gradle.crypto.checksum") version "1.4.0" // hasn't updated in 4+ years
         id("dev.isxander.mtk.manifests") version mtk("manifests")
         id("me.modmuss50.mod-publish-plugin") version plugin("mod-publish-plugin")
@@ -25,6 +23,17 @@ pluginManagement {
         maven("https://maven.kikugie.dev/snapshots")
         maven("https://maven.parchmentmc.org")
         maven("https://maven.isxander.dev/releases/")
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        maven("https://maven.kikugie.dev/snapshots")
+    }
+
+    val ftVersion = providers.gradleProperty("plugin.fletching-table-catalog").get()
+    versionCatalogs {
+        create("ft") { from("dev.kikugie.fletching-table:fletching-table.catalog:$ftVersion-SNAPSHOT") }
     }
 }
 
