@@ -30,7 +30,6 @@ import obro1961.chatpatches.ChatPatches;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.ChatUtil;
 import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.logging.log4j.spi.StandardLevel;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -200,13 +199,14 @@ public class Config {
     }
 
     public Screen getConfigScreen(Screen parent) {
-        URI link = URI.create("https://modrinth.com/mod/" + /*? if config: =yacl {*/"yacl"/*?} else {*//*"cloth-config"*//*?}*/);
-		String modTitle = /*? if config: =yacl {*/"YACL"/*?} else {*//*"Cloth Config"*//*?}*/;
+		var str = "https://modrinth.com/mod/" + /*? if config: =yacl {*/"yacl"/*?} else {*//*"cloth-config"*//*?}*/;
+        var link = URI.create(str);
+		var modTitle = /*? if config: =yacl {*/"YACL"/*?} else {*//*"Cloth Config"*//*?}*/;
 
         return new ConfirmScreen(
             clicked -> {
                 if(clicked) {
-					ConfirmLinkScreen.confirmLinkNow(/*? if >1.20.2 {*/ parent, link /*?} else {*//*link, parent, true*//*?}*/);
+					ConfirmLinkScreen.confirmLinkNow(/*? if >1.20.2 {*/ parent, link /*?} else {*//*str, parent, true*//*?}*/);
 				} else {
 					mc().gui.setScreen(parent);
 				}
