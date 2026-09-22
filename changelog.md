@@ -1,13 +1,11 @@
 # Changelog
 
-## Chat Patches `8.0-beta.1` for Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1-3 on Fabric, Quilt
-- [!NOT DONE] Implemented a budding test suite! If you're a player you won't firsthand see any of this, but you will feel its effects in that trivial bugs
-  should be caught earlier, before being shipped as releases!
-- [!NOT DONE] This release is the first to feature NeoForge compatibility! This will initially take time to acclimate to, but then dev time will decrease again
-- Signatures (`.asc` files) are now uploaded with releases to Modrinth for added security!
-- Bumped the version channel to beta! 🥳🎉
-- Messages received while the chat log is loading no longer get pushed to the top of the list ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263), fixed by [NineOfGaming](https://github.com/NineOfGaming)!)
-- Receiving duplicate messages no longer auto-scrolls the focused chat ([#268](https://www.github.com/mrbuilder1961/ChatPatches/issues/268))
+## Chat Patches `8.0.0` for Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1-3 on Fabric, Quilt
+- Chat Patches has been in alpha for over a year now for no clear reason - everything functions the same if not better - so we're back to full releases!
+- Signatures (`.asc` files) are now uploaded with Modrinth releases for added security!
+- Messages received while the chat log is loading no longer get pushed to the top of the list 
+  ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263), thanks [NineOfGaming](https://github.com/NineOfGaming)!)
+- Receiving duplicate messages no longer auto-scrolls the focused chat ([#286](https://www.github.com/mrbuilder1961/ChatPatches/issues/286))
 - Updated Russian `ru_ru` translations ([#333](https://www.github.com/mrbuilder1961/ChatPatches/issues/333)) thanks to [ADevnin](https://github.com/ADevnin)!
 - Updated some under-the-hood chat log saving stuff that *should* prevent some save/load failures
 
