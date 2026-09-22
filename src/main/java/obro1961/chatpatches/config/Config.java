@@ -62,7 +62,7 @@ import obro1961.chatpatches.integration.ChatHeadsIntegration;
 //import obro1961.chatpatches.util.VersionUtil;
 //?}
 
-//-? if >26.2 {
+//-? if >=26.3 {
 //-?}
 
 public class Config {

@@ -41,7 +41,7 @@ import net.minecraft.util.NullOps;
 //?} else {
 //import com.mojang.serialization.JsonOps;
 //?}
-//? if >26.2 {
+//? if >=26.3 {
 //import com.mojang.blaze3d.Blaze3D;
 //?}
 
@@ -282,7 +282,7 @@ public class YaclConfig extends Config {
                     case "chatlogSave" -> ChatLog.serialize();
                     case "chatlogBackup" -> ChatLog.backup();
                     case "chatlogOpenFolder" ->
-						//? if >26.2 {
+						//? if >=26.3 {
 						//Blaze3D.openPath(ChatLog.PATH.getParent());
 						//?} else {
 						Util.getPlatform().openFile(ChatLog.PATH.getParent().toFile());
