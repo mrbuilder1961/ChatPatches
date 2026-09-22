@@ -1,14 +1,9 @@
 package obro1961.chatpatches.mixin.gui;
 
-//? if >=1.21.9 {
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-//?}
-//? if <=1.21.10 {
-//import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-//?}
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.booleans.BooleanArrayList;
 import it.unimi.dsi.fastutil.booleans.BooleanList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -16,36 +11,16 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Options;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
-//? if >=1.21.11 {
-import net.minecraft.client.gui.ActiveTextCollector;
-//?} else {
-//import net.minecraft.client.gui.Font;
-//?}
+import net.minecraft.client.Options;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
-//? if >=1.21.9 {
-import net.minecraft.client.input.CharacterEvent;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-//?} else {
-//import net.minecraft.client.gui.navigation.CommonInputs;
-//?}
-//? if >=1.21.6 {
-import net.minecraft.client.renderer.RenderPipelines;
-//?} else if >=1.21.2 {
-//import net.minecraft.client.renderer.RenderType;
-//?}
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-//? if <=1.21.10 {
-//import net.minecraft.network.chat.Style;
-//?}
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
@@ -53,9 +28,7 @@ import obro1961.chatpatches.gui.SearchButton;
 import obro1961.chatpatches.util.ChatUtil;
 import obro1961.chatpatches.util.Colors;
 import obro1961.chatpatches.util.RenderUtil;
-import org.apache.commons.lang3./*? if >=1.21.11 {*/Strings/*?} else {*//*StringUtils*//*?}*/;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -72,6 +45,32 @@ import java.util.regex.PatternSyntaxException;
 
 import static obro1961.chatpatches.ChatPatches.config;
 import static obro1961.chatpatches.ChatPatches.id;
+
+//? if >=1.21.9 {
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+//?}
+//? if <=1.21.10 {
+//import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+//?}
+//? if >=1.21.11 {
+import net.minecraft.client.gui.ActiveTextCollector;
+//?} else {
+//import net.minecraft.client.gui.Font;
+//?}
+//? if >=1.21.9 {
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?} else {
+//import net.minecraft.client.gui.navigation.CommonInputs;
+//?}
+//? if >=1.21.6 {
+import net.minecraft.client.renderer.RenderPipelines;
+//?}
+//? if <=1.21.10 {
+//import net.minecraft.network.chat.Style;
+//?}
+import org.apache.commons.lang3./*? if >=1.21.11 {*/Strings/*?} else {*//*StringUtils*//*?}*/;
 
 /**
  * The main entrypoint mixin for chat GUI modifications,
@@ -276,7 +275,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(showSettingsMenu && config.search) {
 			// prepub use demo_background.png instead, but idk how to make it nine-sliced bc by default it's too big -> update preview photos (config & cf/mr)
 			graphics.blit(
-				/*? if >=1.21.6 {*/RenderPipelines.GUI_TEXTURED,/*?} elif >=1.21.2 {*//*RenderType::guiTextured,*//*?}*/
+				/*? if >=1.21.6 {*/RenderPipelines.GUI_TEXTURED,/*?}*/
 				id("textures/gui/search_settings_panel.png"),
 				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
@@ -346,8 +345,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * drafting/{@linkplain Options#saveChatDrafts save chat drafts} is enabled.
 	 *
 	 * @implNote Injects at the super method call because it closes the screen if
-	 * the key is {@link GLFW#GLFW_KEY_ESCAPE}, which is beaten out by the chat
-	 * screen's redundant functionality also provided. (?)
+	 * the key is {@linkplain KeyEvent#isEscape() escaped}, which is beaten out by
+	 * the chat screen's redundant functionality also provided. (?)
 	 */
 	@Inject(
 		method = "keyPressed",
@@ -457,9 +456,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@WrapMethod(method = "mouseClicked")
 	private boolean fixContextMenuNotClosing(MouseButtonEvent mouse, boolean bl, Operation<Boolean> mouseClicked) {
-		boolean clicked = mouseClicked.call(/*$ mouse_args {*/ mouse, bl /*$}*/);
+		boolean clicked = mouseClicked.call(/*$ mouse_args {*/ mouse, bl/*$}*/);
 
-		if(/*? if >=1.21.9 {*/ mouse.button() /*?} else {*//*button*//*?}*/ != GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+		if(/*? if >=1.21.9 {*/ mouse.button() /*?} else {*//*button*//*?}*/ != InputConstants.MOUSE_BUTTON_RIGHT) {
 			contextMenu.close(this::removeWidget); // closes the menu if it wasn't just created, we don't care if anything was actually clicked
 		}
 
@@ -502,20 +501,20 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		int button = mouse.button();
 		//?}
 
-		if(searchField.mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/)) {
+		if(searchField.mouseClicked(/*$ mouse_args {*/ mouse, bl/*$}*/)) {
 			cir.setReturnValue(true);
 		}
 
 		if(isMouseOverSettingsMenu(mX, mY)) {
-			if(caseSensitiveButton.mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/)) {
+			if(caseSensitiveButton.mouseClicked(/*$ mouse_args {*/ mouse, bl/*$}*/)) {
 				cir.setReturnValue(true);
-			} else if(regexButton.mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/)) {
+			} else if(regexButton.mouseClicked(/*$ mouse_args {*/ mouse, bl/*$}*/)) {
 				cir.setReturnValue(true);
 			}
-		} else if(contextMenu.mouseClicked(/*$ mouse_args {*/ mouse, bl /*$}*/)) {
+		} else if(contextMenu.mouseClicked(/*$ mouse_args {*/ mouse, bl/*$}*/)) {
 			contextMenu.close(this::removeWidget);
 			cir.setReturnValue(true);
-		} else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+		} else if(button == InputConstants.MOUSE_BUTTON_RIGHT) {
 			ContextMenu newMenu = new ContextMenu((ChatScreen)(Object)this, mX, mY);
 			// if the mouse right-clicked elsewhere and that location can load a context menu, use it
 			if(newMenu.isFunctional()) {
@@ -545,7 +544,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
 	private void allowContextMenuKeyPressing(KeyEvent key, CallbackInfoReturnable<Boolean> cir) {
 		// keyPressed must be called first, otherwise tabbing will not work
-		if(contextMenu.keyPressed(/*$ key_args {*/ key /*$}*/) && /*? if >=1.21.9 {*/ key.isSelection() /*?} else {*//*CommonInputs.selected(keyCode)*//*?}*/) {
+		if(contextMenu.keyPressed(/*$ key_args {*/ key/*$}*/) && /*? if >=1.21.9 {*/ key.isSelection() /*?} else {*//*CommonInputs.selected(keyCode)*//*?}*/) {
 			contextMenu.close(this::removeWidget);
 			blockSpaceConsumption = true; // see #charTyped
 			cir.setReturnValue(true);

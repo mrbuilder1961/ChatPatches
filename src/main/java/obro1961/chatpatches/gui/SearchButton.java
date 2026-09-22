@@ -1,7 +1,11 @@
 package obro1961.chatpatches.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ImageButton;
+
+import static obro1961.chatpatches.ChatPatches.id;
+
 //? if >=1.20.2 {
 import net.minecraft.client.gui.components.WidgetSprites;
 //?} else {
@@ -10,9 +14,6 @@ import net.minecraft.client.gui.components.WidgetSprites;
 //? if >=1.21.9 {
 import net.minecraft.client.input.MouseButtonEvent;
 //?}
-import org.lwjgl.glfw.GLFW;
-
-import static obro1961.chatpatches.ChatPatches.id;
 
 public class SearchButton extends ImageButton {
     //? if >=1.20.2 {
@@ -42,11 +43,11 @@ public class SearchButton extends ImageButton {
         //?}
 
         if(active && visible && /*? if <1.21.2 {*//*clicked*//*?} else {*/isMouseOver/*?}*/(mX, mY)) {
-            if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            if(button == InputConstants.MOUSE_BUTTON_LEFT) {
                 this.playDownSound(Minecraft.getInstance().getSoundManager());
                 onPress.onPress(this);
                 return true;
-            } else if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            } else if(button == InputConstants.MOUSE_BUTTON_RIGHT) {
                 this.playDownSound(Minecraft.getInstance().getSoundManager());
                 onRightClick.onPress(this);
                 return true;

@@ -3,6 +3,7 @@ package obro1961.chatpatches.gui;
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
+import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -37,7 +38,6 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import oshi.util.Memoizer;
@@ -606,7 +606,7 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		GuiEventListener focused = screen.getFocused();
-		if(/*? if >=1.21.9 {*/ key.key() /*?} else {*//*keyCode*//*?}*/ == GLFW.GLFW_KEY_TAB) {
+		if(/*? if >=1.21.9 {*/ key.key() /*?} else {*//*keyCode*//*?}*/ == InputConstants.KEY_TAB) {
 			if(focused instanceof AbstractButton tabbed && grid.contains(tabbed)) {
 				updateButtons(Optional.of(tabbed));
 				return true; // true - extra KeyCodes.isToggle check does NOT pass
@@ -633,7 +633,7 @@ public class ContextMenu implements GuiEventListener {
 		int button = mouse.button();
 		//?}
 
-		if(!noOp && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if(!noOp && button == InputConstants.MOUSE_BUTTON_LEFT) {
 			Optional<AbstractButton> opt = getHoveredButton(mX, mY);
 			// whether the button at (mX, mY) was clicked or not, otherwise return false and close the menu
 			return opt.isPresent() && opt.get().mouseClicked(/*$ mouse_args {*/ mouse, bl/*$}*/);
