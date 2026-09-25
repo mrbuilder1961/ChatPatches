@@ -6,6 +6,7 @@
 - Messages received while the chat log is loading no longer get pushed to the top of the list 
   ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263), thanks [NineOfGaming](https://github.com/NineOfGaming)!)
 - Receiving duplicate messages no longer auto-scrolls the focused chat ([#286](https://www.github.com/mrbuilder1961/ChatPatches/issues/286))
+- Added `counterDividerList`, a configurable list of messages that, if received while the duplicate counter is enabled, will not be condensed. Currently comes preloaded with a blank line, newline, and hypixel dash sequence! ([#303](https://www.github.com/mrbuilder1961/ChatPatches/issues/303))
 - Updated Russian `ru_ru` translations ([#333](https://www.github.com/mrbuilder1961/ChatPatches/issues/333)) thanks to [ADevnin](https://github.com/ADevnin)!
 - Updated some under-the-hood chat log saving stuff that *should* prevent some save/load failures
 

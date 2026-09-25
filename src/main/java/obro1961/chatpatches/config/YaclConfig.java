@@ -4,6 +4,7 @@ package obro1961.chatpatches.config;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.loader.api.FabricLoader;
@@ -27,7 +28,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
@@ -83,6 +83,7 @@ public class YaclConfig extends Config {
                         contextMenuOpts = new ObjectArrayList<>(),
                         searchOpts = new ObjectArrayList<>(),
                         helpOpts = new ObjectArrayList<>();
+		Object2ObjectArrayMap<String, Option<?>> listOpts = new Object2ObjectArrayMap<>();
 
         config.getOptions().forEach(opt -> {
             String key = opt.key; // effectively final
@@ -129,6 +130,18 @@ public class YaclConfig extends Config {
                     .available( !key.equals("onlyInvasiveDrafting") ) /*?}*/
                     .build();
 
+			// lists use the entirely separate ListOption class, so we just specify them explicitly here
+			if(key.endsWith("List")) {
+				yaclOpt = ListOption.<String>createBuilder()
+					.name(Component.translatable(LANG_PREFIX + key))
+					.description(desc(opt))
+					.controller(me -> getController(me, key))
+					.binding(getBinding(opt)) // gets and sets a List, requires list field to not be final, does not manipulate the list
+					.initial("")
+					.available(!cat.equals("counter") || config.counter)
+					.build();
+				listOpts.put(key, yaclOpt);
+			}
 
             switch(cat) {
 				case "_" -> {}
@@ -164,6 +177,7 @@ public class YaclConfig extends Config {
                 subGroup("time", timeOpts, null),
                 subGroup("hover", hoverOpts, null),
                 subGroup("counter", counterOpts, null),
+				listOpts.get("counterDividerList"), // must be separate because `ListOption`s are internally groups
                 subGroup("compact", compactOpts,
 					Style.EMPTY.withClickEvent(new /*$ open_url '"https://modrinth.com/mod/compact-chat"' {*/ClickEvent.OpenUrl(URI.create("https://modrinth.com/mod/compact-chat"))/*$}*/)
 				)
@@ -258,7 +272,12 @@ public class YaclConfig extends Config {
             builder = StringControllerBuilder.create((Option<String>) opt);
         } else if( key.contains("Color") ) {
             builder = ColorControllerBuilder.create((Option<Color>) opt);
-        } else if( config.getOption(key).get() instanceof Integer ) { // key is int but not color
+        } else if( key.contains("List") ) {
+			// called twice: first is useless, second is actually persistent
+			//if(key.equals("counterDividerList")) {
+				builder = StringControllerBuilder.create((Option<String>) opt);
+			//}
+		} else if( config.getOption(key).get() instanceof Integer ) { // key is int but not color
             builder = IntegerSliderControllerBuilder.create((Option<Integer>) opt).range(getMin(key), getMax(key)).step(getInterval(key));
         } else {
             builder = BooleanControllerBuilder.create((Option<Boolean>) opt).coloured(true);
@@ -367,10 +386,13 @@ public class YaclConfig extends Config {
 
     /**
      * Creates a tab-category with the passed parameters.
+	 *
+	 * @param groups A variable list of {@link OptionGroup}s or
+	 * {@link ListOption}s.
      *
      * @apiNote Puts groups before ungrouped options
      */
-    private static ConfigCategory tabCat(String key, ObjectList<Option<?>> options, OptionGroup... groups) {
+    private static ConfigCategory tabCat(String key, ObjectList<Option<?>> options, Object... groups) {
         ConfigCategory.Builder builder = ConfigCategory.createBuilder().name( Component.translatable(CATEGORY_PREFIX + key) );
 
         Component tooltip = Component.translatable(CATEGORY_DESC_PREFIX + key);
@@ -378,8 +400,12 @@ public class YaclConfig extends Config {
         if( !tooltip.getString().equals(CATEGORY_DESC_PREFIX + key) ) {
 			builder.tooltip(tooltip);
 		}
-        if( groups.length > 0 ) {
-			builder.groups( List.of(groups) );
+		for(Object o : groups) {
+			if(o instanceof ListOption<?> list) {
+				builder.option(list);
+			} else if(o instanceof OptionGroup g) {
+				builder.group(g);
+			}
 		}
         if( !options.isEmpty() ) {
 			builder.options( options );
@@ -394,7 +420,12 @@ public class YaclConfig extends Config {
      */
     private static OptionGroup subGroup(String key, ObjectList<Option<?>> options, Style descStyle) {
         MutableComponent desc = Component.translatable(CATEGORY_DESC_PREFIX + key);
-        return OptionGroup.createBuilder()
+
+		options = new ObjectArrayList<>(options);
+		// makes a copy as to not actually delete anything; ListOptions must be added as a group
+		options.removeIf(o -> o instanceof ListOption<?>);
+
+		return OptionGroup.createBuilder()
             .name( Component.translatable(CATEGORY_PREFIX + key) )
             .description(
                 // does this subgroup actually have a description?

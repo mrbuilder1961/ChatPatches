@@ -50,6 +50,7 @@
     "text.chatpatches.counter": "Duplicate message counter",
     "text.chatpatches.counterFormat": "Counter text",
     "text.chatpatches.counterColor": "Counter color",
+    "text.chatpatches.counterDividerList": "Compact-safe messages",
     "text.chatpatches.counterCheckStyle": "Check message formatting",
     "text.chatpatches.compactChat": "CompactChat method toggle",
     "text.chatpatches.compactDistance": "Message check distance",
@@ -57,6 +58,7 @@
     "text.chatpatches.desc.counterFormat": "The text that's added to the end of a message to indicate multiple duplicates were sent. Requires '$' for the number of duplicates, also supports '&' + formatting codes. Still applies to the CompactChat method, if enabled.",
     "text.chatpatches.desc.counterColor": "The color that fills in the unformatted areas of the resulting duplicate counter. To use this with other formatting codes, use '&r' in the decoration text option. Still applies to the CompactChat method, if enabled.",
     "text.chatpatches.desc.counterCheckStyle": "Should the message counter check formatting codes when checking for duplicates? For example, \"§e§labc§r\" and \"abc\" would NOT be considered duplicates if true. Still applies to the CompactChat method, if enabled.",
+    "text.chatpatches.desc.counterDividerList": "A list of messages that, if any are received while the duplicate counter is enabled, will not be condensed. Intended to prevent intentional divider lines from condensing, but can be used however you see fit. Note that timestamps and duplicate counters are not compared, but usernames in player messages are.",
     "text.chatpatches.desc.compactChat": "Should the message counter behave like the one from the CompactChat mod and check the amount of messages specified in the option below for duplicates?",
     "text.chatpatches.desc.compactDistance": "The distance (inclusive) that messages will attempt to be compacted to. Setting this to '0' will try the max visible line count (how many you can see at once).",
 

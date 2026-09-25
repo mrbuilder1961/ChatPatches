@@ -131,6 +131,7 @@ public class Config {
 	public boolean compactChat = false;
 	@IntConstraints(max = 50)
 	public int compactDistance = 0;
+	public List<String> counterDividerList = ObjectArrayList.of("", "\n", "-----------------------------------------------------");
 
     public boolean boundary = true;
 	@StringConstraints
@@ -719,10 +720,10 @@ public class Config {
          * {@linkplain Codec#optionalFieldOf(String, Object) optional field}
          * {@link MapCodec}, per this Setting's {@link #key} and {@linkplain #def
          * default value}. Provides required serialization checks, particularly for
-         * {@link String}s and {@link Integer}s ({@link TextColor}s); however, no int
-		 * range checks are performed. Additionally, performs a manual, tweaked
-		 * implementation of {@link Codec#optionalFieldOf(String, Object, boolean)}
-		 * to still serialize unchanged values.
+         * {@link String} and {@link Integer} ({@link TextColor}) types.
+		 * Additionally, performs a manual, tweaked implementation of
+		 * {@link Codec#optionalFieldOf(String, Object, boolean)} to still serialize
+		 * unchanged values.
          */
         @SuppressWarnings("unchecked") // java is stupid about T casting
 		public MapCodec<T> getTypeCodec() {
@@ -744,7 +745,7 @@ public class Config {
 				codec = switch(getType().getName()) { // rip 21 pattern matching ;(
 					case "java.lang.Boolean", "boolean" -> Codec.BOOL;
 					case "java.lang.Integer", "int" -> (Object)config.getRange(key) instanceof IntConstraints range
-						? Codec.intRange(range.min(), range.max()).promotePartial((err) -> constraintsIgnored = true)
+						? Codec.intRange(range.min(), range.max()).promotePartial(err -> constraintsIgnored = true)
 						: Codec.INT;
 					case "java.lang.String" -> {
 						StringConstraints constraints = config.getConstraints(key);
@@ -791,6 +792,12 @@ public class Config {
 
 						yield c;
 					}
+
+					// idea: @ListConstraints? particularly for noDuplicates and ofc min/max
+					// we'll probably have to use reflection to get the generic type, then recursively call this method on that type?
+					// actually the best form of reflection would be to somehow call THIS method on getType() but obv we're not in Class
+					case "it.unimi.dsi.fastutil.objects.ObjectArrayList" -> Codec.STRING.listOf(); // for now, we can hardcode it bc it's so easy
+
 					default -> {
 						logReportMsg(new IllegalStateException(String.format("Option type %s is not valid for serialization", getType().getName())));
 						yield Codec.STRING;
