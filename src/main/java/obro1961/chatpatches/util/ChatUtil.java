@@ -509,7 +509,7 @@ public class ChatUtil {
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
 					MutableComponent realContent = Component.empty();
 					// collect all message parts into one list, including the root TextContent
-					List<Component> parts = Lists.asList( m.plainCopy().setStyle(style), m.getSiblings().toArray(new Component[0]) );
+					List<Component> parts = TextUtil.linearize(m);
 
 					// find the first index of a '>' in the '<%s> %s'-formatted message
 					Component firstPart = parts.stream()
