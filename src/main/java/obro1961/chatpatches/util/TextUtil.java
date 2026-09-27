@@ -125,6 +125,39 @@ public class TextUtil {
 		}
 	}
 
+	/**
+	 * Walk the component-sibling tree in depth first order (aka render order).
+	 * Similar to {@code Component.visit()} but without using
+	 * {@code Component.getContents().visit()}, i.e. it will not decompose
+	 * translatables into parts.
+	 */
+	public static void walkTree(Component component, Style currentStyle, BiConsumer<Component, Style> consumer) {
+		currentStyle = component.getStyle().applyTo(currentStyle);
+
+		consumer.accept(component, currentStyle);
+
+		for (Component sibling : component.getSiblings()) {
+			walkTree(sibling, currentStyle, consumer);
+		}
+	}
+
+	/**
+	 * Turns the component-sibling tree into a flat list.
+	 * Similar to {@code Component.toFlatList()} but using {@link #walkTree}
+	 * instead of {@code Component.visit()}.
+	 */
+	public static List<Component> linearize(Component component) {
+		List<Component> components = new ArrayList<>();
+
+		walkTree(component, Style.EMPTY, (c, cStyle) -> {
+			// plainCopy() just copies the contents, so everything is included!
+			var copy = c.plainCopy().setStyle(cStyle);
+			components.add(copy);
+		});
+
+		return components;
+	}
+
 	public static MutableComponent truncate(Component text, int max) {
 		if(ChatFormatting.stripFormatting(text.getString()).length() <= max) {
 			return (MutableComponent) text;
@@ -342,35 +375,5 @@ public class TextUtil {
 		if(style.isObfuscated() && !last.isObfuscated()) joiner.add("k");
 
 		return joiner.toString();
-	}
-
-	/**
-	 * Walk the component-sibling tree in depth first order (aka render order).
-	 * Similar to {@code Component.visit()} but without using {@code Component.getContents().visit()},
-	 * i.e. it will not decompose translatables into parts.
-	 */
-	public static void walkTree(Component component, Style currentStyle, BiConsumer<Component, Style> consumer) {
-		currentStyle = component.getStyle().applyTo(currentStyle);
-
-		consumer.accept(component, currentStyle);
-
-		for (Component sibling : component.getSiblings()) {
-			walkTree(sibling, currentStyle, consumer);
-		}
-	}
-
-	/**
-	 * Turns the component-sibling tree into a flat list.
-	 * Similar to {@code Component.toFlatList()} but using {@link #walkTree} instead of {@code Component.visit()}.
-	 */
-	public static List<Component> linearize(Component component) {
-		List<Component> components = new ArrayList<>();
-
-		walkTree(component, Style.EMPTY, (c, cStyle) -> {
-			var copy = c.plainCopy().setStyle(cStyle);
-			components.add(copy);
-		});
-
-		return components;
 	}
 }
