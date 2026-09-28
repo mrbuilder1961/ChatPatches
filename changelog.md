@@ -1,15 +1,17 @@
 # Changelog
 
 ## Chat Patches `8.0.0` for Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1-3 on Fabric, Quilt
-- Chat Patches has been in alpha for over a year now for no clear reason - everything functions the same if not better - so we're back to full releases!
+- Honestly idk why we've been in alpha for so long - it's dumb - so we're back to full releases!
 - Signatures (`.asc` files) are now uploaded with Modrinth releases for added security!
 - Updated some under-the-hood chat log saving stuff that *should* prevent some save/load failures
 - Messages received while the chat log is loading no longer get pushed to the top of the list 
   ([#263](https://www.github.com/mrbuilder1961/ChatPatches/issues/263), thanks [NineOfGaming](https://github.com/NineOfGaming)!)
 - Receiving duplicate messages no longer auto-scrolls the focused chat ([#286](https://www.github.com/mrbuilder1961/ChatPatches/issues/286))
 - Added `counterDividerList`, a configurable list of messages that, if received while the duplicate counter is enabled, will not be condensed. Currently comes preloaded with a blank line, newline, and hypixel dash sequence! ([#303](https://www.github.com/mrbuilder1961/ChatPatches/issues/303))
-- Fix Chat Heads compatibility edge case ([#320](https://www.github.com/mrbuilder1961/ChatPatches/issues/320), thanks to [Fourmisain](https://github.com/Fourmisain)!)
+- Fixed Chat Heads compatibility edge case ([#320](https://www.github.com/mrbuilder1961/ChatPatches/issues/320) thanks 
+  to [Fourmisain](https://github.com/Fourmisain)!)
 - Updated Russian `ru_ru` translations ([#333](https://www.github.com/mrbuilder1961/ChatPatches/issues/333)) thanks to [ADevnin](https://github.com/ADevnin)!
+- Added `searchEmptyShowsFullChat` to configure behavior when a search has no results ([#345](https://www.github.com/mrbuilder1961/ChatPatches/issues/345) thanks to [JustAlittleWolf](https://github.com/JustAlittleWolf))
 
 ## Chat Patches `8.0-alpha.11` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt
 - Re-published version of `8.0-alpha.10` without the rogue code from other incomplete stuff (#325-331)
