@@ -100,7 +100,7 @@
   "text.chatpatches.context.sender": "Copier l'expéditeur...",
   "text.chatpatches.context.name": "Nom d'utilisateur",
   "text.chatpatches.context.uuid": "UUID",
-  "text.chatpatches.context.timestamp": "Copier l'horodatage...",
+  "text.chatpatches.context.time": "Copier l'horodatage...",
   "text.chatpatches.context.timestampText": "Texte",
   "text.chatpatches.context.timestampHoverText": "Texte survolant",
   "text.chatpatches.context.unix": "Copier l'heure Unix",

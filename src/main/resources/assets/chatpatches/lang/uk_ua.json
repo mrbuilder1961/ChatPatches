@@ -97,7 +97,7 @@
     "text.chatpatches.context.jsonString": "JSON",
     "text.chatpatches.context.links": "Скопіювати посилання >",
     "text.chatpatches.context.linkN": "Посилання %d",
-    "text.chatpatches.context.timestamp": "Скопіювати позначку часу >",
+    "text.chatpatches.context.time": "Скопіювати позначку часу >",
     "text.chatpatches.context.timestampText": "Текст позначки",
     "text.chatpatches.context.timestampHoverText": "Текст при наведенні",
     "text.chatpatches.context.unix": "Копіювати час UNIX",
