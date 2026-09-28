@@ -171,7 +171,7 @@ public class Config {
 	@StringConstraints
 	public String contextReplyFormat = "/msg $ ";
 	@StringConstraints(mustContain = {}, validator = SimpleDateFormat.class)
-	public String contextTimeFormat = "MM/dd/yyyy HH:mm:ss";
+	public String contextTimeFormat = "HH:mm:ss MM/dd/yyyy";
 
 	public boolean search = true;
 	public boolean searchDrafting = true;
