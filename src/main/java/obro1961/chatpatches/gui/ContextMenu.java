@@ -3,15 +3,13 @@ package obro1961.chatpatches.gui;
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
+import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.ints.Int2ObjectFunction;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.util.Util;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
@@ -20,24 +18,14 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
-//? if >=1.21.9 {
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-//?}
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.*;
-//? if <1.20.2 {
-//import net.minecraft.resources.ResourceLocation;
-//?}
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
-//? if >=1.21.9 {
-import net.minecraft.world.entity.player.PlayerSkin;
-//?} elif >=1.20.2 {
-/*import net.minecraft.client.resources.PlayerSkin;
-*//*?}*/
+import net.minecraft.util.Util;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
@@ -45,11 +33,11 @@ import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.mixin.gui.ChatScreenMixin;
 import obro1961.chatpatches.util.RenderUtil;
 import obro1961.chatpatches.util.TextUtil;
+import obro1961.chatpatches.util.VersionUtil;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import oshi.util.Memoizer;
@@ -68,6 +56,19 @@ import static net.minecraft.network.chat.CommonComponents.EMPTY;
 import static net.minecraft.network.chat.Component.literal;
 import static obro1961.chatpatches.ChatPatches.*;
 import static obro1961.chatpatches.util.ChatUtil.*;
+
+//? if >=1.21.9 {
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
+//? if <1.20.2 {
+//import net.minecraft.resources.ResourceLocation;
+//?}
+//? if >=1.21.9 {
+import net.minecraft.world.entity.player.PlayerSkin;
+//?} elif >=1.20.2 {
+/*import net.minecraft.client.resources.PlayerSkin;
+*//*?}*/
 
 /**
  * Represents the context menu that appears when a chat message is right-clicked.
@@ -420,7 +421,7 @@ public class ContextMenu implements GuiEventListener {
 				registerCopyButton(NO_DUPE_TEXT, TextUtil.newSiblings(text, text.getSiblings().subList(TIMESTAMP_INDEX, DUPE_INDEX))); // timestamped ? 3 : 2
 			}
 			registerCopyButton(JSON_STR,
-				TextUtil.UNSAFE_CODEC.encodeStart(regBack(NbtOps.INSTANCE), text)
+				TextUtil.UNSAFE_CODEC.encodeStart(VersionUtil.addSerializationContext(NbtOps.INSTANCE), text)
 					.resultOrPartial(e -> logReportMsg(new JsonParseException(e)))
 					.map(NbtUtils::toPrettyComponent)
 					.orElse(UNKNOWN.apply(JSON_STR))
@@ -620,7 +621,7 @@ public class ContextMenu implements GuiEventListener {
 		}
 
 		GuiEventListener focused = screen.getFocused();
-		if(/*? if >=1.21.9 {*/ key.key() /*?} else {*//*keyCode*//*?}*/ == GLFW.GLFW_KEY_TAB) {
+		if(/*? if >=1.21.9 {*/ key.key() /*?} else {*//*keyCode*//*?}*/ == InputConstants.KEY_TAB) {
 			if(focused instanceof AbstractButton tabbed && grid.contains(tabbed)) {
 				updateButtons(Optional.of(tabbed));
 				return true; // true - extra KeyCodes.isToggle check does NOT pass
@@ -647,7 +648,7 @@ public class ContextMenu implements GuiEventListener {
 		int button = mouse.button();
 		//?}
 
-		if(!noOp && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if(!noOp && button == InputConstants.MOUSE_BUTTON_LEFT) {
 			Optional<AbstractButton> opt = getHoveredButton(mX, mY);
 			// whether the button at (mX, mY) was clicked or not, otherwise return false and close the menu
 			return opt.isPresent() && opt.get().mouseClicked(/*$ mouse_args {*/ mouse, bl/*$}*/);

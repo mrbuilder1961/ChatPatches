@@ -509,7 +509,7 @@ public class ChatUtil {
 				} else { // reconstructs the message if it matches the vanilla format '<%s> %s' but isn't translatable
 					MutableComponent realContent = Component.empty();
 					// collect all message parts into one list, including the root TextContent
-					List<Component> parts = Lists.asList( m.plainCopy().setStyle(style), m.getSiblings().toArray(new Component[0]) );
+					List<Component> parts = TextUtil.linearize(m);
 
 					// find the first index of a '>' in the '<%s> %s'-formatted message
 					Component firstPart = parts.stream()
@@ -647,7 +647,7 @@ public class ChatUtil {
 				// warning: this gets triggered on level loading, but doesn't seem to matter there
 				String err = "`tryCondenseDupes(.)` called when `trimmedMessages` is empty";
 				LOGGER.warn(err);
-				//ChatPatches.pushErrorToast("Duplicate condenser warning", err);
+				//ChatPatches.pushInfoToast("Duplicate condenser warning", err);
 			}
 			return incoming;
 		}
@@ -667,7 +667,15 @@ public class ChatUtil {
 			Component msgContent = getPart(msg, MESSAGE_INDEX);
 			Component incomingContent = getPart(incoming, MESSAGE_INDEX);
 
-			if( !incomingContent.getString().equalsIgnoreCase(msgContent.getString()) ) {
+			if(config.counterDividerList.contains(incomingContent.getString())) {
+				// if the incoming message is a divider, then leave it alone
+				continue;
+			/*} else if(Boundary.isBoundaryLine(incomingContent)) {
+				// idea: should help per world history!
+				// if the incoming message is a boundary line, don't condense it (#194)
+				continue;
+			*/
+			} else if( !incomingContent.getString().equalsIgnoreCase(msgContent.getString()) ) {
 				// if the incoming message is different from the iterated message, don't try to condense it
 				continue;
 			} else if( config.counterCheckStyle && !TextUtil.virtuallyEqual(incomingContent, msgContent) ) {

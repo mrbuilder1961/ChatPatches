@@ -2,7 +2,7 @@
 package obro1961.chatpatches.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import dev.kikugie.fletching_table.annotation.MixinEnvironment;
+import dev.kikugie.fletching_table.mixin.MixinEnvironment;
 import net.minecraft.client.CommandHistory;
 import obro1961.chatpatches.ChatPatches;
 import org.spongepowered.asm.mixin.Mixin;

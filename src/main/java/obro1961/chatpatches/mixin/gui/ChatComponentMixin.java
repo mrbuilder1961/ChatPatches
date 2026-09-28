@@ -2,31 +2,19 @@ package obro1961.chatpatches.mixin.gui;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-//? if >=1.20.2 {
-import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-//?}
-//? if <=1.20.4 {
-//import com.llamalad7.mixinextras.sugar.Local;
-//?}
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.multiplayer.chat.GuiMessage;
-import net.minecraft.client.multiplayer.chat.GuiMessageTag;
-//? if >=26.1 {
-import net.minecraft.client.multiplayer.chat.GuiMessageSource;
-//?}
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.util.ChatUtil;
-//? if >=1.21.11 {
-import obro1961.chatpatches.util.VersionUtil;
-//?}
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,6 +24,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
 import static obro1961.chatpatches.ChatPatches.config;
+
+//? if >=1.20.2 {
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+//?}
+//? if <=1.20.4 {
+//import com.llamalad7.mixinextras.sugar.Local;
+//?}
+//? if >=26.1 {
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+//?}
+//? if >=1.21.11 {
+import obro1961.chatpatches.util.VersionUtil;
+//?}
 
 /**
  * The main entrypoint mixin for technical chat modifications, notably expansive

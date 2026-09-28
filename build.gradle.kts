@@ -8,8 +8,7 @@ import org.gradle.crypto.checksum.Checksum
 
 plugins { // versions in gradle.properties + settings.gradle.kts
     kotlin("jvm")
-    id("com.google.devtools.ksp") // kotlin and this r for fletching-table
-    id("dev.kikugie.fletching-table.fabric")
+    alias(ft.plugins.mixin)
     id("org.gradle.crypto.checksum") //todo temp comment out this stuff..?
     signing
     id("dev.isxander.mtk.manifests")
@@ -222,16 +221,9 @@ modstitch {
 }
 
 fletchingTable {
-    fabric {
-        // i lowkey don't know why i'm even bothering with these entrypoints
-        // this feature feels completely useless to me but i'm just gonna leave em bc why not
-        entrypointMappings.put("modmenu", "com.terraformersmc.modmenu.api.ModMenuApi")
-    }
-
-        //fixme: Name should match an existing source set
-    mixins.create("main") {
-        // matches the default value in the annotation
-        mixin("default", "$id.mixins.json")
+    // Mixins are only processed for configured source sets
+    mixins.configure(sourceSets.main) {
+        mixin("$id.mixins.json") // located in src/main/resources
     }
 }
 

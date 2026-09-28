@@ -14,7 +14,14 @@
   "license": "${mod_license}",
   "icon": "assets/${mod_id}/icon.png",
   "environment": "client",
-  "entrypoints": {},
+  "entrypoints": {
+    "client": [
+      "obro1961.chatpatches.ChatPatches"
+    ],
+    "modmenu": [
+      "obro1961.chatpatches.integration.ModMenuIntegration"
+    ]
+  },
   "depends": {
     "java": ">=${java}",
     "minecraft": ${minecraft_range},
