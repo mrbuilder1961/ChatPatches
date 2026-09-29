@@ -198,7 +198,19 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 */
 	@Inject(method = "init", at = @At("TAIL"))
 	protected void initSearchWidgets(CallbackInfo ci) {
-		searchButton = new SearchButton(2, height - 35, me -> showSearchBar = !showSearchBar, me -> showSettingsMenu = !showSettingsMenu);
+		searchButton = new SearchButton(2, height - 35,
+			me -> {
+				showSearchBar = !showSearchBar;
+				if(showSearchBar) {
+					addWidget(searchField);
+					setFocused(searchField);
+				} else {
+					// prevents tabbing unintentionally switching focus when hidden (#338)
+					removeWidget(searchField);
+					setFocused(input);
+				}
+			}, me -> showSettingsMenu = !showSettingsMenu
+		);
 		searchButton.setTooltip(Tooltip.create(SEARCH_TOOLTIP));
 
 		searchField = new EditBox(minecraft.font, SEARCH_X, height + SEARCH_Y_OFFSET, (int)(width * SEARCH_W_MULTIPLIER), SEARCH_HEIGHT, Component.translatable("chat.editBox"));
