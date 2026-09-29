@@ -1,6 +1,7 @@
 //~ yarnification
 package obro1961.chatpatches.config;
 
+import com.mojang.blaze3d.Blaze3D;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
@@ -16,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.NullOps;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
@@ -38,12 +40,10 @@ import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 
 //? if >1.20.1 {
-import net.minecraft.util.NullOps;
 //?} else {
 //import com.mojang.serialization.JsonOps;
 //?}
 //? if >=26.3 {
-import com.mojang.blaze3d.Blaze3D;
 //?}
 
 /**
@@ -440,7 +440,7 @@ public class YaclConfig extends Config {
     private static OptionDescription desc(Setting<?> opt) {
         OptionDescription.Builder builder = OptionDescription.createBuilder().text( Component.translatable(DESCRIPTION_PREFIX + opt.key) );
 
-        // using Locale.ROOT fixes turkish locale causing file mismatch (https://discord.com/channels/1077285607375638529/1260175475708399616)
+        // using Locale.ROOT fixes Turkish locale causing file mismatch (https://discord.com/channels/1077285607375638529/1260175475708399616)
         String image = "textures/preview/" + opt.key.replaceAll("([A-Z])", "_$1").toLowerCase(Locale.ROOT) + ".webp";
         Identifier id = ChatPatches.id(image);
 

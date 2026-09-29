@@ -14,6 +14,7 @@
 - Fixed Chat Heads compatibility edge case ([#320](https://www.github.com/mrbuilder1961/ChatPatches/issues/320) thanks 
   to [Fourmisain](https://github.com/Fourmisain)!)
 - Updated Russian `ru_ru` translations ([#333](https://www.github.com/mrbuilder1961/ChatPatches/issues/333) thanks to [ADevnin](https://github.com/ADevnin)!)
+- Fixed the search field staying focused when hidden ([#338](https://www.github.com/mrbuilder1961/ChatPatches/issues/338))
 - Added `searchEmptyShowsFullChat` to configure behavior when a search has no results ([#345](https://www.github.com/mrbuilder1961/ChatPatches/issues/345) 
   thanks to JustAlittleWolf)
 
