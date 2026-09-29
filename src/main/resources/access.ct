@@ -86,3 +86,9 @@ accessible field net/minecraft/client/gui/components/Button DEFAULT_NARRATION Ln
 
 #~ if <1.21.11 'Button$Plain ' -> 'Button ' >> '<init>'
 accessible method net/minecraft/client/gui/components/Button$Plain <init> (IIIILnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;Lnet/minecraft/client/gui/components/Button$CreateNarration;)V
+
+
+# AbstractWidget - ContextMenu
+
+#? if >=26.4 >>+ 'Z'
+#accessible field net/minecraft/client/gui/components/AbstractWidget visible Z
