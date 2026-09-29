@@ -430,7 +430,7 @@ public class ContextMenu implements GuiEventListener {
 			// todo: OG_JSON_STR - json of the original message w/o CPS mods - some sort of check should determine if we can just use the time/dupe-stripped text or if reconstruction is needed
 
 		// time buttons - some unconditional
-		registerProxyButton(MENU_TIME, TIMESTAMP, Items.CLOCK);
+		registerProxyButton(MENU_TIME, timestamped ? TIMESTAMP : FORMATTED_TIME, Items.CLOCK);
 			// timestamp buttons - conditional (if they exist)
 			if(timestamped) {
 				registerCopyButton(TIMESTAMP, timestamp);
