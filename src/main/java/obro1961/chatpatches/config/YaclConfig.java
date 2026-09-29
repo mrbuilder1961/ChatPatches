@@ -1,7 +1,6 @@
 //~ yarnification
 package obro1961.chatpatches.config;
 
-import com.mojang.blaze3d.Blaze3D;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.YACLScreen;
@@ -17,7 +16,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.NullOps;
 import net.minecraft.util.Util;
 import obro1961.chatpatches.ChatLog;
 import obro1961.chatpatches.ChatPatches;
@@ -40,10 +38,12 @@ import static obro1961.chatpatches.ChatPatches.LOGGER;
 import static obro1961.chatpatches.ChatPatches.config;
 
 //? if >1.20.1 {
+import net.minecraft.util.NullOps;
 //?} else {
 //import com.mojang.serialization.JsonOps;
 //?}
 //? if >=26.3 {
+import com.mojang.blaze3d.Blaze3D;
 //?}
 
 /**
