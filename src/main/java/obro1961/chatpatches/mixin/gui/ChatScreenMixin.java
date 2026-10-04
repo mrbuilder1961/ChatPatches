@@ -21,6 +21,7 @@ import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import obro1961.chatpatches.accessor.ChatComponentAccess;
 import obro1961.chatpatches.accessor.ChatScreenAccess;
 import obro1961.chatpatches.config.Config;
 import obro1961.chatpatches.gui.ContextMenu;
@@ -106,13 +107,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 	// coordinates and positioning // todo: remove magic numbers from the math where these are used
 	@Unique private static final int SEARCH_X = 22,
-									 SEARCH_Y_OFFSET = -31,
-									 SEARCH_HEIGHT = 12;
+			SEARCH_Y_OFFSET = -31,
+			SEARCH_HEIGHT = 12;
 	@Unique private static final double SEARCH_W_MULTIPLIER = 0.25;
 	@Unique private static final int MENU_WIDTH = 146,
-									 MENU_HEIGHT = 76,
-									 MENU_X = 2,
-									 MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
+			MENU_HEIGHT = 76,
+			MENU_X = 2,
+			MENU_Y_OFFSET = SEARCH_Y_OFFSET - MENU_HEIGHT - 6;
 
 	// context menu
 	@Unique private static ContextMenu contextMenu = new ContextMenu(null, -1, -1);
@@ -199,17 +200,17 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	@Inject(method = "init", at = @At("TAIL"))
 	protected void initSearchWidgets(CallbackInfo ci) {
 		searchButton = new SearchButton(2, height - 35,
-			me -> {
-				showSearchBar = !showSearchBar;
-				if(showSearchBar) {
-					addWidget(searchField);
-					setFocused(searchField);
-				} else {
-					// prevents tabbing unintentionally switching focus when hidden (#338)
-					removeWidget(searchField);
-					setFocused(input);
-				}
-			}, me -> showSettingsMenu = !showSettingsMenu
+				me -> {
+					showSearchBar = !showSearchBar;
+					if(showSearchBar) {
+						addWidget(searchField);
+						setFocused(searchField);
+					} else {
+						// prevents tabbing unintentionally switching focus when hidden (#338)
+						removeWidget(searchField);
+						setFocused(input);
+					}
+				}, me -> showSettingsMenu = !showSettingsMenu
 		);
 		searchButton.setTooltip(Tooltip.create(SEARCH_TOOLTIP));
 
@@ -269,7 +270,7 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 
 		//? if <1.21.6 {
 		/*graphics.pose().translate(0, 0, -1); // easiest fix to render everything effectively under the ChatInputSuggestor (#186) - and 1.21.6+ kinda automatically does this
-		*/
+		 */
 		//?}
 
 		if(showSearchBar && config.search) {
@@ -287,9 +288,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		if(showSettingsMenu && config.search) {
 			// prepub use demo_background.png instead, but idk how to make it nine-sliced bc by default it's too big -> update preview photos (config & cf/mr)
 			graphics.blit(
-				/*? if >=1.21.6 {*/RenderPipelines.GUI_TEXTURED,/*?}*/
-				id("textures/gui/search_settings_panel.png"),
-				MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
+					/*? if >=1.21.6 {*/RenderPipelines.GUI_TEXTURED,/*?}*/
+					id("textures/gui/search_settings_panel.png"),
+					MENU_X, height + MENU_Y_OFFSET, 0, 0, MENU_WIDTH, MENU_HEIGHT, MENU_WIDTH, MENU_HEIGHT
 			);
 			//Identifier DEMO = Identifier.withDefaultNamespace("textures/gui/demo_background.png");
 			//graphics.blit(RenderPipelines.GUI_TEXTURED, DEMO, MENU_X, MENU_Y_OFFSET + height, 0, 0, 248, 166, 256, 256); // too big
@@ -361,13 +362,13 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * the chat screen's redundant functionality also provided. (?)
 	 */
 	@Inject(
-		method = "keyPressed",
-		at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed("
-				+ /*? if <=1.21.8 {*//*"III"*//*?} else {*/ "Lnet/minecraft/client/input/KeyEvent;" /*?}*/
-				+ ")Z"
-		)
+			method = "keyPressed",
+			at = @At(
+					value = "INVOKE",
+					target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed("
+							+ /*? if <=1.21.8 {*//*"III"*//*?} else {*/ "Lnet/minecraft/client/input/KeyEvent;" /*?}*/
+							+ ")Z"
+			)
 	)
 	private void emptyManualDrafts(KeyEvent key, CallbackInfoReturnable<Boolean> cir) {
 		// here, we're keeping all drafts and discarding none
@@ -386,15 +387,15 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * we don't clear if an error occurs.
 	 */
 	@Inject(
-		method = "keyPressed",
-		at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/client/" + /*? if >26.1.2 {*/"gui/Gui"/*?} else {*//*"Minecraft"*//*?}*/ + ";setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"
-			/*? if <=1.21.8 {*/
-			/*, ordinal = 1, // post 1.21.9 partial drafting feature, only one call exists
-			shift = At.Shift.AFTER // not important post 1.21.9 either
-			*//*?}*/
-		)
+			method = "keyPressed",
+			at = @At(
+					value = "INVOKE",
+					target = "Lnet/minecraft/client/" + /*? if >26.1.2 {*/"gui/Gui"/*?} else {*//*"Minecraft"*//*?}*/ + ";setScreen(Lnet/minecraft/client/gui/screens/Screen;)V"
+					/*? if <=1.21.8 {*/
+					/*, ordinal = 1, // post 1.21.9 partial drafting feature, only one call exists
+                    shift = At.Shift.AFTER // not important post 1.21.9 either
+                    *//*?}*/
+			)
 	)
 	private void emptySentDrafts(CallbackInfoReturnable<Boolean> cir) {
 		messageDraft = "";
@@ -430,32 +431,32 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	/*?}*/
 
 	@WrapOperation(
-		method = "mouseClicked",
-		at = @At(
-			value = "INVOKE",
-			target =
-				/*? if >=1.21.11 {*/
-				/*~ if >=26.1 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/
-				"Lnet/minecraft/client/gui/components/ChatComponent;captureClickableText(Lnet/minecraft/client/gui/ActiveTextCollector;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V"
-				//~}
-				/*?} else {*/
-				/*"Lnet/minecraft/client/gui/screens/ChatScreen;getComponentStyleAt(DD)Lnet/minecraft/network/chat/Style;"*/
-				/*?}*/
-		)
+			method = "mouseClicked",
+			at = @At(
+					value = "INVOKE",
+					target =
+							/*? if >=1.21.11 {*/
+							/*~ if >=26.1 'Z' -> 'Lnet/minecraft/client/gui/components/ChatComponent$DisplayMode;' {*/
+							"Lnet/minecraft/client/gui/components/ChatComponent;captureClickableText(Lnet/minecraft/client/gui/ActiveTextCollector;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V"
+					//~}
+					/*?} else {*/
+					/*"Lnet/minecraft/client/gui/screens/ChatScreen;getComponentStyleAt(DD)Lnet/minecraft/network/chat/Style;"*/
+					/*?}*/
+			)
 	)
 	/*? if >=1.21.11 {*/
 	private void fixStyleClickthrough(
-		ChatComponent chat,
-		ActiveTextCollector styleFinder, int h, int ticks, /*? if >=26.1 {*/ChatComponent.DisplayMode/*?} else {*//*boolean*//*?}*/ focused,
-		Operation<Void> captureClickableText, MouseButtonEvent mouse, boolean doubleClick
+			ChatComponent chat,
+			ActiveTextCollector styleFinder, int h, int ticks, /*? if >=26.1 {*/ChatComponent.DisplayMode/*?} else {*//*boolean*//*?}*/ focused,
+			Operation<Void> captureClickableText, MouseButtonEvent mouse, boolean doubleClick
 	) {
 		if(!isMouseOverSettingsMenu(mouse.x(), mouse.y()) && !contextMenu.isMouseOver(mouse.x(), mouse.y())) {
 			captureClickableText.call(chat, styleFinder, h, ticks, focused);
 		}
-	/*?} else {*/
+		/*?} else {*/
 	/*private Style fixStyleClickthrough(ChatScreen screen, double mX, double mY, Operation<Style> getTextStyleAt) {
 		return (isMouseOverSettingsMenu(mX, mY) || contextMenu.isMouseOver(mX, mY)) ? null : getTextStyleAt.call(screen, mX, mY);*/
-	/*?}*/
+		/*?}*/
 	}
 
 	/**
@@ -492,6 +493,8 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 	 * 		<li>Otherwise, anything encapsulated by the
 	 * 		{@linkplain ContextMenu#mouseClicked(MouseButtonEvent, boolean)
 	 * 		context menu}</li>
+	 * 		<li>A searched message while holding Ctrl, which jumps to it in
+	 * 		the unfiltered chat</li>
 	 * 		<li>Finally, the chat box in an attempt to make a new context
 	 * 		menu. If the mouse clicked successfully:</li>
 	 * 		<ol>
@@ -526,6 +529,12 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		} else if(contextMenu.mouseClicked(/*$ mouse_args {*/ mouse, bl/*$}*/)) {
 			contextMenu.close(this::removeWidget);
 			cir.setReturnValue(true);
+		} else if(button == InputConstants.MOUSE_BUTTON_LEFT && /*? if >=1.21.9 {*/mouse.hasControlDown()/*?} else {*//*hasControlDown()*//*?}*/ && !searchResults.isEmpty()) {
+			GuiMessage clicked = findSearchResultAt(mX, mY);
+			if(clicked != null) {
+				jumpToMessage(clicked);
+				cir.setReturnValue(true);
+			}
 		} else if(button == InputConstants.MOUSE_BUTTON_RIGHT) {
 			ContextMenu newMenu = new ContextMenu((ChatScreen)(Object)this, mX, mY);
 			// if the mouse right-clicked elsewhere and that location can load a context menu, use it
@@ -641,6 +650,43 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		return showSettingsMenu && (mX >= MENU_X && mX <= MENU_X + MENU_WIDTH && mY >= height + MENU_Y_OFFSET && mY <= height + MENU_Y_OFFSET + MENU_HEIGHT);
 	}
 
+	@Unique
+	private GuiMessage findSearchResultAt(double mX, double mY) {
+		ChatComponent chat = minecraft.gui.hud.getChat();
+		int index = ((ChatComponentAccess) chat).getGuiMessageIndex(mX, mY);
+
+		if(index < 0 || index >= searchResults.size()) {
+			return null;
+		}
+
+		return searchResults.get(index);
+	}
+
+	@Unique
+	private void jumpToMessage(GuiMessage target) {
+		ChatComponent chat = minecraft.gui.hud.getChat();
+
+		searchField.setValue("");
+
+		int messageIndex = -1;
+		for(int i = 0; i < chat.allMessages.size(); i++) {
+			if(chat.allMessages.get(i) == target) {
+				messageIndex = i;
+				break;
+			}
+		}
+
+		if(messageIndex == -1) {
+			return;
+		}
+
+		int visibleIndex = ChatUtil.message2Visible(messageIndex);
+		int linesPerPage = chat.getLinesPerPage();
+		int maxScroll = Math.max(0, chat.trimmedMessages.size() - linesPerPage);
+
+		chat.chatScrollbarPos = Math.max(0, Math.min(visibleIndex - linesPerPage / 2, maxScroll));
+	}
+
 	/**
 	 * @return Whether chat drafts should only be saved when the chat is closed
 	 * unintentionally. On >=1.21.9, this returns the vanilla `saveChatDrafts` option,
@@ -662,17 +708,17 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 		Component text = CommonComponents.optionStatus(name, setting.get());
 
 		return Button.builder(text, me -> {
-				setting.set(!setting.get()); // toggle the setting
-				me.setMessage( CommonComponents.optionStatus(name, setting.get()) ); // update the button text
-				onSearchFieldUpdate(searchField.getValue(), true); // update the search field color
-				// saved in #onScreenClose
-			})
-			.bounds(
-				8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset,
-				minecraft.font.width(text.getString()) + 10, 20
-			)
-			.tooltip(Tooltip.create( Component.translatable("text.chatpatches.search.desc." + key) ))
-			.build();
+					setting.set(!setting.get()); // toggle the setting
+					me.setMessage( CommonComponents.optionStatus(name, setting.get()) ); // update the button text
+					onSearchFieldUpdate(searchField.getValue(), true); // update the search field color
+					// saved in #onScreenClose
+				})
+				.bounds(
+						8, (height + (MENU_Y_OFFSET / 2) - 51) + yOffset,
+						minecraft.font.width(text.getString()) + 10, 20
+				)
+				.tooltip(Tooltip.create( Component.translatable("text.chatpatches.search.desc." + key) ))
+				.build();
 	}
 
 	/**
@@ -721,10 +767,10 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 				messages.removeIf(Predicate.not(msg -> {
 					String m = ChatFormatting.stripFormatting(msg.content().getString());
 					return (config.regex)
-						? searchMatcher.reset(m).matches()
-						: (config.caseSensitive)
-							? m.contains(text)
-							: /*? if >=1.21.11 {*/Strings.CI.contains/*?} else {*//*StringUtils.containsIgnoreCase*//*?}*/(m, text);
+							? searchMatcher.reset(m).matches()
+							: (config.caseSensitive)
+							  ? m.contains(text)
+							  : /*? if >=1.21.11 {*/Strings.CI.contains/*?} else {*//*StringUtils.containsIgnoreCase*//*?}*/(m, text);
 				}));
 
 				searchResults.clear(); // either there are no results -> clear(), or there are new ones -> clear() + addAll()
@@ -738,9 +784,9 @@ public abstract class ChatScreenMixin extends Screen implements ChatScreenAccess
 					searchResults.addAll(messages);
 					// generate the visible messages from the filtered messages
 					chat.rescaleChat();
-                    // add the real messages back; leaves the (now filtered) visible messages intact
-                    messages.clear();
-                    messages.addAll(copy);
+					// add the real messages back; leaves the (now filtered) visible messages intact
+					messages.clear();
+					messages.addAll(copy);
 				} else {
 					// already empty
 					messages.addAll(copy);
