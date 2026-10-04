@@ -18,6 +18,7 @@
 - Fixed compatibility config issue with MasaGadget ([#342](https://www.github.com/mrbuilder1961/ChatPatches/issues/342))
 - Added `searchEmptyShowsFullChat` to configure behavior when a search has no results ([#345](https://www.github.com/mrbuilder1961/ChatPatches/issues/345) 
   thanks to JustAlittleWolf)
+- Added `pt_pt` translation, thanks to [ShyyYuki](https://github.com/ShyyYuki) ([#353](https://www.github.com/mrbuilder1961/ChatPatches/issues/353))!
 
 ## Chat Patches `8.0-alpha.11` for Minecraft 1.20.1, 1.21.1+5, 1.21.8–26.2 on Fabric, Quilt
 - Re-published version of `8.0-alpha.10` without the rogue code from other incomplete stuff (#325-331)
