@@ -59,8 +59,6 @@ public class YaclConfig extends Config {
     public static final String HELP_PREFIX = LANG_PREFIX + "help.";
     public static final String SEARCH_PREFIX = LANG_PREFIX + "search.";
 
-	protected static Language I18n; // lazily initialized to ensure proper registration
-
     /**
      * Matches if the compared string ends with {@code Str}, {@code Date}, or {@code Format}.
      */
@@ -69,7 +67,6 @@ public class YaclConfig extends Config {
 
     @Override
     public Screen getConfigScreen(Screen parent) {
-		if(I18n == null) I18n = Language.getInstance();
 
         ObjectList<Option<?>> timeOpts = new ObjectArrayList<>(),
                         hoverOpts = new ObjectArrayList<>(),
@@ -89,11 +86,13 @@ public class YaclConfig extends Config {
             String key = opt.key; // effectively final
             String cat = key.split("[A-Z]")[0];
 
-            if(I18n.has(SEARCH_PREFIX + key)) {
+			// can't have this in a field anymore... thanks MasaGadget. (#342)
+			var lang = Language.getInstance();
+            if(lang.has(SEARCH_PREFIX + key)) {
 				cat = "_"; // chat search filters are configurable in the chat screen, not here, where they won't render nicely
 			} else if(key.equals("logMessageStructures") || key.equals("helpToastLevel")) {
 				cat = "help"; // todo: when the migration codec is set up, sort out this help/chat default behavior. for now it's ugly
-			} else if(!I18n.has(CATEGORY_PREFIX + cat)) {
+			} else if(!lang.has(CATEGORY_PREFIX + cat)) {
 				cat = "chat"; // default to chat if the category is invalid
 			}
 
